@@ -1,0 +1,39 @@
+import { api } from './api';
+import type { Student, StudentsResponse, CreateStudentRequest, UpdateStudentRequest } from '../types/studentTypes';
+
+export const studentService = {
+  // Listar alunos
+  async getStudents(params?: {
+    status?: 'ativo' | 'inativo' | 'pendente';
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<StudentsResponse> {
+    const response = await api.get<StudentsResponse>('/api/students', { params });
+    return response.data;
+  },
+
+  // Obter aluno por ID
+  async getStudentById(id: number): Promise<{ success: boolean; student: Student }> {
+    const response = await api.get<{ success: boolean; student: Student }>(`/api/students/${id}`);
+    return response.data;
+  },
+
+  // Criar aluno
+  async createStudent(data: CreateStudentRequest): Promise<{ success: boolean; message: string; student: Student }> {
+    const response = await api.post<{ success: boolean; message: string; student: Student }>('/api/students', data);
+    return response.data;
+  },
+
+  // Atualizar aluno
+  async updateStudent(id: number, data: UpdateStudentRequest): Promise<{ success: boolean; message: string }> {
+    const response = await api.put<{ success: boolean; message: string }>(`/api/students/${id}`, data);
+    return response.data;
+  },
+
+  // Deletar aluno
+  async deleteStudent(id: number): Promise<{ success: boolean; message: string }> {
+    const response = await api.delete<{ success: boolean; message: string }>(`/api/students/${id}`);
+    return response.data;
+  },
+};
