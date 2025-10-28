@@ -1,17 +1,21 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import {BrowserRouter, Route, Routes} from 'react-router'
 import './index.css'
-import Homepage from './routes/Homepage'
-import Login from './routes/Login'
+import App from './App'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-      <BrowserRouter>
-        <Routes>
-          <Route path='/login' element={<Login />} />
-          <Route path='*' element={<Homepage />} />
-        </Routes>
-      </BrowserRouter>
-  </StrictMode>,
-)
+console.log('main.tsx executado!');
+console.log('root element:', document.getElementById('root'));
+
+const rootElement = document.getElementById('root');
+
+if (!rootElement) {
+  console.error('Elemento root não encontrado!');
+} else {
+  console.log('Criando React root...');
+  createRoot(rootElement).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+  console.log('React renderizado!');
+}
