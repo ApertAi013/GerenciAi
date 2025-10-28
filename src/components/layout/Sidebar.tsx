@@ -9,6 +9,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { path: '/', label: 'Início', icon: '🏠' },
+  { path: '/agenda', label: 'Agenda', icon: '📅' },
   { path: '/alunos', label: 'Alunos', icon: '👥' },
   { path: '/turmas', label: 'Turmas', icon: '🏐' },
   { path: '/matriculas', label: 'Matrículas', icon: '📝' },
