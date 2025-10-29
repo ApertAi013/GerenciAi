@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Students from './pages/Students'
 import Classes from './pages/Classes'
 import Schedule from './pages/Schedule'
+import Reports from './pages/Reports'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import Layout from './components/layout/Layout'
 
@@ -23,7 +24,7 @@ export default function App() {
             <Route path="/turmas" element={<Classes />} />
             <Route path="/matriculas" element={<div>Em breve: Matrículas</div>} />
             <Route path="/financeiro" element={<div>Em breve: Financeiro</div>} />
-            <Route path="/relatorios" element={<div>Em breve: Relatórios</div>} />
+            <Route path="/relatorios" element={<Reports />} />
           </Route>
         </Route>
       </Routes>
