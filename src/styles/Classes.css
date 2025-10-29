@@ -32,7 +32,7 @@
 }
 
 .class-card {
-  background: var(--bg-primary);
+  background: var(--color-orange);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-md);
@@ -43,7 +43,7 @@
 .class-card:hover {
   box-shadow: var(--shadow-lg);
   transform: translateY(-4px);
-  border-color: var(--color-orange);
+  border-color: var(--color-yellow-light);
 }
 
 .class-card-header {
@@ -52,13 +52,13 @@
   align-items: flex-start;
   margin-bottom: var(--spacing-md);
   padding-bottom: var(--spacing-md);
-  border-bottom: 2px solid var(--border-light);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .class-card-header h3 {
   font-size: var(--font-size-xl);
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--text-inverse);
   margin: 0;
   flex: 1;
   line-height: 1.4;
@@ -97,7 +97,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .class-info-row:last-child {
@@ -106,7 +106,7 @@
 
 .class-info-row .label {
   font-size: var(--font-size-sm);
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -114,8 +114,8 @@
 
 .class-info-row .value {
   font-size: var(--font-size-md);
-  color: var(--text-primary);
-  font-weight: 600;
+  color: var(--color-black);
+  font-weight: 700;
 }
 
 .class-card-actions {
@@ -124,12 +124,12 @@
   justify-content: flex-end;
   margin-top: var(--spacing-md);
   padding-top: var(--spacing-md);
-  border-top: 1px solid var(--border-light);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn-icon {
   background: var(--bg-primary);
-  border: 2px solid var(--border-medium);
+  border: 2px solid var(--bg-primary);
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
@@ -139,14 +139,16 @@
   align-items: center;
   justify-content: center;
   transition: all var(--transition-base);
-  color: var(--text-secondary);
+  color: var(--color-black);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-icon:hover {
-  background: var(--color-orange);
-  border-color: var(--color-orange);
+  background: var(--color-black);
+  border-color: var(--color-black);
   color: var(--text-inverse);
   transform: scale(1.1);
+  box-shadow: var(--shadow-md);
 }
 
 /* Empty State */
