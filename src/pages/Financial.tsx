@@ -18,6 +18,16 @@ export default function Financial() {
   });
 
   useEffect(() => {
+    // Log current user info for debugging
+    const userDataStr = localStorage.getItem('userData');
+    if (userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr);
+        console.log('Current logged in user:', userData);
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
     loadInvoices();
   }, [filter]);
 
