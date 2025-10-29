@@ -4,6 +4,8 @@ import SchedulePreviewWidget from './SchedulePreviewWidget';
 import FinancialPreviewWidget from './FinancialPreviewWidget';
 import RecentStudentsWidget from './RecentStudentsWidget';
 import NotificationsWidget from './NotificationsWidget';
+import UpcomingClassesWidget from './UpcomingClassesWidget';
+import OverdueInvoicesWidget from './OverdueInvoicesWidget';
 
 interface WidgetRendererProps {
   type: WidgetType;
@@ -22,11 +24,9 @@ export default function WidgetRenderer({ type }: WidgetRendererProps) {
     case 'notifications':
       return <NotificationsWidget />;
     case 'upcoming-classes':
-      // TODO: Implement upcoming classes widget
-      return <div style={{ padding: '20px', textAlign: 'center' }}>Em desenvolvimento</div>;
+      return <UpcomingClassesWidget />;
     case 'overdue-invoices':
-      // TODO: Implement overdue invoices widget
-      return <div style={{ padding: '20px', textAlign: 'center' }}>Em desenvolvimento</div>;
+      return <OverdueInvoicesWidget />;
     default:
       return <div style={{ padding: '20px', textAlign: 'center' }}>Widget não encontrado</div>;
   }
