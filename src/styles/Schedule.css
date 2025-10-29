@@ -378,14 +378,30 @@
   z-index: 1;
 }
 
+.class-card-header {
+  cursor: grab;
+}
+
 .class-card-header:active {
   cursor: grabbing !important;
+}
+
+/* Overlay invisível que aparece durante drag para garantir drop em toda área */
+.drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  pointer-events: auto;
 }
 
 .class-card.drag-over-class {
   border: 2px solid var(--color-yellow-light);
   box-shadow: 0 0 0 4px rgba(255, 208, 79, 0.4);
   transform: scale(1.02);
+  z-index: 2;
 }
 
 /* Custom scrollbar for class cards */

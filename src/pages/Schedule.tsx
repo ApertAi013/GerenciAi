@@ -116,7 +116,7 @@ function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
     data: { type: 'class', classId: classSchedule.id }
   });
 
-  // Droppable para aceitar alunos
+  // Droppable para aceitar alunos - IMPORTANTE: envolve todo o card
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: `class-drop-${classSchedule.id}`,
     data: { type: 'class-drop', classId: classSchedule.id }
@@ -126,7 +126,7 @@ function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
   const capacity = classSchedule.capacity;
   const isFull = filled >= capacity;
 
-  const style = transform
+  const cardStyle = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
         opacity: isDragging ? 0.5 : 1,
@@ -139,14 +139,16 @@ function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
   return (
     <div
       ref={setDropRef}
-      style={style}
+      style={cardStyle}
       className={`class-card ${isOver ? 'drag-over-class' : ''}`}
     >
+      {/* Overlay invisível para capturar drops em toda a área */}
+      {isOver && <div className="drop-overlay" />}
+
       {/* Drag handle - apenas o header é arrastável */}
       <div
         ref={setDragRef}
         className="class-card-header"
-        style={{ cursor: 'grab' }}
         {...listeners}
         {...attributes}
       >
@@ -160,7 +162,7 @@ function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
       <div className="class-name">{classSchedule.name}</div>
 
       {classSchedule.students.length > 0 && (
-        <div className="class-students" onClick={(e) => e.stopPropagation()}>
+        <div className="class-students">
           {classSchedule.students.map((student) => (
             <DraggableStudent key={student.id} student={student} classId={classSchedule.id} />
           ))}
