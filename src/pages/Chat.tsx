@@ -1,8 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { chatService } from '../services/chatService';
+import { premiumFeaturesService } from '../services/premiumFeaturesService';
 import type { Conversation, Message } from '../types/chatTypes';
+import type { FeatureAccess, UsageInfo } from '../types/premiumFeaturesTypes';
+import ChatOnboardingTour from '../components/chat/ChatOnboardingTour';
+import PremiumBadge from '../components/chat/PremiumBadge';
+import UsageCounter from '../components/chat/UsageCounter';
+import LimitReachedModal from '../components/chat/LimitReachedModal';
 import '../styles/Chat.css';
+
+const ONBOARDING_KEY = 'chat_onboarding_completed';
+const AI_FEATURE_CODE = 'ai_assistant';
 
 export default function Chat() {
   const { user } = useAuthStore();
@@ -15,12 +24,29 @@ export default function Chat() {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Carregar conversas ao iniciar
+  // Premium features state
+  const [featureAccess, setFeatureAccess] = useState<FeatureAccess | null>(null);
+  const [isLoadingAccess, setIsLoadingAccess] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  // Carregar acesso premium ao iniciar
   useEffect(() => {
     if (user) {
+      loadPremiumAccess();
       loadConversations();
     }
   }, [user]);
+
+  // Verificar se deve mostrar onboarding
+  useEffect(() => {
+    if (featureAccess) {
+      const hasSeenOnboarding = localStorage.getItem(ONBOARDING_KEY);
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [featureAccess]);
 
   // Scroll automático para última mensagem
   useEffect(() => {
@@ -31,6 +57,24 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Carregar acesso premium
+  const loadPremiumAccess = async () => {
+    try {
+      setIsLoadingAccess(true);
+      const response = await premiumFeaturesService.getMyAccess(AI_FEATURE_CODE);
+      setFeatureAccess(response.data.access);
+    } catch (error: any) {
+      console.error('Erro ao carregar acesso premium:', error);
+      // Se houver erro, assume que não tem acesso
+      setFeatureAccess({
+        hasAccess: false,
+        isUnlimited: false,
+        usageInfo: {},
+      });
+    } finally {
+      setIsLoadingAccess(false);
+    }
+  };
 
   // Carregar lista de conversas
   const loadConversations = async () => {
@@ -40,9 +84,7 @@ export default function Chat() {
       setConversations(response.data);
     } catch (error: any) {
       console.error('Erro ao carregar conversas:', error);
-      // Em caso de erro, define array vazio para não quebrar a UI
       setConversations([]);
-      // Não mostra alert para não incomodar o usuário na carga inicial
     } finally {
       setIsLoadingConversations(false);
     }
@@ -50,13 +92,29 @@ export default function Chat() {
 
   // Criar nova conversa
   const handleNewConversation = async () => {
+    // Verificar se tem acesso antes de criar conversa
+    if (!featureAccess?.hasAccess) {
+      setShowLimitModal(true);
+      return;
+    }
+
     try {
       const response = await chatService.createConversation();
       setCurrentConversation(response.data.conversation_id);
       setMessages([]);
       await loadConversations();
+      // Recarregar acesso para atualizar contador
+      await loadPremiumAccess();
     } catch (error: any) {
       console.error('Erro ao criar conversa:', error);
+
+      // Verificar se o erro é de limite atingido
+      if (error.response?.data?.error === 'FEATURE_LIMIT_REACHED') {
+        setShowLimitModal(true);
+        await loadPremiumAccess(); // Atualizar dados de acesso
+        return;
+      }
+
       const errorMessage = error.response?.data?.message || error.message || 'Erro desconhecido';
       alert('Erro ao criar conversa: ' + errorMessage);
     }
@@ -77,6 +135,12 @@ export default function Chat() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentConversation) return;
+
+    // Verificar se tem acesso antes de enviar mensagem
+    if (!featureAccess?.hasAccess) {
+      setShowLimitModal(true);
+      return;
+    }
 
     const userMessage = newMessage;
     setNewMessage('');
@@ -107,10 +171,20 @@ export default function Chat() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Atualizar lista de conversas
+      // Atualizar lista de conversas e acesso
       await loadConversations();
+      await loadPremiumAccess();
     } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error);
+
+      // Verificar se o erro é de limite atingido
+      if (error.response?.data?.error === 'FEATURE_LIMIT_REACHED') {
+        setShowLimitModal(true);
+        await loadPremiumAccess();
+        setMessages((prev) => prev.slice(0, -1)); // Remover mensagem temporária
+        return;
+      }
+
       alert('Erro ao enviar mensagem: ' + (error.response?.data?.message || error.message));
       // Remover mensagem do usuário em caso de erro
       setMessages((prev) => prev.slice(0, -1));
@@ -141,6 +215,23 @@ export default function Chat() {
     setNewMessage(suggestion);
   };
 
+  // Concluir onboarding
+  const handleOnboardingFinish = () => {
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
+
+  // Ação de upgrade (contatar admin)
+  const handleUpgrade = () => {
+    alert(
+      '💎 Para contratar o Plano PRO com acesso ilimitado à IA:\n\n' +
+      '📧 Entre em contato com:\n' +
+      '- teus.hcp@gmail.com\n' +
+      '- samuelfranca.m@gmail.com\n\n' +
+      'Teremos prazer em ativar seu acesso premium!'
+    );
+  };
+
   // Formatar data
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -163,8 +254,37 @@ export default function Chat() {
     );
   }
 
+  if (isLoadingAccess) {
+    return (
+      <div className="chat-container">
+        <div className="empty-state">
+          <div className="spinner"></div>
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isPremiumUser = featureAccess?.isUnlimited || false;
+  const usageInfo: UsageInfo = featureAccess?.usageInfo || {};
+
   return (
     <div className="chat-container">
+      {/* Tour de Onboarding */}
+      <ChatOnboardingTour
+        run={showOnboarding}
+        onFinish={handleOnboardingFinish}
+        isPremiumUser={isPremiumUser}
+      />
+
+      {/* Modal de Limite Atingido */}
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        onUpgrade={handleUpgrade}
+        usageInfo={usageInfo}
+      />
+
       {/* Sidebar - Lista de conversas */}
       <div className="chat-sidebar">
         <div className="sidebar-header">
@@ -172,6 +292,19 @@ export default function Chat() {
             ✨ Nova Conversa
           </button>
         </div>
+
+        {/* Contador de Uso / Badge PRO */}
+        {isPremiumUser ? (
+          <div style={{ padding: '15px', display: 'flex', justifyContent: 'center' }}>
+            <PremiumBadge />
+          </div>
+        ) : (
+          <UsageCounter
+            usageInfo={usageInfo}
+            isUnlimited={false}
+            onUpgrade={handleUpgrade}
+          />
+        )}
 
         <div className="conversations-list">
           {isLoadingConversations ? (
@@ -217,7 +350,6 @@ export default function Chat() {
             ))
           )}
         </div>
-
       </div>
 
       {/* Área principal - Mensagens */}
@@ -227,7 +359,10 @@ export default function Chat() {
             {/* Header */}
             <div className="chat-header">
               <div>
-                <h2 className="chat-title">Assistente GerenciAi 🤖</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <h2 className="chat-title">Assistente GerenciAi 🤖</h2>
+                  {isPremiumUser && <PremiumBadge />}
+                </div>
                 <p className="chat-subtitle">
                   Tire suas dúvidas e gerencie sua academia com inteligência artificial
                 </p>
@@ -341,6 +476,11 @@ export default function Chat() {
               <div className="empty-icon">💬</div>
               <h3>Bem-vindo ao Assistente GerenciAi</h3>
               <p>Selecione uma conversa ou crie uma nova para começar a gerenciar sua academia com IA</p>
+              {isPremiumUser && (
+                <div style={{ marginBottom: '16px' }}>
+                  <PremiumBadge />
+                </div>
+              )}
               <button onClick={handleNewConversation} className="btn-primary">
                 ✨ Criar Primeira Conversa
               </button>
