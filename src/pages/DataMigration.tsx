@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { dataMigrationService, DataImport, SupportedFileType } from '../services/dataMigrationService';
+import { dataMigrationService, type DataImport, type SupportedFileType } from '../services/dataMigrationService';
 import FileUploadZone from '../components/migration/FileUploadZone';
 import MigrationOnboardingTour from '../components/migration/MigrationOnboardingTour';
-import { Database, FileCheck, AlertCircle, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { Database, FileCheck, AlertCircle, CheckCircle2, Clock, XCircle, Upload, Loader } from 'lucide-react';
 
 const ONBOARDING_KEY = 'migration_onboarding_completed';
 
@@ -127,25 +127,34 @@ export default function DataMigration() {
   };
 
   return (
-    <div className="p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50 p-8">
       <MigrationOnboardingTour run={showOnboarding} onFinish={handleOnboardingFinish} />
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Database className="w-8 h-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900">Migração de Dados</h1>
+      <div className="mb-8 max-w-7xl mx-auto">
+        <div className="flex items-center gap-4 mb-3">
+          <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+            <Database className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">Migração de Dados</h1>
+            <p className="text-gray-600 mt-1">
+              Importe dados do seu sistema anterior para o GerenciAi
+            </p>
+          </div>
         </div>
-        <p className="text-gray-600">
-          Importe dados do seu sistema anterior para o GerenciAi
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {/* Upload Section */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Upload de Arquivo</h2>
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Upload className="w-6 h-6 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Upload de Arquivo</h2>
+            </div>
 
             <div className="upload-zone mb-6">
               <FileUploadZone
@@ -160,49 +169,64 @@ export default function DataMigration() {
               <button
                 onClick={handleUpload}
                 disabled={isUploading}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
               >
-                Fazer Upload
+                <span className="flex items-center justify-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  Fazer Upload
+                </span>
               </button>
             )}
           </div>
 
           {/* Import History */}
-          <div className="bg-white rounded-lg shadow-sm p-6 import-history">
-            <h2 className="text-xl font-semibold mb-4">Histórico de Importações</h2>
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 import-history">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <FileCheck className="w-6 h-6 text-purple-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Histórico de Importações</h2>
+            </div>
 
             {isLoadingImports ? (
-              <div className="text-center py-8">
-                <Clock className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-2" />
-                <p className="text-gray-500">Carregando importações...</p>
+              <div className="text-center py-12">
+                <div className="relative w-16 h-16 mx-auto mb-4">
+                  <Clock className="w-16 h-16 text-blue-500 animate-spin" />
+                  <div className="absolute inset-0 w-16 h-16 bg-blue-400 rounded-full blur-xl opacity-30 animate-pulse"></div>
+                </div>
+                <p className="text-gray-600 font-medium">Carregando importações...</p>
               </div>
             ) : imports.length === 0 ? (
-              <div className="text-center py-8">
-                <FileCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">Nenhuma importação encontrada</p>
-                <p className="text-sm text-gray-400 mt-1">
+              <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border-2 border-dashed border-gray-300">
+                <div className="relative w-20 h-20 mx-auto mb-4">
+                  <FileCheck className="w-20 h-20 text-gray-400" />
+                </div>
+                <p className="text-lg font-semibold text-gray-700">Nenhuma importação encontrada</p>
+                <p className="text-sm text-gray-500 mt-2">
                   Faça o upload de um arquivo CSV para começar
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {imports.map((importData) => (
                   <div
                     key={importData.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    className="border-2 border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-white to-gray-50"
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(importData.status)}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white rounded-lg shadow-sm">
+                          {getStatusIcon(importData.status)}
+                        </div>
                         <div>
-                          <p className="font-medium text-gray-900">{importData.file_name}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="font-semibold text-gray-900">{importData.file_name}</p>
+                          <p className="text-sm text-gray-600 mt-0.5">
                             {formatFileSize(importData.file_size_bytes)} • Tipo: {importData.file_type}
                           </p>
                         </div>
                       </div>
                       <span
-                        className={`text-xs px-2 py-1 rounded ${
+                        className={`text-xs px-3 py-1.5 rounded-full font-semibold ${
                           importData.status === 'completed'
                             ? 'bg-green-100 text-green-700'
                             : importData.status === 'processing'
@@ -216,24 +240,30 @@ export default function DataMigration() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
-                      <div>
-                        <p className="text-gray-500">Total</p>
-                        <p className="font-medium">{importData.rows_total} linhas</p>
+                    <div className="grid grid-cols-3 gap-4 mt-4 text-sm">
+                      <div className="bg-white p-3 rounded-lg border border-gray-200">
+                        <p className="text-gray-600 text-xs mb-1">Total</p>
+                        <p className="font-bold text-gray-900 text-lg">{importData.rows_total}</p>
+                        <p className="text-xs text-gray-500">linhas</p>
                       </div>
-                      <div>
-                        <p className="text-gray-500">Importados</p>
-                        <p className="font-medium text-green-600">{importData.rows_imported}</p>
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <p className="text-green-700 text-xs mb-1">Importados</p>
+                        <p className="font-bold text-green-700 text-lg">{importData.rows_imported}</p>
+                        <p className="text-xs text-green-600">sucesso</p>
                       </div>
-                      <div>
-                        <p className="text-gray-500">Falhas</p>
-                        <p className="font-medium text-red-600">{importData.rows_failed}</p>
+                      <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+                        <p className="text-red-700 text-xs mb-1">Falhas</p>
+                        <p className="font-bold text-red-700 text-lg">{importData.rows_failed}</p>
+                        <p className="text-xs text-red-600">erros</p>
                       </div>
                     </div>
 
-                    <p className="text-xs text-gray-400 mt-2">
-                      {formatDate(importData.created_at)}
-                    </p>
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatDate(importData.created_at)}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -242,26 +272,39 @@ export default function DataMigration() {
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
           {/* Supported Types */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6 supported-types">
-            <h3 className="text-lg font-semibold mb-4">Tipos Suportados</h3>
+          <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 supported-types">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <FileCheck className="w-5 h-5 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">Tipos Suportados</h3>
+            </div>
 
             {supportedTypes.length === 0 ? (
-              <p className="text-gray-500 text-sm">Carregando...</p>
+              <div className="flex items-center justify-center py-8">
+                <div className="relative">
+                  <Loader className="w-8 h-8 text-blue-500 animate-spin" />
+                  <div className="absolute inset-0 bg-blue-400 rounded-full blur-lg opacity-30 animate-pulse"></div>
+                </div>
+              </div>
             ) : (
               <div className="space-y-4">
                 {supportedTypes.map((type) => (
-                  <div key={type.type} className="border-l-4 border-blue-500 pl-3">
-                    <p className="font-medium text-gray-900">{type.name}</p>
-                    <p className="text-sm text-gray-600 mt-1">{type.description}</p>
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-500 mb-1">Colunas esperadas:</p>
-                      <div className="flex flex-wrap gap-1">
+                  <div
+                    key={type.type}
+                    className="border-l-4 border-blue-500 pl-4 pr-3 py-3 bg-gradient-to-r from-blue-50 to-transparent rounded-r-lg hover:from-blue-100 transition-colors"
+                  >
+                    <p className="font-bold text-gray-900 text-sm">{type.name}</p>
+                    <p className="text-xs text-gray-600 mt-1 leading-relaxed">{type.description}</p>
+                    <div className="mt-3">
+                      <p className="text-xs font-semibold text-gray-700 mb-2">Colunas esperadas:</p>
+                      <div className="flex flex-wrap gap-1.5">
                         {type.sample_columns.map((col, idx) => (
                           <span
                             key={idx}
-                            className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                            className="text-xs bg-white border border-gray-300 text-gray-700 px-2.5 py-1 rounded-md font-medium shadow-sm"
                           >
                             {col}
                           </span>
@@ -275,16 +318,30 @@ export default function DataMigration() {
           </div>
 
           {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex gap-2">
-              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white">
+            <div className="flex gap-3">
+              <div className="p-2 bg-white/20 rounded-lg h-fit">
+                <AlertCircle className="w-6 h-6 text-white" />
+              </div>
               <div>
-                <p className="text-sm font-medium text-blue-900">Dicas de Importação</p>
-                <ul className="text-xs text-blue-800 mt-2 space-y-1">
-                  <li>• Arquivos devem estar em formato CSV</li>
-                  <li>• Tamanho máximo: 10MB</li>
-                  <li>• Use codificação UTF-8</li>
-                  <li>• Separe colunas por vírgula</li>
+                <p className="text-lg font-bold mb-3">Dicas de Importação</p>
+                <ul className="space-y-2.5 text-sm">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-200 mt-0.5">•</span>
+                    <span>Arquivos devem estar em formato CSV</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-200 mt-0.5">•</span>
+                    <span>Tamanho máximo: 10MB</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-200 mt-0.5">•</span>
+                    <span>Use codificação UTF-8</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-200 mt-0.5">•</span>
+                    <span>Separe colunas por vírgula</span>
+                  </li>
                 </ul>
               </div>
             </div>
