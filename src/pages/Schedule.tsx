@@ -201,10 +201,11 @@ export default function Schedule() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [classes, setClasses] = useState<ClassSchedule[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
+  const [viewMode, setViewMode] = useState<'week' | 'day' | 'month'>('week');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSearchModal, setShowSearchModal] = useState(false);
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Começa na segunda
 
@@ -621,6 +622,13 @@ export default function Schedule() {
             </button>
             <button
               type="button"
+              className={viewMode === 'month' ? 'active' : ''}
+              onClick={() => setViewMode('month')}
+            >
+              Mês
+            </button>
+            <button
+              type="button"
               className={viewMode === 'day' ? 'active' : ''}
               onClick={() => setViewMode('day')}
             >
@@ -645,12 +653,38 @@ export default function Schedule() {
           </div>
 
           <div className="action-buttons">
-            <button type="button" className="btn-primary">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => setShowSearchModal(true)}
+              title="Buscar horários disponíveis"
+            >
               📅 BUSCAR HORÁRIOS
             </button>
-            <button type="button" className="btn-icon">+</button>
-            <button type="button" className="btn-icon">🗑️</button>
-            <button type="button" className="btn-icon">🔍</button>
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={() => alert('Funcionalidade de criar nova turma em desenvolvimento')}
+              title="Criar nova turma"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={() => alert('Funcionalidade de limpar agenda em desenvolvimento')}
+              title="Limpar seleção"
+            >
+              🗑️
+            </button>
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={() => setShowSearchModal(true)}
+              title="Buscar"
+            >
+              🔍
+            </button>
           </div>
         </div>
       </div>
@@ -731,6 +765,116 @@ export default function Schedule() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Modal de Busca de Horários */}
+      {showSearchModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setShowSearchModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '32px',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginBottom: '16px', fontSize: '24px', fontWeight: 'bold' }}>
+              🔍 Buscar Horários
+            </h2>
+            <p style={{ marginBottom: '24px', color: '#666', lineHeight: '1.6' }}>
+              Funcionalidade de busca de horários disponíveis em desenvolvimento.
+            </p>
+            <p style={{ marginBottom: '24px', color: '#666', lineHeight: '1.6' }}>
+              Em breve você poderá:
+            </p>
+            <ul style={{ marginBottom: '24px', marginLeft: '20px', color: '#666', lineHeight: '1.8' }}>
+              <li>Buscar horários livres por dia da semana</li>
+              <li>Filtrar por modalidade</li>
+              <li>Ver capacidade disponível</li>
+              <li>Encontrar conflitos de horário</li>
+            </ul>
+            <button
+              type="button"
+              onClick={() => setShowSearchModal(false)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#3B82F6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Aviso de visualização mensal */}
+      {viewMode === 'month' && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '32px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+            zIndex: 999
+          }}
+        >
+          <h2 style={{ marginBottom: '16px', fontSize: '24px', fontWeight: 'bold' }}>
+            📅 Visualização Mensal
+          </h2>
+          <p style={{ marginBottom: '24px', color: '#666', lineHeight: '1.6' }}>
+            A visualização mensal completa está em desenvolvimento.
+          </p>
+          <p style={{ marginBottom: '24px', color: '#666', lineHeight: '1.6' }}>
+            Por enquanto, use a visualização semanal para gerenciar suas turmas.
+          </p>
+          <button
+            type="button"
+            onClick={() => setViewMode('week')}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: '#3B82F6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Voltar para Semana
+          </button>
+        </div>
+      )}
     </div>
   );
 }
