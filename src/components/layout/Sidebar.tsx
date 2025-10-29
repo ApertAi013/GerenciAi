@@ -1,21 +1,33 @@
 import { Link, useLocation } from 'react-router';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faHome,
+  faCalendarDays,
+  faUsers,
+  faUserGroup,
+  faClipboardList,
+  faMoneyBillWave,
+  faChartBar,
+  faRobot
+} from '@fortawesome/free-solid-svg-icons';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import '../../styles/Sidebar.css';
 
 interface MenuItem {
   path: string;
   label: string;
-  icon: string;
+  icon: IconDefinition;
 }
 
 const menuItems: MenuItem[] = [
-  { path: '/', label: 'Início', icon: '🏠' },
-  { path: '/agenda', label: 'Agenda', icon: '📅' },
-  { path: '/alunos', label: 'Alunos', icon: '👥' },
-  { path: '/turmas', label: 'Turmas', icon: '🏐' },
-  { path: '/matriculas', label: 'Matrículas', icon: '📝' },
-  { path: '/financeiro', label: 'Financeiro', icon: '💰' },
-  { path: '/relatorios', label: 'Relatórios', icon: '📊' },
-  { path: '/chat', label: 'Chat IA', icon: '🤖' },
+  { path: '/', label: 'Início', icon: faHome },
+  { path: '/agenda', label: 'Agenda', icon: faCalendarDays },
+  { path: '/alunos', label: 'Alunos', icon: faUsers },
+  { path: '/turmas', label: 'Turmas', icon: faUserGroup },
+  { path: '/matriculas', label: 'Matrículas', icon: faClipboardList },
+  { path: '/financeiro', label: 'Financeiro', icon: faMoneyBillWave },
+  { path: '/relatorios', label: 'Relatórios', icon: faChartBar },
+  { path: '/chat', label: 'Chat IA', icon: faRobot },
 ];
 
 export default function Sidebar() {
@@ -37,7 +49,9 @@ export default function Sidebar() {
               to={item.path}
               className={`sidebar-item ${isActive ? 'active' : ''}`}
             >
-              <span className="sidebar-icon">{item.icon}</span>
+              <span className="sidebar-icon">
+                <FontAwesomeIcon icon={item.icon} />
+              </span>
               <span className="sidebar-label">{item.label}</span>
             </Link>
           );

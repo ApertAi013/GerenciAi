@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMoneyBillWave, faDollarSign, faTriangleExclamation, faCreditCard } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../store/authStore';
 import { reportService } from '../services/reportService';
 import '../styles/Reports.css';
@@ -284,7 +286,9 @@ export default function Reports() {
       {/* Cards de Métricas Principais */}
       <div className="metrics-grid">
         <div className="metric-card">
-          <div className="metric-icon">💰</div>
+          <div className="metric-icon">
+            <FontAwesomeIcon icon={faMoneyBillWave} />
+          </div>
           <div className="metric-content">
             <p className="metric-label">Receita Recebida</p>
             <h2 className="metric-value">{formatCurrency(revenueStats.total_received)}</h2>
@@ -293,7 +297,9 @@ export default function Reports() {
         </div>
 
         <div className="metric-card">
-          <div className="metric-icon green">💵</div>
+          <div className="metric-icon green">
+            <FontAwesomeIcon icon={faDollarSign} />
+          </div>
           <div className="metric-content">
             <p className="metric-label">Valor Recebido</p>
             <h2 className="metric-value">{formatCurrency(revenueStats.total_received)}</h2>
@@ -302,7 +308,9 @@ export default function Reports() {
         </div>
 
         <div className="metric-card">
-          <div className="metric-icon orange">⚠️</div>
+          <div className="metric-icon orange">
+            <FontAwesomeIcon icon={faTriangleExclamation} />
+          </div>
           <div className="metric-content">
             <p className="metric-label">Valor em Aberto</p>
             <h2 className="metric-value">{formatCurrency(revenueStats.total_to_receive)}</h2>
@@ -311,7 +319,9 @@ export default function Reports() {
         </div>
 
         <div className="metric-card">
-          <div className="metric-icon blue">💳</div>
+          <div className="metric-icon blue">
+            <FontAwesomeIcon icon={faCreditCard} />
+          </div>
           <div className="metric-content">
             <p className="metric-label">Valor em Andamento</p>
             <h2 className="metric-value">R$ 0,00</h2>

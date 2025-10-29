@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../services/classService';
 import type { Class, Modality } from '../types/classTypes';
 import '../styles/Classes.css';
@@ -141,8 +143,12 @@ export default function Classes() {
             </div>
 
             <div className="class-card-actions">
-              <button className="btn-icon">📝</button>
-              <button className="btn-icon">🗑️</button>
+              <button className="btn-icon">
+                <FontAwesomeIcon icon={faPenToSquare} />
+              </button>
+              <button className="btn-icon">
+                <FontAwesomeIcon icon={faTrash} />
+              </button>
             </div>
           </div>
         ))}

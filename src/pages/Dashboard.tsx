@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUsers, faChartLine, faUserGroup, faMoneyBillWave, faBellSlash } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../store/authStore';
 import { studentService } from '../services/studentService';
 import '../styles/Dashboard.css';
@@ -80,25 +82,33 @@ export default function Dashboard() {
         <div className="stat-card">
           <p className="stat-label">ALUNOS ATIVOS</p>
           <h2 className="stat-value">{stats.activeStudents}</h2>
-          <div className="stat-icon">👥</div>
+          <div className="stat-icon">
+            <FontAwesomeIcon icon={faUsers} />
+          </div>
         </div>
 
         <div className="stat-card">
           <p className="stat-label">NOVOS ALUNOS (30 DIAS)</p>
           <h2 className="stat-value">{stats.newStudents}</h2>
-          <div className="stat-icon">📈</div>
+          <div className="stat-icon">
+            <FontAwesomeIcon icon={faChartLine} />
+          </div>
         </div>
 
         <div className="stat-card">
           <p className="stat-label">TURMAS ATIVAS</p>
           <h2 className="stat-value">-</h2>
-          <div className="stat-icon">🏐</div>
+          <div className="stat-icon">
+            <FontAwesomeIcon icon={faUserGroup} />
+          </div>
         </div>
 
         <div className="stat-card">
           <p className="stat-label">RECEITA DO MÊS</p>
           <h2 className="stat-value">-</h2>
-          <div className="stat-icon">💰</div>
+          <div className="stat-icon">
+            <FontAwesomeIcon icon={faMoneyBillWave} />
+          </div>
         </div>
       </div>
 
@@ -106,7 +116,9 @@ export default function Dashboard() {
       <div className="notifications-card">
         <h3>NOTIFICAÇÕES</h3>
         <div className="empty-state">
-          <div className="empty-icon">🔕</div>
+          <div className="empty-icon">
+            <FontAwesomeIcon icon={faBellSlash} />
+          </div>
           <p className="empty-title">Não há notificações agora</p>
           <p className="empty-subtitle">Fique atento! Suas notificações aparecerão aqui.</p>
         </div>

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBell, faChevronDown, faUser, faGear, faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import '../../styles/Header.css';
@@ -24,7 +26,7 @@ export default function Header() {
       <div className="header-actions">
         {/* Notificações */}
         <button className="header-notification">
-          <span>🔔</span>
+          <FontAwesomeIcon icon={faBell} />
           <span className="notification-badge">20</span>
         </button>
 
@@ -41,15 +43,21 @@ export default function Header() {
               <p className="user-name">{user?.full_name || 'Usuário'}</p>
               <p className="user-role">{user?.role || 'admin'}</p>
             </div>
-            <span className="user-arrow">▼</span>
+            <span className="user-arrow">
+              <FontAwesomeIcon icon={faChevronDown} />
+            </span>
           </button>
 
           {showMenu && (
             <div className="user-menu">
-              <button className="menu-item">Meu Perfil</button>
-              <button className="menu-item">Configurações</button>
+              <button className="menu-item">
+                <FontAwesomeIcon icon={faUser} /> Meu Perfil
+              </button>
+              <button className="menu-item">
+                <FontAwesomeIcon icon={faGear} /> Configurações
+              </button>
               <button className="menu-item logout" onClick={handleLogout}>
-                Sair
+                <FontAwesomeIcon icon={faRightFromBracket} /> Sair
               </button>
             </div>
           )}
