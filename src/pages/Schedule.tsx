@@ -136,21 +136,20 @@ function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
         backgroundColor: classSchedule.color,
       };
 
-  // Combinar refs
-  const setRefs = (element: HTMLDivElement | null) => {
-    setDragRef(element);
-    setDropRef(element);
-  };
-
   return (
     <div
-      ref={setRefs}
+      ref={setDropRef}
       style={style}
       className={`class-card ${isOver ? 'drag-over-class' : ''}`}
-      {...listeners}
-      {...attributes}
     >
-      <div className="class-card-header">
+      {/* Drag handle - apenas o header é arrastável */}
+      <div
+        ref={setDragRef}
+        className="class-card-header"
+        style={{ cursor: 'grab' }}
+        {...listeners}
+        {...attributes}
+      >
         <span className="class-time">
           {classSchedule.startTime} - {classSchedule.endTime}
         </span>
@@ -364,8 +363,7 @@ export default function Schedule() {
 
         console.log('Turma atualizada com sucesso!');
 
-        // Re-buscar dados atualizados
-        await fetchClassesAndStudents();
+        // Não precisa refetch - já atualizamos o estado otimisticamente
       } catch (error) {
         console.error('Erro ao atualizar turma:', error);
         alert('Erro ao mover turma. Revertendo alteração.');
@@ -488,8 +486,7 @@ export default function Schedule() {
 
         console.log('Aluno transferido com sucesso!');
 
-        // Re-buscar dados atualizados
-        await fetchClassesAndStudents();
+        // Não precisa refetch - já atualizamos o estado otimisticamente
       } catch (error: any) {
         console.error('Erro ao transferir aluno:', error);
         const errorMessage = error?.response?.data?.message || error?.message || 'Erro desconhecido';

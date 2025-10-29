@@ -374,13 +374,12 @@
 }
 
 .class-card {
-  cursor: grab;
   position: relative;
   z-index: 1;
 }
 
-.class-card:active {
-  cursor: grabbing;
+.class-card-header:active {
+  cursor: grabbing !important;
 }
 
 .class-card.drag-over-class {
