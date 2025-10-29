@@ -10,6 +10,7 @@ import Enrollments from './pages/Enrollments'
 import Financial from './pages/Financial'
 import DataMigration from './pages/DataMigration'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
 
 export default function App() {
@@ -30,7 +31,14 @@ export default function App() {
             <Route path="/financeiro" element={<Financial />} />
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/migracao" element={<DataMigration />} />
+            <Route
+              path="/migracao"
+              element={
+                <FeatureProtectedRoute featureCode="data_migration">
+                  <DataMigration />
+                </FeatureProtectedRoute>
+              }
+            />
           </Route>
         </Route>
       </Routes>

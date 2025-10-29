@@ -12,12 +12,14 @@ import {
   faDatabase
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { useFeatureAccess } from '../../hooks/useFeatureAccess';
 import '../../styles/Sidebar.css';
 
 interface MenuItem {
   path: string;
   label: string;
   icon: IconDefinition;
+  featureCode?: string; // Feature flag opcional
 }
 
 const menuItems: MenuItem[] = [
@@ -29,11 +31,27 @@ const menuItems: MenuItem[] = [
   { path: '/financeiro', label: 'Financeiro', icon: faMoneyBillWave },
   { path: '/relatorios', label: 'Relatórios', icon: faChartBar },
   { path: '/chat', label: 'Chat IA', icon: faRobot },
-  { path: '/migracao', label: 'Migração', icon: faDatabase },
+  { path: '/migracao', label: 'Migração', icon: faDatabase, featureCode: 'data_migration' },
 ];
 
 export default function Sidebar() {
   const location = useLocation();
+  const { hasAccess: hasMigrationAccess, isLoading: isMigrationLoading } = useFeatureAccess('data_migration');
+
+  // Filtra os itens do menu baseado em feature flags
+  const visibleMenuItems = menuItems.filter((item) => {
+    // Se não tem feature flag, sempre exibe
+    if (!item.featureCode) {
+      return true;
+    }
+
+    // Para migração, verifica o acesso
+    if (item.featureCode === 'data_migration') {
+      return !isMigrationLoading && hasMigrationAccess;
+    }
+
+    return true;
+  });
 
   return (
     <div className="sidebar">
@@ -42,7 +60,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const isActive = location.pathname === item.path;
 
           return (
