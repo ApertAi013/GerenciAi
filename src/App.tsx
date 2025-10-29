@@ -6,6 +6,8 @@ import Classes from './pages/Classes'
 import Schedule from './pages/Schedule'
 import Reports from './pages/Reports'
 import Chat from './pages/Chat'
+import Enrollments from './pages/Enrollments'
+import Financial from './pages/Financial'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import Layout from './components/layout/Layout'
 
@@ -23,8 +25,8 @@ export default function App() {
             <Route path="/agenda" element={<Schedule />} />
             <Route path="/alunos" element={<Students />} />
             <Route path="/turmas" element={<Classes />} />
-            <Route path="/matriculas" element={<div>Em breve: Matrículas</div>} />
-            <Route path="/financeiro" element={<div>Em breve: Financeiro</div>} />
+            <Route path="/matriculas" element={<Enrollments />} />
+            <Route path="/financeiro" element={<Financial />} />
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/chat" element={<Chat />} />
           </Route>
