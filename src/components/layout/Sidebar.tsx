@@ -15,6 +15,7 @@ const menuItems: MenuItem[] = [
   { path: '/matriculas', label: 'Matrículas', icon: '📝' },
   { path: '/financeiro', label: 'Financeiro', icon: '💰' },
   { path: '/relatorios', label: 'Relatórios', icon: '📊' },
+  { path: '/chat', label: 'Chat IA', icon: '🤖' },
 ];
 
 export default function Sidebar() {
