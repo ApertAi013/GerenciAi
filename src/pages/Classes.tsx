@@ -72,6 +72,33 @@ export default function Classes() {
     return level ? levels[level] || level : '-';
   };
 
+  const handleEditClass = (classData: Class) => {
+    // TODO: Implementar modal de edição de turma
+    alert(`Edição de turma em desenvolvimento.\n\nTurma: ${classData.name || classData.modality_name}\nID: ${classData.id}\n\nEm breve você poderá editar horários, capacidade e outras informações da turma.`);
+  };
+
+  const handleDeleteClass = async (classId: number) => {
+    const classToDelete = classes.find(c => c.id === classId);
+    if (!classToDelete) return;
+
+    const confirmMessage = `Tem certeza que deseja excluir a turma "${classToDelete.name || classToDelete.modality_name}"?\n\nEsta ação não pode ser desfeita.`;
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const response = await classService.deleteClass(classId);
+
+      if (response.success) {
+        alert('Turma excluída com sucesso!');
+        // Atualizar lista removendo a turma deletada
+        setClasses(classes.filter(c => c.id !== classId));
+      }
+    } catch (error: any) {
+      console.error('Erro ao excluir turma:', error);
+      alert(error.response?.data?.message || 'Erro ao excluir turma. Tente novamente.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -143,10 +170,20 @@ export default function Classes() {
             </div>
 
             <div className="class-card-actions">
-              <button type="button" className="btn-icon">
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => handleEditClass(cls)}
+                title="Editar turma"
+              >
                 <FontAwesomeIcon icon={faPenToSquare} />
               </button>
-              <button type="button" className="btn-icon">
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => handleDeleteClass(cls.id)}
+                title="Excluir turma"
+              >
                 <FontAwesomeIcon icon={faTrash} />
               </button>
             </div>
