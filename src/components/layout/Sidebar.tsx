@@ -8,7 +8,8 @@ import {
   faClipboardList,
   faMoneyBillWave,
   faChartBar,
-  faRobot
+  faRobot,
+  faDatabase
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import '../../styles/Sidebar.css';
@@ -28,6 +29,7 @@ const menuItems: MenuItem[] = [
   { path: '/financeiro', label: 'Financeiro', icon: faMoneyBillWave },
   { path: '/relatorios', label: 'Relatórios', icon: faChartBar },
   { path: '/chat', label: 'Chat IA', icon: faRobot },
+  { path: '/migracao', label: 'Migração', icon: faDatabase },
 ];
 
 export default function Sidebar() {
