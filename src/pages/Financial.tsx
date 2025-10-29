@@ -27,8 +27,15 @@ export default function Financial() {
       const params = filter !== 'all' ? { status: filter } : {};
       const response = await financialService.getInvoices(params);
 
+      console.log('Load invoices response:', response);
+      console.log('Filter:', filter);
+
       if (response.status === 'success' && response.data?.invoices) {
+        console.log('Invoices loaded:', response.data.invoices.length);
         setInvoices(response.data.invoices);
+      } else {
+        console.log('No invoices in response or unexpected format');
+        setInvoices([]);
       }
     } catch (error) {
       console.error('Erro ao carregar faturas:', error);
@@ -49,9 +56,15 @@ export default function Financial() {
         reference_month: currentMonth,
       });
 
-      if (response.status === 'success') {
-        alert('Faturas geradas com sucesso!');
-        loadInvoices();
+      console.log('Generate invoices response:', response);
+
+      // A resposta pode vir como { status: 'success' } ou { message: 'success' }
+      if (response.status === 'success' || response.message) {
+        alert(response.message || 'Faturas geradas com sucesso!');
+        // Aguardar um momento antes de recarregar para garantir que o backend processou
+        setTimeout(() => {
+          loadInvoices();
+        }, 500);
       }
     } catch (error: any) {
       console.error('Erro ao gerar faturas:', error);
