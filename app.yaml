@@ -1,0 +1,28 @@
+runtime: python312
+
+handlers:
+# Serve all static files with efficient caching
+- url: /assets
+  static_dir: dist/assets
+  secure: always
+  redirect_http_response_code: 301
+  http_headers:
+    Cache-Control: 'public, max-age=31536000, immutable'
+
+# Serve other static files (images, favicon, etc)
+- url: /(.*\.(json|ico|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot))
+  static_files: dist/\1
+  upload: dist/.*\.(json|ico|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot)
+  secure: always
+  redirect_http_response_code: 301
+  http_headers:
+    Cache-Control: 'public, max-age=86400'
+
+# Serve index.html for all routes (SPA support)
+- url: /.*
+  static_files: dist/index.html
+  upload: dist/index.html
+  secure: always
+  redirect_http_response_code: 301
+  http_headers:
+    Cache-Control: 'public, max-age=0, must-revalidate'
