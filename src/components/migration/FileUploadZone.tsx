@@ -145,9 +145,9 @@ export default function FileUploadZone({
             ) : (
               <div className="animate-fade-in">
                 <div className="relative mb-6">
-                  <Upload className="w-20 h-20 text-blue-500 mx-auto" />
+                  <Upload className="w-16 h-16 text-blue-500 mx-auto" />
                   {isDragging && (
-                    <div className="absolute inset-0 w-20 h-20 bg-blue-400 rounded-full blur-2xl opacity-40 animate-pulse"></div>
+                    <div className="absolute inset-0 w-16 h-16 bg-blue-400 rounded-full blur-2xl opacity-40 animate-pulse"></div>
                   )}
                 </div>
                 <p className="text-xl font-semibold text-gray-800">
@@ -155,19 +155,9 @@ export default function FileUploadZone({
                 </p>
                 <p className="text-base text-gray-600 mt-2">ou clique para selecionar um arquivo</p>
                 <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
-                      <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"/>
-                    </svg>
-                    Máximo 10MB
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/>
-                    </svg>
-                    Formato CSV
-                  </span>
+                  <span>Máximo 10MB</span>
+                  <span>•</span>
+                  <span>Formato CSV</span>
                 </div>
               </div>
             )}
