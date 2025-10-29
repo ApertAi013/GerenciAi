@@ -18,7 +18,7 @@ export default function Header() {
       <div className="header-search">
         <input
           type="text"
-          placeholder="Pesquisar clientes e leads"
+          placeholder="Pesquisar alunos, turmas e matrículas"
           className="search-input"
         />
       </div>

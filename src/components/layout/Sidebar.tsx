@@ -36,7 +36,7 @@ export default function Sidebar() {
   return (
     <div className="sidebar">
       <div className="sidebar-logo">
-        <h1>GerenciAi</h1>
+        <img src="/arenai-logo.svg" alt="ArenaAi" className="sidebar-logo-img" />
       </div>
 
       <nav className="sidebar-nav">
