@@ -25,7 +25,7 @@ export default function Header() {
 
       <div className="header-actions">
         {/* Notificações */}
-        <button className="header-notification">
+        <button type="button" className="header-notification">
           <FontAwesomeIcon icon={faBell} />
           <span className="notification-badge">20</span>
         </button>
@@ -50,13 +50,13 @@ export default function Header() {
 
           {showMenu && (
             <div className="user-menu">
-              <button className="menu-item">
+              <button type="button" className="menu-item">
                 <FontAwesomeIcon icon={faUser} /> Meu Perfil
               </button>
-              <button className="menu-item">
+              <button type="button" className="menu-item">
                 <FontAwesomeIcon icon={faGear} /> Configurações
               </button>
-              <button className="menu-item logout" onClick={handleLogout}>
+              <button type="button" className="menu-item logout" onClick={handleLogout}>
                 <FontAwesomeIcon icon={faRightFromBracket} /> Sair
               </button>
             </div>

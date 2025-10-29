@@ -51,7 +51,7 @@ export default function UsageCounter({ usageInfo, isUnlimited, onUpgrade }: Usag
         )}
       </div>
 
-      <button onClick={onUpgrade} className="btn-upgrade">
+      <button type="button" onClick={onUpgrade} className="btn-upgrade">
         <span className="upgrade-icon">💎</span>
         <span>Contratar Plano PRO</span>
       </button>

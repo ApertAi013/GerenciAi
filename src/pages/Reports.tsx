@@ -156,6 +156,7 @@ export default function Reports() {
         <h1>Relatórios Financeiros</h1>
         <div className="period-selector">
           <button
+            type="button"
             className="btn-nav-period"
             onClick={() => handleQuickMonthChange(-1)}
             title="Mês anterior"
@@ -164,6 +165,7 @@ export default function Reports() {
           </button>
           <div className="period-display">{getDisplayPeriod()}</div>
           <button
+            type="button"
             className="btn-nav-period"
             onClick={() => handleQuickMonthChange(1)}
             title="Próximo mês"
@@ -171,6 +173,7 @@ export default function Reports() {
             ►
           </button>
           <button
+            type="button"
             className="btn-filter"
             onClick={() => setShowFilterModal(true)}
           >
@@ -185,7 +188,7 @@ export default function Reports() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Filtrar Relatórios</h2>
-              <button className="btn-close" onClick={() => setShowFilterModal(false)}>×</button>
+              <button type="button" className="btn-close" onClick={() => setShowFilterModal(false)}>×</button>
             </div>
             <div className="modal-body">
               {/* Tipo de Filtro */}
@@ -272,10 +275,10 @@ export default function Reports() {
               )}
             </div>
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setShowFilterModal(false)}>
+              <button type="button" className="btn-secondary" onClick={() => setShowFilterModal(false)}>
                 Cancelar
               </button>
-              <button className="btn-primary" onClick={handleApplyCustomFilter}>
+              <button type="button" className="btn-primary" onClick={handleApplyCustomFilter}>
                 Aplicar Filtro
               </button>
             </div>
@@ -336,7 +339,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Vendas</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="bar-chart">
             <div className="chart-y-axis">
@@ -380,7 +383,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Receita</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="bar-chart">
             <div className="chart-y-axis">
@@ -420,7 +423,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Receita prevista</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="bar-chart">
             <div className="chart-y-axis">
@@ -524,7 +527,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Vendas por origem</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="donut-chart-container">
             <svg viewBox="0 0 200 200" className="donut-svg">
@@ -554,7 +557,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Recuperação com motor de cobrança</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="bar-chart">
             <div className="chart-y-axis">
@@ -590,7 +593,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Contratos vendidos</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="bar-chart">
             <div className="chart-y-axis">
@@ -660,7 +663,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Histórico de clientes ativos</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="bar-chart">
             <div className="chart-y-axis">
@@ -692,7 +695,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Churn (Evasão)</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="bar-chart">
             <div className="chart-y-axis">
@@ -731,7 +734,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Contratos mais vendidos</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="donut-chart-container">
             <svg viewBox="0 0 200 200" className="donut-svg">
@@ -768,7 +771,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Contratos encerrados por motivo</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="donut-chart-container">
             <svg viewBox="0 0 200 200" className="donut-svg">
@@ -806,7 +809,7 @@ export default function Reports() {
         <div className="chart-card">
           <div className="chart-header">
             <h3>Estatísticas de contratos</h3>
-            <button className="btn-open-report">Abrir relatório</button>
+            <button type="button" className="btn-open-report">Abrir relatório</button>
           </div>
           <div className="stacked-bar-chart">
             <div className="chart-y-axis">

@@ -555,6 +555,7 @@ export default function Schedule() {
         }}>
           <div style={{ fontSize: '18px', color: '#ef4444' }}>{error}</div>
           <button
+            type="button"
             onClick={() => window.location.reload()}
             style={{
               padding: '10px 20px',
@@ -613,12 +614,14 @@ export default function Schedule() {
         <div className="schedule-controls">
           <div className="view-toggle">
             <button
+              type="button"
               className={viewMode === 'week' ? 'active' : ''}
               onClick={() => setViewMode('week')}
             >
               Semana
             </button>
             <button
+              type="button"
               className={viewMode === 'day' ? 'active' : ''}
               onClick={() => setViewMode('day')}
             >
@@ -627,13 +630,13 @@ export default function Schedule() {
           </div>
 
           <div className="date-navigation">
-            <button onClick={handlePreviousWeek} className="nav-button">
+            <button type="button" onClick={handlePreviousWeek} className="nav-button">
               ←
             </button>
-            <button onClick={handleToday} className="today-button">
+            <button type="button" onClick={handleToday} className="today-button">
               Hoje
             </button>
-            <button onClick={handleNextWeek} className="nav-button">
+            <button type="button" onClick={handleNextWeek} className="nav-button">
               →
             </button>
           </div>
@@ -643,12 +646,12 @@ export default function Schedule() {
           </div>
 
           <div className="action-buttons">
-            <button className="btn-primary">
+            <button type="button" className="btn-primary">
               📅 BUSCAR HORÁRIOS
             </button>
-            <button className="btn-icon">+</button>
-            <button className="btn-icon">🗑️</button>
-            <button className="btn-icon">🔍</button>
+            <button type="button" className="btn-icon">+</button>
+            <button type="button" className="btn-icon">🗑️</button>
+            <button type="button" className="btn-icon">🔍</button>
           </div>
         </div>
       </div>

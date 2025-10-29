@@ -59,11 +59,11 @@ export default function LimitReachedModal({
         </div>
 
         <div className="modal-actions">
-          <button onClick={onUpgrade} className="btn-modal-upgrade">
+          <button type="button" onClick={onUpgrade} className="btn-modal-upgrade">
             <span>💎</span>
             <span>Contratar Plano PRO</span>
           </button>
-          <button onClick={onClose} className="btn-modal-close">
+          <button type="button" onClick={onClose} className="btn-modal-close">
             Fechar
           </button>
         </div>

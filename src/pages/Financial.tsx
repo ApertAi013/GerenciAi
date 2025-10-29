@@ -140,7 +140,7 @@ export default function Financial() {
     <div className="financial-container">
       <div className="page-header">
         <h1>Financeiro</h1>
-        <button className="btn-primary" onClick={handleGenerateInvoices}>
+        <button type="button" className="btn-primary" onClick={handleGenerateInvoices}>
           Gerar Faturas do Mês
         </button>
       </div>
@@ -271,7 +271,7 @@ export default function Financial() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Registrar Pagamento</h2>
-              <button className="modal-close" onClick={() => setShowPaymentModal(false)}>×</button>
+              <button type="button" className="modal-close" onClick={() => setShowPaymentModal(false)}>×</button>
             </div>
 
             <div className="invoice-details">

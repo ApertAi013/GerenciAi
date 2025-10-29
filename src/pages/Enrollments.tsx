@@ -138,7 +138,7 @@ export default function Enrollments() {
     <div className="enrollments-container">
       <div className="page-header">
         <h1>Matrículas</h1>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
+        <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
           + Nova Matrícula
         </button>
       </div>
@@ -210,7 +210,7 @@ export default function Enrollments() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Nova Matrícula</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+              <button type="button" className="modal-close" onClick={() => setShowModal(false)}>×</button>
             </div>
 
             <form onSubmit={handleSubmit} className="enrollment-form">

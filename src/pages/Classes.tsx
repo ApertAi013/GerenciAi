@@ -86,10 +86,10 @@ export default function Classes() {
       <div className="classes-header">
         <h1>Turmas</h1>
         <div className="header-actions">
-          <button className="btn-secondary" onClick={() => setShowModalitiesModal(true)}>
+          <button type="button" className="btn-secondary" onClick={() => setShowModalitiesModal(true)}>
             MODALIDADES
           </button>
-          <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+          <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)}>
             + TURMA
           </button>
         </div>
@@ -143,10 +143,10 @@ export default function Classes() {
             </div>
 
             <div className="class-card-actions">
-              <button className="btn-icon">
+              <button type="button" className="btn-icon">
                 <FontAwesomeIcon icon={faPenToSquare} />
               </button>
-              <button className="btn-icon">
+              <button type="button" className="btn-icon">
                 <FontAwesomeIcon icon={faTrash} />
               </button>
             </div>
@@ -156,7 +156,7 @@ export default function Classes() {
         {classes.length === 0 && (
           <div className="empty-state">
             <p>Nenhuma turma cadastrada ainda.</p>
-            <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+            <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)}>
               + CRIAR PRIMEIRA TURMA
             </button>
           </div>
@@ -250,7 +250,7 @@ function CreateClassModal({
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Criar Nova Turma</h2>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -455,7 +455,7 @@ function ModalitiesModal({
       <div className="modal-content modalities-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Gerenciar Modalidades</h2>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
         <div className="modalities-content">

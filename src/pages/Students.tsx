@@ -109,18 +109,18 @@ export default function Students() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <button className="search-icon">🔍</button>
+            <button type="button" className="search-icon">🔍</button>
           </div>
 
-          <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+          <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)}>
             + ALUNO
           </button>
 
-          <button className="btn-secondary">
+          <button type="button" className="btn-secondary">
             📊 GRADE
           </button>
 
-          <button className="btn-secondary">
+          <button type="button" className="btn-secondary">
             🔽 FILTROS
           </button>
         </div>
@@ -357,7 +357,7 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Criar Novo Aluno</h2>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -458,7 +458,7 @@ function ViewStudentModal({ student, onClose }: { student: Student; onClose: () 
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Perfil do Aluno</h2>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
         <div className="student-profile">
@@ -553,7 +553,7 @@ function EditStudentModal({
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Editar Aluno</h2>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="modal-close" onClick={onClose}>✕</button>
         </div>
 
         {error && <div className="error-message">{error}</div>}

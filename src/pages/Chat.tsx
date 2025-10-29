@@ -288,7 +288,7 @@ export default function Chat() {
       {/* Sidebar - Lista de conversas */}
       <div className="chat-sidebar">
         <div className="sidebar-header">
-          <button onClick={handleNewConversation} className="btn-new-conversation">
+          <button type="button" onClick={handleNewConversation} className="btn-new-conversation">
             ✨ Nova Conversa
           </button>
         </div>
@@ -481,7 +481,7 @@ export default function Chat() {
                   <PremiumBadge />
                 </div>
               )}
-              <button onClick={handleNewConversation} className="btn-primary">
+              <button type="button" onClick={handleNewConversation} className="btn-primary">
                 ✨ Criar Primeira Conversa
               </button>
             </div>
