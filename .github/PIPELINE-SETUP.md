@@ -18,7 +18,11 @@ gcloud iam service-accounts create github-actions \
     --display-name="GitHub Actions" \
     --project=gerenciai-476500
 
-# 2. Dar permissões necessárias
+# 2. Habilitar APIs necessárias
+gcloud services enable appengine.googleapis.com --project=gerenciai-476500
+gcloud services enable cloudbuild.googleapis.com --project=gerenciai-476500
+
+# 3. Dar permissões necessárias
 gcloud projects add-iam-policy-binding gerenciai-476500 \
     --member="serviceAccount:github-actions@gerenciai-476500.iam.gserviceaccount.com" \
     --role="roles/appengine.deployer"
@@ -35,7 +39,11 @@ gcloud projects add-iam-policy-binding gerenciai-476500 \
     --member="serviceAccount:github-actions@gerenciai-476500.iam.gserviceaccount.com" \
     --role="roles/cloudbuild.builds.editor"
 
-# 3. Criar e baixar a chave
+gcloud projects add-iam-policy-binding gerenciai-476500 \
+    --member="serviceAccount:github-actions@gerenciai-476500.iam.gserviceaccount.com" \
+    --role="roles/iam.serviceAccountUser"
+
+# 4. Criar e baixar a chave
 gcloud iam service-accounts keys create ~/github-actions-key.json \
     --iam-account=github-actions@gerenciai-476500.iam.gserviceaccount.com \
     --project=gerenciai-476500
