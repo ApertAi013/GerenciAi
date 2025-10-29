@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "gerenciai-476500",
     "public": "dist",
     "ignore": [
       "firebase.json",
