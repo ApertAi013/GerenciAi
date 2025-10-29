@@ -24,19 +24,30 @@ export default function Financial() {
   const loadInvoices = async () => {
     try {
       setLoading(true);
-      const params = filter !== 'all' ? { status: filter } : {};
+      // Don't pass status parameter at all when filter is "all"
+      const params = filter !== 'all' ? { status: filter } : undefined;
+
+      console.log('Loading invoices with params:', params);
       const response = await financialService.getInvoices(params);
 
       console.log('Load invoices response:', response);
       console.log('Filter:', filter);
 
-      if (response.status === 'success' && response.data?.invoices) {
-        console.log('Invoices loaded:', response.data.invoices.length);
-        setInvoices(response.data.invoices);
-      } else {
-        console.log('No invoices in response or unexpected format');
-        setInvoices([]);
+      // Backend returns either { status: 'success', data: { invoices: [] } }
+      // or { success: true, data: [] } depending on the endpoint
+      const invoiceList = response.data?.invoices || response.data || [];
+
+      console.log('Invoices loaded:', invoiceList.length);
+      if (invoiceList.length > 0) {
+        console.log('Invoice details:', invoiceList.map((inv: Invoice) => ({
+          id: inv.id,
+          status: inv.status,
+          student_id: inv.student_id,
+          amount: inv.final_amount_cents
+        })));
       }
+
+      setInvoices(invoiceList);
     } catch (error) {
       console.error('Erro ao carregar faturas:', error);
       alert('Erro ao carregar faturas');

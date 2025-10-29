@@ -73,7 +73,8 @@
       "Bash(node -e:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwiaWF0IjoxNzYxNzE4MzYxLCJleHAiOjE3NjIzMjMxNjF9.NwgXpETydmFSR0BZoGy_iv8ruVAFWF9K0Jwgth9ZwMk\")",
       "Bash(__NEW_LINE__ curl -s -X GET \"https://gerenciai-backend-798546007335.us-east1.run.app/api/premium-features/my-access/ai_assistant\" )",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwiaWF0IjoxNzYxNzE4MzYxLCJleHAiOjE3NjIzMjMxNjF9.NwgXpETydmFSR0BZoGy_iv8ruVAFWF9K0Jwgth9ZwMk\" curl -s -X GET \"https://gerenciai-backend-798546007335.us-east1.run.app/api/invoices\" -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\")"
     ],
     "deny": [],
     "ask": []
