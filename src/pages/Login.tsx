@@ -56,7 +56,7 @@ export default function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1 className="logo">GerenciAi</h1>
+          <img src="/arenai-logo.svg" alt="ArenaAi" className="login-logo" />
           <h2>Bem-vindo de volta</h2>
           <p>Faça login para acessar o sistema</p>
         </div>
@@ -98,10 +98,6 @@ export default function Login() {
             {isLoading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-
-        <div className="login-footer">
-          <p><strong>Teste:</strong> admin@gerenciai.com / admin123</p>
-        </div>
       </div>
     </div>
   );
