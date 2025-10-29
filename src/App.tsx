@@ -3,6 +3,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Students from './pages/Students'
 import Classes from './pages/Classes'
+import Schedule from './pages/Schedule'
 import Reports from './pages/Reports'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -18,6 +19,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/agenda" element={<Schedule />} />
             <Route path="/alunos" element={<Students />} />
             <Route path="/turmas" element={<Classes />} />
             <Route path="/matriculas" element={<div>Em breve: Matrículas</div>} />
