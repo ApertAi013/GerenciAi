@@ -62,11 +62,11 @@ export default function Enrollments() {
       if (enrollmentsRes.success && enrollmentsRes.data) {
         setEnrollments(enrollmentsRes.data);
       }
-      if (studentsRes.status === 'success' && studentsRes.data?.students) {
-        setStudents(studentsRes.data.students);
+      if (studentsRes.success && studentsRes.data) {
+        setStudents(studentsRes.data);
       }
-      if (classesRes.status === 'success' && classesRes.data?.classes) {
-        setClasses(classesRes.data.classes);
+      if (classesRes.success && classesRes.data) {
+        setClasses(classesRes.data);
       }
       if (plansRes.success && plansRes.plans) {
         setPlans(plansRes.plans);
