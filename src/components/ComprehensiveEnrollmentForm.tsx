@@ -129,8 +129,8 @@ export default function ComprehensiveEnrollmentForm({
       };
 
       const response = await studentService.createStudent(cleanedData);
-      if (response.status === 'success' && response.data) {
-        setCreatedStudent(response.data);
+      if (response.success && response.student) {
+        setCreatedStudent(response.student);
         setCurrentStep('plan');
       }
     } catch (err: any) {
@@ -217,7 +217,7 @@ export default function ComprehensiveEnrollmentForm({
           });
 
           // Find the first invoice (should be the one just created)
-          const firstInvoice = invoicesResponse.data?.[0];
+          const firstInvoice = invoicesResponse.data?.invoices?.[0];
 
           if (firstInvoice) {
             // Calculate payment value (with discount if applicable)
@@ -233,7 +233,7 @@ export default function ComprehensiveEnrollmentForm({
             await financialService.registerPayment({
               invoice_id: firstInvoice.id,
               amount_cents: Math.max(0, Math.round(paymentValue)),
-              method: paymentMethod,
+              method: paymentMethod as 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'outro',
               paid_at: paymentDate,
             });
           }

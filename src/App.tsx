@@ -10,6 +10,8 @@ import Chat from './pages/Chat'
 import Enrollments from './pages/Enrollments'
 import Financial from './pages/Financial'
 import DataMigration from './pages/DataMigration'
+import Levels from './pages/Levels'
+import Plans from './pages/Plans'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -32,6 +34,8 @@ export default function App() {
             <Route path="/matriculas" element={<Enrollments />} />
             <Route path="/financeiro" element={<Financial />} />
             <Route path="/relatorios" element={<Reports />} />
+            <Route path="/niveis" element={<Levels />} />
+            <Route path="/planos" element={<Plans />} />
             <Route path="/chat" element={<Chat />} />
             <Route
               path="/migracao"
