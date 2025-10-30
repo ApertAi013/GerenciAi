@@ -42,15 +42,15 @@ export default function StudentDetails() {
       setIsLoading(true);
 
       const [studentRes, enrollmentsRes, invoicesRes, levelsRes] = await Promise.all([
-        studentService.getStudent(parseInt(id!)),
-        enrollmentService.getEnrollmentsByStudent(parseInt(id!)),
+        studentService.getStudentById(parseInt(id!)),
+        enrollmentService.getEnrollments({ student_id: parseInt(id!) }),
         financialService.getInvoices({ student_id: parseInt(id!) }),
         levelService.getLevels(),
       ]);
 
-      if (studentRes.success) {
-        setStudent(studentRes.data);
-        setSelectedLevel(studentRes.data.level_id);
+      if (studentRes.success && studentRes.student) {
+        setStudent(studentRes.student);
+        setSelectedLevel(studentRes.student.level_id);
       }
 
       if (enrollmentsRes.success) {
@@ -140,7 +140,7 @@ Qualquer dúvida, estou à disposição!`;
     return (
       <div className="error-container">
         <p>Aluno não encontrado</p>
-        <button type="button" className="btn-primary" onClick={() => navigate('/students')}>
+        <button type="button" className="btn-primary" onClick={() => navigate('/alunos')}>
           Voltar para alunos
         </button>
       </div>
