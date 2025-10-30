@@ -73,7 +73,7 @@ function SortableWidget({ widget }: SortableWidgetProps) {
         >
           <FontAwesomeIcon icon={faGripVertical} />
         </div>
-        <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div style={{ flex: 1, overflow: 'auto' }}>
           <WidgetRenderer type={widget.type} />
         </div>
       </div>
