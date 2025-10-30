@@ -14,8 +14,8 @@ export const studentService = {
   },
 
   // Obter aluno por ID
-  async getStudentById(id: number): Promise<{ success: boolean; student: Student }> {
-    const response = await api.get<{ success: boolean; student: Student }>(`/api/students/${id}`);
+  async getStudentById(id: number): Promise<{ success: boolean; message: string; data: Student }> {
+    const response = await api.get<{ success: boolean; message: string; data: Student }>(`/api/students/${id}`);
     return response.data;
   },
 

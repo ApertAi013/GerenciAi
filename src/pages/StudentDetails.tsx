@@ -48,9 +48,9 @@ export default function StudentDetails() {
         levelService.getLevels(),
       ]);
 
-      if (studentRes.success && studentRes.student) {
-        setStudent(studentRes.student);
-        setSelectedLevel(studentRes.student.level_id);
+      if (studentRes.success && studentRes.data) {
+        setStudent(studentRes.data);
+        setSelectedLevel(studentRes.data.level_id);
       }
 
       if (enrollmentsRes.success) {
