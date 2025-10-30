@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="1200" viewBox="0 0 800 1200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="1200" fill="transparent"/>
+
+  <!-- Person Silhouette -->
+  <g opacity="0.3">
+    <!-- Head -->
+    <circle cx="400" cy="250" r="80" fill="#1a1a1a"/>
+
+    <!-- Body -->
+    <rect x="320" y="340" width="160" height="300" rx="20" fill="#1a1a1a"/>
+
+    <!-- Arms -->
+    <rect x="250" y="360" width="60" height="200" rx="30" fill="#1a1a1a"/>
+    <rect x="490" y="360" width="60" height="200" rx="30" fill="#1a1a1a"/>
+
+    <!-- Tablet in hand -->
+    <rect x="340" y="420" width="120" height="180" rx="10" fill="#2b2b2b" stroke="#f04f28" stroke-width="4"/>
+    <rect x="355" y="435" width="90" height="150" rx="5" fill="#f04f28" opacity="0.3"/>
+
+    <!-- Legs -->
+    <rect x="340" y="640" width="60" height="300" rx="30" fill="#1a1a1a"/>
+    <rect x="400" y="640" width="60" height="300" rx="30" fill="#1a1a1a"/>
+
+    <!-- Shoes -->
+    <ellipse cx="370" cy="960" rx="50" ry="20" fill="#1a1a1a"/>
+    <ellipse cx="430" cy="960" rx="50" ry="20" fill="#1a1a1a"/>
+  </g>
+
+  <!-- Placeholder Text -->
+  <text x="400" y="1100" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1a1a1a" opacity="0.5">
+    ADICIONE SUA IMAGEM AQUI
+  </text>
+  <text x="400" y="1140" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#1a1a1a" opacity="0.4">
+    hero-person.png (1000x1400px)
+  </text>
+</svg>

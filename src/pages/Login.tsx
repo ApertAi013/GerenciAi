@@ -34,7 +34,7 @@ export default function Login() {
 
         setAuth(response.data.user, response.data.token);
         console.log('Navegando para /...');
-        navigate('/');
+        navigate('/dashboard');
       } else {
         console.log('Login falhou - success = false');
         setError('Email ou senha inválidos');
