@@ -1,10 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
-import { DndContext, DragOverlay, closestCenter, useDraggable, useDroppable } from '@dnd-kit/core';
-import { format, addWeeks, subWeeks, startOfWeek, addDays } from 'date-fns';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { format, addWeeks, subWeeks, addDays, addMonths, subMonths, addDays as addDaysUtil, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFilter, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../services/classService';
 import { enrollmentService } from '../services/enrollmentService';
-import type { Class } from '../types/classTypes';
+import type { Class, Modality } from '../types/classTypes';
+import CreateClassModal from '../components/CreateClassModal';
+import MonthView from '../components/schedule/MonthView';
+import DayView from '../components/schedule/DayView';
+import WeekView from '../components/schedule/WeekView';
+import FilterDropdown from '../components/schedule/FilterDropdown';
 import '../styles/Schedule.css';
 
 interface Student {
@@ -23,15 +29,9 @@ interface ClassSchedule {
   capacity: number;
   students: Student[];
   color: string;
+  modality_id: number;
+  level?: string;
 }
-
-const HOURS = [
-  '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-  '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-  '18:00', '19:00', '20:00', '21:00'
-];
-
-const DAYS_OF_WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 // Mapeamento de dias da semana do banco para números
 const WEEKDAY_TO_NUMBER: Record<string, number> = {
@@ -75,139 +75,50 @@ const convertClassToSchedule = (dbClass: Class & { students?: any[] }): ClassSch
     capacity: dbClass.capacity || 0,
     students: dbClass.students || [],
     color: color,
+    modality_id: dbClass.modality_id,
+    level: dbClass.level,
   };
 };
-
-// Componente de aluno arrastável
-function DraggableStudent({ student, classId }: { student: Student; classId: string }) {
-  // ID único combinando student.id + classId para evitar conflitos quando aluno está em múltiplas turmas
-  const uniqueId = `student-${student.id}-class-${classId}`;
-
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: uniqueId,
-    data: { type: 'student', studentId: student.id, classId }
-  });
-
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        opacity: isDragging ? 0.5 : 1,
-      }
-    : undefined;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className="student-chip draggable"
-    >
-      {student.name}
-    </div>
-  );
-}
-
-// Componente de card de turma (draggable e droppable)
-function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
-  // Draggable para mover a turma inteira
-  const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
-    id: `class-${classSchedule.id}`,
-    data: { type: 'class', classId: classSchedule.id }
-  });
-
-  // Droppable para aceitar alunos - IMPORTANTE: envolve todo o card
-  const { setNodeRef: setDropRef, isOver } = useDroppable({
-    id: `class-drop-${classSchedule.id}`,
-    data: { type: 'class-drop', classId: classSchedule.id }
-  });
-
-  const filled = classSchedule.students.length;
-  const capacity = classSchedule.capacity;
-  const isFull = filled >= capacity;
-
-  const cardStyle = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        opacity: isDragging ? 0.5 : 1,
-        backgroundColor: classSchedule.color,
-      }
-    : {
-        backgroundColor: classSchedule.color,
-      };
-
-  return (
-    <div
-      ref={setDropRef}
-      style={cardStyle}
-      className={`class-card ${isOver ? 'drag-over-class' : ''}`}
-    >
-      {/* Overlay invisível para capturar drops em toda a área */}
-      {isOver && <div className="drop-overlay" />}
-
-      {/* Drag handle - apenas o header é arrastável */}
-      <div
-        ref={setDragRef}
-        className="class-card-header"
-        {...listeners}
-        {...attributes}
-      >
-        <span className="class-time">
-          {classSchedule.startTime} - {classSchedule.endTime}
-        </span>
-        <span className={`class-capacity ${isFull ? 'full' : ''}`}>
-          {filled}/{capacity}
-        </span>
-      </div>
-      <div className="class-name">{classSchedule.name}</div>
-
-      {classSchedule.students.length > 0 && (
-        <div className="class-students">
-          {classSchedule.students.map((student) => (
-            <DraggableStudent key={student.id} student={student} classId={classSchedule.id} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Componente de slot de horário que aceita drops
-function DroppableTimeSlot({
-  day,
-  hour,
-  children
-}: {
-  day: number;
-  hour: string;
-  children: React.ReactNode;
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: `slot-${day}-${hour}`,
-    data: { type: 'timeslot', day, hour }
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`time-slot ${isOver ? 'drag-over' : ''}`}
-    >
-      {children}
-    </div>
-  );
-}
 
 export default function Schedule() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [classes, setClasses] = useState<ClassSchedule[]>([]);
+  const [modalities, setModalities] = useState<Modality[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'week' | 'day' | 'month'>('week');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [selectedModalities, setSelectedModalities] = useState<number[]>([]);
+  const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
 
-  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Começa na segunda
+  // Aplicar filtros nas turmas
+  const filteredClasses = useMemo(() => {
+    let filtered = classes;
+
+    // Filtrar por modalidade
+    if (selectedModalities.length > 0) {
+      filtered = filtered.filter(cls =>
+        selectedModalities.includes(cls.modality_id)
+      );
+    }
+
+    // Filtrar por nível
+    if (selectedLevels.length > 0) {
+      filtered = filtered.filter(cls =>
+        cls.level && selectedLevels.includes(cls.level)
+      );
+    }
+
+    return filtered;
+  }, [classes, selectedModalities, selectedLevels]);
+
+  const handleFilterChange = (modalities: number[], levels: string[]) => {
+    setSelectedModalities(modalities);
+    setSelectedLevels(levels);
+  };
 
   // Buscar turmas e alunos da API
   const fetchClassesAndStudents = useCallback(async () => {
@@ -215,7 +126,16 @@ export default function Schedule() {
       setIsLoading(true);
       setError(null);
 
-      // 1. Buscar turmas
+      // 1. Buscar modalidades
+      try {
+        const modalitiesRes = await classService.getModalities();
+        setModalities(modalitiesRes.data || []);
+      } catch (err) {
+        console.error('Erro ao buscar modalidades:', err);
+        setModalities([]);
+      }
+
+      // 2. Buscar turmas
       const classesResponse = await classService.getClasses({ status: 'ativa' });
 
       if (!classesResponse.success || !classesResponse.data) {
@@ -283,8 +203,26 @@ export default function Schedule() {
     fetchClassesAndStudents();
   }, [fetchClassesAndStudents]);
 
-  const handlePreviousWeek = () => setCurrentWeek(subWeeks(currentWeek, 1));
-  const handleNextWeek = () => setCurrentWeek(addWeeks(currentWeek, 1));
+  const handlePrevious = () => {
+    if (viewMode === 'week') {
+      setCurrentWeek(subWeeks(currentWeek, 1));
+    } else if (viewMode === 'month') {
+      setCurrentWeek(subMonths(currentWeek, 1));
+    } else if (viewMode === 'day') {
+      setCurrentWeek(subDays(currentWeek, 1));
+    }
+  };
+
+  const handleNext = () => {
+    if (viewMode === 'week') {
+      setCurrentWeek(addWeeks(currentWeek, 1));
+    } else if (viewMode === 'month') {
+      setCurrentWeek(addMonths(currentWeek, 1));
+    } else if (viewMode === 'day') {
+      setCurrentWeek(addDaysUtil(currentWeek, 1));
+    }
+  };
+
   const handleToday = () => setCurrentWeek(new Date());
 
   const handleDragStart = (event: any) => {
@@ -503,16 +441,6 @@ export default function Schedule() {
     setActiveId(null);
   };
 
-  const getClassesForDayAndTime = (day: number, hour: string) => {
-    return classes.filter(
-      (cls) => cls.day === day && cls.startTime === hour
-    );
-  };
-
-  const activeClass = activeId
-    ? classes.find((c) => `class-${c.id}` === activeId)
-    : null;
-
   // Loading state
   if (isLoading) {
     return (
@@ -577,34 +505,6 @@ export default function Schedule() {
 
   return (
     <div className="schedule-page">
-      {/* Saving indicator */}
-      {isSaving && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          background: '#F97316',
-          color: 'white',
-          padding: '12px 20px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <div style={{
-            width: '16px',
-            height: '16px',
-            border: '3px solid rgba(255,255,255,0.3)',
-            borderTop: '3px solid white',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}></div>
-          Salvando...
-        </div>
-      )}
-
       {/* Header */}
       <div className="schedule-header">
         <div className="schedule-title">
@@ -637,13 +537,13 @@ export default function Schedule() {
           </div>
 
           <div className="date-navigation">
-            <button type="button" onClick={handlePreviousWeek} className="nav-button">
+            <button type="button" onClick={handlePrevious} className="nav-button">
               ←
             </button>
             <button type="button" onClick={handleToday} className="today-button">
               Hoje
             </button>
-            <button type="button" onClick={handleNextWeek} className="nav-button">
+            <button type="button" onClick={handleNext} className="nav-button">
               →
             </button>
           </div>
@@ -656,18 +556,45 @@ export default function Schedule() {
             <button
               type="button"
               className="btn-primary"
-              onClick={() => setShowSearchModal(true)}
-              title="Buscar horários disponíveis"
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              title="Filtrar turmas"
+              style={{
+                position: 'relative',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
             >
-              📅 BUSCAR HORÁRIOS
+              <FontAwesomeIcon icon={faFilter} />
+              FILTRAR TURMAS
+              {(selectedModalities.length > 0 || selectedLevels.length > 0) && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  background: '#EF4444',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                  {selectedModalities.length + selectedLevels.length}
+                </span>
+              )}
             </button>
             <button
               type="button"
               className="btn-icon"
-              onClick={() => alert('Funcionalidade de criar nova turma em desenvolvimento')}
+              onClick={() => setShowCreateModal(true)}
               title="Criar nova turma"
             >
-              +
+              <FontAwesomeIcon icon={faPlus} />
             </button>
             <button
               type="button"
@@ -675,205 +602,49 @@ export default function Schedule() {
               onClick={() => alert('Funcionalidade de limpar agenda em desenvolvimento')}
               title="Limpar seleção"
             >
-              🗑️
-            </button>
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => setShowSearchModal(true)}
-              title="Buscar"
-            >
-              🔍
+              <FontAwesomeIcon icon={faTrash} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Calendar Grid */}
-      <DndContext
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="schedule-grid-container">
-          <div className="schedule-grid">
-            {/* Time column */}
-            <div className="time-column">
-              <div className="time-header"></div>
-              {HOURS.map((hour) => (
-                <div key={hour} className="time-cell">
-                  {hour}
-                </div>
-              ))}
-            </div>
-
-            {/* Days columns */}
-            {[1, 2, 3, 4, 5, 6, 0].map((dayOffset, index) => {
-              const currentDay = addDays(weekStart, index);
-              const isToday = format(currentDay, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-
-              return (
-                <div key={dayOffset} className="day-column">
-                  <div className={`day-header ${isToday ? 'today' : ''}`}>
-                    <div className="day-name">{DAYS_OF_WEEK[index + 1] || 'Dom'}</div>
-                    <div className="day-number">{format(currentDay, 'd')}</div>
-                  </div>
-
-                  {HOURS.map((hour) => {
-                    const classesInSlot = getClassesForDayAndTime(dayOffset, hour);
-
-                    return (
-                      <DroppableTimeSlot key={`${dayOffset}-${hour}`} day={dayOffset} hour={hour}>
-                        {classesInSlot.map((cls) => (
-                          <ClassCard key={cls.id} classSchedule={cls} />
-                        ))}
-                      </DroppableTimeSlot>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <DragOverlay>
-          {activeId && activeId.startsWith('class-') && activeClass ? (
-            <div
-              className="class-card"
-              style={{
-                backgroundColor: activeClass.color,
-                minHeight: '100px',
-                opacity: 0.9,
-                cursor: 'grabbing',
-                width: '200px'
-              }}
-            >
-              <div className="class-card-header">
-                <span className="class-time">
-                  {activeClass.startTime} - {activeClass.endTime}
-                </span>
-                <span className="class-capacity">
-                  {activeClass.students.length}/{activeClass.capacity}
-                </span>
-              </div>
-              <div className="class-name">{activeClass.name}</div>
-            </div>
-          ) : activeId && activeId.startsWith('student-') ? (
-            <div className="student-chip" style={{ opacity: 0.9, cursor: 'grabbing' }}>
-              Movendo aluno...
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-
-      {/* Modal de Busca de Horários */}
-      {showSearchModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-          onClick={() => setShowSearchModal(false)}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '32px',
-              maxWidth: '500px',
-              width: '90%',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 style={{ marginBottom: '16px', fontSize: '24px', fontWeight: 'bold' }}>
-              🔍 Buscar Horários
-            </h2>
-            <p style={{ marginBottom: '24px', color: '#666', lineHeight: '1.6' }}>
-              Funcionalidade de busca de horários disponíveis em desenvolvimento.
-            </p>
-            <p style={{ marginBottom: '24px', color: '#666', lineHeight: '1.6' }}>
-              Em breve você poderá:
-            </p>
-            <ul style={{ marginBottom: '24px', marginLeft: '20px', color: '#666', lineHeight: '1.8' }}>
-              <li>Buscar horários livres por dia da semana</li>
-              <li>Filtrar por modalidade</li>
-              <li>Ver capacidade disponível</li>
-              <li>Encontrar conflitos de horário</li>
-            </ul>
-            <button
-              type="button"
-              onClick={() => setShowSearchModal(false)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#3B82F6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer'
-              }}
-            >
-              Entendi
-            </button>
-          </div>
-        </div>
+      {/* Calendar Views */}
+      {viewMode === 'month' ? (
+        <MonthView currentDate={currentWeek} classes={filteredClasses} />
+      ) : viewMode === 'day' ? (
+        <DayView currentDate={currentWeek} classes={filteredClasses} />
+      ) : (
+        <WeekView
+          currentWeek={currentWeek}
+          classes={filteredClasses}
+          activeId={activeId}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          isSaving={isSaving}
+        />
       )}
 
-      {/* Aviso de visualização mensal */}
-      {viewMode === 'month' && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '32px',
-            maxWidth: '500px',
-            width: '90%',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            zIndex: 999
+      {/* Filter Dropdown */}
+      {showFilterDropdown && (
+        <FilterDropdown
+          modalities={modalities}
+          selectedModalities={selectedModalities}
+          selectedLevels={selectedLevels}
+          onFilterChange={handleFilterChange}
+          onClose={() => setShowFilterDropdown(false)}
+        />
+      )}
+
+      {/* Create Class Modal */}
+      {showCreateModal && (
+        <CreateClassModal
+          modalities={modalities}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false);
+            fetchClassesAndStudents();
           }}
-        >
-          <h2 style={{ marginBottom: '16px', fontSize: '24px', fontWeight: 'bold' }}>
-            📅 Visualização Mensal
-          </h2>
-          <p style={{ marginBottom: '24px', color: '#666', lineHeight: '1.6' }}>
-            A visualização mensal completa está em desenvolvimento.
-          </p>
-          <p style={{ marginBottom: '24px', color: '#666', lineHeight: '1.6' }}>
-            Por enquanto, use a visualização semanal para gerenciar suas turmas.
-          </p>
-          <button
-            type="button"
-            onClick={() => setViewMode('week')}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#3B82F6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer'
-            }}
-          >
-            Voltar para Semana
-          </button>
-        </div>
+        />
       )}
     </div>
   );

@@ -41,24 +41,24 @@ button {
 
 .btn-primary:hover,
 .btn-primary:focus {
-  background: var(--color-toranja);
-  box-shadow: var(--shadow-md);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background: var(--bg-primary);
+  background: white;
   color: var(--text-primary);
   padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--radius-md);
   font-weight: 500;
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
 }
 
 .btn-secondary:hover,
 .btn-secondary:focus {
-  background: var(--bg-dark);
-  color: var(--text-inverse);
-  border-color: var(--bg-dark);
+  background: var(--bg-secondary);
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
 }
 
 /* Custom animations for data migration page */

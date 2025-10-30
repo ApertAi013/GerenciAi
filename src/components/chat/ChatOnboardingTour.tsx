@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import Joyride, { CallBackProps, Step, STATUS } from 'react-joyride';
+import Joyride, { type CallBackProps, type Step, STATUS } from 'react-joyride';
 
 interface ChatOnboardingTourProps {
   run: boolean;

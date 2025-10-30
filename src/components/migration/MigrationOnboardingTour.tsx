@@ -1,4 +1,4 @@
-import Joyride, { Step, CallBackProps } from 'react-joyride';
+import Joyride, { type Step, type CallBackProps } from 'react-joyride';
 
 interface MigrationOnboardingTourProps {
   run: boolean;

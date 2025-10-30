@@ -5,6 +5,7 @@ import '../styles/Students.css';
 
 export default function Students() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ativo' | 'inativo' | 'pendente' | ''>('');
@@ -23,9 +24,14 @@ export default function Students() {
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
+
+      // Sempre buscar todos os alunos para contagem correta
+      const allResponse = await studentService.getStudents({});
+      setAllStudents(allResponse.data);
+
+      // Buscar alunos filtrados se houver filtro
       const params: any = {};
       if (statusFilter) params.status = statusFilter;
-
       const response = await studentService.getStudents(params);
       setStudents(response.data);
     } catch (error) {
@@ -61,7 +67,7 @@ export default function Students() {
 
   const filteredStudents = students.filter(student =>
     student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (student.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.cpf.includes(searchTerm)
   );
 
@@ -115,14 +121,6 @@ export default function Students() {
           <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)}>
             + ALUNO
           </button>
-
-          <button type="button" className="btn-secondary">
-            📊 GRADE
-          </button>
-
-          <button type="button" className="btn-secondary">
-            🔽 FILTROS
-          </button>
         </div>
       </div>
 
@@ -130,27 +128,39 @@ export default function Students() {
       <div className="filter-tabs">
         <button
           className={statusFilter === '' ? 'filter-tab active' : 'filter-tab'}
-          onClick={() => setStatusFilter('')}
+          onClick={() => {
+            setStatusFilter('');
+            setCurrentPage(1);
+          }}
         >
-          Todos ({students.length})
+          Todos ({allStudents.length})
         </button>
         <button
           className={statusFilter === 'ativo' ? 'filter-tab active' : 'filter-tab'}
-          onClick={() => setStatusFilter('ativo')}
+          onClick={() => {
+            setStatusFilter('ativo');
+            setCurrentPage(1);
+          }}
         >
-          Ativos ({students.filter(s => s.status === 'ativo').length})
+          Ativos ({allStudents.filter(s => s.status === 'ativo').length})
         </button>
         <button
           className={statusFilter === 'inativo' ? 'filter-tab active' : 'filter-tab'}
-          onClick={() => setStatusFilter('inativo')}
+          onClick={() => {
+            setStatusFilter('inativo');
+            setCurrentPage(1);
+          }}
         >
-          Inativos ({students.filter(s => s.status === 'inativo').length})
+          Inativos ({allStudents.filter(s => s.status === 'inativo').length})
         </button>
         <button
           className={statusFilter === 'pendente' ? 'filter-tab active' : 'filter-tab'}
-          onClick={() => setStatusFilter('pendente')}
+          onClick={() => {
+            setStatusFilter('pendente');
+            setCurrentPage(1);
+          }}
         >
-          Pendentes ({students.filter(s => s.status === 'pendente').length})
+          Pendentes ({allStudents.filter(s => s.status === 'pendente').length})
         </button>
       </div>
 

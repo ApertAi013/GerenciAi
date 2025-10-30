@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faTrash, faVolleyball, faCalendarDays, faClock, faLocationDot, faUsers, faChartSimple, faPlus, faList } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../services/classService';
 import type { Class, Modality } from '../types/classTypes';
+import CreateClassModal from '../components/CreateClassModal';
 import '../styles/Classes.css';
 
 export default function Classes() {
@@ -11,6 +12,7 @@ export default function Classes() {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showModalitiesModal, setShowModalitiesModal] = useState(false);
+  const [editingClass, setEditingClass] = useState<Class | undefined>(undefined);
 
   useEffect(() => {
     fetchData();
@@ -73,8 +75,8 @@ export default function Classes() {
   };
 
   const handleEditClass = (classData: Class) => {
-    // TODO: Implementar modal de edição de turma
-    alert(`Edição de turma em desenvolvimento.\n\nTurma: ${classData.name || classData.modality_name}\nID: ${classData.id}\n\nEm breve você poderá editar horários, capacidade e outras informações da turma.`);
+    setEditingClass(classData);
+    setShowCreateModal(true);
   };
 
   const handleDeleteClass = async (classId: number) => {
@@ -113,11 +115,13 @@ export default function Classes() {
       <div className="classes-header">
         <h1>Turmas</h1>
         <div className="header-actions">
-          <button type="button" className="btn-secondary" onClick={() => setShowModalitiesModal(true)}>
+          <button type="button" className="btn-secondary" onClick={() => setShowModalitiesModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <FontAwesomeIcon icon={faList} />
             MODALIDADES
           </button>
-          <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)}>
-            + TURMA
+          <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <FontAwesomeIcon icon={faPlus} />
+            TURMA
           </button>
         </div>
       </div>
@@ -125,7 +129,8 @@ export default function Classes() {
       {/* Classes Grid */}
       <div className="classes-grid">
         {classes.map((cls) => (
-          <div key={cls.id} className="class-card">
+          <div key={cls.id} style={{ maxWidth: '400px', width: '100%' }}>
+            <div className="class-card">
             <div className="class-card-header">
               <h3>{cls.name || `${cls.modality_name} - ${getWeekdayLabel(cls.weekday)}`}</h3>
               <span className={`status-badge status-${cls.status}`}>
@@ -135,36 +140,55 @@ export default function Classes() {
 
             <div className="class-card-body">
               <div className="class-info-row">
-                <span className="label">🏐 Modalidade:</span>
+                <span className="label">
+                  <FontAwesomeIcon icon={faVolleyball} style={{ marginRight: '6px', fontSize: '14px' }} />
+                  Modalidade:
+                </span>
                 <span className="value">{cls.modality_name}</span>
               </div>
 
               <div className="class-info-row">
-                <span className="label">📅 Dia:</span>
+                <span className="label">
+                  <FontAwesomeIcon icon={faCalendarDays} style={{ marginRight: '6px', fontSize: '14px' }} />
+                  Dia:
+                </span>
                 <span className="value">{getWeekdayLabel(cls.weekday)}</span>
               </div>
 
               <div className="class-info-row">
-                <span className="label">⏰ Horário:</span>
-                <span className="value">
-                  {cls.start_time} {cls.end_time && `- ${cls.end_time}`}
+                <span className="label">
+                  <FontAwesomeIcon icon={faClock} style={{ marginRight: '6px', fontSize: '14px' }} />
+                  Horário:
+                </span>
+                <span className="value" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                  <span>{cls.start_time.substring(0, 5)}</span>
+                  {cls.end_time && <span>{cls.end_time.substring(0, 5)}</span>}
                 </span>
               </div>
 
               {cls.location && (
                 <div className="class-info-row">
-                  <span className="label">📍 Local:</span>
+                  <span className="label">
+                    <FontAwesomeIcon icon={faLocationDot} style={{ marginRight: '6px', fontSize: '14px' }} />
+                    Local:
+                  </span>
                   <span className="value">{cls.location}</span>
                 </div>
               )}
 
               <div className="class-info-row">
-                <span className="label">👥 Capacidade:</span>
+                <span className="label">
+                  <FontAwesomeIcon icon={faUsers} style={{ marginRight: '6px', fontSize: '14px' }} />
+                  Capacidade:
+                </span>
                 <span className="value">{cls.capacity} alunos</span>
               </div>
 
               <div className="class-info-row">
-                <span className="label">📊 Nível:</span>
+                <span className="label">
+                  <FontAwesomeIcon icon={faChartSimple} style={{ marginRight: '6px', fontSize: '14px' }} />
+                  Nível:
+                </span>
                 <span className="value">{getLevelLabel(cls.level)}</span>
               </div>
             </div>
@@ -188,6 +212,7 @@ export default function Classes() {
               </button>
             </div>
           </div>
+          </div>
         ))}
 
         {classes.length === 0 && (
@@ -200,13 +225,18 @@ export default function Classes() {
         )}
       </div>
 
-      {/* Create Class Modal */}
+      {/* Create/Edit Class Modal */}
       {showCreateModal && (
         <CreateClassModal
           modalities={modalities}
-          onClose={() => setShowCreateModal(false)}
+          editClass={editingClass}
+          onClose={() => {
+            setShowCreateModal(false);
+            setEditingClass(undefined);
+          }}
           onSuccess={() => {
             setShowCreateModal(false);
+            setEditingClass(undefined);
             fetchData();
           }}
         />
@@ -222,198 +252,6 @@ export default function Classes() {
           }}
         />
       )}
-    </div>
-  );
-}
-
-// Create Class Modal Component
-function CreateClassModal({
-  modalities,
-  onClose,
-  onSuccess,
-}: {
-  modalities: Modality[];
-  onClose: () => void;
-  onSuccess: () => void;
-}) {
-  const [formData, setFormData] = useState({
-    modality_id: '',
-    name: '',
-    weekday: '' as '' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom',
-    start_time: '',
-    end_time: '',
-    location: '',
-    capacity: '20',
-    level: '' as '' | 'iniciante' | 'intermediario' | 'avancado' | 'todos',
-  });
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsSubmitting(true);
-
-    try {
-      if (!formData.modality_id || !formData.weekday || !formData.start_time) {
-        setError('Modalidade, dia e horário de início são obrigatórios');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const payload: any = {
-        modality_id: parseInt(formData.modality_id),
-        weekday: formData.weekday,
-        start_time: formData.start_time,
-        capacity: parseInt(formData.capacity),
-      };
-
-      if (formData.name) payload.name = formData.name;
-      if (formData.end_time) payload.end_time = formData.end_time;
-      if (formData.location) payload.location = formData.location;
-      if (formData.level) payload.level = formData.level;
-
-      await classService.createClass(payload);
-      onSuccess();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao criar turma');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Criar Nova Turma</h2>
-          <button type="button" className="modal-close" onClick={onClose}>✕</button>
-        </div>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="class-form">
-          <div className="form-group">
-            <label htmlFor="modality_id">Modalidade *</label>
-            <select
-              id="modality_id"
-              value={formData.modality_id}
-              onChange={(e) => setFormData({ ...formData, modality_id: e.target.value })}
-              required
-            >
-              <option value="">Selecione uma modalidade...</option>
-              {modalities.map((mod) => (
-                <option key={mod.id} value={mod.id}>
-                  {mod.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="name">Nome da Turma (opcional)</label>
-            <input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ex: Futevôlei Iniciante - Segunda"
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="weekday">Dia da Semana *</label>
-              <select
-                id="weekday"
-                value={formData.weekday}
-                onChange={(e) => setFormData({ ...formData, weekday: e.target.value as any })}
-                required
-              >
-                <option value="">Selecione...</option>
-                <option value="seg">Segunda-feira</option>
-                <option value="ter">Terça-feira</option>
-                <option value="qua">Quarta-feira</option>
-                <option value="qui">Quinta-feira</option>
-                <option value="sex">Sexta-feira</option>
-                <option value="sab">Sábado</option>
-                <option value="dom">Domingo</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="level">Nível</label>
-              <select
-                id="level"
-                value={formData.level}
-                onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
-              >
-                <option value="">Selecione...</option>
-                <option value="iniciante">Iniciante</option>
-                <option value="intermediario">Intermediário</option>
-                <option value="avancado">Avançado</option>
-                <option value="todos">Todos</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="start_time">Horário Início *</label>
-              <input
-                id="start_time"
-                type="time"
-                value={formData.start_time}
-                onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="end_time">Horário Fim</label>
-              <input
-                id="end_time"
-                type="time"
-                value={formData.end_time}
-                onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="location">Local</label>
-              <input
-                id="location"
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="Ex: Quadra 1"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="capacity">Capacidade</label>
-              <input
-                id="capacity"
-                type="number"
-                value={formData.capacity}
-                onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                min="1"
-              />
-            </div>
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Criando...' : 'Criar Turma'}
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 }
@@ -569,14 +407,14 @@ function ModalitiesModal({
                         onClick={() => handleEdit(modality)}
                         title="Editar"
                       >
-                        ✏️
+                        <FontAwesomeIcon icon={faPenToSquare} />
                       </button>
                       <button
                         className="btn-icon danger"
                         onClick={() => handleDelete(modality.id)}
                         title="Excluir"
                       >
-                        🗑️
+                        <FontAwesomeIcon icon={faTrash} />
                       </button>
                     </div>
                   </div>
