@@ -20,6 +20,7 @@ export const enrollmentService = {
   async getEnrollments(params?: {
     student_id?: number;
     status?: string;
+    search?: string;
   }): Promise<EnrollmentsResponse> {
     const response = await api.get<EnrollmentsResponse>('/api/enrollments', { params });
     return response.data;

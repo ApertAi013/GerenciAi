@@ -14,6 +14,7 @@ export const classService = {
     weekday?: string;
     level?: string;
     status?: string;
+    search?: string;
   }): Promise<ClassesResponse> {
     const response = await api.get<ClassesResponse>('/api/classes', { params });
     return response.data;
