@@ -4,7 +4,7 @@ import type { ClassesResponse, ModalitiesResponse, CreateClassRequest, Class } f
 export const classService = {
   // Listar modalidades
   async getModalities(): Promise<ModalitiesResponse> {
-    const response = await api.get<ModalitiesResponse>('/api/classes/modalities');
+    const response = await api.get<ModalitiesResponse>('/api/modalities');
     return response.data;
   },
 
@@ -45,19 +45,19 @@ export const classService = {
 
   // Criar modalidade
   async createModality(data: { name: string; description?: string }): Promise<{ success: boolean; message: string }> {
-    const response = await api.post<{ success: boolean; message: string }>('/api/classes/modalities', data);
+    const response = await api.post<{ success: boolean; message: string }>('/api/modalities', data);
     return response.data;
   },
 
   // Atualizar modalidade
   async updateModality(id: number, data: { name?: string; description?: string }): Promise<{ success: boolean; message: string }> {
-    const response = await api.put<{ success: boolean; message: string }>(`/api/classes/modalities/${id}`, data);
+    const response = await api.put<{ success: boolean; message: string }>(`/api/modalities/${id}`, data);
     return response.data;
   },
 
   // Deletar modalidade
   async deleteModality(id: number): Promise<{ success: boolean; message: string }> {
-    const response = await api.delete<{ success: boolean; message: string }>(`/api/classes/modalities/${id}`);
+    const response = await api.delete<{ success: boolean; message: string }>(`/api/modalities/${id}`);
     return response.data;
   },
 };
