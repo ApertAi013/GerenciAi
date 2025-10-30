@@ -129,8 +129,7 @@ export default function Classes() {
       {/* Classes Grid */}
       <div className="classes-grid">
         {classes.map((cls) => (
-          <div key={cls.id} style={{ maxWidth: '400px', width: '100%' }}>
-            <div className="class-card">
+          <div key={cls.id} className="class-card">
             <div className="class-card-header">
               <h3>{cls.name || `${cls.modality_name} - ${getWeekdayLabel(cls.weekday)}`}</h3>
               <span className={`status-badge status-${cls.status}`}>
@@ -211,7 +210,6 @@ export default function Classes() {
                 <FontAwesomeIcon icon={faTrash} />
               </button>
             </div>
-          </div>
           </div>
         ))}
 

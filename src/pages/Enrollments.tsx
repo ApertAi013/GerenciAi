@@ -374,7 +374,7 @@ export default function Enrollments() {
                     </span>
                   )}
                 </label>
-                <div className="classes-grid">
+                <div className="enrollment-classes-grid">
                   {classes.map(classItem => (
                     <div
                       key={classItem.id}

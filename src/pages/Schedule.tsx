@@ -251,15 +251,36 @@ export default function Schedule() {
       setClasses((prev) =>
         prev.map((cls) => {
           if (cls.id === classId) {
-            // Calcular duração original
-            const originalStart = parseInt(cls.startTime.split(':')[0]);
-            const originalEnd = parseInt(cls.endTime.split(':')[0]);
-            const duration = originalEnd - originalStart;
+            // Calcular duração original em minutos
+            const [oldStartH, oldStartM] = cls.startTime.split(':').map(Number);
+            const [oldEndH, oldEndM] = cls.endTime.split(':').map(Number);
+            const oldStartMinutes = oldStartH * 60 + oldStartM;
+            const oldEndMinutes = oldEndH * 60 + oldEndM;
+            const durationMinutes = oldEndMinutes - oldStartMinutes;
+
+            console.log('Drag - Turma original:', {
+              startTime: cls.startTime,
+              endTime: cls.endTime,
+              oldStartMinutes,
+              oldEndMinutes,
+              durationMinutes
+            });
 
             // Calcular novo endTime mantendo a duração
-            const newStart = parseInt(newStartTime.split(':')[0]);
-            const newEnd = newStart + duration;
-            const newEndTime = `${String(newEnd).padStart(2, '0')}:00`;
+            const [newStartH, newStartM] = newStartTime.split(':').map(Number);
+            const newStartMinutes = newStartH * 60 + newStartM;
+            const newEndMinutes = newStartMinutes + durationMinutes;
+            const newEndH = Math.floor(newEndMinutes / 60);
+            const newEndM = newEndMinutes % 60;
+            const newEndTime = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}`;
+
+            console.log('Drag - Novo horário:', {
+              newStartTime,
+              newEndTime,
+              newStartMinutes,
+              newEndMinutes,
+              durationMinutes
+            });
 
             return { ...cls, day: newDay, startTime: newStartTime, endTime: newEndTime };
           }
@@ -277,13 +298,20 @@ export default function Schedule() {
         const originalClass = previousClasses.find((c) => c.id === classId);
         if (!originalClass) return;
 
-        const originalStart = parseInt(originalClass.startTime.split(':')[0]);
-        const originalEnd = parseInt(originalClass.endTime.split(':')[0]);
-        const duration = originalEnd - originalStart;
+        // Calcular duração em minutos
+        const [oldStartH, oldStartM] = originalClass.startTime.split(':').map(Number);
+        const [oldEndH, oldEndM] = originalClass.endTime.split(':').map(Number);
+        const oldStartMinutes = oldStartH * 60 + oldStartM;
+        const oldEndMinutes = oldEndH * 60 + oldEndM;
+        const durationMinutes = oldEndMinutes - oldStartMinutes;
 
-        const newStart = parseInt(newStartTime.split(':')[0]);
-        const newEnd = newStart + duration;
-        const newEndTime = `${String(newEnd).padStart(2, '0')}:00`;
+        // Aplicar duração ao novo horário
+        const [newStartH, newStartM] = newStartTime.split(':').map(Number);
+        const newStartMinutes = newStartH * 60 + newStartM;
+        const newEndMinutes = newStartMinutes + durationMinutes;
+        const newEndH = Math.floor(newEndMinutes / 60);
+        const newEndM = newEndMinutes % 60;
+        const newEndTime = `${String(newEndH).padStart(2, '0')}:${String(newEndM).padStart(2, '0')}`;
 
         // Adicionar segundos no formato esperado pelo backend (HH:MM:SS)
         const startTimeWithSeconds = `${newStartTime}:00`;

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { studentService } from '../services/studentService';
 import { levelService } from '../services/levelService';
 import { financialService } from '../services/financialService';

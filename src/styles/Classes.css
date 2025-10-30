@@ -27,7 +27,7 @@
 /* Classes Grid */
 .classes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 400px));
+  grid-template-columns: repeat(auto-fill, 300px);
   gap: var(--spacing-lg);
   align-items: start;
   justify-content: start;
@@ -42,10 +42,8 @@
   border: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  min-height: 240px;
-  width: fit-content;
-  min-width: 200px;
-  max-width: 600px;
+  width: 300px;
+  height: 350px;
 }
 
 .class-card:hover {
@@ -72,7 +70,8 @@
   margin: 0;
   flex: 1;
   line-height: 1.2;
-  white-space: nowrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   min-width: 0;
 }
 

@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import { studentService } from '../../services/studentService';
 import { classService } from '../../services/classService';
 import { enrollmentService } from '../../services/enrollmentService';
+import { useNotifications } from '../../hooks/useNotifications';
 import '../../styles/Header.css';
 
 interface SearchResult {
@@ -20,11 +21,14 @@ export default function Header() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const handleLogout = () => {
     authService.logout();
@@ -35,6 +39,9 @@ export default function Header() {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowResults(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
       }
     };
 
@@ -136,6 +143,22 @@ export default function Header() {
     }
   };
 
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'warning': return faCircleExclamation;
+      case 'success': return faCircleCheck;
+      default: return faCircleInfo;
+    }
+  };
+
+  const getNotificationColor = (type: string) => {
+    switch (type) {
+      case 'warning': return '#f5576c';
+      case 'success': return '#38f9d7';
+      default: return '#667eea';
+    }
+  };
+
   return (
     <header className="header">
       <div className="header-search" ref={searchRef}>
@@ -171,10 +194,61 @@ export default function Header() {
 
       <div className="header-actions">
         {/* Notificações */}
-        <button type="button" className="header-notification">
-          <FontAwesomeIcon icon={faBell} />
-          <span className="notification-badge">20</span>
-        </button>
+        <div className="header-notification-container" ref={notificationsRef}>
+          <button
+            type="button"
+            className="header-notification"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            <FontAwesomeIcon icon={faBell} />
+            {unreadCount > 0 && (
+              <span className="notification-badge">{unreadCount}</span>
+            )}
+          </button>
+
+          {showNotifications && (
+            <div className="notifications-dropdown">
+              <div className="notifications-header">
+                <h3>Notificações</h3>
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    className="mark-all-read"
+                    onClick={markAllAsRead}
+                  >
+                    Marcar todas como lidas
+                  </button>
+                )}
+              </div>
+
+              <div className="notifications-list">
+                {notifications.length === 0 ? (
+                  <div className="no-notifications">
+                    <FontAwesomeIcon icon={faBell} style={{ fontSize: '32px', color: '#ccc' }} />
+                    <p>Nenhuma notificação</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className={`notification-item ${!notif.isRead ? 'unread' : ''}`}
+                      onClick={() => markAsRead(notif.id)}
+                    >
+                      <div className="notification-icon" style={{ color: getNotificationColor(notif.type) }}>
+                        <FontAwesomeIcon icon={getNotificationIcon(notif.type)} />
+                      </div>
+                      <div className="notification-content">
+                        <div className="notification-title">{notif.title}</div>
+                        <div className="notification-message">{notif.message}</div>
+                      </div>
+                      {!notif.isRead && <div className="unread-dot"></div>}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Menu do Usuário */}
         <div className="header-user">

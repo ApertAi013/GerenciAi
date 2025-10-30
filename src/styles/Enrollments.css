@@ -243,7 +243,7 @@
   font-weight: 600;
 }
 
-.classes-grid {
+.enrollment-classes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;

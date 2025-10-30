@@ -38,6 +38,23 @@ const HOURS = [
 
 const DAYS_OF_WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
+// Gerar slots de 10 em 10 minutos
+const generateTimeSlots = () => {
+  const slots: { time: string; isHourStart: boolean }[] = [];
+  for (let hour = 6; hour <= 21; hour++) {
+    for (let min = 0; min < 60; min += 10) {
+      const time = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+      slots.push({
+        time,
+        isHourStart: min === 0
+      });
+    }
+  }
+  return slots;
+};
+
+const TIME_SLOTS = generateTimeSlots();
+
 // Componente de aluno arrastável
 function DraggableStudent({ student, classId }: { student: Student; classId: string }) {
   const uniqueId = `student-${student.id}-class-${classId}`;
@@ -67,8 +84,93 @@ function DraggableStudent({ student, classId }: { student: Student; classId: str
   );
 }
 
+// Funções auxiliares para cálculo de tempo
+const timeToMinutes = (time: string): number => {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+};
+
+// Detectar se duas turmas se sobrepõem temporalmente
+const classesOverlap = (cls1: ClassSchedule, cls2: ClassSchedule): boolean => {
+  if (cls1.day !== cls2.day) return false;
+  const start1 = timeToMinutes(cls1.startTime);
+  const end1 = timeToMinutes(cls1.endTime);
+  const start2 = timeToMinutes(cls2.startTime);
+  const end2 = timeToMinutes(cls2.endTime);
+  return start1 < end2 && start2 < end1;
+};
+
+// Atribuir posições horizontais (lanes) para turmas sobrepostas
+const assignLanes = (classes: ClassSchedule[]): Map<string, { lane: number; totalLanes: number }> => {
+  const laneMap = new Map<string, { lane: number; totalLanes: number }>();
+
+  // Ordenar por horário de início
+  const sortedClasses = [...classes].sort((a, b) =>
+    timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
+  );
+
+  sortedClasses.forEach((cls) => {
+    // Encontrar todas as turmas que se sobrepõem com esta
+    const overlapping = sortedClasses.filter((other) =>
+      other.id !== cls.id && classesOverlap(cls, other)
+    );
+
+    // Encontrar lanes já ocupadas pelas turmas sobrepostas
+    const occupiedLanes = new Set<number>();
+    overlapping.forEach((other) => {
+      const otherLane = laneMap.get(other.id);
+      if (otherLane) occupiedLanes.add(otherLane.lane);
+    });
+
+    // Atribuir a primeira lane disponível
+    let lane = 0;
+    while (occupiedLanes.has(lane)) {
+      lane++;
+    }
+
+    // Calcular total de lanes necessárias para este grupo
+    const totalLanes = Math.max(lane + 1, ...overlapping.map((other) => {
+      const otherLane = laneMap.get(other.id);
+      return otherLane ? otherLane.totalLanes : 1;
+    }));
+
+    // Atualizar todas as turmas do grupo com o novo totalLanes
+    laneMap.set(cls.id, { lane, totalLanes });
+    overlapping.forEach((other) => {
+      const otherLane = laneMap.get(other.id);
+      if (otherLane) {
+        laneMap.set(other.id, { lane: otherLane.lane, totalLanes });
+      }
+    });
+  });
+
+  return laneMap;
+};
+
+const calculateOffset = (startTime: string, hourStartTime: string): number => {
+  const startMin = timeToMinutes(startTime);
+  const hourMin = timeToMinutes(hourStartTime);
+  const offsetMin = startMin - hourMin; // minutos desde o início da hora
+  return (offsetMin / 60) * 100; // % da hora completa (60 min = 100%)
+};
+
+const calculateHeight = (startTime: string, endTime: string): number => {
+  const durationMin = timeToMinutes(endTime) - timeToMinutes(startTime);
+  return (durationMin / 60) * 100; // % em relação a 1 hora (60 min = 100% = 240px)
+};
+
 // Componente de card de turma (draggable e droppable)
-function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
+function ClassCard({
+  classSchedule,
+  slotHour,
+  lane = 0,
+  totalLanes = 1
+}: {
+  classSchedule: ClassSchedule;
+  slotHour: string;
+  lane?: number;
+  totalLanes?: number;
+}) {
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
     id: `class-${classSchedule.id}`,
     data: { type: 'class', classId: classSchedule.id }
@@ -83,14 +185,40 @@ function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
   const capacity = classSchedule.capacity;
   const isFull = filled >= capacity;
 
+  // Calcular posicionamento baseado em minutos
+  // Encontrar o início da hora que contém este slot
+  const slotMinutes = timeToMinutes(slotHour);
+  const hourStart = Math.floor(slotMinutes / 60) * 60;
+  const hourStartTime = `${String(Math.floor(hourStart / 60)).padStart(2, '0')}:00`;
+
+  const topOffset = calculateOffset(classSchedule.startTime, hourStartTime);
+  const height = calculateHeight(classSchedule.startTime, classSchedule.endTime);
+
+  // Calcular posição e largura horizontal baseado na lane
+  const widthPercent = (100 / totalLanes);
+  const leftPercent = (lane * widthPercent);
+
   const cardStyle = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.3 : 1,
         backgroundColor: classSchedule.color,
+        position: 'absolute' as const,
+        top: `${topOffset}%`,
+        height: `${height}%`,
+        minHeight: '80px',
+        left: `calc(${leftPercent}% + ${lane > 0 ? '2px' : '4px'})`,
+        width: `calc(${widthPercent}% - ${lane === 0 && totalLanes > 1 ? '6px' : lane === totalLanes - 1 ? '6px' : '8px'})`,
+        pointerEvents: 'none' as const,
       }
     : {
         backgroundColor: classSchedule.color,
+        position: 'absolute' as const,
+        top: `${topOffset}%`,
+        height: `${height}%`,
+        minHeight: '80px',
+        left: `calc(${leftPercent}% + ${lane > 0 ? '2px' : '4px'})`,
+        width: `calc(${widthPercent}% - ${lane === 0 && totalLanes > 1 ? '6px' : lane === totalLanes - 1 ? '6px' : '8px'})`,
       };
 
   return (
@@ -108,23 +236,26 @@ function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
         {...attributes}
       >
         <span className="class-time">
-          <FontAwesomeIcon icon={faClock} style={{ fontSize: '10px', marginRight: '4px', opacity: 0.8 }} />
+          <FontAwesomeIcon icon={faClock} style={{ fontSize: '10px', marginRight: '4px', opacity: 0.8, color: 'white' }} />
           {classSchedule.startTime} - {classSchedule.endTime}
         </span>
         <span className={`class-capacity ${isFull ? 'full' : ''}`}>
-          <FontAwesomeIcon icon={faUsers} style={{ fontSize: '10px', marginRight: '3px' }} />
+          <FontAwesomeIcon icon={faUsers} style={{ fontSize: '10px', marginRight: '3px', color: 'white' }} />
           {filled}/{capacity}
         </span>
       </div>
-      <div className="class-name">{classSchedule.name}</div>
 
-      {classSchedule.students.length > 0 && (
-        <div className="class-students">
-          {classSchedule.students.map((student) => (
-            <DraggableStudent key={student.id} student={student} classId={classSchedule.id} />
-          ))}
-        </div>
-      )}
+      <div className="class-card-body">
+        <div className="class-name">{classSchedule.name}</div>
+
+        {classSchedule.students.length > 0 && (
+          <div className="class-students">
+            {classSchedule.students.map((student) => (
+              <DraggableStudent key={student.id} student={student} classId={classSchedule.id} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -133,10 +264,12 @@ function ClassCard({ classSchedule }: { classSchedule: ClassSchedule }) {
 function DroppableTimeSlot({
   day,
   hour,
+  isHourStart,
   children
 }: {
   day: number;
   hour: string;
+  isHourStart: boolean;
   children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -147,7 +280,7 @@ function DroppableTimeSlot({
   return (
     <div
       ref={setNodeRef}
-      className={`time-slot ${isOver ? 'drag-over' : ''}`}
+      className={`time-slot ${isOver ? 'drag-over' : ''} ${isHourStart ? 'hour-start' : 'sub-slot'}`}
     >
       {children}
     </div>
@@ -164,31 +297,52 @@ export default function WeekView({
 }: WeekViewProps) {
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
 
-  const getClassesForDayAndTime = (day: number, hour: string) => {
-    return classes.filter(
-      (cls) => cls.day === day && cls.startTime === hour
-    );
+  // Calcular próximo slot de 10 minutos
+  const getNextTimeSlot = (time: string): string => {
+    const minutes = timeToMinutes(time);
+    const nextMinutes = minutes + 10;
+    const hours = Math.floor(nextMinutes / 60);
+    const mins = nextMinutes % 60;
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   };
 
-  // Calcular o número máximo de turmas em qualquer horário para cada dia
-  const getMaxClassesForDay = (day: number) => {
-    let maxClasses = 1;
-    HOURS.forEach((hour) => {
-      const classesInSlot = getClassesForDayAndTime(day, hour);
-      if (classesInSlot.length > maxClasses) {
-        maxClasses = classesInSlot.length;
+  // Pegar turmas que COMEÇAM dentro do slot de 10 minutos
+  const getClassesForDayAndTime = (day: number, time: string) => {
+    // Encontrar a hora completa anterior ou igual ao time
+    const timeMinutes = timeToMinutes(time);
+    const hourStart = Math.floor(timeMinutes / 60) * 60; // minutos do início da hora
+    const hourEnd = hourStart + 60; // minutos do fim da hora
+
+    return classes.filter((cls) => {
+      const classStartMin = timeToMinutes(cls.startTime);
+      return cls.day === day && classStartMin >= hourStart && classStartMin < hourEnd;
+    });
+  };
+
+  // Calcular o número máximo de lanes necessárias para cada dia
+  const getMaxLanesForDay = (day: number) => {
+    const dayClasses = classes.filter((cls) => cls.day === day);
+    if (dayClasses.length === 0) return 1;
+
+    const laneMap = assignLanes(dayClasses);
+    let maxLanes = 1;
+
+    laneMap.forEach((info) => {
+      if (info.totalLanes > maxLanes) {
+        maxLanes = info.totalLanes;
       }
     });
-    return maxClasses;
+
+    return maxLanes;
   };
 
-  // Calcular largura da coluna baseado no número máximo de turmas
+  // Calcular largura da coluna baseado no número máximo de lanes
   // Largura base: 200px
-  // Cada turma adicional: +100px (50% da base)
+  // Cada lane adicional: +100px (50% da base)
   const getColumnWidth = (day: number) => {
-    const maxClasses = getMaxClassesForDay(day);
+    const maxLanes = getMaxLanesForDay(day);
     const baseWidth = 200;
-    const additionalWidth = (maxClasses - 1) * 100;
+    const additionalWidth = (maxLanes - 1) * 100;
     return baseWidth + additionalWidth;
   };
 
@@ -243,9 +397,9 @@ export default function WeekView({
             {/* Time column */}
             <div className="time-column">
               <div className="time-header"></div>
-              {HOURS.map((hour) => (
-                <div key={hour} className="time-cell">
-                  {hour}
+              {TIME_SLOTS.map((slot) => (
+                <div key={slot.time} className={`time-cell ${slot.isHourStart ? 'hour-label' : 'sub-label'}`}>
+                  {slot.isHourStart ? slot.time : ''}
                 </div>
               ))}
             </div>
@@ -255,6 +409,10 @@ export default function WeekView({
               const currentDay = addDays(weekStart, index);
               const isToday = format(currentDay, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
               const columnWidth = getColumnWidth(dayOffset);
+
+              // Calcular lanes para este dia
+              const dayClasses = classes.filter((cls) => cls.day === dayOffset);
+              const laneMap = assignLanes(dayClasses);
 
               return (
                 <div
@@ -268,14 +426,39 @@ export default function WeekView({
                   </div>
 
                   {HOURS.map((hour) => {
-                    const classesInSlot = getClassesForDayAndTime(dayOffset, hour);
+                    // Pegar todos os slots de 10 min desta hora
+                    const hourSlots = TIME_SLOTS.filter((slot) => slot.time.startsWith(hour.substring(0, 2)));
+                    // Pegar turmas que começam nesta hora
+                    const classesInHour = getClassesForDayAndTime(dayOffset, hour);
 
                     return (
-                      <DroppableTimeSlot key={`${dayOffset}-${hour}`} day={dayOffset} hour={hour}>
-                        {classesInSlot.map((cls) => (
-                          <ClassCard key={cls.id} classSchedule={cls} />
+                      <div key={`${dayOffset}-${hour}`} style={{ position: 'relative', height: '240px' }}>
+                        {/* Renderizar cards desta hora */}
+                        {classesInHour.map((cls) => {
+                          const laneInfo = laneMap.get(cls.id) || { lane: 0, totalLanes: 1 };
+                          return (
+                            <ClassCard
+                              key={cls.id}
+                              classSchedule={cls}
+                              slotHour={hour}
+                              lane={laneInfo.lane}
+                              totalLanes={laneInfo.totalLanes}
+                            />
+                          );
+                        })}
+
+                        {/* Renderizar slots de 10 min para drop */}
+                        {hourSlots.map((slot) => (
+                          <DroppableTimeSlot
+                            key={`${dayOffset}-${slot.time}`}
+                            day={dayOffset}
+                            hour={slot.time}
+                            isHourStart={slot.isHourStart}
+                          >
+                            {/* Vazio - cards são renderizados no nível da hora */}
+                          </DroppableTimeSlot>
                         ))}
-                      </DroppableTimeSlot>
+                      </div>
                     );
                   })}
                 </div>
@@ -290,24 +473,30 @@ export default function WeekView({
               className="class-card"
               style={{
                 backgroundColor: activeClass.color,
-                minHeight: '100px',
-                opacity: 0.9,
+                minHeight: '60px',
+                maxHeight: '80px',
+                opacity: 1,
                 cursor: 'grabbing',
-                width: '200px'
+                width: '140px',
+                padding: '6px 8px',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+                border: '2px solid rgba(255, 255, 255, 0.4)'
               }}
             >
-              <div className="class-card-header">
-                <span className="class-time">
+              <div className="class-card-header" style={{ marginBottom: '2px' }}>
+                <span className="class-time" style={{ fontSize: '9px', color: 'white' }}>
                   {activeClass.startTime} - {activeClass.endTime}
                 </span>
-                <span className="class-capacity">
+                <span className="class-capacity" style={{ fontSize: '8px', padding: '2px 6px', color: 'white' }}>
                   {activeClass.students.length}/{activeClass.capacity}
                 </span>
               </div>
-              <div className="class-name">{activeClass.name}</div>
+              <div className="class-name" style={{ fontSize: '11px', lineHeight: '1.2', color: 'white' }}>
+                {activeClass.name}
+              </div>
             </div>
           ) : activeId && activeId.startsWith('student-') ? (
-            <div className="student-chip" style={{ opacity: 0.9, cursor: 'grabbing' }}>
+            <div className="student-chip" style={{ opacity: 1, cursor: 'grabbing', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)' }}>
               Movendo aluno...
             </div>
           ) : null}
