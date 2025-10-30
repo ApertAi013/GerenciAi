@@ -129,16 +129,11 @@ export default function ComprehensiveEnrollmentForm({
       };
 
       const response = await studentService.createStudent(cleanedData);
-      console.log('Create student response:', response);
-      console.log('Response success:', response.success);
-      console.log('Response student:', response.student);
 
-      if (response.success && response.student) {
-        console.log('Setting created student and moving to plan step');
-        setCreatedStudent(response.student);
+      if (response.success && response.data) {
+        setCreatedStudent(response.data);
         setCurrentStep('plan');
       } else {
-        console.error('Failed to create student or missing student data');
         setError('Erro ao criar aluno. Tente novamente.');
       }
     } catch (err: any) {
