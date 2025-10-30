@@ -20,8 +20,8 @@ export const studentService = {
   },
 
   // Criar aluno
-  async createStudent(data: CreateStudentRequest): Promise<{ success: boolean; message: string; student: Student }> {
-    const response = await api.post<{ success: boolean; message: string; student: Student }>('/api/students', data);
+  async createStudent(data: CreateStudentRequest): Promise<{ success: boolean; message: string; data: Student }> {
+    const response = await api.post<{ success: boolean; message: string; data: Student }>('/api/students', data);
     return response.data;
   },
 
