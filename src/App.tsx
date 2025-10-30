@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Students from './pages/Students'
+import StudentDetails from './pages/StudentDetails'
 import Classes from './pages/Classes'
 import Schedule from './pages/Schedule'
 import Reports from './pages/Reports'
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/agenda" element={<Schedule />} />
             <Route path="/alunos" element={<Students />} />
+            <Route path="/alunos/:id" element={<StudentDetails />} />
             <Route path="/turmas" element={<Classes />} />
             <Route path="/matriculas" element={<Enrollments />} />
             <Route path="/financeiro" element={<Financial />} />

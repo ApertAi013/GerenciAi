@@ -17,12 +17,14 @@ export interface Enrollment {
   start_date: string;
   end_date?: string;
   due_day: number;
+  contract_type?: 'mensal' | 'anual';
   status: 'ativa' | 'suspensa' | 'cancelada' | 'concluida';
   discount_type?: 'fixed' | 'percentage';
   discount_value?: number;
   discount_until?: string;
   created_at?: string;
   class_ids?: number[];
+  classes?: any[]; // Full class details
 }
 
 export interface EnrollmentClass {
@@ -49,9 +51,21 @@ export interface CreateEnrollmentRequest {
   plan_id: number;
   start_date: string;
   due_day?: number;
+  contract_type?: 'mensal' | 'anual';
   class_ids: number[];
 }
 
 export interface UpdateEnrollmentClassesRequest {
   class_ids: number[];
+}
+
+export interface UpdateEnrollmentRequest {
+  plan_id?: number;
+  contract_type?: 'mensal' | 'anual';
+  class_ids?: number[];
+  discount_type?: 'none' | 'fixed' | 'percentage';
+  discount_value?: number;
+  discount_until?: string;
+  due_day?: number;
+  status?: 'ativa' | 'suspensa' | 'cancelada' | 'concluida';
 }

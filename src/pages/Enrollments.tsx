@@ -14,6 +14,8 @@ export default function Enrollments() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
   const [formData, setFormData] = useState<CreateEnrollmentRequest>({
     student_id: 0,
     plan_id: 0,
@@ -22,9 +24,30 @@ export default function Enrollments() {
     class_ids: [],
   });
 
+  // Student search state
+  const [studentSearch, setStudentSearch] = useState('');
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    // Filter students based on search
+    if (studentSearch.trim() === '') {
+      setFilteredStudents(students);
+    } else {
+      const searchLower = studentSearch.toLowerCase();
+      const filtered = students.filter(
+        (student) =>
+          student.full_name.toLowerCase().includes(searchLower) ||
+          student.cpf.includes(searchLower) ||
+          (student.email && student.email.toLowerCase().includes(searchLower))
+      );
+      setFilteredStudents(filtered);
+    }
+  }, [studentSearch, students]);
 
   const loadData = async () => {
     try {
@@ -94,6 +117,18 @@ export default function Enrollments() {
       due_day: 10,
       class_ids: [],
     });
+    setStudentSearch('');
+    setShowStudentDropdown(false);
+  };
+
+  const handleSelectStudent = (student: Student) => {
+    setFormData({ ...formData, student_id: student.id });
+    setStudentSearch(student.full_name);
+    setShowStudentDropdown(false);
+  };
+
+  const getSelectedStudent = () => {
+    return students.find((s) => s.id === formData.student_id);
   };
 
   const handleClassToggle = (classId: number) => {
@@ -171,6 +206,7 @@ export default function Enrollments() {
               <th>Vencimento</th>
               <th>Status</th>
               <th>Desconto</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -198,6 +234,19 @@ export default function Enrollments() {
                       '-'
                     )}
                   </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="btn-icon"
+                      onClick={() => {
+                        setEditingEnrollment(enrollment);
+                        setShowEditModal(true);
+                      }}
+                      title="Editar matrícula"
+                    >
+                      ✏️
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
@@ -215,20 +264,57 @@ export default function Enrollments() {
 
             <form onSubmit={handleSubmit} className="enrollment-form">
               <div className="form-group">
-                <label htmlFor="student_id">Aluno *</label>
-                <select
-                  id="student_id"
-                  value={formData.student_id}
-                  onChange={(e) => setFormData({ ...formData, student_id: Number(e.target.value) })}
-                  required
-                >
-                  <option value={0}>Selecione um aluno</option>
-                  {students.map(student => (
-                    <option key={student.id} value={student.id}>
-                      {student.full_name} - {student.cpf}
-                    </option>
-                  ))}
-                </select>
+                <label htmlFor="student_search">Aluno *</label>
+                <div className="student-autocomplete">
+                  <input
+                    id="student_search"
+                    type="text"
+                    placeholder="Digite o nome, CPF ou email do aluno..."
+                    value={studentSearch}
+                    onChange={(e) => {
+                      setStudentSearch(e.target.value);
+                      setShowStudentDropdown(true);
+                      if (!e.target.value) {
+                        setFormData({ ...formData, student_id: 0 });
+                      }
+                    }}
+                    onFocus={() => setShowStudentDropdown(true)}
+                    className="student-search-input"
+                    autoComplete="off"
+                    required={!formData.student_id}
+                  />
+                  {showStudentDropdown && filteredStudents.length > 0 && (
+                    <div className="student-dropdown">
+                      {filteredStudents.slice(0, 10).map((student) => (
+                        <div
+                          key={student.id}
+                          className="student-dropdown-item"
+                          onClick={() => handleSelectStudent(student)}
+                        >
+                          <div className="student-dropdown-name">{student.full_name}</div>
+                          <div className="student-dropdown-info">
+                            CPF: {student.cpf} {student.email && `| ${student.email}`}
+                          </div>
+                        </div>
+                      ))}
+                      {filteredStudents.length > 10 && (
+                        <div className="student-dropdown-more">
+                          +{filteredStudents.length - 10} aluno(s)... Continue digitando para refinar
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {showStudentDropdown && studentSearch && filteredStudents.length === 0 && (
+                    <div className="student-dropdown">
+                      <div className="student-dropdown-empty">Nenhum aluno encontrado</div>
+                    </div>
+                  )}
+                </div>
+                {getSelectedStudent() && (
+                  <div className="selected-student-badge">
+                    ✓ Aluno selecionado: <strong>{getSelectedStudent()?.full_name}</strong>
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -321,6 +407,317 @@ export default function Enrollments() {
           </div>
         </div>
       )}
+
+      {/* Edit Enrollment Modal */}
+      {showEditModal && editingEnrollment && (
+        <EditEnrollmentModal
+          enrollment={editingEnrollment}
+          plans={plans}
+          classes={classes}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingEnrollment(null);
+          }}
+          onSuccess={() => {
+            setShowEditModal(false);
+            setEditingEnrollment(null);
+            loadData();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Edit Enrollment Modal Component
+function EditEnrollmentModal({
+  enrollment,
+  plans,
+  classes,
+  onClose,
+  onSuccess,
+}: {
+  enrollment: Enrollment;
+  plans: Plan[];
+  classes: Class[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    plan_id: enrollment.plan_id,
+    contract_type: (enrollment.contract_type || 'mensal') as 'mensal' | 'anual',
+    due_day: enrollment.due_day,
+    class_ids: enrollment.class_ids || [],
+    discount_type: (enrollment.discount_type || 'none') as 'none' | 'fixed' | 'percentage',
+    discount_value: enrollment.discount_value || 0,
+    discount_until: enrollment.discount_until || '',
+    status: enrollment.status,
+  });
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const selectedPlan = plans.find((p) => p.id === formData.plan_id);
+
+  const handleClassToggle = (classId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      class_ids: prev.class_ids.includes(classId)
+        ? prev.class_ids.filter((id) => id !== classId)
+        : [...prev.class_ids, classId],
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // Validate
+    if (selectedPlan && formData.class_ids.length !== selectedPlan.sessions_per_week) {
+      setError(
+        `O plano ${selectedPlan.name} requer ${selectedPlan.sessions_per_week} turma(s). Você selecionou ${formData.class_ids.length}.`
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const payload: any = {
+        plan_id: formData.plan_id,
+        contract_type: formData.contract_type,
+        due_day: formData.due_day,
+        class_ids: formData.class_ids,
+        status: formData.status,
+      };
+
+      // Add discount if applicable
+      if (formData.discount_type !== 'none') {
+        payload.discount_type = formData.discount_type;
+        payload.discount_value = formData.discount_value;
+        if (formData.discount_until) {
+          payload.discount_until = formData.discount_until;
+        }
+      } else {
+        payload.discount_type = 'none';
+      }
+
+      await enrollmentService.updateEnrollment(enrollment.id, payload);
+      onSuccess();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao atualizar matrícula');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Editar Matrícula #{enrollment.id}</h2>
+          <button type="button" className="modal-close" onClick={onClose}>
+            ×
+          </button>
+        </div>
+
+        {error && <div className="error-message">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="enrollment-form">
+          <div className="form-info">
+            <p>
+              <strong>Aluno:</strong> {enrollment.student_name}
+            </p>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="plan_id">Plano *</label>
+            <select
+              id="plan_id"
+              value={formData.plan_id}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  plan_id: Number(e.target.value),
+                  class_ids: [],
+                })
+              }
+              required
+            >
+              {plans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} - {plan.sessions_per_week}x/semana - R${' '}
+                  {(plan.price_cents / 100).toFixed(2)}
+                </option>
+              ))}
+            </select>
+            {selectedPlan && (
+              <small className="form-help">
+                Selecione {selectedPlan.sessions_per_week} turma(s) abaixo
+              </small>
+            )}
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="contract_type">Tipo de Contrato</label>
+              <select
+                id="contract_type"
+                value={formData.contract_type}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    contract_type: e.target.value as 'mensal' | 'anual',
+                  })
+                }
+              >
+                <option value="mensal">Mensal</option>
+                <option value="anual">Anual</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="due_day">Dia de Vencimento *</label>
+              <input
+                type="number"
+                id="due_day"
+                min="1"
+                max="28"
+                value={formData.due_day}
+                onChange={(e) =>
+                  setFormData({ ...formData, due_day: Number(e.target.value) })
+                }
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>
+              Turmas *
+              {selectedPlan && (
+                <span className="selected-count">
+                  {formData.class_ids.length}/{selectedPlan.sessions_per_week}{' '}
+                  selecionada(s)
+                </span>
+              )}
+            </label>
+            <div className="classes-grid">
+              {classes.map((classItem) => (
+                <div
+                  key={classItem.id}
+                  className={`class-card ${
+                    formData.class_ids.includes(classItem.id) ? 'selected' : ''
+                  }`}
+                  onClick={() => handleClassToggle(classItem.id)}
+                >
+                  <h4>{classItem.modality_name}</h4>
+                  {classItem.name && <p>{classItem.name}</p>}
+                  <p>
+                    {classItem.weekday} - {classItem.start_time}
+                  </p>
+                  <input
+                    type="checkbox"
+                    checked={formData.class_ids.includes(classItem.id)}
+                    onChange={() => {}}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="discount_type">Tipo de Desconto</label>
+            <select
+              id="discount_type"
+              value={formData.discount_type}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  discount_type: e.target.value as any,
+                })
+              }
+            >
+              <option value="none">Sem desconto</option>
+              <option value="fixed">Valor Fixo</option>
+              <option value="percentage">Percentual</option>
+            </select>
+          </div>
+
+          {formData.discount_type !== 'none' && (
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="discount_value">
+                  Valor do Desconto{' '}
+                  {formData.discount_type === 'percentage' ? '(%)' : '(R$)'}
+                </label>
+                <input
+                  type="number"
+                  id="discount_value"
+                  min="0"
+                  step={formData.discount_type === 'percentage' ? '1' : '0.01'}
+                  value={formData.discount_value}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      discount_value: Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="discount_until">Desconto até</label>
+                <input
+                  type="date"
+                  id="discount_until"
+                  value={formData.discount_until}
+                  onChange={(e) =>
+                    setFormData({ ...formData, discount_until: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label htmlFor="status">Status</label>
+            <select
+              id="status"
+              value={formData.status}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  status: e.target.value as any,
+                })
+              }
+            >
+              <option value="ativa">Ativa</option>
+              <option value="suspensa">Suspensa</option>
+              <option value="cancelada">Cancelada</option>
+              <option value="concluida">Concluída</option>
+            </select>
+          </div>
+
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

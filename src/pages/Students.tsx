@@ -1,25 +1,48 @@
 import { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { studentService } from '../services/studentService';
+import { levelService } from '../services/levelService';
+import { financialService } from '../services/financialService';
 import type { Student } from '../types/studentTypes';
+import type { Level } from '../types/levelTypes';
+import ComprehensiveEnrollmentForm from '../components/ComprehensiveEnrollmentForm';
 import '../styles/Students.css';
 
 export default function Students() {
+  const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>([]);
   const [allStudents, setAllStudents] = useState<Student[]>([]);
+  const [levels, setLevels] = useState<Level[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ativo' | 'inativo' | 'pendente' | ''>('');
+  const [levelFilter, setLevelFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showComprehensiveEnrollmentModal, setShowComprehensiveEnrollmentModal] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
+  const [isProcessingBatch, setIsProcessingBatch] = useState(false);
   const itemsPerPage = 20;
 
   useEffect(() => {
     fetchStudents();
+    fetchLevels();
   }, [statusFilter]);
+
+  const fetchLevels = async () => {
+    try {
+      const response = await levelService.getLevels();
+      if (response.success) {
+        setLevels(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar níveis:', error);
+    }
+  };
 
   const fetchStudents = async () => {
     try {
@@ -65,11 +88,84 @@ export default function Students() {
     }
   };
 
-  const filteredStudents = students.filter(student =>
-    student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (student.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.cpf.includes(searchTerm)
-  );
+  const handleToggleSelectStudent = (studentId: number) => {
+    const newSelection = new Set(selectedStudentIds);
+    if (newSelection.has(studentId)) {
+      newSelection.delete(studentId);
+    } else {
+      newSelection.add(studentId);
+    }
+    setSelectedStudentIds(newSelection);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedStudentIds.size === paginatedStudents.length) {
+      setSelectedStudentIds(new Set());
+    } else {
+      setSelectedStudentIds(new Set(paginatedStudents.map((s) => s.id)));
+    }
+  };
+
+  const handleBatchPaymentReceipt = async () => {
+    if (selectedStudentIds.size === 0) {
+      alert('Selecione pelo menos um aluno');
+      return;
+    }
+
+    const confirmMsg = `Tem certeza que deseja dar baixa nas faturas pendentes de ${selectedStudentIds.size} aluno(s)?`;
+    if (!confirm(confirmMsg)) return;
+
+    setIsProcessingBatch(true);
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const studentId of selectedStudentIds) {
+        try {
+          // Get pending invoices for this student
+          const invoicesRes = await financialService.getInvoices({
+            student_id: studentId,
+            status: 'aberta',
+          });
+
+          if (invoicesRes.success && invoicesRes.data.length > 0) {
+            // Register payment for the first pending invoice
+            const invoice = invoicesRes.data[0];
+            await financialService.registerPayment({
+              invoice_id: invoice.id,
+              amount_cents: invoice.final_amount_cents,
+              method: 'dinheiro',
+              paid_at: new Date().toISOString().split('T')[0],
+            });
+            successCount++;
+          }
+        } catch (err) {
+          console.error(`Erro ao processar aluno ${studentId}:`, err);
+          errorCount++;
+        }
+      }
+
+      alert(`Baixa processada!\n✅ Sucesso: ${successCount}\n❌ Erros: ${errorCount}`);
+      setSelectedStudentIds(new Set());
+      fetchStudents();
+    } catch (error) {
+      console.error('Erro ao processar baixa em lote:', error);
+      alert('Erro ao processar baixa em lote');
+    } finally {
+      setIsProcessingBatch(false);
+    }
+  };
+
+  const filteredStudents = students.filter(student => {
+    const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.cpf.includes(searchTerm);
+
+    const matchesLevel = !levelFilter || student.level === levelFilter;
+
+    return matchesSearch && matchesLevel;
+  });
 
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -118,8 +214,24 @@ export default function Students() {
             <button type="button" className="search-icon">🔍</button>
           </div>
 
+          {selectedStudentIds.size > 0 && (
+            <button
+              type="button"
+              className="btn-success"
+              onClick={handleBatchPaymentReceipt}
+              disabled={isProcessingBatch}
+            >
+              {isProcessingBatch
+                ? '⏳ Processando...'
+                : `💵 Dar Baixa (${selectedStudentIds.size})`}
+            </button>
+          )}
+
           <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)}>
             + ALUNO
+          </button>
+          <button type="button" className="btn-primary" onClick={() => setShowComprehensiveEnrollmentModal(true)}>
+            + MATRÍCULA COMPLETA
           </button>
         </div>
       </div>
@@ -164,13 +276,52 @@ export default function Students() {
         </button>
       </div>
 
+      {/* Level Filter */}
+      {levels.length > 0 && (
+        <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+          <label htmlFor="level-filter" style={{ marginRight: '0.5rem', fontWeight: 500 }}>
+            Filtrar por nível:
+          </label>
+          <select
+            id="level-filter"
+            value={levelFilter}
+            onChange={(e) => {
+              setLevelFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            style={{
+              padding: '0.5rem',
+              borderRadius: '4px',
+              border: '1px solid #ddd',
+              minWidth: '200px'
+            }}
+          >
+            <option value="">Todos os níveis</option>
+            {levels.map((level) => (
+              <option key={level.id} value={level.name}>
+                {level.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Table */}
       <div className="students-table-container">
         <table className="students-table">
           <thead>
             <tr>
+              <th style={{ width: '50px' }}>
+                <input
+                  type="checkbox"
+                  checked={paginatedStudents.length > 0 && selectedStudentIds.size === paginatedStudents.length}
+                  onChange={handleSelectAll}
+                  style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                />
+              </th>
               <th>Nome</th>
               <th>Situação</th>
+              <th>Nível</th>
               <th>Idade</th>
               <th>Sexo</th>
               <th></th>
@@ -180,11 +331,26 @@ export default function Students() {
             {paginatedStudents.map((student) => (
               <tr key={student.id}>
                 <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedStudentIds.has(student.id)}
+                    onChange={() => handleToggleSelectStudent(student.id)}
+                    style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                  />
+                </td>
+                <td>
                   <div className="student-name-cell">
                     <div className="student-avatar">
                       👤
                     </div>
-                    <span>{student.full_name}</span>
+                    <span
+                      onClick={() => navigate(`/alunos/${student.id}`)}
+                      style={{ cursor: 'pointer', color: '#007bff', textDecoration: 'none' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                      onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                    >
+                      {student.full_name}
+                    </span>
                   </div>
                 </td>
                 <td>
@@ -192,6 +358,7 @@ export default function Students() {
                     {getStatusLabel(student.status)}
                   </span>
                 </td>
+                <td>{student.level || '-'}</td>
                 <td>{calculateAge(student.birth_date)}</td>
                 <td>{student.sex || '-'}</td>
                 <td>
@@ -208,8 +375,7 @@ export default function Students() {
                           <button
                             className="dropdown-item"
                             onClick={() => {
-                              setSelectedStudent(student);
-                              setShowViewModal(true);
+                              navigate(`/alunos/${student.id}`);
                               setOpenDropdown(null);
                             }}
                           >
@@ -310,12 +476,24 @@ export default function Students() {
           }}
         />
       )}
+
+      {/* Comprehensive Enrollment Modal */}
+      {showComprehensiveEnrollmentModal && (
+        <ComprehensiveEnrollmentForm
+          onClose={() => setShowComprehensiveEnrollmentModal(false)}
+          onSuccess={() => {
+            setShowComprehensiveEnrollmentModal(false);
+            fetchStudents();
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // Create Student Modal Component
 function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [levels, setLevels] = useState<Level[]>([]);
   const [formData, setFormData] = useState({
     full_name: '',
     cpf: '',
@@ -323,9 +501,25 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     phone: '',
     birth_date: '',
     sex: '' as 'Masculino' | 'Feminino' | 'Outro' | 'N/I' | '',
+    level: '',
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchLevels();
+  }, []);
+
+  const fetchLevels = async () => {
+    try {
+      const response = await levelService.getLevels();
+      if (response.success) {
+        setLevels(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar níveis:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -352,6 +546,7 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
       if (formData.phone) payload.phone = formData.phone.replace(/\D/g, '');
       if (formData.birth_date) payload.birth_date = formData.birth_date;
       if (formData.sex) payload.sex = formData.sex;
+      if (formData.level) payload.level = formData.level;
 
       await studentService.createStudent(payload);
       onSuccess();
@@ -447,6 +642,22 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
             </div>
           </div>
 
+          <div className="form-group">
+            <label htmlFor="level">Nível</label>
+            <select
+              id="level"
+              value={formData.level}
+              onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+            >
+              <option value="">Selecione...</option>
+              {levels.map((level) => (
+                <option key={level.id} value={level.name}>
+                  {level.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
               Cancelar
@@ -507,6 +718,11 @@ function ViewStudentModal({ student, onClose }: { student: Student; onClose: () 
             <div className="profile-info-item">
               <span className="profile-label">Sexo</span>
               <span className="profile-value">{student.sex || '-'}</span>
+            </div>
+
+            <div className="profile-info-item">
+              <span className="profile-label">Nível</span>
+              <span className="profile-value">{student.level || '-'}</span>
             </div>
 
             <div className="profile-info-item">

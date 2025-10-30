@@ -19,8 +19,10 @@ export const reportService = {
     return response.data;
   },
 
-  async getAllOverdue(): Promise<ReportsResponse<OverdueStudent[]>> {
-    const response = await api.get<ReportsResponse<OverdueStudent[]>>('/api/reports/overdue/all');
+  async getAllOverdue(params?: {
+    modality_id?: number;
+  }): Promise<ReportsResponse<OverdueStudent[]>> {
+    const response = await api.get<ReportsResponse<OverdueStudent[]>>('/api/reports/overdue/all', { params });
     return response.data;
   },
 
@@ -31,6 +33,7 @@ export const reportService = {
     month?: number;
     start_date?: string;
     end_date?: string;
+    modality_id?: number;
   }): Promise<ReportsResponse<{ total_received: number; invoices: any[] }>> {
     const response = await api.get<ReportsResponse<{ total_received: number; invoices: any[] }>>('/api/reports/revenue/received', { params });
     return response.data;
@@ -40,6 +43,7 @@ export const reportService = {
   async getRevenueToReceive(params?: {
     year?: number;
     month?: number;
+    modality_id?: number;
   }): Promise<ReportsResponse<{ total_to_receive: number; invoices: any[] }>> {
     const response = await api.get<ReportsResponse<{ total_to_receive: number; invoices: any[] }>>('/api/reports/revenue/to-receive', { params });
     return response.data;

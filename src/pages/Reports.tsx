@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMoneyBillWave, faDollarSign, faTriangleExclamation, faCreditCard } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../store/authStore';
 import { reportService } from '../services/reportService';
+import { modalityService } from '../services/modalityService';
+import type { Modality } from '../types/levelTypes';
 import '../styles/Reports.css';
 
 interface MonthlyData {
@@ -25,12 +27,14 @@ interface DateFilter {
   month: number;
   startDate: string;
   endDate: string;
+  modality_id?: number | null;
 }
 
 export default function Reports() {
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [modalities, setModalities] = useState<Modality[]>([]);
 
   // Estado do filtro de datas
   const currentDate = new Date();
@@ -40,7 +44,24 @@ export default function Reports() {
     month: currentDate.getMonth() + 1,
     startDate: '',
     endDate: '',
+    modality_id: null,
   });
+
+  // Buscar modalidades ao carregar a página
+  useEffect(() => {
+    const fetchModalities = async () => {
+      try {
+        const response = await modalityService.getModalities();
+        if (response.success) {
+          setModalities(response.data);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar modalidades:', error);
+      }
+    };
+
+    fetchModalities();
+  }, []);
 
   const [revenueStats, setRevenueStats] = useState<RevenueStats>({
     total_received: 0,
@@ -68,22 +89,36 @@ export default function Reports() {
         setIsLoading(true);
 
         // Preparar parâmetros baseados no tipo de filtro
-        const params = dateFilter.filterType === 'month'
+        const baseParams = dateFilter.filterType === 'month'
           ? { period: 'month' as const, year: dateFilter.year, month: dateFilter.month }
           : { period: 'custom' as const, start_date: dateFilter.startDate, end_date: dateFilter.endDate };
 
+        // Adicionar modality_id aos parâmetros se selecionado
+        const params = dateFilter.modality_id
+          ? { ...baseParams, modality_id: dateFilter.modality_id }
+          : baseParams;
+
+        const toReceiveParams = dateFilter.filterType === 'month'
+          ? { year: dateFilter.year, month: dateFilter.month }
+          : {};
+
+        const toReceiveParamsWithModality = dateFilter.modality_id
+          ? { ...toReceiveParams, modality_id: dateFilter.modality_id }
+          : toReceiveParams;
+
+        const overdueParams = dateFilter.modality_id
+          ? { modality_id: dateFilter.modality_id }
+          : {};
+
         const [receivedRes, toReceiveRes, overdueRes] = await Promise.all([
           reportService.getReceivedRevenue(params),
-          reportService.getRevenueToReceive(dateFilter.filterType === 'month'
-            ? { year: dateFilter.year, month: dateFilter.month }
-            : {}
-          ),
-          reportService.getAllOverdue(),
+          reportService.getRevenueToReceive(toReceiveParamsWithModality),
+          reportService.getAllOverdue(overdueParams),
         ]);
 
         setRevenueStats({
-          total_received: receivedRes.data.total_received || 0,
-          total_to_receive: toReceiveRes.data.total_to_receive || 0,
+          total_received: receivedRes.data.summary?.total_received_cents || 0,
+          total_to_receive: toReceiveRes.data.summary?.total_to_receive_cents || 0,
           total_overdue: overdueRes.data.length || 0,
           overdue_count: overdueRes.data.length || 0,
         });
@@ -115,12 +150,23 @@ export default function Reports() {
 
   // Formatar período selecionado para exibição
   const getDisplayPeriod = () => {
+    let period = '';
     if (dateFilter.filterType === 'month') {
       const monthNames = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-      return `${monthNames[dateFilter.month - 1]}/${dateFilter.year}`;
+      period = `${monthNames[dateFilter.month - 1]}/${dateFilter.year}`;
     } else {
-      return `${dateFilter.startDate} até ${dateFilter.endDate}`;
+      period = `${dateFilter.startDate} até ${dateFilter.endDate}`;
     }
+
+    // Adicionar modalidade se selecionada
+    if (dateFilter.modality_id) {
+      const modality = modalities.find((m) => m.id === dateFilter.modality_id);
+      if (modality) {
+        period += ` - ${modality.name}`;
+      }
+    }
+
+    return period;
   };
 
   // Handler para mudança rápida de mês
@@ -273,6 +319,25 @@ export default function Reports() {
                   </div>
                 </div>
               )}
+
+              {/* Filtro por Modalidade */}
+              <div className="form-group" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e0e0e0' }}>
+                <label>Modalidade</label>
+                <select
+                  value={dateFilter.modality_id || ''}
+                  onChange={(e) => setDateFilter({
+                    ...dateFilter,
+                    modality_id: e.target.value ? parseInt(e.target.value) : null
+                  })}
+                >
+                  <option value="">Todas as modalidades</option>
+                  {modalities.map((modality) => (
+                    <option key={modality.id} value={modality.id}>
+                      {modality.icon ? `${modality.icon} ` : ''}{modality.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="modal-footer">
               <button type="button" className="btn-secondary" onClick={() => setShowFilterModal(false)}>

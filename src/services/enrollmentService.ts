@@ -4,6 +4,7 @@ import type {
   EnrollmentsResponse,
   CreateEnrollmentRequest,
   UpdateEnrollmentClassesRequest,
+  UpdateEnrollmentRequest,
   Enrollment,
   EnrollmentClass
 } from '../types/enrollmentTypes';
@@ -46,7 +47,19 @@ export const enrollmentService = {
     return response.data;
   },
 
-  // Atualizar turmas da matrícula
+  // Atualizar matrícula (novo endpoint completo)
+  async updateEnrollment(
+    enrollmentId: number,
+    data: UpdateEnrollmentRequest
+  ): Promise<{ success: boolean; message: string; enrollment?: Enrollment }> {
+    const response = await api.put<{ success: boolean; message: string; enrollment?: Enrollment }>(
+      `/api/enrollments/${enrollmentId}`,
+      data
+    );
+    return response.data;
+  },
+
+  // Atualizar turmas da matrícula (endpoint legado)
   async updateEnrollmentClasses(
     enrollmentId: number,
     data: UpdateEnrollmentClassesRequest

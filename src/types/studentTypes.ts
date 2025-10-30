@@ -6,6 +6,7 @@ export interface Student {
   phone?: string;
   birth_date?: string;
   sex?: 'Masculino' | 'Feminino' | 'Outro' | 'N/I';
+  level?: 'iniciante' | 'intermediario' | 'avançado' | string;
   status: 'ativo' | 'inativo' | 'pendente';
   created_at: string;
 }
@@ -17,6 +18,7 @@ export interface CreateStudentRequest {
   phone?: string;
   birth_date?: string;
   sex?: 'Masculino' | 'Feminino' | 'Outro' | 'N/I';
+  level?: string;
 }
 
 export interface UpdateStudentRequest {

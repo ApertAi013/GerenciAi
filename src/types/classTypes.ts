@@ -9,6 +9,8 @@ export interface Class {
   location?: string;
   capacity: number;
   level?: 'iniciante' | 'intermediario' | 'avancado' | 'todos';
+  allowed_levels?: string[]; // Array of level names that can attend this class
+  current_students?: number; // Number of enrolled students
   status: 'ativa' | 'suspensa' | 'cancelada';
   created_at?: string;
 }
@@ -40,4 +42,5 @@ export interface CreateClassRequest {
   location?: string;
   capacity?: number;
   level?: 'iniciante' | 'intermediario' | 'avancado' | 'todos';
+  allowed_levels?: string[];
 }
