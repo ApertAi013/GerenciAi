@@ -12,6 +12,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +34,15 @@ export default function Login() {
         console.log('Token:', response.data.token);
 
         setAuth(response.data.user, response.data.token);
-        console.log('Navegando para /...');
+
+        // Salvar preferência de "mantenha-me logado"
+        if (keepLoggedIn) {
+          localStorage.setItem('keepLoggedIn', 'true');
+        } else {
+          localStorage.removeItem('keepLoggedIn');
+        }
+
+        console.log('Navegando para /dashboard...');
         navigate('/dashboard');
       } else {
         console.log('Login falhou - success = false');
@@ -92,6 +101,19 @@ export default function Login() {
               required
               disabled={isLoading}
             />
+          </div>
+
+          <div className="form-group-checkbox">
+            <label htmlFor="keepLoggedIn" className="checkbox-label">
+              <input
+                id="keepLoggedIn"
+                type="checkbox"
+                checked={keepLoggedIn}
+                onChange={(e) => setKeepLoggedIn(e.target.checked)}
+                disabled={isLoading}
+              />
+              <span>Mantenha-me logado (ir direto ao portal)</span>
+            </label>
           </div>
 
           <button type="submit" className="login-button" disabled={isLoading}>

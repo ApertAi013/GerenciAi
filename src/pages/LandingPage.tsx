@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { authService } from '../services/authService';
 import {
   faCalendarDays,
   faMoneyBillWave,
@@ -18,6 +19,16 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Verificar se o usuário está logado e tem a preferência de "mantenha-me logado"
+    const token = authService.getToken();
+    const keepLoggedIn = localStorage.getItem('keepLoggedIn') === 'true';
+
+    if (token && keepLoggedIn) {
+      // Redirecionar automaticamente para o dashboard
+      navigate('/dashboard');
+      return;
+    }
+
     // Smooth scroll for anchor links
     const links = document.querySelectorAll('a[href^="#"]');
     links.forEach(anchor => {
