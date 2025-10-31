@@ -28,7 +28,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { path: '/', label: 'Início', icon: faHome },
+  { path: '/dashboard', label: 'Início', icon: faHome },
   { path: '/agenda', label: 'Agenda', icon: faCalendarDays },
   { path: '/alunos', label: 'Alunos', icon: faUsers },
   { path: '/turmas', label: 'Turmas', icon: faUserGroup },

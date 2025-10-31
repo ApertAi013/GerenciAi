@@ -61,6 +61,22 @@ export const AVAILABLE_WIDGETS: WidgetConfig[] = [
     defaultSize: 'medium',
     category: 'quick-access',
   },
+  {
+    type: 'ai-suggestions',
+    title: 'Sugestões da IA',
+    description: 'Recomendações inteligentes para seu negócio',
+    icon: '💡',
+    defaultSize: 'medium',
+    category: 'quick-access',
+  },
+  {
+    type: 'ai-stats',
+    title: 'Estatísticas da IA',
+    description: 'Métricas e análises das sugestões da IA',
+    icon: '🤖',
+    defaultSize: 'medium',
+    category: 'stats',
+  },
 ];
 
 // Widgets padrão para novos usuários

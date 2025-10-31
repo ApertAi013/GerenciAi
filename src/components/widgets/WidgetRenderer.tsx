@@ -6,6 +6,8 @@ import RecentStudentsWidget from './RecentStudentsWidget';
 import NotificationsWidget from './NotificationsWidget';
 import UpcomingClassesWidget from './UpcomingClassesWidget';
 import OverdueInvoicesWidget from './OverdueInvoicesWidget';
+import AISuggestionsWidget from './AISuggestionsWidget';
+import AIStatsWidget from './AIStatsWidget';
 
 interface WidgetRendererProps {
   type: WidgetType;
@@ -27,6 +29,10 @@ export default function WidgetRenderer({ type }: WidgetRendererProps) {
       return <UpcomingClassesWidget />;
     case 'overdue-invoices':
       return <OverdueInvoicesWidget />;
+    case 'ai-suggestions':
+      return <AISuggestionsWidget />;
+    case 'ai-stats':
+      return <AIStatsWidget />;
     default:
       return <div style={{ padding: '20px', textAlign: 'center' }}>Widget não encontrado</div>;
   }

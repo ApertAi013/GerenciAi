@@ -5,7 +5,9 @@ export type WidgetType =
   | 'recent-students'
   | 'upcoming-classes'
   | 'overdue-invoices'
-  | 'notifications';
+  | 'notifications'
+  | 'ai-suggestions'
+  | 'ai-stats';
 
 export interface Widget {
   id: string;
