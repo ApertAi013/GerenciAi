@@ -65,3 +65,43 @@ export interface AIStats {
   by_type: Record<SuggestionType, number>;
   by_priority: Record<SuggestionPriority, number>;
 }
+
+// Action response types
+export interface WhatsAppLink {
+  student_id: number;
+  student_name: string;
+  phone: string;
+  whatsapp_link: string;
+  amount?: number;
+  due_date?: string;
+  days_inactive?: number;
+}
+
+export interface ClassInfo {
+  id: number;
+  name: string;
+  weekday?: string;
+  time?: string;
+  available_slots?: number;
+  occupancy_rate?: number;
+  enrolled?: number;
+  max?: number;
+}
+
+export interface ScheduleConflict {
+  class1: {
+    id: number;
+    name: string;
+  };
+  class2: {
+    id: number;
+    name: string;
+  };
+  weekday: string;
+}
+
+export type ActionData =
+  | { type: 'whatsapp_links'; links: WhatsAppLink[] }
+  | { type: 'class_list'; classes: ClassInfo[] }
+  | { type: 'low_occupancy_list'; classes: ClassInfo[] }
+  | { type: 'conflicts_list'; conflicts: ScheduleConflict[] };

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { aiService } from '../services/aiService';
-import type { AISuggestion, SuggestionPriority, SuggestionStatus, SuggestionType } from '../types/aiTypes';
+import type { AISuggestion, SuggestionPriority, SuggestionStatus, SuggestionType, ActionData } from '../types/aiTypes';
+import SuggestionActionModal from '../components/SuggestionActionModal';
 import '../styles/AISuggestions.css';
 
 export default function AISuggestions() {
@@ -9,6 +10,9 @@ export default function AISuggestions() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [showModal, setShowModal] = useState(false);
+  const [modalData, setModalData] = useState<ActionData | null>(null);
+  const [currentSuggestionType, setCurrentSuggestionType] = useState<string>('');
 
   useEffect(() => {
     fetchSuggestions();
@@ -47,16 +51,23 @@ export default function AISuggestions() {
     }
   };
 
-  const handleMarkAsExecuted = async (id: number) => {
+  const handleExecuteAction = async (suggestion: AISuggestion) => {
     try {
-      const response = await aiService.markAsExecuted(id);
+      const response = await aiService.executeAction(suggestion.id);
       if (response.success) {
-        setSuggestions(suggestions.map(s => s.id === id ? response.data : s));
-        toast.success('Sugestão marcada como executada');
+        setModalData(response.data);
+        setCurrentSuggestionType(suggestion.type);
+        setShowModal(true);
+
+        // Mark as executed after opening modal
+        await aiService.markAsExecuted(suggestion.id);
+        setSuggestions(suggestions.map(s =>
+          s.id === suggestion.id ? { ...s, status: 'executada' as SuggestionStatus } : s
+        ));
       }
     } catch (error: any) {
-      console.error('Erro ao marcar como executada:', error);
-      toast.error(error.response?.data?.message || 'Erro ao marcar como executada');
+      console.error('Erro ao executar ação:', error);
+      toast.error(error.response?.data?.message || 'Erro ao executar ação');
     }
   };
 
@@ -209,7 +220,7 @@ export default function AISuggestions() {
                       </button>
                       <button
                         className="btn-action btn-execute"
-                        onClick={() => handleMarkAsExecuted(suggestion.id)}
+                        onClick={() => handleExecuteAction(suggestion)}
                       >
                         Executar
                       </button>
@@ -218,7 +229,7 @@ export default function AISuggestions() {
                   {suggestion.status === 'lida' && (
                     <button
                       className="btn-action btn-execute"
-                      onClick={() => handleMarkAsExecuted(suggestion.id)}
+                      onClick={() => handleExecuteAction(suggestion)}
                     >
                       Executar
                     </button>
@@ -235,6 +246,13 @@ export default function AISuggestions() {
           ))}
         </div>
       )}
+
+      <SuggestionActionModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        actionData={modalData}
+        suggestionType={currentSuggestionType}
+      />
     </div>
   );
 }

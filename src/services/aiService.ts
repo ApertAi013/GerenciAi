@@ -4,6 +4,7 @@ import type {
   AISuggestion,
   AIStats,
   UpdateAISettingsData,
+  ActionData,
 } from '../types/aiTypes';
 
 interface ApiResponse<T> {
@@ -79,6 +80,14 @@ export const aiService = {
    */
   getStats: async (): Promise<ApiResponse<AIStats>> => {
     const response = await api.get('/api/ai-proactive/stats');
+    return response.data;
+  },
+
+  /**
+   * Executar ação de uma sugestão
+   */
+  executeAction: async (id: number): Promise<ApiResponse<ActionData>> => {
+    const response = await api.post(`/api/ai-proactive/suggestions/${id}/action`);
     return response.data;
   },
 };
