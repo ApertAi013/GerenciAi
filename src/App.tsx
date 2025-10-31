@@ -17,6 +17,7 @@ import Plans from './pages/Plans'
 import Courts from './pages/Courts'
 import Rentals from './pages/Rentals'
 import RentalsSchedule from './pages/RentalsSchedule'
+import AI from './pages/AI'
 import AISettings from './pages/AISettings'
 import AISuggestions from './pages/AISuggestions'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -82,6 +83,7 @@ export default function App() {
             <Route path="/quadras" element={<Courts />} />
             <Route path="/locacoes" element={<Rentals />} />
             <Route path="/locacoes/agenda" element={<RentalsSchedule />} />
+            <Route path="/ia" element={<AI />} />
             <Route path="/ia/configuracoes" element={<AISettings />} />
             <Route path="/ia/sugestoes" element={<AISuggestions />} />
             <Route path="/chat" element={<Chat />} />

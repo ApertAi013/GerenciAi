@@ -88,7 +88,9 @@
       "Bash(gcloud app services list:*)",
       "Bash(gcloud app versions list:*)",
       "Bash(gcloud app versions describe:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(gcloud sql connect:*)",
+      "Bash(gcloud beta sql connect:*)"
     ],
     "deny": [],
     "ask": []
