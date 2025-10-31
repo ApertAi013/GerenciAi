@@ -5,7 +5,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilter, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../services/classService';
 import { enrollmentService } from '../services/enrollmentService';
+import { rentalService } from '../services/rentalService';
 import type { Class, Modality } from '../types/classTypes';
+import type { CourtRental } from '../types/rentalTypes';
 import CreateClassModal from '../components/CreateClassModal';
 import MonthView from '../components/schedule/MonthView';
 import DayView from '../components/schedule/DayView';
@@ -21,6 +23,7 @@ interface Student {
 
 interface ClassSchedule {
   id: string;
+  type: 'class' | 'rental'; // Novo: diferenciar turmas de locações
   name: string;
   sport: string;
   day: number; // 0-6 (domingo-sábado)
@@ -31,6 +34,11 @@ interface ClassSchedule {
   color: string;
   modality_id: number;
   level?: string;
+  // Campos específicos de locação
+  rentalDate?: string; // Para locações: data específica
+  renterName?: string;
+  courtName?: string;
+  paymentStatus?: string;
 }
 
 // Mapeamento de dias da semana do banco para números
@@ -67,6 +75,7 @@ const convertClassToSchedule = (dbClass: Class & { students?: any[] }): ClassSch
 
   return {
     id: dbClass.id.toString(),
+    type: 'class',
     name: dbClass.name || dbClass.modality_name || 'Turma sem nome',
     sport: dbClass.modality_name || '',
     day: WEEKDAY_TO_NUMBER[dbClass.weekday] || 0,
@@ -77,6 +86,34 @@ const convertClassToSchedule = (dbClass: Class & { students?: any[] }): ClassSch
     color: color,
     modality_id: dbClass.modality_id,
     level: dbClass.level,
+  };
+};
+
+// Função para converter locação do banco para formato da agenda
+const convertRentalToSchedule = (rental: CourtRental): ClassSchedule => {
+  // Cor baseada no status de pagamento
+  const color = rental.payment_status === 'paga' ? '#10B981' : rental.payment_status === 'pendente' ? '#F59E0B' : '#EF4444';
+
+  // Obter dia da semana da data
+  const rentalDate = new Date(rental.rental_date + 'T00:00:00');
+  const day = rentalDate.getDay();
+
+  return {
+    id: `rental-${rental.id}`,
+    type: 'rental',
+    name: rental.court_name,
+    sport: `Locação - ${rental.renter_name}`,
+    day: day,
+    startTime: rental.start_time.substring(0, 5),
+    endTime: rental.end_time.substring(0, 5),
+    capacity: 1,
+    students: [],
+    color: color,
+    modality_id: -1, // ID especial para locações
+    rentalDate: rental.rental_date,
+    renterName: rental.renter_name,
+    courtName: rental.court_name,
+    paymentStatus: rental.payment_status,
   };
 };
 
@@ -185,19 +222,63 @@ export default function Schedule() {
         })
       );
 
-      // 3. Converter para formato da agenda
+      // 3. Converter turmas para formato da agenda
       const scheduleClasses = classesWithStudents.map((dbClass) =>
         convertClassToSchedule(dbClass)
       );
 
-      setClasses(scheduleClasses);
+      // 4. Buscar locações da semana/mês/dia atual
+      let rentals: CourtRental[] = [];
+      try {
+        // Calcular período baseado no viewMode e currentWeek
+        const startDate = format(
+          viewMode === 'month'
+            ? new Date(currentWeek.getFullYear(), currentWeek.getMonth(), 1)
+            : viewMode === 'week'
+            ? addDays(currentWeek, -currentWeek.getDay()) // Domingo da semana
+            : currentWeek,
+          'yyyy-MM-dd'
+        );
+
+        const endDate = format(
+          viewMode === 'month'
+            ? new Date(currentWeek.getFullYear(), currentWeek.getMonth() + 1, 0)
+            : viewMode === 'week'
+            ? addDays(currentWeek, 6 - currentWeek.getDay()) // Sábado da semana
+            : currentWeek,
+          'yyyy-MM-dd'
+        );
+
+        const rentalsResponse = await rentalService.getRentals({
+          start_date: startDate,
+          end_date: endDate,
+        });
+
+        if (rentalsResponse.success && rentalsResponse.data) {
+          // Filtrar locações não canceladas
+          rentals = rentalsResponse.data.filter(r => r.status !== 'cancelada');
+        }
+      } catch (err) {
+        console.error('Erro ao buscar locações:', err);
+        // Continuar mesmo se falhar ao buscar locações
+      }
+
+      // 5. Converter locações para formato da agenda
+      const scheduleRentals = rentals.map((rental) =>
+        convertRentalToSchedule(rental)
+      );
+
+      // 6. Combinar turmas e locações
+      const combinedSchedule = [...scheduleClasses, ...scheduleRentals];
+
+      setClasses(combinedSchedule);
     } catch (err) {
       console.error('Erro ao buscar turmas:', err);
       setError('Erro ao carregar turmas. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentWeek, viewMode]);
 
   useEffect(() => {
     fetchClassesAndStudents();

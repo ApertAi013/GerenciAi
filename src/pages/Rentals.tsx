@@ -15,6 +15,11 @@ export default function Rentals() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedRental, setSelectedRental] = useState<CourtRental | null>(null);
 
+  // Student search state
+  const [studentSearch, setStudentSearch] = useState('');
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+
   // Stats
   const [stats, setStats] = useState({
     today: 0,
@@ -51,6 +56,22 @@ export default function Rentals() {
     fetchStudents();
     fetchStats();
   }, [filters]);
+
+  // Filter students based on search
+  useEffect(() => {
+    if (studentSearch.trim() === '') {
+      setFilteredStudents(students);
+    } else {
+      const searchLower = studentSearch.toLowerCase();
+      const filtered = students.filter(
+        (student) =>
+          student.full_name.toLowerCase().includes(searchLower) ||
+          student.phone.includes(searchLower) ||
+          (student.email && student.email.toLowerCase().includes(searchLower))
+      );
+      setFilteredStudents(filtered);
+    }
+  }, [studentSearch, students]);
 
   const fetchRentals = async () => {
     try {
@@ -183,6 +204,18 @@ export default function Rentals() {
     }
   };
 
+  const handleSelectStudent = (student: Student) => {
+    setFormData({
+      ...formData,
+      student_id: student.id,
+      renter_name: student.full_name,
+      renter_phone: student.phone,
+      renter_email: student.email || '',
+    });
+    setStudentSearch('');
+    setShowStudentDropdown(false);
+  };
+
   const resetForm = () => {
     setFormData({
       renter_name: '',
@@ -197,6 +230,8 @@ export default function Rentals() {
       notes: '',
     });
     setRentalType('student');
+    setStudentSearch('');
+    setShowStudentDropdown(false);
   };
 
   const formatCurrency = (cents: number) => {
@@ -517,18 +552,75 @@ export default function Rentals() {
                 {rentalType === 'student' && (
                   <div className="form-group">
                     <label>Aluno *</label>
-                    <select
-                      required
-                      value={formData.student_id || ''}
-                      onChange={(e) => handleStudentChange(parseInt(e.target.value))}
-                    >
-                      <option value="">Selecione o aluno...</option>
-                      {students.map((student) => (
-                        <option key={student.id} value={student.id}>
-                          {student.full_name} - {student.phone}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="student-autocomplete">
+                      <input
+                        type="text"
+                        className="student-search-input"
+                        placeholder="Digite o nome, telefone ou email do aluno..."
+                        value={formData.student_id ? formData.renter_name : studentSearch}
+                        onChange={(e) => {
+                          // Se já tem aluno selecionado, limpa a seleção ao começar a digitar
+                          if (formData.student_id) {
+                            setFormData({
+                              ...formData,
+                              student_id: undefined,
+                              renter_name: '',
+                              renter_phone: '',
+                              renter_email: '',
+                            });
+                          }
+                          setStudentSearch(e.target.value);
+                          setShowStudentDropdown(true);
+                        }}
+                        onFocus={() => setShowStudentDropdown(true)}
+                        onBlur={() => {
+                          // Delay para permitir clique no dropdown
+                          setTimeout(() => setShowStudentDropdown(false), 200);
+                        }}
+                      />
+                      {showStudentDropdown && filteredStudents.length > 0 && (
+                        <div className="student-dropdown">
+                          {filteredStudents.slice(0, 10).map((student) => (
+                            <div
+                              key={student.id}
+                              className="student-dropdown-item"
+                              onClick={() => handleSelectStudent(student)}
+                            >
+                              <div className="student-dropdown-name">{student.full_name}</div>
+                              <div className="student-dropdown-info">
+                                Telefone: {student.phone}
+                                {student.email && ` | Email: ${student.email}`}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {showStudentDropdown && studentSearch && filteredStudents.length === 0 && (
+                        <div className="student-dropdown">
+                          <div className="student-dropdown-empty">Nenhum aluno encontrado</div>
+                        </div>
+                      )}
+                    </div>
+                    {formData.student_id && (
+                      <div className="selected-student-badge">
+                        ✓ {formData.renter_name}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              student_id: undefined,
+                              renter_name: '',
+                              renter_phone: '',
+                              renter_email: '',
+                            });
+                            setStudentSearch('');
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
