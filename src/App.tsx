@@ -13,6 +13,8 @@ import Financial from './pages/Financial'
 import DataMigration from './pages/DataMigration'
 import Levels from './pages/Levels'
 import Plans from './pages/Plans'
+import Rentals from './pages/Rentals'
+import RentalsSchedule from './pages/RentalsSchedule'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -38,6 +40,8 @@ export default function App() {
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/niveis" element={<Levels />} />
             <Route path="/planos" element={<Plans />} />
+            <Route path="/locacoes" element={<Rentals />} />
+            <Route path="/locacoes/agenda" element={<RentalsSchedule />} />
             <Route path="/chat" element={<Chat />} />
             <Route
               path="/migracao"
