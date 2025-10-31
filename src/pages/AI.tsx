@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faLightbulb, faCog, faCrown } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../store/authStore';
 import { premiumFeaturesService } from '../services/premiumFeaturesService';
 import type { FeatureAccess, UsageInfo } from '../types/premiumFeaturesTypes';
 import AIProactiveOnboardingTour from '../components/ai/AIProactiveOnboardingTour';
 import LimitReachedModal from '../components/chat/LimitReachedModal';
+import PremiumBadge from '../components/chat/PremiumBadge';
 import '../styles/AI.css';
 
 const ONBOARDING_KEY = 'ai_proactive_onboarding_completed';
@@ -124,35 +127,41 @@ export default function AI() {
       />
 
       <div className="ai-header">
-        <h1>Inteligência Artificial {isPremiumUser && '👑'}</h1>
+        <h1>
+          Inteligência Artificial {isPremiumUser && <PremiumBadge />}
+        </h1>
         <p>Gerencie configurações e visualize sugestões inteligentes do sistema</p>
         {!isPremiumUser && (
           <p style={{ marginTop: '10px', fontSize: '14px', color: '#f59e0b' }}>
-            💎 Feature Premium - Entre em contato para contratar
+            <FontAwesomeIcon icon={faCrown} /> Feature Premium - Entre em contato para contratar
           </p>
         )}
       </div>
 
       <div className="ai-cards">
         <div className="ai-card" onClick={() => handleNavigation('/ia/sugestoes')}>
-          <div className="ai-card-icon suggestions">💡</div>
+          <div className="ai-card-icon suggestions">
+            <FontAwesomeIcon icon={faLightbulb} />
+          </div>
           <h2>Sugestões</h2>
           <p>Visualize e gerencie sugestões inteligentes geradas pela IA</p>
           {!featureAccess?.hasAccess && (
             <div style={{ marginTop: '10px', fontSize: '12px', color: '#f59e0b' }}>
-              🔒 Requer acesso premium
+              <FontAwesomeIcon icon={faCrown} /> Requer acesso premium
             </div>
           )}
           <button className="ai-card-button">Acessar Sugestões →</button>
         </div>
 
         <div className="ai-card" onClick={() => handleNavigation('/ia/configuracoes')}>
-          <div className="ai-card-icon settings">⚙️</div>
+          <div className="ai-card-icon settings">
+            <FontAwesomeIcon icon={faCog} />
+          </div>
           <h2>Configurações</h2>
           <p>Configure tipos de análises, frequências e horários da IA</p>
           {!featureAccess?.hasAccess && (
             <div style={{ marginTop: '10px', fontSize: '12px', color: '#f59e0b' }}>
-              🔒 Requer acesso premium
+              <FontAwesomeIcon icon={faCrown} /> Requer acesso premium
             </div>
           )}
           <button className="ai-card-button">Acessar Configurações →</button>

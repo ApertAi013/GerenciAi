@@ -1,5 +1,18 @@
 import { useCallback } from 'react';
 import Joyride, { type CallBackProps, type Step, STATUS } from 'react-joyride';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faRobot,
+  faClipboardList,
+  faDollarSign,
+  faCalendarAlt,
+  faChartLine,
+  faUserSlash,
+  faExclamationTriangle,
+  faCog,
+  faCrown,
+  faBullseye
+} from '@fortawesome/free-solid-svg-icons';
 
 interface AIProactiveOnboardingTourProps {
   run: boolean;
@@ -13,7 +26,7 @@ export default function AIProactiveOnboardingTour({ run, onFinish, isPremiumUser
       target: 'body',
       content: (
         <div>
-          <h3>🤖 Bem-vindo à IA Proativa!</h3>
+          <h3><FontAwesomeIcon icon={faRobot} /> Bem-vindo à IA Proativa!</h3>
           <p>Nossa IA analisa automaticamente os dados da sua academia e gera sugestões inteligentes para melhorar sua gestão.</p>
           <p style={{ marginTop: '15px' }}>Vamos fazer um tour rápido pelas funcionalidades!</p>
         </div>
@@ -25,14 +38,14 @@ export default function AIProactiveOnboardingTour({ run, onFinish, isPremiumUser
       target: '.ai-card',
       content: (
         <div>
-          <h3>📋 Sugestões Inteligentes</h3>
+          <h3><FontAwesomeIcon icon={faClipboardList} /> Sugestões Inteligentes</h3>
           <p>Aqui você encontra sugestões geradas pela IA, como:</p>
           <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
-            <li>💰 Lembretes de pagamento</li>
-            <li>📅 Vagas disponíveis em turmas</li>
-            <li>📉 Alertas de baixa ocupação</li>
-            <li>😴 Alunos inativos</li>
-            <li>⚠️ Conflitos de horário</li>
+            <li><FontAwesomeIcon icon={faDollarSign} /> Lembretes de pagamento</li>
+            <li><FontAwesomeIcon icon={faCalendarAlt} /> Vagas disponíveis em turmas</li>
+            <li><FontAwesomeIcon icon={faChartLine} /> Alertas de baixa ocupação</li>
+            <li><FontAwesomeIcon icon={faUserSlash} /> Alunos inativos</li>
+            <li><FontAwesomeIcon icon={faExclamationTriangle} /> Conflitos de horário</li>
           </ul>
         </div>
       ),
@@ -42,7 +55,7 @@ export default function AIProactiveOnboardingTour({ run, onFinish, isPremiumUser
       target: 'body',
       content: (
         <div>
-          <h3>⚙️ Configurações Personalizadas</h3>
+          <h3><FontAwesomeIcon icon={faCog} /> Configurações Personalizadas</h3>
           <p>Na área de configurações, você pode:</p>
           <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
             <li>Ativar/desativar cada tipo de sugestão</li>
@@ -58,17 +71,23 @@ export default function AIProactiveOnboardingTour({ run, onFinish, isPremiumUser
       target: 'body',
       content: (
         <div>
-          <h3>{isPremiumUser ? '👑 Você é Usuário PRO!' : '🎯 Feature Premium'}</h3>
+          <h3>
+            {isPremiumUser ? (
+              <><FontAwesomeIcon icon={faCrown} /> Você é Usuário PRO!</>
+            ) : (
+              <><FontAwesomeIcon icon={faBullseye} /> Feature Premium</>
+            )}
+          </h3>
           {isPremiumUser ? (
             <div>
-              <p>✅ Você tem <strong>acesso total</strong> à IA Proativa!</p>
+              <p>Você tem <strong>acesso total</strong> à IA Proativa!</p>
               <p>Aproveite sugestões ilimitadas e automáticas para otimizar sua gestão.</p>
             </div>
           ) : (
             <div>
               <p>A IA Proativa é uma <strong>funcionalidade premium</strong>.</p>
               <p>Para ter acesso completo a sugestões inteligentes automáticas:</p>
-              <p><strong>💎 Entre em contato para contratar!</strong></p>
+              <p><strong><FontAwesomeIcon icon={faCrown} /> Entre em contato para contratar!</strong></p>
             </div>
           )}
           <p style={{ marginTop: '15px', fontSize: '14px', opacity: 0.8 }}>

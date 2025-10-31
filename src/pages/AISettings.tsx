@@ -63,8 +63,8 @@ export default function AISettings() {
   // Ação de upgrade (contatar admin)
   const handleUpgrade = () => {
     alert(
-      '💎 Para contratar a IA Proativa com sugestões automáticas:\n\n' +
-      '📧 Entre em contato com:\n' +
+      'Para contratar a IA Proativa com sugestões automáticas:\n\n' +
+      'Entre em contato com:\n' +
       '- teus.hcp@gmail.com\n' +
       '- samuelfranca.m@gmail.com\n\n' +
       'Teremos prazer em ativar seu acesso premium!'

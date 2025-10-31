@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDollarSign, faCalendarAlt, faChartLine, faUserSlash, faExclamationTriangle, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../store/authStore';
 import { premiumFeaturesService } from '../services/premiumFeaturesService';
 import { aiService } from '../services/aiService';
@@ -68,8 +70,8 @@ export default function AISuggestions() {
   // Ação de upgrade (contatar admin)
   const handleUpgrade = () => {
     alert(
-      '💎 Para contratar a IA Proativa com sugestões automáticas:\n\n' +
-      '📧 Entre em contato com:\n' +
+      'Para contratar a IA Proativa com sugestões automáticas:\n\n' +
+      'Entre em contato com:\n' +
       '- teus.hcp@gmail.com\n' +
       '- samuelfranca.m@gmail.com\n\n' +
       'Teremos prazer em ativar seu acesso premium!'
@@ -163,12 +165,12 @@ export default function AISuggestions() {
 
   const getTypeIcon = (type: SuggestionType) => {
     switch (type) {
-      case 'payment_reminder': return '💰';
-      case 'available_slots': return '📅';
-      case 'low_occupancy': return '📉';
-      case 'inactive_students': return '😴';
-      case 'schedule_conflict': return '⚠️';
-      default: return '💡';
+      case 'payment_reminder': return <FontAwesomeIcon icon={faDollarSign} />;
+      case 'available_slots': return <FontAwesomeIcon icon={faCalendarAlt} />;
+      case 'low_occupancy': return <FontAwesomeIcon icon={faChartLine} />;
+      case 'inactive_students': return <FontAwesomeIcon icon={faUserSlash} />;
+      case 'schedule_conflict': return <FontAwesomeIcon icon={faExclamationTriangle} />;
+      default: return <FontAwesomeIcon icon={faLightbulb} />;
     }
   };
 
