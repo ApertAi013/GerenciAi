@@ -1,17 +1,81 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../store/authStore';
+import { premiumFeaturesService } from '../services/premiumFeaturesService';
 import { aiService } from '../services/aiService';
+import type { FeatureAccess, UsageInfo } from '../types/premiumFeaturesTypes';
 import type { AISettings as AISettingsType, Frequency } from '../types/aiTypes';
+import LimitReachedModal from '../components/chat/LimitReachedModal';
 import '../styles/AISettings.css';
 
+const AI_PROACTIVE_FEATURE_CODE = 'ai_proactive';
+
 export default function AISettings() {
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+
   const [settings, setSettings] = useState<AISettingsType | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Premium features state
+  const [featureAccess, setFeatureAccess] = useState<FeatureAccess | null>(null);
+  const [isLoadingAccess, setIsLoadingAccess] = useState(true);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    if (user) {
+      loadPremiumAccess();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (featureAccess?.hasAccess) {
+      fetchSettings();
+    }
+  }, [featureAccess]);
+
+  // Carregar acesso premium
+  const loadPremiumAccess = async () => {
+    try {
+      setIsLoadingAccess(true);
+      const response = await premiumFeaturesService.getMyAccess(AI_PROACTIVE_FEATURE_CODE);
+      setFeatureAccess(response.data.access);
+
+      // Se não tem acesso, mostrar modal
+      if (!response.data.access.hasAccess) {
+        setShowLimitModal(true);
+      }
+    } catch (error: any) {
+      console.error('Erro ao carregar acesso premium:', error);
+      setFeatureAccess({
+        hasAccess: false,
+        isUnlimited: false,
+        usageInfo: {},
+      });
+      setShowLimitModal(true);
+    } finally {
+      setIsLoadingAccess(false);
+    }
+  };
+
+  // Ação de upgrade (contatar admin)
+  const handleUpgrade = () => {
+    alert(
+      '💎 Para contratar a IA Proativa com sugestões automáticas:\n\n' +
+      '📧 Entre em contato com:\n' +
+      '- teus.hcp@gmail.com\n' +
+      '- samuelfranca.m@gmail.com\n\n' +
+      'Teremos prazer em ativar seu acesso premium!'
+    );
+  };
+
+  // Fechar modal e voltar para página inicial da IA
+  const handleCloseModal = () => {
+    setShowLimitModal(false);
+    navigate('/ia');
+  };
 
   const fetchSettings = async () => {
     try {
@@ -85,7 +149,15 @@ export default function AISettings() {
     }
   };
 
-  if (loading) {
+  if (!user) {
+    return (
+      <div className="ai-settings-container">
+        <div className="loading">Faça login para acessar as configurações</div>
+      </div>
+    );
+  }
+
+  if (isLoadingAccess || loading) {
     return (
       <div className="ai-settings-container">
         <div className="loading">Carregando configurações...</div>
@@ -101,8 +173,18 @@ export default function AISettings() {
     );
   }
 
+  const isPremiumUser = featureAccess?.isUnlimited || false;
+  const usageInfo: UsageInfo = featureAccess?.usageInfo || {};
+
   return (
     <div className="ai-settings-container">
+      {/* Modal de Limite Atingido */}
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={handleCloseModal}
+        onUpgrade={handleUpgrade}
+        usageInfo={usageInfo}
+      />
       <div className="ai-settings-header">
         <div>
           <h1>Configurações da IA</h1>

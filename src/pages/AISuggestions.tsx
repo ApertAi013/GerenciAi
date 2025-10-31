@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../store/authStore';
+import { premiumFeaturesService } from '../services/premiumFeaturesService';
 import { aiService } from '../services/aiService';
+import type { FeatureAccess, UsageInfo } from '../types/premiumFeaturesTypes';
 import type { AISuggestion, SuggestionPriority, SuggestionStatus, SuggestionType, ActionData } from '../types/aiTypes';
 import SuggestionActionModal from '../components/SuggestionActionModal';
+import LimitReachedModal from '../components/chat/LimitReachedModal';
 import '../styles/AISuggestions.css';
 
+const AI_PROACTIVE_FEATURE_CODE = 'ai_proactive';
+
 export default function AISuggestions() {
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -14,9 +24,63 @@ export default function AISuggestions() {
   const [modalData, setModalData] = useState<ActionData | null>(null);
   const [currentSuggestionType, setCurrentSuggestionType] = useState<string>('');
 
+  // Premium features state
+  const [featureAccess, setFeatureAccess] = useState<FeatureAccess | null>(null);
+  const [isLoadingAccess, setIsLoadingAccess] = useState(true);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
   useEffect(() => {
-    fetchSuggestions();
-  }, [filterStatus, filterPriority]);
+    if (user) {
+      loadPremiumAccess();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (featureAccess?.hasAccess) {
+      fetchSuggestions();
+    }
+  }, [filterStatus, filterPriority, featureAccess]);
+
+  // Carregar acesso premium
+  const loadPremiumAccess = async () => {
+    try {
+      setIsLoadingAccess(true);
+      const response = await premiumFeaturesService.getMyAccess(AI_PROACTIVE_FEATURE_CODE);
+      setFeatureAccess(response.data.access);
+
+      // Se não tem acesso, mostrar modal
+      if (!response.data.access.hasAccess) {
+        setShowLimitModal(true);
+      }
+    } catch (error: any) {
+      console.error('Erro ao carregar acesso premium:', error);
+      setFeatureAccess({
+        hasAccess: false,
+        isUnlimited: false,
+        usageInfo: {},
+      });
+      setShowLimitModal(true);
+    } finally {
+      setIsLoadingAccess(false);
+    }
+  };
+
+  // Ação de upgrade (contatar admin)
+  const handleUpgrade = () => {
+    alert(
+      '💎 Para contratar a IA Proativa com sugestões automáticas:\n\n' +
+      '📧 Entre em contato com:\n' +
+      '- teus.hcp@gmail.com\n' +
+      '- samuelfranca.m@gmail.com\n\n' +
+      'Teremos prazer em ativar seu acesso premium!'
+    );
+  };
+
+  // Fechar modal e voltar para página inicial da IA
+  const handleCloseModal = () => {
+    setShowLimitModal(false);
+    navigate('/ia');
+  };
 
   const fetchSuggestions = async () => {
     try {
@@ -135,7 +199,15 @@ export default function AISuggestions() {
     }
   };
 
-  if (loading) {
+  if (!user) {
+    return (
+      <div className="ai-suggestions-container">
+        <div className="loading">Faça login para acessar as sugestões</div>
+      </div>
+    );
+  }
+
+  if (isLoadingAccess || loading) {
     return (
       <div className="ai-suggestions-container">
         <div className="loading">Carregando sugestões...</div>
@@ -143,8 +215,18 @@ export default function AISuggestions() {
     );
   }
 
+  const isPremiumUser = featureAccess?.isUnlimited || false;
+  const usageInfo: UsageInfo = featureAccess?.usageInfo || {};
+
   return (
     <div className="ai-suggestions-container">
+      {/* Modal de Limite Atingido */}
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={handleCloseModal}
+        onUpgrade={handleUpgrade}
+        usageInfo={usageInfo}
+      />
       <div className="suggestions-header">
         <h1>Sugestões da IA</h1>
         <div className="filters">
