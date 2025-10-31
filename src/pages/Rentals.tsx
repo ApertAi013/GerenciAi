@@ -2,14 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { rentalService } from '../services/rentalService';
 import { studentService } from '../services/studentService';
+import { courtService } from '../services/courtService';
 import type { CourtRental, CreateRentalData, RentalFilters, PaymentMethod } from '../types/rentalTypes';
 import type { Student } from '../types/studentTypes';
+import type { Court } from '../types/courtTypes';
 import '../styles/Rentals.css';
 
 export default function Rentals() {
   const navigate = useNavigate();
   const [rentals, setRentals] = useState<CourtRental[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [courts, setCourts] = useState<Court[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -54,6 +57,7 @@ export default function Rentals() {
   useEffect(() => {
     fetchRentals();
     fetchStudents();
+    fetchCourts();
     fetchStats();
   }, [filters]);
 
@@ -94,6 +98,18 @@ export default function Rentals() {
       }
     } catch (error) {
       console.error('Erro ao buscar alunos:', error);
+    }
+  };
+
+  const fetchCourts = async () => {
+    try {
+      const response = await courtService.getCourts();
+      if (response.success) {
+        // Filtra apenas quadras ativas
+        setCourts(response.data.filter((court: Court) => court.status === 'ativa'));
+      }
+    } catch (error) {
+      console.error('Erro ao buscar quadras:', error);
     }
   };
 
@@ -302,9 +318,11 @@ export default function Rentals() {
               onChange={(e) => setFilters({ ...filters, court_name: e.target.value })}
             >
               <option value="">Todas as quadras</option>
-              <option value="Quadra 1">Quadra 1</option>
-              <option value="Quadra 2">Quadra 2</option>
-              <option value="Beach Tennis">Beach Tennis</option>
+              {courts.map((court) => (
+                <option key={court.id} value={court.name}>
+                  {court.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="filter-group">
@@ -667,9 +685,11 @@ export default function Rentals() {
                     onChange={(e) => setFormData({ ...formData, court_name: e.target.value })}
                   >
                     <option value="">Selecione a quadra...</option>
-                    <option value="Quadra 1">Quadra 1</option>
-                    <option value="Quadra 2">Quadra 2</option>
-                    <option value="Beach Tennis">Beach Tennis</option>
+                    {courts.map((court) => (
+                      <option key={court.id} value={court.name}>
+                        {court.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
