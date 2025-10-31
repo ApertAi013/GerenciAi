@@ -15,7 +15,7 @@ export const rentalService = {
    * Listar locações com filtros opcionais
    */
   getRentals: async (filters?: RentalFilters): Promise<ApiResponse<CourtRental[]>> => {
-    const response = await api.get('/court-rentals', { params: filters });
+    const response = await api.get('/api/court-rentals', { params: filters });
     return response.data;
   },
 
@@ -23,7 +23,7 @@ export const rentalService = {
    * Obter detalhes de uma locação específica
    */
   getRentalById: async (id: number): Promise<ApiResponse<CourtRental>> => {
-    const response = await api.get(`/court-rentals/${id}`);
+    const response = await api.get(`/api/court-rentals/${id}`);
     return response.data;
   },
 
@@ -31,7 +31,7 @@ export const rentalService = {
    * Criar nova locação (vinculada ou avulsa)
    */
   createRental: async (data: CreateRentalData): Promise<ApiResponse<CourtRental>> => {
-    const response = await api.post('/court-rentals', data);
+    const response = await api.post('/api/court-rentals', data);
     return response.data;
   },
 
@@ -39,7 +39,7 @@ export const rentalService = {
    * Atualizar locação existente
    */
   updateRental: async (id: number, data: UpdateRentalData): Promise<ApiResponse<CourtRental>> => {
-    const response = await api.put(`/court-rentals/${id}`, data);
+    const response = await api.put(`/api/court-rentals/${id}`, data);
     return response.data;
   },
 
@@ -47,7 +47,7 @@ export const rentalService = {
    * Cancelar locação (não deleta, apenas muda status)
    */
   cancelRental: async (id: number): Promise<ApiResponse<null>> => {
-    const response = await api.delete(`/court-rentals/${id}`);
+    const response = await api.delete(`/api/court-rentals/${id}`);
     return response.data;
   },
 
@@ -55,7 +55,7 @@ export const rentalService = {
    * Registrar pagamento de uma locação
    */
   registerPayment: async (id: number, data: RegisterPaymentData): Promise<ApiResponse<CourtRental>> => {
-    const response = await api.post(`/court-rentals/${id}/payment`, data);
+    const response = await api.post(`/api/court-rentals/${id}/payment`, data);
     return response.data;
   },
 
@@ -68,7 +68,7 @@ export const rentalService = {
     startTime: string,
     endTime: string
   ): Promise<ApiResponse<RentalAvailability>> => {
-    const response = await api.get('/court-rentals/availability', {
+    const response = await api.get('/api/court-rentals/availability', {
       params: {
         court_name: courtName,
         rental_date: rentalDate,
@@ -83,7 +83,7 @@ export const rentalService = {
    * Listar todas as quadras cadastradas com estatísticas
    */
   getCourts: async (): Promise<ApiResponse<Court[]>> => {
-    const response = await api.get('/court-rentals/courts');
+    const response = await api.get('/api/court-rentals/courts');
     return response.data;
   },
 
