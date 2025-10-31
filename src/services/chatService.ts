@@ -75,7 +75,7 @@ export const chatService = {
 
   // Arquivar conversa
   async archiveConversation(conversationId: number): Promise<ChatResponse<{ message: string }>> {
-    const response = await api.patch<ChatResponse<{ message: string }>>>(
+    const response = await api.patch<ChatResponse<{ message: string }>>(
       `/api/chat/conversations/${conversationId}/archive`
     );
     return response.data;
@@ -83,7 +83,7 @@ export const chatService = {
 
   // Deletar conversa
   async deleteConversation(conversationId: number): Promise<ChatResponse<{ message: string }>> {
-    const response = await api.delete<ChatResponse<{ message: string }>>>(
+    const response = await api.delete<ChatResponse<{ message: string }>>(
       `/api/chat/conversations/${conversationId}`
     );
     return response.data;

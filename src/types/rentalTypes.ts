@@ -86,3 +86,9 @@ export interface RentalFilters {
   status?: RentalStatus;
   payment_status?: PaymentStatus;
 }
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}

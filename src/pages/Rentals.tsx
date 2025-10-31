@@ -66,7 +66,7 @@ export default function Rentals() {
       const filtered = students.filter(
         (student) =>
           student.full_name.toLowerCase().includes(searchLower) ||
-          student.phone.includes(searchLower) ||
+          (student.phone && student.phone.includes(searchLower)) ||
           (student.email && student.email.toLowerCase().includes(searchLower))
       );
       setFilteredStudents(filtered);
@@ -191,25 +191,12 @@ export default function Rentals() {
     }
   };
 
-  const handleStudentChange = (studentId: number) => {
-    const student = students.find(s => s.id === studentId);
-    if (student) {
-      setFormData({
-        ...formData,
-        student_id: student.id,
-        renter_name: student.full_name,
-        renter_phone: student.phone,
-        renter_email: student.email || '',
-      });
-    }
-  };
-
   const handleSelectStudent = (student: Student) => {
     setFormData({
       ...formData,
       student_id: student.id,
       renter_name: student.full_name,
-      renter_phone: student.phone,
+      renter_phone: student.phone || '',
       renter_email: student.email || '',
     });
     setStudentSearch('');

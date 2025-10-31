@@ -7,8 +7,8 @@ import type {
   RentalAvailability,
   Court,
   RentalFilters,
+  ApiResponse,
 } from '../types/rentalTypes';
-import type { ApiResponse } from '../types/apiTypes';
 
 export const rentalService = {
   /**
