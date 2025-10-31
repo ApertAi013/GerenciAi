@@ -76,7 +76,9 @@
       "Bash(head:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwiaWF0IjoxNzYxNzE4MzYxLCJleHAiOjE3NjIzMjMxNjF9.NwgXpETydmFSR0BZoGy_iv8ruVAFWF9K0Jwgth9ZwMk\" curl -s -X GET \"https://gerenciai-backend-798546007335.us-east1.run.app/api/invoices\" -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\")",
       "Bash(ls:*)",
-      "Bash(open http://localhost:8080)"
+      "Bash(open http://localhost:8080)",
+      "Bash(node scripts/run-court-rentals-migration.js:*)",
+      "Bash(gcloud sql execute:*)"
     ],
     "deny": [],
     "ask": []

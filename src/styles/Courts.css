@@ -1,0 +1,277 @@
+.courts-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.courts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.courts-header h1 {
+  font-size: 2rem;
+  color: #1F2937;
+  margin: 0;
+}
+
+.courts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.court-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.court-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.court-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.court-card-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1F2937;
+  flex: 1;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-active {
+  background-color: #D1FAE5;
+  color: #065F46;
+}
+
+.status-inactive {
+  background-color: #FEE2E2;
+  color: #991B1B;
+}
+
+.status-maintenance {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.court-description {
+  color: #6B7280;
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.court-price {
+  color: #10B981;
+  font-weight: 600;
+  margin: 0.75rem 0;
+}
+
+.court-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.btn-primary, .btn-secondary, .btn-edit, .btn-delete, .btn-cancel, .btn-submit {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background-color: #22C55E;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #16A34A;
+}
+
+.btn-secondary {
+  background-color: #E5E7EB;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background-color: #D1D5DB;
+}
+
+.btn-edit {
+  flex: 1;
+  background-color: #3B82F6;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #2563EB;
+}
+
+.btn-delete {
+  flex: 1;
+  background-color: #EF4444;
+  color: white;
+}
+
+.btn-delete:hover {
+  background-color: #DC2626;
+}
+
+.no-courts {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #F9FAFB;
+  border-radius: 12px;
+  border: 2px dashed #D1D5DB;
+}
+
+.no-courts p {
+  color: #6B7280;
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  margin: 0 0 1.5rem 0;
+  color: #1F2937;
+  font-size: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #22C55E;
+}
+
+.form-group textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-cancel {
+  flex: 1;
+  background-color: #E5E7EB;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background-color: #D1D5DB;
+}
+
+.btn-submit {
+  flex: 1;
+  background-color: #22C55E;
+  color: white;
+}
+
+.btn-submit:hover {
+  background-color: #16A34A;
+}
+
+.loading {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6B7280;
+  font-size: 1.125rem;
+}
+
+@media (max-width: 768px) {
+  .courts-container {
+    padding: 1rem;
+  }
+
+  .courts-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .courts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    padding: 1.5rem;
+  }
+}

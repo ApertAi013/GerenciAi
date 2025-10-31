@@ -12,7 +12,8 @@ import {
   faDatabase,
   faLayerGroup,
   faTags,
-  faBaseballBall
+  faBaseballBall,
+  faSquare
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { useFeatureAccess } from '../../hooks/useFeatureAccess';
@@ -31,6 +32,7 @@ const menuItems: MenuItem[] = [
   { path: '/alunos', label: 'Alunos', icon: faUsers },
   { path: '/turmas', label: 'Turmas', icon: faUserGroup },
   { path: '/matriculas', label: 'Matrículas', icon: faClipboardList },
+  { path: '/quadras', label: 'Quadras', icon: faSquare },
   { path: '/locacoes', label: 'Locações', icon: faBaseballBall },
   { path: '/financeiro', label: 'Financeiro', icon: faMoneyBillWave },
   { path: '/relatorios', label: 'Relatórios', icon: faChartBar },

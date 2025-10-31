@@ -13,6 +13,7 @@ import Financial from './pages/Financial'
 import DataMigration from './pages/DataMigration'
 import Levels from './pages/Levels'
 import Plans from './pages/Plans'
+import Courts from './pages/Courts'
 import Rentals from './pages/Rentals'
 import RentalsSchedule from './pages/RentalsSchedule'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/relatorios" element={<Reports />} />
             <Route path="/niveis" element={<Levels />} />
             <Route path="/planos" element={<Plans />} />
+            <Route path="/quadras" element={<Courts />} />
             <Route path="/locacoes" element={<Rentals />} />
             <Route path="/locacoes/agenda" element={<RentalsSchedule />} />
             <Route path="/chat" element={<Chat />} />
