@@ -78,7 +78,17 @@
       "Bash(ls:*)",
       "Bash(open http://localhost:8080)",
       "Bash(node scripts/run-court-rentals-migration.js:*)",
-      "Bash(gcloud sql execute:*)"
+      "Bash(gcloud sql execute:*)",
+      "Bash(./scripts/deploy-cloud-run.sh)",
+      "Bash(CORS_ORIGIN=\"https://arenai.com.br\" yes:*)",
+      "Bash(export CORS_ORIGIN=\"https://arenai.com.br\")",
+      "Bash(gcloud run revisions list:*)",
+      "Bash(git restore:*)",
+      "Bash(gsutil -m rsync:*)",
+      "Bash(gcloud app services list:*)",
+      "Bash(gcloud app versions list:*)",
+      "Bash(gcloud app versions describe:*)",
+      "Read(//tmp/**)"
     ],
     "deny": [],
     "ask": []

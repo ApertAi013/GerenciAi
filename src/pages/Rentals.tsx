@@ -245,10 +245,48 @@ export default function Rentals() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
+    if (!dateString) return 'Data inválida';
+
+    try {
+      // Tenta diferentes formatos de data
+      let date: Date;
+
+      // Se já for um timestamp ou objeto Date
+      if (!isNaN(Date.parse(dateString))) {
+        date = new Date(dateString);
+      }
+      // Se for formato YYYY-MM-DD
+      else if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        date = new Date(dateString + 'T00:00:00');
+      }
+      // Se for formato DD/MM/YYYY
+      else if (dateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const [day, month, year] = dateString.split('/');
+        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      }
+      else {
+        date = new Date(dateString);
+      }
+
+      // Verifica se a data é válida
+      if (isNaN(date.getTime())) {
+        console.error('Data inválida:', dateString);
+        return 'Data inválida';
+      }
+
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Erro ao formatar data:', dateString, error);
+      return 'Data inválida';
+    }
   };
 
   const formatTime = (timeString: string) => {
+    if (!timeString) return '';
     return timeString.substring(0, 5);
   };
 

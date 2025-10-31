@@ -80,12 +80,39 @@ export default function RentalsSchedule() {
     }
   };
 
+  const parseRentalDate = (dateString: string): string => {
+    if (!dateString) return '';
+
+    try {
+      // Se for formato YYYY-MM-DD, retorna como está
+      if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return dateString;
+      }
+      // Se for formato DD/MM/YYYY
+      if (dateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const [day, month, year] = dateString.split('/');
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      // Tenta parse como Date e formata
+      const parsed = new Date(dateString);
+      if (!isNaN(parsed.getTime())) {
+        return format(parsed, 'yyyy-MM-dd');
+      }
+      console.error('Data inválida no RentalsSchedule:', dateString);
+      return '';
+    } catch (error) {
+      console.error('Erro ao parsear data no RentalsSchedule:', dateString, error);
+      return '';
+    }
+  };
+
   const getRentalsForDayAndHour = (date: Date, hour: string): CourtRental[] => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const hourNum = parseInt(hour.split(':')[0]);
 
     return rentals.filter((rental) => {
-      if (rental.rental_date !== dateStr) return false;
+      const rentalDateStr = parseRentalDate(rental.rental_date);
+      if (rentalDateStr !== dateStr) return false;
       const startHour = parseInt(rental.start_time.split(':')[0]);
       return startHour === hourNum;
     });

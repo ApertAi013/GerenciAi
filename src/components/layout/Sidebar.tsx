@@ -13,7 +13,9 @@ import {
   faLayerGroup,
   faTags,
   faBaseballBall,
-  faSquare
+  faSquare,
+  faBrain,
+  faLightbulb
 } from '@fortawesome/free-solid-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { useFeatureAccess } from '../../hooks/useFeatureAccess';
@@ -38,6 +40,8 @@ const menuItems: MenuItem[] = [
   { path: '/relatorios', label: 'Relatórios', icon: faChartBar },
   { path: '/niveis', label: 'Níveis', icon: faLayerGroup },
   { path: '/planos', label: 'Planos', icon: faTags },
+  { path: '/ia/sugestoes', label: 'IA - Sugestões', icon: faLightbulb },
+  { path: '/ia/configuracoes', label: 'IA - Configurações', icon: faBrain },
   { path: '/chat', label: 'Chat IA', icon: faRobot },
   { path: '/migracao', label: 'Migração', icon: faDatabase, featureCode: 'data_migration' },
 ];

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
 import '../styles/Login.css';
@@ -42,11 +43,17 @@ export default function Login() {
           localStorage.removeItem('keepLoggedIn');
         }
 
+        toast.success('Login realizado com sucesso!');
+
         console.log('Navegando para /dashboard...');
-        navigate('/dashboard');
+        // Pequeno delay para mostrar o toast antes de navegar
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 500);
       } else {
         console.log('Login falhou - success = false');
         setError('Email ou senha inválidos');
+        toast.error('Email ou senha inválidos');
       }
     } catch (err: any) {
       console.error('=== ERRO NO LOGIN ===');
@@ -54,7 +61,9 @@ export default function Login() {
       console.error('Response:', err.response);
       console.error('Data:', err.response?.data);
       console.error('Status:', err.response?.status);
-      setError(err.response?.data?.message || 'Erro ao fazer login. Tente novamente.');
+      const errorMessage = err.response?.data?.message || 'Erro ao fazer login. Tente novamente.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
       console.log('=== FIM LOGIN ===');

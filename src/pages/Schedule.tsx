@@ -94,8 +94,25 @@ const convertRentalToSchedule = (rental: CourtRental): ClassSchedule => {
   // Cor baseada no status de pagamento
   const color = rental.payment_status === 'paga' ? '#10B981' : rental.payment_status === 'pendente' ? '#F59E0B' : '#EF4444';
 
-  // Obter dia da semana da data
-  const rentalDate = new Date(rental.rental_date + 'T00:00:00');
+  // Obter dia da semana da data - com parse robusto
+  const parseDate = (dateString: string): Date => {
+    if (!dateString) return new Date();
+
+    // Se for formato YYYY-MM-DD
+    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return new Date(dateString + 'T00:00:00');
+    }
+    // Tenta parse direto
+    const parsed = new Date(dateString);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+    // Fallback para data atual
+    console.error('Data inválida no Schedule:', dateString);
+    return new Date();
+  };
+
+  const rentalDate = parseDate(rental.rental_date);
   const day = rentalDate.getDay();
 
   return {

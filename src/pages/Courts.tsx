@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { courtService } from '../services/courtService';
 import type { Court, CreateCourtData, UpdateCourtData, CourtStatus } from '../types/courtTypes';
 import '../styles/Courts.css';
@@ -7,6 +8,8 @@ const Courts: React.FC = () => {
   const [courts, setCourts] = useState<Court[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingCourt, setDeletingCourt] = useState<Court | null>(null);
   const [editingCourt, setEditingCourt] = useState<Court | null>(null);
   const [formData, setFormData] = useState<CreateCourtData>({
     name: '',
@@ -28,7 +31,7 @@ const Courts: React.FC = () => {
       }
     } catch (error) {
       console.error('Erro ao buscar quadras:', error);
-      alert('Erro ao buscar quadras');
+      toast.error('Erro ao buscar quadras');
     } finally {
       setLoading(false);
     }
@@ -78,32 +81,42 @@ const Courts: React.FC = () => {
           default_price_cents: formData.default_price_cents,
         };
         await courtService.updateCourt(editingCourt.id, updateData);
-        alert('Quadra atualizada com sucesso!');
+        toast.success('Quadra atualizada com sucesso!');
       } else {
         await courtService.createCourt(formData);
-        alert('Quadra criada com sucesso!');
+        toast.success('Quadra criada com sucesso!');
       }
       handleCloseModal();
       fetchCourts();
     } catch (error: any) {
       console.error('Erro ao salvar quadra:', error);
-      alert(error.response?.data?.message || 'Erro ao salvar quadra');
+      toast.error(error.response?.data?.message || 'Erro ao salvar quadra');
     }
   };
 
-  const handleDelete = async (court: Court) => {
-    if (!confirm(`Tem certeza que deseja deletar a quadra "${court.name}"?`)) {
-      return;
-    }
+  const handleDeleteClick = (court: Court) => {
+    setDeletingCourt(court);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingCourt) return;
 
     try {
-      await courtService.deleteCourt(court.id);
-      alert('Quadra deletada com sucesso!');
+      await courtService.deleteCourt(deletingCourt.id);
+      toast.success('Quadra deletada com sucesso!');
+      setShowDeleteConfirm(false);
+      setDeletingCourt(null);
       fetchCourts();
     } catch (error: any) {
       console.error('Erro ao deletar quadra:', error);
-      alert(error.response?.data?.message || 'Erro ao deletar quadra');
+      toast.error(error.response?.data?.message || 'Erro ao deletar quadra');
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+    setDeletingCourt(null);
   };
 
   const getStatusBadgeClass = (status: CourtStatus) => {
@@ -179,7 +192,7 @@ const Courts: React.FC = () => {
                 </button>
                 <button
                   className="btn-delete"
-                  onClick={() => handleDelete(court)}
+                  onClick={() => handleDeleteClick(court)}
                 >
                   Deletar
                 </button>
@@ -258,6 +271,24 @@ const Courts: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && deletingCourt && (
+        <div className="modal-overlay" onClick={handleDeleteCancel}>
+          <div className="modal-content confirm-delete" onClick={(e) => e.stopPropagation()}>
+            <h2>Confirmar Exclusão</h2>
+            <p>Tem certeza que deseja deletar a quadra <strong>"{deletingCourt.name}"</strong>?</p>
+            <p className="warning-text">Esta ação não pode ser desfeita.</p>
+            <div className="modal-actions">
+              <button type="button" className="btn-cancel" onClick={handleDeleteCancel}>
+                Cancelar
+              </button>
+              <button type="button" className="btn-delete" onClick={handleDeleteConfirm}>
+                Deletar
+              </button>
+            </div>
           </div>
         </div>
       )}

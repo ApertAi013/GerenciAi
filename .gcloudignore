@@ -13,45 +13,44 @@
 .git
 .gitignore
 
-# Node.js dependencies:
-node_modules/
-npm-debug.log
+# Python pycache:
+__pycache__/
+# Ignored by the build system
+/setup.cfg
 
-# Source files (we only need dist/)
+# Node.js
+node_modules/
+.npm
+.env
+.env.local
+
+# Build artifacts (keep only dist/)
 src/
 public/
-
-# Build config files
-tsconfig.json
-tsconfig.node.json
+*.config.js
+*.config.ts
+tsconfig*.json
 vite.config.ts
-.env
-.env.*
+eslint.config.js
 
-# IDE files
+# Documentation and markdown files
+*.md
+!README.md
+
+# Backend directory
+backend/
+
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS files
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
 .DS_Store
-Thumbs.db
-
-# Firebase files
-.firebaserc
-firebase.json
-.firebase/
-
-# Backend files
-backend/
-
-# Git files
-.gitattributes
-README.md
-.eslintrc.cjs
-
-# Deploy scripts
-deploy-firebase.sh
-DEPLOY.md
+*.log
