@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import { whatsappService } from '../services/whatsappService';
 import type { WhatsAppMessageLog, MessageType, MessageStatus } from '../types/whatsappTypes';
+import PremiumBadge from '../components/chat/PremiumBadge';
 import '../styles/WhatsAppLogs.css';
 
 export default function WhatsAppLogs() {
@@ -107,7 +108,9 @@ export default function WhatsAppLogs() {
           <FontAwesomeIcon icon={faArrowLeft} /> Voltar
         </button>
         <div>
-          <h1>Histórico de Mensagens</h1>
+          <h1>
+            Histórico de Mensagens <PremiumBadge />
+          </h1>
           <p>Visualize todas as mensagens enviadas via WhatsApp</p>
         </div>
       </div>

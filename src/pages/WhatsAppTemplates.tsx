@@ -15,6 +15,7 @@ import { useAuthStore } from '../store/authStore';
 import { whatsappService } from '../services/whatsappService';
 import type { WhatsAppTemplate, TemplateType } from '../types/whatsappTypes';
 import { TEMPLATE_VARIABLES } from '../types/whatsappTypes';
+import PremiumBadge from '../components/chat/PremiumBadge';
 import '../styles/WhatsAppTemplates.css';
 
 export default function WhatsAppTemplates() {
@@ -190,7 +191,9 @@ export default function WhatsAppTemplates() {
           <FontAwesomeIcon icon={faArrowLeft} /> Voltar
         </button>
         <div>
-          <h1>Templates de Mensagens</h1>
+          <h1>
+            Templates de Mensagens <PremiumBadge />
+          </h1>
           <p>Gerencie os templates de mensagens do WhatsApp</p>
         </div>
         <button className="btn-new" onClick={handleNew}>

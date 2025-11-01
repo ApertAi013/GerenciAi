@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import { whatsappService } from '../services/whatsappService';
 import type { AutomationSettings, WhatsAppTemplate } from '../types/whatsappTypes';
+import PremiumBadge from '../components/chat/PremiumBadge';
 import '../styles/WhatsAppAutomation.css';
 
 export default function WhatsAppAutomation() {
@@ -93,7 +94,9 @@ export default function WhatsAppAutomation() {
           <FontAwesomeIcon icon={faArrowLeft} /> Voltar
         </button>
         <div>
-          <h1>Configurações de Automação</h1>
+          <h1>
+            Configurações de Automação <PremiumBadge />
+          </h1>
           <p>Configure regras para envio automático de mensagens</p>
         </div>
       </div>

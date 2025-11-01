@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import { whatsappService } from '../services/whatsappService';
 import type { WhatsAppConfig } from '../types/whatsappTypes';
+import PremiumBadge from '../components/chat/PremiumBadge';
 import '../styles/WhatsAppConfig.css';
 
 export default function WhatsAppConfig() {
@@ -123,7 +124,9 @@ export default function WhatsAppConfig() {
           <FontAwesomeIcon icon={faArrowLeft} /> Voltar
         </button>
         <div>
-          <h1>Status da Integração WhatsApp</h1>
+          <h1>
+            Status da Integração WhatsApp <PremiumBadge />
+          </h1>
           <p>Verifique o status e teste o envio de mensagens</p>
         </div>
         {isConfigured && (
