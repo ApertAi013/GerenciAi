@@ -53,6 +53,16 @@
   margin-bottom: 2rem;
 }
 
+.monitoring-tabs.main-tabs {
+  border-bottom: 3px solid #E5E7EB;
+}
+
+.monitoring-tabs.sub-tabs {
+  border-bottom: 1px solid #E5E7EB;
+  margin-bottom: 1.5rem;
+  padding-top: 1rem;
+}
+
 .tab {
   background: none;
   border: none;

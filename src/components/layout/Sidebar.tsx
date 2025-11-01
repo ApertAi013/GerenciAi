@@ -48,7 +48,7 @@ const menuItems: MenuItem[] = [
   { path: '/ia', label: 'IA', icon: faBrain, isPremium: true },
   { path: '/whatsapp', label: 'WhatsApp', icon: faWhatsapp, isPremium: true },
   { path: '/chat', label: 'Chat IA', icon: faRobot, isPremium: true },
-  { path: '/admin/monitoring', label: 'Monitoramento', icon: faGauge, adminOnly: true },
+  { path: '/admin/monitoring', label: 'Gerenciador', icon: faGauge, adminOnly: true },
   { path: '/migracao', label: 'Migração', icon: faDatabase, featureCode: 'data_migration' },
 ];
 

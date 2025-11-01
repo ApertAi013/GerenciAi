@@ -134,14 +134,14 @@ export interface User {
   email: string;
   full_name: string;
   role: 'admin' | 'gestor' | 'professor' | 'aluno';
-  status: 'ativo' | 'inativo' | 'suspenso';
+  status: 'active' | 'inactive';
   premium_features: string[];
   created_at: string;
-  last_login: string | null;
-  total_enrollments: number;
-  total_conversations: number;
-  hasPremium: boolean;
-  hasUnlimited: boolean;
+  last_login?: string | null;
+  total_enrollments?: number;
+  total_conversations?: number;
+  hasPremium?: boolean;
+  hasUnlimited?: boolean;
 }
 
 export interface UserDetails {
@@ -194,7 +194,7 @@ export interface UpdateUserRoleData {
 }
 
 export interface UpdateUserStatusData {
-  status: 'ativo' | 'inativo' | 'suspenso';
+  status: 'active' | 'inactive';
 }
 
 export interface UsersListParams {
