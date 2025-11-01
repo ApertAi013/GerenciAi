@@ -117,7 +117,9 @@
       "Bash(gcloud run services update:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzYxODg4MzQ2LCJleHAiOjE3NjI0OTMxNDZ9.bh17jJ7z5sgzZvapeZMUKgpNKXa6wocu-V5RG7USSUE\" curl -s -X GET \"https://gerenciai-backend-798546007335.us-east1.run.app/api/admin/monitoring/gcp\" -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\")",
       "Bash(find:*)",
-      "Bash(node scripts/check-premium-features.js:*)"
+      "Bash(node scripts/check-premium-features.js:*)",
+      "Bash(gs://gerenciai-sql-backups/migrations/007_update_users_status_to_english.sql )",
+      "Bash(gs://gerenciai-sql-migrations/007_update_users_status_to_english.sql )"
     ],
     "deny": [],
     "ask": []

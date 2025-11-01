@@ -61,14 +61,29 @@ export default function AdminMonitoring() {
   const [gcpMetrics, setGCPMetrics] = useState<GCPMetrics | null>(null);
   const [health, setHealth] = useState<HealthCheck | null>(null);
 
-  // Historical data for charts (últimos 20 pontos)
+  // Historical data for charts (últimos 20 pontos) - persiste no localStorage
   const [metricsHistory, setMetricsHistory] = useState<Array<{
     time: string;
     requests: number;
     responseTime: number;
     memory: number;
     connections: number;
-  }>>([]);
+  }>>(() => {
+    // Carregar dados históricos do localStorage
+    try {
+      const saved = localStorage.getItem('admin_metrics_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Salvar histórico no localStorage quando mudar
+  useEffect(() => {
+    if (metricsHistory.length > 0) {
+      localStorage.setItem('admin_metrics_history', JSON.stringify(metricsHistory));
+    }
+  }, [metricsHistory]);
 
   useEffect(() => {
     if (user?.role === 'admin' || user?.role === 'gestor') {

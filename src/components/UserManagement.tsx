@@ -4,8 +4,6 @@ import {
   faUsers,
   faSearch,
   faFilter,
-  faToggleOn,
-  faToggleOff,
   faSpinner,
   faCheckCircle,
   faTimesCircle,
@@ -250,23 +248,27 @@ export default function UserManagement() {
                                       updatingFeature?.featureCode === feature.feature_code;
 
                     return (
-                      <div key={feature.feature_code} className="feature-toggle-item">
-                        <div className="feature-info">
-                          <span className="feature-name">{feature.feature_name}</span>
-                          <span className="feature-desc">{feature.description}</span>
-                        </div>
-                        <button
-                          className={`toggle-button ${isEnabled ? 'enabled' : 'disabled'}`}
-                          onClick={() => toggleUserFeature(user.id, feature.feature_code, isEnabled)}
-                          disabled={isUpdating}
-                          title={isEnabled ? 'Clique para desabilitar' : 'Clique para habilitar'}
-                        >
-                          {isUpdating ? (
-                            <FontAwesomeIcon icon={faSpinner} spin />
-                          ) : (
-                            <FontAwesomeIcon icon={isEnabled ? faToggleOn : faToggleOff} size="lg" />
-                          )}
-                        </button>
+                      <div key={feature.feature_code} className="feature-checkbox-item">
+                        <label className="feature-checkbox-label">
+                          <input
+                            type="checkbox"
+                            className="feature-checkbox"
+                            checked={isEnabled}
+                            onChange={() => toggleUserFeature(user.id, feature.feature_code, isEnabled)}
+                            disabled={isUpdating}
+                          />
+                          <div className="checkbox-custom">
+                            {isUpdating ? (
+                              <FontAwesomeIcon icon={faSpinner} spin />
+                            ) : (
+                              isEnabled && <FontAwesomeIcon icon={faCheckCircle} />
+                            )}
+                          </div>
+                          <div className="feature-info">
+                            <span className="feature-name">{feature.feature_name}</span>
+                            <span className="feature-desc">{feature.description}</span>
+                          </div>
+                        </label>
                       </div>
                     );
                   })}
