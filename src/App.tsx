@@ -20,6 +20,11 @@ import RentalsSchedule from './pages/RentalsSchedule'
 import AI from './pages/AI'
 import AISettings from './pages/AISettings'
 import AISuggestions from './pages/AISuggestions'
+import WhatsApp from './pages/WhatsApp'
+import WhatsAppConfig from './pages/WhatsAppConfig'
+import WhatsAppTemplates from './pages/WhatsAppTemplates'
+import WhatsAppAutomation from './pages/WhatsAppAutomation'
+import WhatsAppLogs from './pages/WhatsAppLogs'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -86,6 +91,11 @@ export default function App() {
             <Route path="/ia" element={<AI />} />
             <Route path="/ia/configuracoes" element={<AISettings />} />
             <Route path="/ia/sugestoes" element={<AISuggestions />} />
+            <Route path="/whatsapp" element={<WhatsApp />} />
+            <Route path="/whatsapp/config" element={<WhatsAppConfig />} />
+            <Route path="/whatsapp/templates" element={<WhatsAppTemplates />} />
+            <Route path="/whatsapp/automation" element={<WhatsAppAutomation />} />
+            <Route path="/whatsapp/logs" element={<WhatsAppLogs />} />
             <Route path="/chat" element={<Chat />} />
             <Route
               path="/migracao"

@@ -16,6 +16,7 @@ import {
   faSquare,
   faBrain
 } from '@fortawesome/free-solid-svg-icons';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { useFeatureAccess } from '../../hooks/useFeatureAccess';
 import '../../styles/Sidebar.css';
@@ -40,6 +41,7 @@ const menuItems: MenuItem[] = [
   { path: '/niveis', label: 'Níveis', icon: faLayerGroup },
   { path: '/planos', label: 'Planos', icon: faTags },
   { path: '/ia', label: 'IA', icon: faBrain },
+  { path: '/whatsapp', label: 'WhatsApp', icon: faWhatsapp },
   { path: '/chat', label: 'Chat IA', icon: faRobot },
   { path: '/migracao', label: 'Migração', icon: faDatabase, featureCode: 'data_migration' },
 ];
