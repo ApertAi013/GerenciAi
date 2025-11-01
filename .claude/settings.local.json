@@ -116,7 +116,8 @@
       "Bash(gcloud services list:*)",
       "Bash(gcloud run services update:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzYxODg4MzQ2LCJleHAiOjE3NjI0OTMxNDZ9.bh17jJ7z5sgzZvapeZMUKgpNKXa6wocu-V5RG7USSUE\" curl -s -X GET \"https://gerenciai-backend-798546007335.us-east1.run.app/api/admin/monitoring/gcp\" -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(node scripts/check-premium-features.js:*)"
     ],
     "deny": [],
     "ask": []

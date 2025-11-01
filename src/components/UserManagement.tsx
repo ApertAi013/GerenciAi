@@ -229,7 +229,7 @@ export default function UserManagement() {
                       {user.status === 'active' ? '● Ativo' : '○ Inativo'}
                     </span>
                     {user.hasPremium && (
-                      <span className="premium-badge">
+                      <span className="user-has-premium-badge">
                         <FontAwesomeIcon icon={faCheckCircle} /> Premium
                       </span>
                     )}
