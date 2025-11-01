@@ -14,7 +14,8 @@ import {
   faTags,
   faBaseballBall,
   faSquare,
-  faBrain
+  faBrain,
+  faCrown
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -26,6 +27,7 @@ interface MenuItem {
   label: string;
   icon: IconDefinition;
   featureCode?: string; // Feature flag opcional
+  isPremium?: boolean; // Badge PRO
 }
 
 const menuItems: MenuItem[] = [
@@ -40,9 +42,9 @@ const menuItems: MenuItem[] = [
   { path: '/relatorios', label: 'Relatórios', icon: faChartBar },
   { path: '/niveis', label: 'Níveis', icon: faLayerGroup },
   { path: '/planos', label: 'Planos', icon: faTags },
-  { path: '/ia', label: 'IA', icon: faBrain },
-  { path: '/whatsapp', label: 'WhatsApp', icon: faWhatsapp },
-  { path: '/chat', label: 'Chat IA', icon: faRobot },
+  { path: '/ia', label: 'IA', icon: faBrain, isPremium: true },
+  { path: '/whatsapp', label: 'WhatsApp', icon: faWhatsapp, isPremium: true },
+  { path: '/chat', label: 'Chat IA', icon: faRobot, isPremium: true },
   { path: '/migracao', label: 'Migração', icon: faDatabase, featureCode: 'data_migration' },
 ];
 
@@ -84,7 +86,14 @@ export default function Sidebar() {
               <span className="sidebar-icon">
                 <FontAwesomeIcon icon={item.icon} />
               </span>
-              <span className="sidebar-label">{item.label}</span>
+              <span className="sidebar-label">
+                {item.label}
+                {item.isPremium && (
+                  <span className="sidebar-pro-badge">
+                    <FontAwesomeIcon icon={faCrown} />
+                  </span>
+                )}
+              </span>
             </Link>
           );
         })}
