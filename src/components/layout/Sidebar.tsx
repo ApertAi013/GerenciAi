@@ -15,11 +15,13 @@ import {
   faBaseballBall,
   faSquare,
   faBrain,
-  faCrown
+  faCrown,
+  faGauge
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { useFeatureAccess } from '../../hooks/useFeatureAccess';
+import { useAuthStore } from '../../store/authStore';
 import '../../styles/Sidebar.css';
 
 interface MenuItem {
@@ -28,6 +30,7 @@ interface MenuItem {
   icon: IconDefinition;
   featureCode?: string; // Feature flag opcional
   isPremium?: boolean; // Badge PRO
+  adminOnly?: boolean; // Apenas para admin/gestor
 }
 
 const menuItems: MenuItem[] = [
@@ -45,15 +48,22 @@ const menuItems: MenuItem[] = [
   { path: '/ia', label: 'IA', icon: faBrain, isPremium: true },
   { path: '/whatsapp', label: 'WhatsApp', icon: faWhatsapp, isPremium: true },
   { path: '/chat', label: 'Chat IA', icon: faRobot, isPremium: true },
+  { path: '/admin/monitoring', label: 'Monitoramento', icon: faGauge, adminOnly: true },
   { path: '/migracao', label: 'Migração', icon: faDatabase, featureCode: 'data_migration' },
 ];
 
 export default function Sidebar() {
   const location = useLocation();
+  const { user } = useAuthStore();
   const { hasAccess: hasMigrationAccess, isLoading: isMigrationLoading } = useFeatureAccess('data_migration');
 
-  // Filtra os itens do menu baseado em feature flags
+  // Filtra os itens do menu baseado em feature flags e roles
   const visibleMenuItems = menuItems.filter((item) => {
+    // Verificar se é admin-only
+    if (item.adminOnly) {
+      return user?.role === 'admin' || user?.role === 'gestor';
+    }
+
     // Se não tem feature flag, sempre exibe
     if (!item.featureCode) {
       return true;

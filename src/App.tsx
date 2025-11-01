@@ -25,6 +25,7 @@ import WhatsAppConfig from './pages/WhatsAppConfig'
 import WhatsAppTemplates from './pages/WhatsAppTemplates'
 import WhatsAppAutomation from './pages/WhatsAppAutomation'
 import WhatsAppLogs from './pages/WhatsAppLogs'
+import AdminMonitoring from './pages/AdminMonitoring'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -96,6 +97,7 @@ export default function App() {
             <Route path="/whatsapp/templates" element={<WhatsAppTemplates />} />
             <Route path="/whatsapp/automation" element={<WhatsAppAutomation />} />
             <Route path="/whatsapp/logs" element={<WhatsAppLogs />} />
+            <Route path="/admin/monitoring" element={<AdminMonitoring />} />
             <Route path="/chat" element={<Chat />} />
             <Route
               path="/migracao"
