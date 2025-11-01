@@ -52,6 +52,7 @@ export default function AdminMonitoring() {
       if (response.success) setDashboard(response.data);
     } catch (error: any) {
       console.error('Erro ao carregar dashboard:', error);
+      toast.error('Erro ao carregar métricas do dashboard');
     }
   };
 
@@ -61,6 +62,7 @@ export default function AdminMonitoring() {
       if (response.success) setGCPMetrics(response.data);
     } catch (error: any) {
       console.error('Erro ao carregar GCP:', error);
+      // GCP é opcional, não mostra erro
     }
   };
 
@@ -70,6 +72,7 @@ export default function AdminMonitoring() {
       if (response.success) setHealth(response.data);
     } catch (error: any) {
       console.error('Erro ao carregar health:', error);
+      toast.error('Erro ao carregar status de saúde');
     }
   };
 
@@ -151,7 +154,17 @@ export default function AdminMonitoring() {
       {/* Content */}
       <div className="monitoring-content">
         {/* Dashboard Tab */}
-        {activeTab === 'dashboard' && dashboard && (
+        {activeTab === 'dashboard' && (
+          <>
+            {!dashboard ? (
+              <div className="info-banner">
+                <FontAwesomeIcon icon={faExclamationTriangle} />
+                <div>
+                  <p><strong>Aguardando dados do servidor...</strong></p>
+                  <p>Se o erro persistir, verifique se as rotas de monitoramento estão configuradas no backend.</p>
+                </div>
+              </div>
+            ) : (
           <div className="tab-content">
             <div className="metrics-grid">
               {/* Backend Metrics */}
@@ -262,7 +275,17 @@ export default function AdminMonitoring() {
         )}
 
         {/* GCP Tab */}
-        {activeTab === 'gcp' && gcpMetrics && (
+        {activeTab === 'gcp' && (
+          <>
+            {!gcpMetrics ? (
+              <div className="info-banner">
+                <FontAwesomeIcon icon={faExclamationTriangle} />
+                <div>
+                  <p><strong>Aguardando métricas do Google Cloud...</strong></p>
+                  <p>Verifique se o serviço de monitoramento está configurado no backend.</p>
+                </div>
+              </div>
+            ) : (
           <div className="tab-content">
             {gcpMetrics.enabled === false ? (
               <div className="info-banner">
@@ -353,11 +376,22 @@ export default function AdminMonitoring() {
                 )}
               </div>
             )}
-          </div>
+            )}
+          </>
         )}
 
         {/* Health Tab */}
-        {activeTab === 'health' && health && (
+        {activeTab === 'health' && (
+          <>
+            {!health ? (
+              <div className="info-banner">
+                <FontAwesomeIcon icon={faExclamationTriangle} />
+                <div>
+                  <p><strong>Aguardando health check...</strong></p>
+                  <p>Verifique se o endpoint de health está acessível.</p>
+                </div>
+              </div>
+            ) : (
           <div className="tab-content">
             <div className="health-status">
               <div className={`status-badge ${health.status}`}>
@@ -407,6 +441,8 @@ export default function AdminMonitoring() {
               </div>
             </div>
           </div>
+            )}
+          </>
         )}
       </div>
     </div>
