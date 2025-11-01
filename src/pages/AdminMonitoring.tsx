@@ -11,6 +11,22 @@ import {
   faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
 import toast from 'react-hot-toast';
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import { useAuthStore } from '../store/authStore';
 import { monitoringService } from '../services/monitoringService';
 import type {
@@ -19,6 +35,15 @@ import type {
   HealthCheck,
 } from '../types/monitoringTypes';
 import '../styles/AdminMonitoring.css';
+
+// Chart colors
+const COLORS = {
+  primary: '#FF9900',
+  success: '#10B981',
+  error: '#EF4444',
+  warning: '#F59E0B',
+  info: '#3B82F6',
+};
 
 export default function AdminMonitoring() {
   const { user } = useAuthStore();
@@ -32,9 +57,25 @@ export default function AdminMonitoring() {
   const [gcpMetrics, setGCPMetrics] = useState<GCPMetrics | null>(null);
   const [health, setHealth] = useState<HealthCheck | null>(null);
 
+  // Historical data for charts (últimos 20 pontos)
+  const [metricsHistory, setMetricsHistory] = useState<Array<{
+    time: string;
+    requests: number;
+    responseTime: number;
+    memory: number;
+    connections: number;
+  }>>([]);
+
   useEffect(() => {
     if (user?.role === 'admin' || user?.role === 'gestor') {
       loadData();
+
+      // Auto-refresh a cada 30 segundos
+      const interval = setInterval(() => {
+        loadData();
+      }, 30000);
+
+      return () => clearInterval(interval);
     } else if (user) {
       // Se o usuário não tem permissão, para de carregar
       setLoading(false);
@@ -61,7 +102,27 @@ export default function AdminMonitoring() {
   const loadDashboard = async () => {
     try {
       const response = await monitoringService.getDashboard();
-      if (response.success) setDashboard(response.data);
+      if (response.success) {
+        setDashboard(response.data);
+
+        // Adicionar ao histórico de métricas
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        setMetricsHistory(prev => {
+          const newPoint = {
+            time: timeStr,
+            requests: response.data?.api?.requests?.total || 0,
+            responseTime: response.data?.api?.requests?.avgResponseTime || 0,
+            memory: response.data?.backend?.memory?.heapUsed || 0,
+            connections: response.data?.database?.connectionPool?.active || 0,
+          };
+
+          // Manter apenas os últimos 20 pontos
+          const updated = [...prev, newPoint];
+          return updated.slice(-20);
+        });
+      }
     } catch (error: any) {
       console.error('Erro ao carregar dashboard:', error);
       toast.error('Erro ao carregar métricas do dashboard');
@@ -301,6 +362,121 @@ export default function AdminMonitoring() {
                 </div>
               </div>
             </div>
+
+            {/* Visual Charts Section */}
+            {metricsHistory.length > 0 && (
+              <div className="charts-section">
+                <h2 className="charts-title">📊 Métricas ao Longo do Tempo</h2>
+
+                <div className="charts-grid">
+                  {/* API Requests Chart */}
+                  <div className="chart-card">
+                    <h3>Total de Requests</h3>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart data={metricsHistory}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis dataKey="time" stroke="#6B7280" fontSize={12} />
+                        <YAxis stroke="#6B7280" fontSize={12} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #E5E7EB',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="requests"
+                          stroke={COLORS.primary}
+                          strokeWidth={2}
+                          dot={{ fill: COLORS.primary, r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Response Time Chart */}
+                  <div className="chart-card">
+                    <h3>Tempo de Resposta Médio (ms)</h3>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <AreaChart data={metricsHistory}>
+                        <defs>
+                          <linearGradient id="colorResponseTime" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={COLORS.info} stopOpacity={0.8} />
+                            <stop offset="95%" stopColor={COLORS.info} stopOpacity={0.1} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis dataKey="time" stroke="#6B7280" fontSize={12} />
+                        <YAxis stroke="#6B7280" fontSize={12} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #E5E7EB',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="responseTime"
+                          stroke={COLORS.info}
+                          strokeWidth={2}
+                          fillOpacity={1}
+                          fill="url(#colorResponseTime)"
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Database Connections Chart */}
+                  <div className="chart-card">
+                    <h3>Conexões do Banco de Dados</h3>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={metricsHistory}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis dataKey="time" stroke="#6B7280" fontSize={12} />
+                        <YAxis stroke="#6B7280" fontSize={12} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            border: '1px solid #E5E7EB',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Bar dataKey="connections" fill={COLORS.success} radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Success Rate Pie Chart */}
+                  <div className="chart-card">
+                    <h3>Taxa de Sucesso de Requests</h3>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Sucesso', value: dashboard?.api?.requests?.success || 0 },
+                            { name: 'Erros', value: dashboard?.api?.requests?.errors || 0 },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={60}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          <Cell fill={COLORS.success} />
+                          <Cell fill={COLORS.error} />
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
             )}
           </>
