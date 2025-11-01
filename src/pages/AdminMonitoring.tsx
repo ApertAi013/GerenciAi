@@ -25,6 +25,7 @@ export default function AdminMonitoring() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'gcp' | 'health'>('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Data states
   const [dashboard, setDashboard] = useState<DashboardMetrics | null>(null);
@@ -34,13 +35,24 @@ export default function AdminMonitoring() {
   useEffect(() => {
     if (user?.role === 'admin' || user?.role === 'gestor') {
       loadData();
+    } else if (user) {
+      // Se o usuário não tem permissão, para de carregar
+      setLoading(false);
     }
-  }, [user]);
+  }, [user?.role]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      await Promise.all([loadDashboard(), loadGCP(), loadHealth()]);
+      setError(null);
+      await Promise.all([
+        loadDashboard().catch(e => console.error('Dashboard error:', e)),
+        loadGCP().catch(e => console.error('GCP error:', e)),
+        loadHealth().catch(e => console.error('Health error:', e))
+      ]);
+    } catch (error: any) {
+      console.error('Error loading monitoring data:', error);
+      setError(error?.message || 'Erro ao carregar dados de monitoramento');
     } finally {
       setLoading(false);
     }
@@ -112,6 +124,24 @@ export default function AdminMonitoring() {
     return (
       <div className="admin-monitoring-container">
         <div className="loading">Carregando métricas...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-monitoring-container">
+        <div className="info-banner">
+          <FontAwesomeIcon icon={faExclamationTriangle} />
+          <div>
+            <p><strong>Erro ao carregar painel de monitoramento</strong></p>
+            <p>{error}</p>
+            <button className="btn-refresh" onClick={loadData} style={{ marginTop: '1rem' }}>
+              <FontAwesomeIcon icon={faRefresh} />
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
