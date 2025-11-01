@@ -272,6 +272,8 @@ export default function AdminMonitoring() {
               </div>
             </div>
           </div>
+            )}
+          </>
         )}
 
         {/* GCP Tab */}
@@ -376,6 +378,7 @@ export default function AdminMonitoring() {
                 )}
               </div>
             )}
+          </div>
             )}
           </>
         )}
