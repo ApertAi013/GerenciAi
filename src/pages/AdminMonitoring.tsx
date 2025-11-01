@@ -206,19 +206,19 @@ export default function AdminMonitoring() {
                 <div className="metric-body">
                   <div className="metric-item">
                     <span>Uptime:</span>
-                    <strong>{formatUptime(dashboard.backend.uptime)}</strong>
+                    <strong>{dashboard?.backend?.uptime ? formatUptime(dashboard.backend.uptime) : 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Memória Usada:</span>
-                    <strong>{formatBytes(dashboard.backend.memory.heapUsed)}</strong>
+                    <strong>{dashboard?.backend?.memory?.heapUsed ? formatBytes(dashboard.backend.memory.heapUsed) : 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Memória Total:</span>
-                    <strong>{formatBytes(dashboard.backend.memory.heapTotal)}</strong>
+                    <strong>{dashboard?.backend?.memory?.heapTotal ? formatBytes(dashboard.backend.memory.heapTotal) : 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Node Version:</span>
-                    <strong>{dashboard.backend.nodeVersion}</strong>
+                    <strong>{dashboard?.backend?.nodeVersion || 'N/A'}</strong>
                   </div>
                 </div>
               </div>
@@ -232,19 +232,19 @@ export default function AdminMonitoring() {
                 <div className="metric-body">
                   <div className="metric-item">
                     <span>Conexões Ativas:</span>
-                    <strong>{dashboard.database.connectionPool.active}</strong>
+                    <strong>{dashboard?.database?.connectionPool?.active ?? 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Conexões Idle:</span>
-                    <strong>{dashboard.database.connectionPool.idle}</strong>
+                    <strong>{dashboard?.database?.connectionPool?.idle ?? 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Total Queries:</span>
-                    <strong>{dashboard.database.queries.total}</strong>
+                    <strong>{dashboard?.database?.queries?.total ?? 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Tempo Médio:</span>
-                    <strong>{dashboard.database.queries.avgTime.toFixed(2)}ms</strong>
+                    <strong>{dashboard?.database?.queries?.avgTime ? dashboard.database.queries.avgTime.toFixed(2) + 'ms' : 'N/A'}</strong>
                   </div>
                 </div>
               </div>
@@ -258,19 +258,19 @@ export default function AdminMonitoring() {
                 <div className="metric-body">
                   <div className="metric-item">
                     <span>Total Requests:</span>
-                    <strong>{dashboard.api.requests.total}</strong>
+                    <strong>{dashboard?.api?.requests?.total ?? 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Sucessos:</span>
-                    <strong className="success">{dashboard.api.requests.success}</strong>
+                    <strong className="success">{dashboard?.api?.requests?.success ?? 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Erros:</span>
-                    <strong className="error">{dashboard.api.requests.errors}</strong>
+                    <strong className="error">{dashboard?.api?.requests?.errors ?? 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Tempo Médio:</span>
-                    <strong>{dashboard.api.requests.avgResponseTime.toFixed(2)}ms</strong>
+                    <strong>{dashboard?.api?.requests?.avgResponseTime ? dashboard.api.requests.avgResponseTime.toFixed(2) + 'ms' : 'N/A'}</strong>
                   </div>
                 </div>
               </div>
@@ -284,19 +284,19 @@ export default function AdminMonitoring() {
                 <div className="metric-body">
                   <div className="metric-item">
                     <span>Total:</span>
-                    <strong>{dashboard.users.total}</strong>
+                    <strong>{dashboard?.users?.total ?? 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Ativos:</span>
-                    <strong className="success">{dashboard.users.active}</strong>
+                    <strong className="success">{dashboard?.users?.active ?? 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Premium:</span>
-                    <strong className="premium">{dashboard.users.premium}</strong>
+                    <strong className="premium">{dashboard?.users?.premium ?? 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Novos (30d):</span>
-                    <strong>{dashboard.users.recentSignups}</strong>
+                    <strong>{dashboard?.users?.recentSignups ?? 'N/A'}</strong>
                   </div>
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function AdminMonitoring() {
             ) : (
               <div className="metrics-grid">
                 {/* Cloud SQL */}
-                {gcpMetrics.cloudSQL && !gcpMetrics.cloudSQL.error && (
+                {gcpMetrics?.cloudSQL && !gcpMetrics.cloudSQL.error && (
                   <div className="metric-card">
                     <div className="metric-header">
                       <FontAwesomeIcon icon={faDatabase} />
@@ -336,26 +336,26 @@ export default function AdminMonitoring() {
                     <div className="metric-body">
                       <div className="metric-item">
                         <span>Instance:</span>
-                        <strong>{gcpMetrics.cloudSQL.instance}</strong>
+                        <strong>{gcpMetrics?.cloudSQL?.instance || 'N/A'}</strong>
                       </div>
                       <div className="metric-item">
                         <span>CPU Atual:</span>
-                        <strong>{formatPercent(gcpMetrics.cloudSQL.cpu.current)}</strong>
+                        <strong>{gcpMetrics?.cloudSQL?.cpu?.current ? formatPercent(gcpMetrics.cloudSQL.cpu.current) : 'N/A'}</strong>
                       </div>
                       <div className="metric-item">
                         <span>Memória Atual:</span>
-                        <strong>{formatPercent(gcpMetrics.cloudSQL.memory.current)}</strong>
+                        <strong>{gcpMetrics?.cloudSQL?.memory?.current ? formatPercent(gcpMetrics.cloudSQL.memory.current) : 'N/A'}</strong>
                       </div>
                       <div className="metric-item">
                         <span>Conexões:</span>
-                        <strong>{Math.round(gcpMetrics.cloudSQL.connections.current)}</strong>
+                        <strong>{gcpMetrics?.cloudSQL?.connections?.current ? Math.round(gcpMetrics.cloudSQL.connections.current) : 'N/A'}</strong>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Cloud Run */}
-                {gcpMetrics.cloudRun && !gcpMetrics.cloudRun.error && (
+                {gcpMetrics?.cloudRun && !gcpMetrics.cloudRun.error && (
                   <div className="metric-card">
                     <div className="metric-header">
                       <FontAwesomeIcon icon={faServer} />
@@ -364,26 +364,26 @@ export default function AdminMonitoring() {
                     <div className="metric-body">
                       <div className="metric-item">
                         <span>Service:</span>
-                        <strong>{gcpMetrics.cloudRun.service}</strong>
+                        <strong>{gcpMetrics?.cloudRun?.service || 'N/A'}</strong>
                       </div>
                       <div className="metric-item">
                         <span>Requests:</span>
-                        <strong>{Math.round(gcpMetrics.cloudRun.requests.current)}</strong>
+                        <strong>{gcpMetrics?.cloudRun?.requests?.current ? Math.round(gcpMetrics.cloudRun.requests.current) : 'N/A'}</strong>
                       </div>
                       <div className="metric-item">
                         <span>Latência Média:</span>
-                        <strong>{gcpMetrics.cloudRun.latency.avg.toFixed(2)}ms</strong>
+                        <strong>{gcpMetrics?.cloudRun?.latency?.avg ? gcpMetrics.cloudRun.latency.avg.toFixed(2) + 'ms' : 'N/A'}</strong>
                       </div>
                       <div className="metric-item">
                         <span>Instâncias:</span>
-                        <strong>{Math.round(gcpMetrics.cloudRun.instances.current)}</strong>
+                        <strong>{gcpMetrics?.cloudRun?.instances?.current ? Math.round(gcpMetrics.cloudRun.instances.current) : 'N/A'}</strong>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Billing */}
-                {gcpMetrics.billing && !gcpMetrics.billing.error && (
+                {gcpMetrics?.billing && !gcpMetrics.billing.error && (
                   <div className="metric-card">
                     <div className="metric-header">
                       <FontAwesomeIcon icon={faCloud} />
@@ -392,16 +392,16 @@ export default function AdminMonitoring() {
                     <div className="metric-body">
                       <div className="metric-item">
                         <span>Project:</span>
-                        <strong>{gcpMetrics.billing.projectId}</strong>
+                        <strong>{gcpMetrics?.billing?.projectId || 'N/A'}</strong>
                       </div>
                       <div className="metric-item">
                         <span>Billing Enabled:</span>
-                        <strong className={gcpMetrics.billing.billingEnabled ? 'success' : 'error'}>
-                          {gcpMetrics.billing.billingEnabled ? 'Sim' : 'Não'}
+                        <strong className={gcpMetrics?.billing?.billingEnabled ? 'success' : 'error'}>
+                          {gcpMetrics?.billing?.billingEnabled ? 'Sim' : 'Não'}
                         </strong>
                       </div>
                       <div className="metric-item info-text" style={{ gridColumn: '1 / -1' }}>
-                        {gcpMetrics.billing.message}
+                        {gcpMetrics?.billing?.message || ''}
                       </div>
                     </div>
                   </div>
@@ -427,29 +427,29 @@ export default function AdminMonitoring() {
             ) : (
           <div className="tab-content">
             <div className="health-status">
-              <div className={`status-badge ${health.status}`}>
+              <div className={`status-badge ${health?.status || 'unknown'}`}>
                 <FontAwesomeIcon
-                  icon={health.status === 'healthy' ? faCheckCircle : faExclamationTriangle}
+                  icon={health?.status === 'healthy' ? faCheckCircle : faExclamationTriangle}
                 />
-                {health.status.toUpperCase()}
+                {health?.status?.toUpperCase() || 'UNKNOWN'}
               </div>
-              <p className="health-timestamp">Last check: {new Date(health.timestamp).toLocaleString()}</p>
+              <p className="health-timestamp">Last check: {health?.timestamp ? new Date(health.timestamp).toLocaleString() : 'N/A'}</p>
             </div>
 
             <div className="metrics-grid">
               <div className="metric-card">
                 <div className="metric-header">
                   <h3>Backend</h3>
-                  <span className={`status-dot ${health.services.backend.status}`}></span>
+                  <span className={`status-dot ${health?.services?.backend?.status || 'unknown'}`}></span>
                 </div>
                 <div className="metric-body">
                   <div className="metric-item">
                     <span>Status:</span>
-                    <strong>{health.services.backend.status}</strong>
+                    <strong>{health?.services?.backend?.status || 'N/A'}</strong>
                   </div>
                   <div className="metric-item">
                     <span>Uptime:</span>
-                    <strong>{formatUptime(health.services.backend.uptime)}</strong>
+                    <strong>{health?.services?.backend?.uptime ? formatUptime(health.services.backend.uptime) : 'N/A'}</strong>
                   </div>
                 </div>
               </div>
@@ -457,14 +457,14 @@ export default function AdminMonitoring() {
               <div className="metric-card">
                 <div className="metric-header">
                   <h3>Database</h3>
-                  <span className={`status-dot ${health.services.database.status}`}></span>
+                  <span className={`status-dot ${health?.services?.database?.status || 'unknown'}`}></span>
                 </div>
                 <div className="metric-body">
                   <div className="metric-item">
                     <span>Status:</span>
-                    <strong>{health.services.database.status}</strong>
+                    <strong>{health?.services?.database?.status || 'N/A'}</strong>
                   </div>
-                  {health.services.database.error && (
+                  {health?.services?.database?.error && (
                     <div className="metric-item error">
                       <span>Error:</span>
                       <strong>{health.services.database.error}</strong>
