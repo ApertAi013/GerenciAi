@@ -86,7 +86,7 @@ export default function AdminMonitoring() {
   }, [metricsHistory]);
 
   useEffect(() => {
-    if (user?.role === 'admin' || user?.role === 'gestor') {
+    if (user?.role === 'admin') {
       loadData();
 
       // Auto-refresh a cada 30 segundos
@@ -189,7 +189,7 @@ export default function AdminMonitoring() {
     return `${(value * 100).toFixed(1)}%`;
   };
 
-  if (user?.role !== 'admin' && user?.role !== 'gestor') {
+  if (user?.role !== 'admin') {
     return (
       <div className="admin-monitoring-container">
         <div className="access-denied">
