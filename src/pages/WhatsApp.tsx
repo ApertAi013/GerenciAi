@@ -125,14 +125,14 @@ export default function WhatsApp() {
           <div className="whatsapp-card-icon config">
             <FontAwesomeIcon icon={faCog} />
           </div>
-          <h2>Configuração</h2>
-          <p>Configure sua conta WhatsApp Business API e teste a conexão</p>
+          <h2>Status & Teste</h2>
+          <p>Verifique o status da integração e teste o envio de mensagens</p>
           {!featureAccess?.hasAccess && (
             <div style={{ marginTop: '10px', fontSize: '12px', color: '#f59e0b' }}>
               <FontAwesomeIcon icon={faCrown} /> Requer acesso premium
             </div>
           )}
-          <button className="whatsapp-card-button">Configurar →</button>
+          <button className="whatsapp-card-button">Verificar Status →</button>
         </div>
 
         <div className="whatsapp-card" onClick={() => handleNavigation('/whatsapp/templates')}>
@@ -182,20 +182,20 @@ export default function WhatsApp() {
         <h3>Como funciona?</h3>
         <div className="whatsapp-info-grid">
           <div className="whatsapp-info-item">
-            <strong>1. Configure</strong>
-            <p>Conecte sua conta WhatsApp Business API e configure as credenciais</p>
+            <strong>1. Verifique o Status</strong>
+            <p>Confira se a integração está ativa e teste o envio de mensagens</p>
           </div>
           <div className="whatsapp-info-item">
-            <strong>2. Personalize</strong>
-            <p>Crie templates de mensagens personalizadas para diferentes situações</p>
+            <strong>2. Personalize Templates</strong>
+            <p>Crie mensagens personalizadas com variáveis dinâmicas para diferentes situações</p>
           </div>
           <div className="whatsapp-info-item">
-            <strong>3. Automatize</strong>
-            <p>Defina regras para envio automático de lembretes e cobranças</p>
+            <strong>3. Configure Automação</strong>
+            <p>Defina regras automáticas de envio, frequência e horários dos lembretes</p>
           </div>
           <div className="whatsapp-info-item">
-            <strong>4. Acompanhe</strong>
-            <p>Monitore o histórico de mensagens e taxa de entrega em tempo real</p>
+            <strong>4. Acompanhe Resultados</strong>
+            <p>Monitore o histórico completo de mensagens e status de entrega</p>
           </div>
         </div>
       </div>
@@ -203,13 +203,14 @@ export default function WhatsApp() {
       <div className="whatsapp-features">
         <h3>Recursos Disponíveis</h3>
         <ul>
+          <li>Integração oficial com WhatsApp Business API (gerenciada centralmente)</li>
           <li>Lembretes automáticos de vencimento de mensalidades</li>
-          <li>Cobranças automáticas para alunos inadimplentes</li>
-          <li>Confirmação de pagamento recebido</li>
+          <li>Cobranças programadas para alunos inadimplentes</li>
+          <li>Confirmação automática de pagamento recebido</li>
           <li>Templates personalizáveis com variáveis dinâmicas</li>
-          <li>Controle de frequência e horário de envio</li>
-          <li>Histórico completo com status de entrega</li>
-          <li>Integração oficial com WhatsApp Business API</li>
+          <li>Controle total de frequência e horário de envio</li>
+          <li>Histórico completo com status de entrega em tempo real</li>
+          <li>Envio de mensagens de teste para validação</li>
         </ul>
       </div>
     </div>

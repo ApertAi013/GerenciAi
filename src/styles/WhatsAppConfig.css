@@ -106,6 +106,12 @@
   color: #92400E;
 }
 
+.verification-banner.not-configured {
+  background: #FEE2E2;
+  border-color: #EF4444;
+  color: #991B1B;
+}
+
 .verification-banner strong {
   display: block;
   font-size: 1.125rem;
@@ -308,6 +314,68 @@
   font-weight: 500;
   margin-top: 1rem !important;
   font-size: 0.875rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-label {
+  color: #6B7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.info-value {
+  color: #1F2937;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.info-value.active {
+  color: #16A34A;
+}
+
+.info-value.inactive {
+  color: #DC2626;
+}
+
+.info-value.verified {
+  color: #16A34A;
+}
+
+.info-value.not-verified {
+  color: #F59E0B;
+}
+
+.config-section.support-section {
+  background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+  border: 1px solid #BFDBFE;
+}
+
+.config-section.support-section ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.config-section.support-section li {
+  margin-bottom: 0.5rem;
+  color: #1F2937;
+}
+
+.support-note {
+  margin-top: 1rem !important;
+  font-size: 0.875rem !important;
+  font-style: italic;
+  color: #6B7280 !important;
 }
 
 .toggle-switch {
