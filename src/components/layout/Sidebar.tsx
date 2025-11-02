@@ -61,7 +61,7 @@ export default function Sidebar() {
   const visibleMenuItems = menuItems.filter((item) => {
     // Verificar se é admin-only
     if (item.adminOnly) {
-      return user?.role === 'admin' || user?.role === 'gestor';
+      return user?.role === 'admin';
     }
 
     // Se não tem feature flag, sempre exibe

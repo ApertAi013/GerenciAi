@@ -102,10 +102,10 @@ export default function UserManagement() {
       let updatedFeatures: string[];
 
       if (currentlyEnabled) {
-        // Remove feature
-        updatedFeatures = currentFeatures.filter(f => f !== featureCode);
+        // Remove feature and all its variations (base + :unlimited)
+        updatedFeatures = currentFeatures.filter(f => !f.startsWith(featureCode));
       } else {
-        // Add feature
+        // Add feature (just the base, not unlimited)
         updatedFeatures = [...currentFeatures, featureCode];
       }
 
@@ -243,7 +243,8 @@ export default function UserManagement() {
                 <h4>Features Premium</h4>
                 <div className="features-grid">
                   {features.map(feature => {
-                    const isEnabled = user.premium_features?.includes(feature.feature_code) || false;
+                    // Check if user has this feature (base or :unlimited version)
+                    const isEnabled = user.premium_features?.some(f => f.startsWith(feature.feature_code)) || false;
                     const isUpdating = updatingFeature?.userId === user.id &&
                                       updatingFeature?.featureCode === feature.feature_code;
 
