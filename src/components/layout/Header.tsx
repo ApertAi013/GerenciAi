@@ -261,12 +261,7 @@ export default function Header() {
             </div>
             <div className="user-info">
               <p className="user-name">{user?.full_name || 'Usuário'}</p>
-              <p className="user-role">
-                {user?.role === 'admin' ? 'Administrador' :
-                 user?.role === 'gestor' ? 'Gestor' :
-                 user?.role === 'instrutor' ? 'Instrutor' :
-                 user?.role === 'financeiro' ? 'Financeiro' : 'Usuário'}
-              </p>
+              <p className="user-role">{user?.role || 'admin'}</p>
             </div>
             <span className="user-arrow">
               <FontAwesomeIcon icon={faChevronDown} />
