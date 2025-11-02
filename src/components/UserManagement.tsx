@@ -108,8 +108,8 @@ export default function UserManagement() {
         // Remove feature and all its variations (base + :unlimited)
         updatedFeatures = currentFeatures.filter(f => !f.startsWith(featureCode));
       } else {
-        // Add feature (just the base, not unlimited)
-        updatedFeatures = [...currentFeatures, featureCode];
+        // Add feature with unlimited access
+        updatedFeatures = [...currentFeatures, `${featureCode}:unlimited`];
       }
 
       console.log('Toggle Feature:', {
