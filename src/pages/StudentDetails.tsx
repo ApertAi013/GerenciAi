@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
+import toast from 'react-hot-toast';
 import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
 import { financialService } from '../services/financialService';
@@ -95,12 +96,18 @@ export default function StudentDetails() {
     if (!student || !selectedLevel) return;
 
     try {
-      await studentService.updateStudent(student.id, { level_id: selectedLevel });
-      setShowLevelModal(false);
-      fetchStudentData();
-    } catch (error) {
+      const response = await studentService.updateStudent(student.id, { level_id: selectedLevel });
+      if (response.success) {
+        toast.success('Nível do aluno atualizado com sucesso!');
+        setShowLevelModal(false);
+        fetchStudentData();
+      } else {
+        toast.error(response.message || 'Erro ao atualizar nível do aluno');
+      }
+    } catch (error: any) {
       console.error('Erro ao atualizar nível:', error);
-      alert('Erro ao atualizar nível do aluno');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Erro ao atualizar nível do aluno';
+      toast.error(errorMessage);
     }
   };
 

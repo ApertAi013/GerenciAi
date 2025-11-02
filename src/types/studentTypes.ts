@@ -7,8 +7,12 @@ export interface Student {
   birth_date?: string;
   sex?: 'Masculino' | 'Feminino' | 'Outro' | 'N/I';
   level?: 'iniciante' | 'intermediario' | 'avançado' | string;
+  level_id?: number;
   status: 'ativo' | 'inativo' | 'pendente';
   created_at: string;
+  gender?: string;
+  address?: string;
+  responsible_name?: string;
 }
 
 export interface CreateStudentRequest {
@@ -26,6 +30,13 @@ export interface UpdateStudentRequest {
   email?: string;
   phone?: string;
   status?: 'ativo' | 'inativo' | 'pendente';
+  level_id?: number;
+  cpf?: string;
+  birth_date?: string;
+  sex?: 'Masculino' | 'Feminino' | 'Outro' | 'N/I';
+  gender?: string;
+  address?: string;
+  responsible_name?: string;
 }
 
 export interface StudentsResponse {
