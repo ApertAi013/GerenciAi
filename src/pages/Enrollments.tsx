@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { enrollmentService } from '../services/enrollmentService';
 import { studentService } from '../services/studentService';
 import { classService } from '../services/classService';
@@ -98,14 +99,14 @@ export default function Enrollments() {
     try {
       const response = await enrollmentService.createEnrollment(formData);
       if (response.success) {
-        alert('Matrícula criada com sucesso!');
+        toast.success('Matrícula criada com sucesso!');
         setShowModal(false);
         resetForm();
         loadData();
       }
     } catch (error: any) {
       console.error('Erro ao criar matrícula:', error);
-      alert(error.response?.data?.message || 'Erro ao criar matrícula');
+      toast.error(error.response?.data?.message || 'Erro ao criar matrícula');
     }
   };
 
@@ -501,7 +502,10 @@ function EditEnrollmentModal({
         payload.discount_type = 'none';
       }
 
-      await enrollmentService.updateEnrollment(enrollment.id, payload);
+      const response = await enrollmentService.updateEnrollment(enrollment.id, payload);
+      if (response.success) {
+        toast.success('Matrícula atualizada com sucesso!');
+      }
       onSuccess();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao atualizar matrícula');
