@@ -19,6 +19,10 @@ export default function SuggestionActionModal({
 
   if (!isOpen || !actionData) return null;
 
+  // Log para debug
+  console.log('SuggestionActionModal - actionData:', actionData);
+  console.log('SuggestionActionModal - suggestionType:', suggestionType);
+
   const getTitleByType = () => {
     switch (suggestionType) {
       case 'payment_reminder':
@@ -149,17 +153,52 @@ export default function SuggestionActionModal({
   );
 
   const renderContent = () => {
-    switch (actionData.type) {
-      case 'whatsapp_links':
-        return renderWhatsAppLinks(actionData.links);
-      case 'class_list':
-        return renderClassList(actionData.classes, false);
-      case 'low_occupancy_list':
-        return renderClassList(actionData.classes, true);
-      case 'conflicts_list':
-        return renderConflictsList(actionData.conflicts);
-      default:
-        return <p>Tipo de ação desconhecido</p>;
+    try {
+      console.log('Renderizando conteúdo para tipo:', actionData.type);
+
+      switch (actionData.type) {
+        case 'whatsapp_links':
+          if (!actionData.links || !Array.isArray(actionData.links)) {
+            console.error('Links inválidos:', actionData.links);
+            return <p>Nenhum link de WhatsApp disponível</p>;
+          }
+          return renderWhatsAppLinks(actionData.links);
+
+        case 'class_list':
+          if (!actionData.classes || !Array.isArray(actionData.classes)) {
+            console.error('Classes inválidas:', actionData.classes);
+            return <p>Nenhuma turma disponível</p>;
+          }
+          return renderClassList(actionData.classes, false);
+
+        case 'low_occupancy_list':
+          if (!actionData.classes || !Array.isArray(actionData.classes)) {
+            console.error('Classes inválidas:', actionData.classes);
+            return <p>Nenhuma turma disponível</p>;
+          }
+          return renderClassList(actionData.classes, true);
+
+        case 'conflicts_list':
+          if (!actionData.conflicts || !Array.isArray(actionData.conflicts)) {
+            console.error('Conflitos inválidos:', actionData.conflicts);
+            return <p>Nenhum conflito detectado</p>;
+          }
+          return renderConflictsList(actionData.conflicts);
+
+        default:
+          console.error('Tipo de ação desconhecido:', actionData.type);
+          return <p>Tipo de ação desconhecido: {actionData.type}</p>;
+      }
+    } catch (error) {
+      console.error('Erro ao renderizar conteúdo do modal:', error);
+      return (
+        <div style={{ padding: '20px', textAlign: 'center', color: '#ef4444' }}>
+          <p>Erro ao carregar ação</p>
+          <p style={{ fontSize: '14px', color: '#737373' }}>
+            Por favor, tente novamente ou entre em contato com o suporte.
+          </p>
+        </div>
+      );
     }
   };
 

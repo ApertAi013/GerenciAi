@@ -119,8 +119,19 @@ export default function AISuggestions() {
 
   const handleExecuteAction = async (suggestion: AISuggestion) => {
     try {
+      console.log('Executando ação para sugestão:', suggestion);
       const response = await aiService.executeAction(suggestion.id);
+      console.log('Resposta da ação:', response);
+
       if (response.success) {
+        // Validar se os dados retornados são válidos
+        if (!response.data || typeof response.data !== 'object') {
+          console.error('Dados inválidos retornados:', response.data);
+          toast.error('Erro: dados inválidos retornados do servidor');
+          return;
+        }
+
+        console.log('Abrindo modal com dados:', response.data);
         setModalData(response.data);
         setCurrentSuggestionType(suggestion.type);
         setShowModal(true);
@@ -130,9 +141,14 @@ export default function AISuggestions() {
         setSuggestions(suggestions.map(s =>
           s.id === suggestion.id ? { ...s, status: 'executada' as SuggestionStatus } : s
         ));
+
+        toast.success('Ação executada com sucesso!');
+      } else {
+        toast.error(response.message || 'Erro ao executar ação');
       }
     } catch (error: any) {
       console.error('Erro ao executar ação:', error);
+      console.error('Detalhes do erro:', error.response);
       toast.error(error.response?.data?.message || 'Erro ao executar ação');
     }
   };
