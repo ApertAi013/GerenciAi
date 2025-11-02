@@ -99,14 +99,7 @@ export default function App() {
             <Route path="/whatsapp/logs" element={<WhatsAppLogs />} />
             <Route path="/admin/monitoring" element={<AdminMonitoring />} />
             <Route path="/chat" element={<Chat />} />
-            <Route
-              path="/migracao"
-              element={
-                <FeatureProtectedRoute featureCode="data_migration">
-                  <DataMigration />
-                </FeatureProtectedRoute>
-              }
-            />
+            <Route path="/migracao" element={<DataMigration />} />
           </Route>
         </Route>
       </Routes>

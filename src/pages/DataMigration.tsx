@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { dataMigrationService, type DataImport, type SupportedFileType } from '../services/dataMigrationService';
+import { premiumFeaturesService } from '../services/premiumFeaturesService';
+import type { FeatureAccess } from '../types/premiumFeaturesTypes';
 import FileUploadZone from '../components/migration/FileUploadZone';
 import MigrationOnboardingTour from '../components/migration/MigrationOnboardingTour';
+import LimitReachedModal from '../components/chat/LimitReachedModal';
 import { Database, FileCheck, AlertCircle, CheckCircle2, Clock, XCircle, Upload, Loader } from 'lucide-react';
 
 const ONBOARDING_KEY = 'migration_onboarding_completed';
+const DATA_MIGRATION_FEATURE_CODE = 'data_migration';
 
 export default function DataMigration() {
   const { user } = useAuthStore();
@@ -18,14 +22,38 @@ export default function DataMigration() {
   const [isLoadingImports, setIsLoadingImports] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Premium features state
+  const [featureAccess, setFeatureAccess] = useState<FeatureAccess | null>(null);
+  const [isLoadingAccess, setIsLoadingAccess] = useState(true);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
   // Carregar dados ao iniciar
   useEffect(() => {
     if (user) {
+      loadPremiumAccess();
       loadImports();
       loadSupportedTypes();
       checkOnboarding();
     }
   }, [user]);
+
+  // Carregar acesso premium
+  const loadPremiumAccess = async () => {
+    try {
+      setIsLoadingAccess(true);
+      const response = await premiumFeaturesService.getMyAccess(DATA_MIGRATION_FEATURE_CODE);
+      setFeatureAccess(response.data.access);
+    } catch (error: any) {
+      console.error('Erro ao carregar acesso premium:', error);
+      setFeatureAccess({
+        hasAccess: false,
+        isUnlimited: false,
+        usageInfo: {},
+      });
+    } finally {
+      setIsLoadingAccess(false);
+    }
+  };
 
   const checkOnboarding = () => {
     const hasSeenOnboarding = localStorage.getItem(ONBOARDING_KEY);
@@ -69,6 +97,12 @@ export default function DataMigration() {
 
   const handleUpload = async () => {
     if (!selectedFile) return;
+
+    // Verificar se tem acesso antes de fazer upload
+    if (!featureAccess?.hasAccess) {
+      setShowLimitModal(true);
+      return;
+    }
 
     try {
       setIsUploading(true);
@@ -348,6 +382,15 @@ export default function DataMigration() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Limite Atingido */}
+      {showLimitModal && featureAccess && (
+        <LimitReachedModal
+          isUnlimited={featureAccess.isUnlimited}
+          usageInfo={featureAccess.usageInfo}
+          onClose={() => setShowLimitModal(false)}
+        />
+      )}
     </div>
   );
 }
