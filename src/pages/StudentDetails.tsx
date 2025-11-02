@@ -9,6 +9,7 @@ import type { Student } from '../types/studentTypes';
 import type { Enrollment } from '../types/enrollmentTypes';
 import type { Invoice } from '../types/financialTypes';
 import type { Level } from '../types/levelTypes';
+import MakeupCreditsManager from '../components/MakeupCreditsManager';
 import '../styles/StudentDetails.css';
 
 export default function StudentDetails() {
@@ -376,6 +377,11 @@ Qualquer dúvida, estou à disposição!`;
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Makeup Credits Section */}
+        <div className="content-card content-card-full">
+          <MakeupCreditsManager studentId={parseInt(id!)} studentName={student.full_name} />
         </div>
 
         {/* Invoices Section */}
