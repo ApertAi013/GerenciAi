@@ -96,7 +96,10 @@ export default function UserManagement() {
     try {
       // Get current user features
       const user = users.find(u => u.id === userId);
-      if (!user) return;
+      if (!user) {
+        console.error('User not found:', userId);
+        return;
+      }
 
       const currentFeatures = user.premium_features || [];
       let updatedFeatures: string[];
@@ -109,9 +112,20 @@ export default function UserManagement() {
         updatedFeatures = [...currentFeatures, featureCode];
       }
 
+      console.log('Toggle Feature:', {
+        userId,
+        userEmail: user.email,
+        featureCode,
+        currentlyEnabled,
+        currentFeatures,
+        updatedFeatures
+      });
+
       const response = await monitoringService.updateUserFeatures(userId, {
         features: updatedFeatures,
       });
+
+      console.log('Update response:', response);
 
       if (response.success) {
         // Update local state
@@ -126,9 +140,13 @@ export default function UserManagement() {
             ? `Feature "${featureCode}" desabilitada para ${user.full_name}`
             : `Feature "${featureCode}" habilitada para ${user.full_name}`
         );
+      } else {
+        console.error('Update failed:', response);
+        toast.error('Falha ao atualizar features');
       }
     } catch (error: any) {
       console.error('Erro ao atualizar features:', error);
+      console.error('Error details:', error.response?.data);
       toast.error('Erro ao atualizar features do usuário');
     } finally {
       setUpdatingFeature(null);
