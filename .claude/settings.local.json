@@ -119,7 +119,12 @@
       "Bash(find:*)",
       "Bash(node scripts/check-premium-features.js:*)",
       "Bash(gs://gerenciai-sql-backups/migrations/007_update_users_status_to_english.sql )",
-      "Bash(gs://gerenciai-sql-migrations/007_update_users_status_to_english.sql )"
+      "Bash(gs://gerenciai-sql-migrations/007_update_users_status_to_english.sql )",
+      "Bash(gcloud sql execute-sql:*)",
+      "Bash(/tmp/login_response.json)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzYyMDQyNTMxLCJleHAiOjE3NjI2NDczMzF9.yRiODOBDObE-c_ZHjIAVsu8glTpAYwE8Xyspd1BXUXY\")",
+      "Bash(__NEW_LINE__ curl -s -X GET \"https://gerenciai-backend-798546007335.us-east1.run.app/api/auth/me\" -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzYyMDQyNjk4LCJleHAiOjE3NjI2NDc0OTh9.mwqknWMtSXWfGuMV59UGDS8YsYcvkgpKVLQkg0z1wf8\")"
     ],
     "deny": [],
     "ask": []

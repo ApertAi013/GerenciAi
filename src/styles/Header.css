@@ -356,6 +356,7 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   min-width: 180px;
   overflow: hidden;
+  z-index: 100;
 }
 
 .menu-item {
