@@ -9,6 +9,7 @@ export interface User {
   email: string;
   role: 'admin' | 'gestor' | 'instrutor' | 'financeiro';
   status: string;
+  premium_features?: string[];
 }
 
 export interface AuthResponse {

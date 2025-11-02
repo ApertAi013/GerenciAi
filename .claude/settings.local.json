@@ -124,7 +124,8 @@
       "Bash(/tmp/login_response.json)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzYyMDQyNTMxLCJleHAiOjE3NjI2NDczMzF9.yRiODOBDObE-c_ZHjIAVsu8glTpAYwE8Xyspd1BXUXY\")",
       "Bash(__NEW_LINE__ curl -s -X GET \"https://gerenciai-backend-798546007335.us-east1.run.app/api/auth/me\" -H \"Authorization: Bearer $TOKEN\")",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzYyMDQyNjk4LCJleHAiOjE3NjI2NDc0OTh9.mwqknWMtSXWfGuMV59UGDS8YsYcvkgpKVLQkg0z1wf8\")"
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzYyMDQyNjk4LCJleHAiOjE3NjI2NDc0OTh9.mwqknWMtSXWfGuMV59UGDS8YsYcvkgpKVLQkg0z1wf8\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwiaWF0IjoxNzYyMDQ1NDcxLCJleHAiOjE3NjI2NTAyNzF9.QhUCgFiI6-YxPoDwliNd9lU181S8yAvnth9v56-TAgE\")"
     ],
     "deny": [],
     "ask": []
