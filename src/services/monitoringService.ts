@@ -175,6 +175,46 @@ export const monitoringService = {
     return response.data;
   },
 
+  /**
+   * Criar novo usuário
+   */
+  createUser: async (userData: {
+    full_name: string;
+    email: string;
+    password: string;
+    role?: 'admin' | 'gestor' | 'instrutor' | 'financeiro';
+    status?: 'active' | 'inactive';
+    premium_features?: string[];
+  }): Promise<ApiResponse<User>> => {
+    const response = await api.post('/api/admin/monitoring/users', userData);
+    return response.data;
+  },
+
+  /**
+   * Atualizar dados de um usuário
+   */
+  updateUser: async (
+    userId: number,
+    userData: {
+      full_name?: string;
+      email?: string;
+      password?: string;
+      role?: 'admin' | 'gestor' | 'instrutor' | 'financeiro';
+      status?: 'active' | 'inactive';
+    }
+  ): Promise<ApiResponse<User>> => {
+    const response = await api.put(`/api/admin/monitoring/users/${userId}`, userData);
+    return response.data;
+  },
+
+  /**
+   * Deletar usuário
+   */
+  deleteUser: async (userId: number): Promise<ApiResponse<{ userId: number }>> => {
+    const response = await api.delete(`/api/admin/monitoring/users/${userId}`);
+    return response.data;
+  },
+
   // ==================== FEATURES ====================
 
   /**

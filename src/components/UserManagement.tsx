@@ -7,6 +7,9 @@ import {
   faSpinner,
   faCheckCircle,
   faTimesCircle,
+  faPlus,
+  faEdit,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import toast from 'react-hot-toast';
 import { monitoringService } from '../services/monitoringService';
@@ -35,6 +38,30 @@ export default function UserManagement() {
     totalPages: 0,
   });
   const [updatingFeature, setUpdatingFeature] = useState<{ userId: number; featureCode: string } | null>(null);
+
+  // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // Form states para criação
+  const [newUserForm, setNewUserForm] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+    role: 'gestor' as 'admin' | 'gestor' | 'instrutor' | 'financeiro',
+    status: 'active' as 'active' | 'inactive',
+  });
+
+  // Form states para edição
+  const [editUserForm, setEditUserForm] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+    role: 'gestor' as 'admin' | 'gestor' | 'instrutor' | 'financeiro',
+    status: 'active' as 'active' | 'inactive',
+  });
 
   useEffect(() => {
     loadFeatures();
@@ -168,6 +195,102 @@ export default function UserManagement() {
     loadUsers();
   };
 
+  // ==================== CRUD FUNCTIONS ====================
+
+  // Criar usuário
+  const handleCreateUser = async () => {
+    try {
+      const response = await monitoringService.createUser(newUserForm);
+
+      if (response.success) {
+        toast.success('Usuário criado com sucesso!');
+        setShowCreateModal(false);
+        setNewUserForm({
+          full_name: '',
+          email: '',
+          password: '',
+          role: 'gestor',
+          status: 'active',
+        });
+        loadUsers(); // Recarregar lista
+      } else {
+        toast.error(response.message || 'Erro ao criar usuário');
+      }
+    } catch (error: any) {
+      console.error('Erro ao criar usuário:', error);
+      toast.error(error.response?.data?.message || 'Erro ao criar usuário');
+    }
+  };
+
+  // Editar usuário
+  const handleEditUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const updateData: any = {};
+
+      if (editUserForm.full_name) updateData.full_name = editUserForm.full_name;
+      if (editUserForm.email) updateData.email = editUserForm.email;
+      if (editUserForm.password) updateData.password = editUserForm.password;
+      if (editUserForm.role) updateData.role = editUserForm.role;
+      if (editUserForm.status) updateData.status = editUserForm.status;
+
+      const response = await monitoringService.updateUser(selectedUser.id, updateData);
+
+      if (response.success) {
+        toast.success('Usuário atualizado com sucesso!');
+        setShowEditModal(false);
+        setSelectedUser(null);
+        loadUsers(); // Recarregar lista
+      } else {
+        toast.error(response.message || 'Erro ao atualizar usuário');
+      }
+    } catch (error: any) {
+      console.error('Erro ao atualizar usuário:', error);
+      toast.error(error.response?.data?.message || 'Erro ao atualizar usuário');
+    }
+  };
+
+  // Deletar usuário
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const response = await monitoringService.deleteUser(selectedUser.id);
+
+      if (response.success) {
+        toast.success('Usuário deletado com sucesso!');
+        setShowDeleteModal(false);
+        setSelectedUser(null);
+        loadUsers(); // Recarregar lista
+      } else {
+        toast.error(response.message || 'Erro ao deletar usuário');
+      }
+    } catch (error: any) {
+      console.error('Erro ao deletar usuário:', error);
+      toast.error(error.response?.data?.message || 'Erro ao deletar usuário');
+    }
+  };
+
+  // Abrir modal de edição
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setEditUserForm({
+      full_name: user.full_name,
+      email: user.email,
+      password: '', // Deixar vazio, só atualiza se preencher
+      role: user.role,
+      status: user.status,
+    });
+    setShowEditModal(true);
+  };
+
+  // Abrir modal de delete
+  const openDeleteModal = (user: User) => {
+    setSelectedUser(user);
+    setShowDeleteModal(true);
+  };
+
   if (loading && users.length === 0) {
     return (
       <div className="user-management-container">
@@ -189,6 +312,13 @@ export default function UserManagement() {
           </h2>
           <p>Habilite ou desabilite features premium para seus usuários</p>
         </div>
+
+        <button
+          className="create-user-button"
+          onClick={() => setShowCreateModal(true)}
+        >
+          <FontAwesomeIcon icon={faPlus} /> Novo Usuário
+        </button>
       </div>
 
       {/* Filters */}
@@ -239,6 +369,22 @@ export default function UserManagement() {
               <div className="user-info">
                 <div className="user-header">
                   <h3>{user.full_name}</h3>
+                  <div className="user-actions">
+                    <button
+                      className="action-btn edit-btn"
+                      onClick={() => openEditModal(user)}
+                      title="Editar usuário"
+                    >
+                      <FontAwesomeIcon icon={faEdit} />
+                    </button>
+                    <button
+                      className="action-btn delete-btn"
+                      onClick={() => openDeleteModal(user)}
+                      title="Deletar usuário"
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  </div>
                   <div className="user-badges">
                     <span className={`role-badge ${user.role}`}>{user.role}</span>
                     <span className={`status-badge ${user.status}`}>
@@ -325,6 +471,182 @@ export default function UserManagement() {
           Mostrando {users.length} de {pagination.total} usuários
         </p>
       </div>
+
+      {/* ==================== MODALS ==================== */}
+
+      {/* Modal de Criar Usuário */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Criar Novo Usuário</h3>
+
+            <div className="form-group">
+              <label>Nome Completo *</label>
+              <input
+                type="text"
+                value={newUserForm.full_name}
+                onChange={(e) => setNewUserForm({ ...newUserForm, full_name: e.target.value })}
+                placeholder="Nome completo do usuário"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Email *</label>
+              <input
+                type="email"
+                value={newUserForm.email}
+                onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Senha *</label>
+              <input
+                type="password"
+                value={newUserForm.password}
+                onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                placeholder="Senha do usuário"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Tipo de Usuário</label>
+              <select
+                value={newUserForm.role}
+                onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as any })}
+              >
+                <option value="gestor">Gestor</option>
+                <option value="instrutor">Instrutor</option>
+                <option value="financeiro">Financeiro</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Status</label>
+              <select
+                value={newUserForm.status}
+                onChange={(e) => setNewUserForm({ ...newUserForm, status: e.target.value as any })}
+              >
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleCreateUser}
+                disabled={!newUserForm.full_name || !newUserForm.email || !newUserForm.password}
+              >
+                Criar Usuário
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Editar Usuário */}
+      {showEditModal && selectedUser && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Editar Usuário: {selectedUser.full_name}</h3>
+
+            <div className="form-group">
+              <label>Nome Completo</label>
+              <input
+                type="text"
+                value={editUserForm.full_name}
+                onChange={(e) => setEditUserForm({ ...editUserForm, full_name: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={editUserForm.email}
+                onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Nova Senha (deixe vazio para não alterar)</label>
+              <input
+                type="password"
+                value={editUserForm.password}
+                onChange={(e) => setEditUserForm({ ...editUserForm, password: e.target.value })}
+                placeholder="Deixe vazio para manter a senha atual"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Tipo de Usuário</label>
+              <select
+                value={editUserForm.role}
+                onChange={(e) => setEditUserForm({ ...editUserForm, role: e.target.value as any })}
+              >
+                <option value="gestor">Gestor</option>
+                <option value="instrutor">Instrutor</option>
+                <option value="financeiro">Financeiro</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Status</label>
+              <select
+                value={editUserForm.status}
+                onChange={(e) => setEditUserForm({ ...editUserForm, status: e.target.value as any })}
+              >
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setShowEditModal(false)}>
+                Cancelar
+              </button>
+              <button className="btn-primary" onClick={handleEditUser}>
+                Salvar Alterações
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Deletar Usuário */}
+      {showDeleteModal && selectedUser && (
+        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="modal-content modal-delete" onClick={(e) => e.stopPropagation()}>
+            <h3>⚠️ Confirmar Exclusão</h3>
+
+            <p>
+              Tem certeza que deseja deletar o usuário <strong>{selectedUser.full_name}</strong>?
+            </p>
+            <p className="warning-text">
+              Esta ação não pode ser desfeita. Todos os dados associados a este usuário serão permanentemente deletados.
+            </p>
+
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setShowDeleteModal(false)}>
+                Cancelar
+              </button>
+              <button className="btn-danger" onClick={handleDeleteUser}>
+                Deletar Usuário
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
