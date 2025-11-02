@@ -51,7 +51,15 @@ export default function StudentDetails() {
 
       if (studentRes.success && studentRes.data) {
         setStudent(studentRes.data);
-        setSelectedLevel(studentRes.data.level_id);
+        // Define o nível selecionado (prioriza level_id, senão busca pelo nome)
+        if (studentRes.data.level_id) {
+          setSelectedLevel(studentRes.data.level_id);
+        } else if (studentRes.data.level) {
+          const levelMatch = levelsRes.success
+            ? levelsRes.data.find(l => l.name.toLowerCase() === studentRes.data.level?.toLowerCase())
+            : null;
+          setSelectedLevel(levelMatch?.id || null);
+        }
       }
 
       if (enrollmentsRes.success) {
@@ -96,7 +104,19 @@ export default function StudentDetails() {
     if (!student || !selectedLevel) return;
 
     try {
-      const response = await studentService.updateStudent(student.id, { level_id: selectedLevel });
+      // Encontra o nível selecionado para pegar o nome
+      const selectedLevelObj = levels.find(l => l.id === selectedLevel);
+      if (!selectedLevelObj) {
+        toast.error('Nível selecionado não encontrado');
+        return;
+      }
+
+      // Tenta atualizar usando ambos os campos para compatibilidade
+      const response = await studentService.updateStudent(student.id, {
+        level_id: selectedLevel,
+        level: selectedLevelObj.name
+      } as any);
+
       if (response.success) {
         toast.success('Nível do aluno atualizado com sucesso!');
         setShowLevelModal(false);
@@ -154,7 +174,10 @@ Qualquer dúvida, estou à disposição!`;
     );
   }
 
-  const currentLevel = levels.find((l) => l.id === student.level_id);
+  // Tenta encontrar o nível por ID (novo sistema) ou por nome (sistema antigo)
+  const currentLevel = student.level_id
+    ? levels.find((l) => l.id === student.level_id)
+    : levels.find((l) => l.name.toLowerCase() === student.level?.toLowerCase());
 
   return (
     <div className="student-details">

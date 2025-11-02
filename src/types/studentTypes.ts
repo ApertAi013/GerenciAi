@@ -31,6 +31,7 @@ export interface UpdateStudentRequest {
   phone?: string;
   status?: 'ativo' | 'inativo' | 'pendente';
   level_id?: number;
+  level?: string;
   cpf?: string;
   birth_date?: string;
   sex?: 'Masculino' | 'Feminino' | 'Outro' | 'N/I';
