@@ -499,11 +499,11 @@ function EditEnrollmentModal({
     setIsSubmitting(true);
 
     try {
+      // Primeiro, atualiza os dados gerais da matrícula (SEM class_ids)
       const payload: any = {
         plan_id: formData.plan_id,
         contract_type: formData.contract_type,
         due_day: formData.due_day,
-        class_ids: formData.class_ids,
         status: formData.status,
       };
 
@@ -518,23 +518,41 @@ function EditEnrollmentModal({
         payload.discount_type = 'none';
       }
 
-      console.log('🔵 ATUALIZANDO MATRÍCULA:', {
+      console.log('🔵 ATUALIZANDO MATRÍCULA (dados gerais):', {
         enrollmentId: enrollment.id,
-        payload,
-        selectedClasses: formData.class_ids,
-        selectedPlan: selectedPlan?.name
+        payload
       });
 
       const response = await enrollmentService.updateEnrollment(enrollment.id, payload);
 
-      console.log('🟢 RESPOSTA DO BACKEND:', response);
+      console.log('🟢 RESPOSTA (dados gerais):', response);
 
-      if (response.success) {
-        toast.success('Matrícula atualizada com sucesso!');
-      } else {
-        console.error('❌ Sucesso = false na resposta:', response);
+      if (!response.success) {
+        console.error('❌ Erro ao atualizar dados gerais:', response);
         toast.error(response.message || 'Erro ao atualizar matrícula');
+        return;
       }
+
+      // Segundo, atualiza as TURMAS usando o endpoint específico
+      console.log('🔵 ATUALIZANDO TURMAS:', {
+        enrollmentId: enrollment.id,
+        class_ids: formData.class_ids
+      });
+
+      const classesResponse = await enrollmentService.updateEnrollmentClasses(
+        enrollment.id,
+        { class_ids: formData.class_ids }
+      );
+
+      console.log('🟢 RESPOSTA (turmas):', classesResponse);
+
+      if (classesResponse.success) {
+        toast.success('Matrícula e turmas atualizadas com sucesso!');
+      } else {
+        console.error('❌ Erro ao atualizar turmas:', classesResponse);
+        toast.error(classesResponse.message || 'Erro ao atualizar turmas');
+      }
+
       onSuccess();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao atualizar matrícula');
