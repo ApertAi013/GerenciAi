@@ -61,23 +61,39 @@ export default function Enrollments() {
       ]);
 
       if (enrollmentsRes.success && enrollmentsRes.data) {
-        console.log('📋 Matrículas carregadas:', enrollmentsRes.data);
+        console.log('📋 Matrículas carregadas (raw):', enrollmentsRes.data);
+
+        // Mapear o array 'classes' retornado pelo backend para os campos esperados pelo frontend
+        const enrollmentsWithMappedClasses = enrollmentsRes.data.map((enrollment: any) => {
+          // Se o backend retornou um array 'classes', extrair class_ids e class_names
+          if (enrollment.classes && Array.isArray(enrollment.classes)) {
+            return {
+              ...enrollment,
+              class_ids: enrollment.classes.map((c: any) => c.class_id),
+              class_names: enrollment.classes.map((c: any) => c.class_name || `Turma ${c.class_id}`)
+            };
+          }
+          return enrollment;
+        });
+
+        console.log('📋 Matrículas após mapeamento:', enrollmentsWithMappedClasses);
 
         // Log específico para Claudete (se existir)
-        const claudeteEnrollment = enrollmentsRes.data.find((e: any) =>
+        const claudeteEnrollment = enrollmentsWithMappedClasses.find((e: any) =>
           e.student_name?.toLowerCase().includes('claudete')
         );
         if (claudeteEnrollment) {
           console.log('👤 Matrícula da Claudete:', {
             id: claudeteEnrollment.id,
             student_name: claudeteEnrollment.student_name,
+            classes: claudeteEnrollment.classes,
             class_ids: claudeteEnrollment.class_ids,
             class_names: claudeteEnrollment.class_names,
             plan_name: claudeteEnrollment.plan_name
           });
         }
 
-        setEnrollments(enrollmentsRes.data);
+        setEnrollments(enrollmentsWithMappedClasses);
       }
       if (studentsRes.success && studentsRes.data) {
         setStudents(studentsRes.data);

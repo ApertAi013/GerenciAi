@@ -64,7 +64,19 @@ export default function StudentDetails() {
       }
 
       if (enrollmentsRes.success) {
-        setEnrollments(enrollmentsRes.data);
+        // Mapear o array 'classes' retornado pelo backend para os campos esperados pelo frontend
+        const enrollmentsWithMappedClasses = enrollmentsRes.data.map((enrollment: any) => {
+          // Se o backend retornou um array 'classes', extrair class_ids e class_names
+          if (enrollment.classes && Array.isArray(enrollment.classes)) {
+            return {
+              ...enrollment,
+              class_ids: enrollment.classes.map((c: any) => c.class_id),
+              class_names: enrollment.classes.map((c: any) => c.class_name || `Turma ${c.class_id}`)
+            };
+          }
+          return enrollment;
+        });
+        setEnrollments(enrollmentsWithMappedClasses);
       }
 
       if (invoicesRes.success) {
