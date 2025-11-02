@@ -53,10 +53,19 @@ export const enrollmentService = {
     enrollmentId: number,
     data: UpdateEnrollmentRequest
   ): Promise<{ success: boolean; message: string; enrollment?: Enrollment }> {
+    console.log('🔵 enrollmentService.updateEnrollment:', {
+      enrollmentId,
+      data,
+      url: `/api/enrollments/${enrollmentId}`
+    });
+
     const response = await api.put<{ success: boolean; message: string; enrollment?: Enrollment }>(
       `/api/enrollments/${enrollmentId}`,
       data
     );
+
+    console.log('🟢 Resposta da API:', response.data);
+
     return response.data;
   },
 

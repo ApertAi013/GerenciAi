@@ -61,6 +61,22 @@ export default function Enrollments() {
       ]);
 
       if (enrollmentsRes.success && enrollmentsRes.data) {
+        console.log('📋 Matrículas carregadas:', enrollmentsRes.data);
+
+        // Log específico para Claudete (se existir)
+        const claudeteEnrollment = enrollmentsRes.data.find((e: any) =>
+          e.student_name?.toLowerCase().includes('claudete')
+        );
+        if (claudeteEnrollment) {
+          console.log('👤 Matrícula da Claudete:', {
+            id: claudeteEnrollment.id,
+            student_name: claudeteEnrollment.student_name,
+            class_ids: claudeteEnrollment.class_ids,
+            class_names: claudeteEnrollment.class_names,
+            plan_name: claudeteEnrollment.plan_name
+          });
+        }
+
         setEnrollments(enrollmentsRes.data);
       }
       if (studentsRes.success && studentsRes.data) {
@@ -502,9 +518,22 @@ function EditEnrollmentModal({
         payload.discount_type = 'none';
       }
 
+      console.log('🔵 ATUALIZANDO MATRÍCULA:', {
+        enrollmentId: enrollment.id,
+        payload,
+        selectedClasses: formData.class_ids,
+        selectedPlan: selectedPlan?.name
+      });
+
       const response = await enrollmentService.updateEnrollment(enrollment.id, payload);
+
+      console.log('🟢 RESPOSTA DO BACKEND:', response);
+
       if (response.success) {
         toast.success('Matrícula atualizada com sucesso!');
+      } else {
+        console.error('❌ Sucesso = false na resposta:', response);
+        toast.error(response.message || 'Erro ao atualizar matrícula');
       }
       onSuccess();
     } catch (err: any) {
