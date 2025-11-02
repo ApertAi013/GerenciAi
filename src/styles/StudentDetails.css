@@ -68,16 +68,19 @@
 
 .student-meta {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   margin-bottom: 0.5rem;
+  align-items: center;
 }
 
 .status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
   text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
 }
 
 .status-badge.status-ativo,
@@ -109,12 +112,13 @@
 }
 
 .level-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
   color: white;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
 }
 
 .student-subtitle {

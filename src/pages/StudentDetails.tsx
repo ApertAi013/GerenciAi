@@ -153,7 +153,7 @@ Qualquer dúvida, estou à disposição!`;
     <div className="student-details">
       {/* Header */}
       <div className="student-header">
-        <button type="button" className="btn-back" onClick={() => navigate('/students')}>
+        <button type="button" className="btn-back" onClick={() => navigate('/alunos')}>
           ← Voltar
         </button>
 
@@ -246,7 +246,7 @@ Qualquer dúvida, estou à disposição!`;
             <button
               type="button"
               className="btn-icon"
-              onClick={() => navigate('/enrollments')}
+              onClick={() => navigate('/matriculas')}
               title="Ver todas as matrículas"
             >
               ➕
@@ -286,7 +286,7 @@ Qualquer dúvida, estou à disposição!`;
                     <button
                       type="button"
                       className="btn-sm btn-secondary"
-                      onClick={() => navigate(`/enrollments?student=${student.id}`)}
+                      onClick={() => navigate(`/matriculas?student=${student.id}`)}
                     >
                       Editar matrícula
                     </button>
@@ -355,7 +355,7 @@ Qualquer dúvida, estou à disposição!`;
             <button
               type="button"
               className="btn-icon"
-              onClick={() => navigate(`/financial?student=${student.id}`)}
+              onClick={() => navigate(`/financeiro?student=${student.id}`)}
               title="Ver financeiro completo"
             >
               📊
@@ -391,7 +391,7 @@ Qualquer dúvida, estou à disposição!`;
                           <button
                             type="button"
                             className="btn-sm btn-primary"
-                            onClick={() => navigate(`/financial?invoice=${invoice.id}`)}
+                            onClick={() => navigate(`/financeiro?invoice=${invoice.id}`)}
                           >
                             Ver
                           </button>
