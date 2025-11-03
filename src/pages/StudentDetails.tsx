@@ -5,10 +5,12 @@ import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
 import { financialService } from '../services/financialService';
 import { levelService } from '../services/levelService';
+import { classService } from '../services/classService';
 import type { Student } from '../types/studentTypes';
 import type { Enrollment } from '../types/enrollmentTypes';
 import type { Invoice } from '../types/financialTypes';
 import type { Level } from '../types/levelTypes';
+import type { Class } from '../types/classTypes';
 import MakeupCreditsManager from '../components/MakeupCreditsManager';
 import '../styles/StudentDetails.css';
 
@@ -24,6 +26,12 @@ export default function StudentDetails() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+
+  // Estados para adicionar aluno a turma
+  const [showAddToClassModal, setShowAddToClassModal] = useState(false);
+  const [availableClasses, setAvailableClasses] = useState<Class[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
+  const [isLoadingClasses, setIsLoadingClasses] = useState(false);
 
   // Financial stats
   const [financialStats, setFinancialStats] = useState({
@@ -142,6 +150,85 @@ export default function StudentDetails() {
       const errorMessage = error?.response?.data?.message || error?.message || 'Erro ao atualizar nível do aluno';
       toast.error(errorMessage);
     }
+  };
+
+  const handleOpenAddToClassModal = async () => {
+    // Verificar se o aluno tem matrícula ativa
+    const activeEnrollment = enrollments.find(e => e.status === 'ativa');
+
+    if (!activeEnrollment) {
+      toast.error('Este aluno não possui matrícula ativa. Crie uma matrícula primeiro.');
+      return;
+    }
+
+    try {
+      setIsLoadingClasses(true);
+      setShowAddToClassModal(true);
+
+      // Buscar todas as turmas ativas
+      const classesRes = await classService.getClasses({ status: 'ativa' });
+
+      if (classesRes.success) {
+        // Filtrar turmas que o aluno ainda não está matriculado
+        const currentClassIds = activeEnrollment.class_ids || [];
+        const available = classesRes.data.filter(
+          (cls) => !currentClassIds.includes(cls.id)
+        );
+        setAvailableClasses(available);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar turmas:', error);
+      toast.error('Erro ao buscar turmas disponíveis');
+      setShowAddToClassModal(false);
+    } finally {
+      setIsLoadingClasses(false);
+    }
+  };
+
+  const handleAddToClasses = async () => {
+    if (selectedClasses.length === 0) {
+      toast.error('Selecione pelo menos uma turma');
+      return;
+    }
+
+    const activeEnrollment = enrollments.find(e => e.status === 'ativa');
+    if (!activeEnrollment) {
+      toast.error('Matrícula ativa não encontrada');
+      return;
+    }
+
+    try {
+      // Combinar turmas atuais com as novas selecionadas
+      const currentClassIds = activeEnrollment.class_ids || [];
+      const updatedClassIds = [...currentClassIds, ...selectedClasses];
+
+      const response = await enrollmentService.updateEnrollmentClasses(
+        activeEnrollment.id,
+        { class_ids: updatedClassIds }
+      );
+
+      if (response.success) {
+        toast.success(`Aluno adicionado a ${selectedClasses.length} turma(s) com sucesso!`);
+        setShowAddToClassModal(false);
+        setSelectedClasses([]);
+        // Recarregar dados do aluno
+        fetchStudentData();
+      } else {
+        toast.error(response.message || 'Erro ao adicionar aluno às turmas');
+      }
+    } catch (error: any) {
+      console.error('Erro ao adicionar às turmas:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Erro ao adicionar aluno às turmas';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleToggleClass = (classId: number) => {
+    setSelectedClasses((prev) =>
+      prev.includes(classId)
+        ? prev.filter((id) => id !== classId)
+        : [...prev, classId]
+    );
   };
 
   const handleWhatsAppClick = () => {
@@ -286,14 +373,24 @@ Qualquer dúvida, estou à disposição!`;
         <div className="content-card">
           <div className="content-card-header">
             <h3>📋 Matrículas</h3>
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => navigate('/matriculas')}
-              title="Ver todas as matrículas"
-            >
-              ➕
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={handleOpenAddToClassModal}
+                title="Adicionar aluno a uma turma"
+              >
+                ➕ Turma
+              </button>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => navigate('/matriculas')}
+                title="Ver todas as matrículas"
+              >
+                📋
+              </button>
+            </div>
           </div>
           <div className="content-card-body">
             {enrollments.length === 0 ? (
@@ -512,8 +609,125 @@ Qualquer dúvida, estou à disposição!`;
           </div>
         </div>
       )}
+
+      {/* Add to Class Modal */}
+      {showAddToClassModal && (
+        <div className="modal-overlay" onClick={() => setShowAddToClassModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className="modal-header">
+              <h2>Adicionar Aluno a Turmas</h2>
+              <button type="button" className="modal-close" onClick={() => setShowAddToClassModal(false)}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              {isLoadingClasses ? (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <div className="spinner"></div>
+                  <p>Carregando turmas disponíveis...</p>
+                </div>
+              ) : availableClasses.length === 0 ? (
+                <p className="empty-state">
+                  Nenhuma turma disponível. O aluno já está matriculado em todas as turmas ativas.
+                </p>
+              ) : (
+                <div>
+                  <p style={{ marginBottom: '1rem', color: '#666' }}>
+                    Selecione as turmas para adicionar o aluno:
+                  </p>
+                  <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    {availableClasses.map((cls) => (
+                      <div
+                        key={cls.id}
+                        onClick={() => handleToggleClass(cls.id)}
+                        style={{
+                          padding: '1rem',
+                          marginBottom: '0.5rem',
+                          border: selectedClasses.includes(cls.id) ? '2px solid #4CAF50' : '1px solid #ddd',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          backgroundColor: selectedClasses.includes(cls.id) ? '#f0f8f0' : '#fff',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                          <div style={{ flex: 1 }}>
+                            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>
+                              {cls.name || `${cls.modality_name} - ${cls.weekday}`}
+                            </h4>
+                            <div style={{ fontSize: '0.875rem', color: '#666' }}>
+                              <p style={{ margin: '0.25rem 0' }}>
+                                <strong>Modalidade:</strong> {cls.modality_name}
+                              </p>
+                              <p style={{ margin: '0.25rem 0' }}>
+                                <strong>Horário:</strong> {getWeekdayName(cls.weekday)} às {cls.start_time}
+                                {cls.end_time && ` - ${cls.end_time}`}
+                              </p>
+                              {cls.location && (
+                                <p style={{ margin: '0.25rem 0' }}>
+                                  <strong>Local:</strong> {cls.location}
+                                </p>
+                              )}
+                              {cls.level && (
+                                <p style={{ margin: '0.25rem 0' }}>
+                                  <strong>Nível:</strong> {cls.level}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ marginLeft: '1rem' }}>
+                            <input
+                              type="checkbox"
+                              checked={selectedClasses.includes(cls.id)}
+                              onChange={() => handleToggleClass(cls.id)}
+                              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setShowAddToClassModal(false);
+                  setSelectedClasses([]);
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleAddToClasses}
+                disabled={selectedClasses.length === 0 || isLoadingClasses}
+              >
+                Adicionar ({selectedClasses.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function getWeekdayName(weekday: string): string {
+  const weekdays: { [key: string]: string } = {
+    seg: 'Segunda',
+    ter: 'Terça',
+    qua: 'Quarta',
+    qui: 'Quinta',
+    sex: 'Sexta',
+    sab: 'Sábado',
+    dom: 'Domingo',
+  };
+  return weekdays[weekday] || weekday;
 }
 
 function calculateAge(birthDate: string): number {
