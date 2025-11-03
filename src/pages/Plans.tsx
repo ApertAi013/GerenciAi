@@ -283,9 +283,12 @@ function PlanModal({
                     price_cents: Math.round(parseFloat(e.target.value) * 100),
                   })
                 }
-                placeholder="0.00"
+                placeholder="150.00"
                 required
               />
+              <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
+                Digite o valor desejado (ex: 150.00)
+              </small>
             </div>
           </div>
 

@@ -37,7 +37,9 @@ export default function Students() {
     try {
       const response = await levelService.getLevels();
       if (response.success) {
-        setLevels(response.data);
+        // Filtrar apenas níveis não-padrão (criados pelo usuário)
+        const userLevels = response.data.filter((level: Level) => !level.is_default);
+        setLevels(userLevels);
       }
     } catch (error) {
       console.error('Erro ao buscar níveis:', error);
@@ -514,7 +516,9 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     try {
       const response = await levelService.getLevels();
       if (response.success) {
-        setLevels(response.data);
+        // Filtrar apenas níveis não-padrão (criados pelo usuário)
+        const userLevels = response.data.filter((level: Level) => !level.is_default);
+        setLevels(userLevels);
       }
     } catch (error) {
       console.error('Erro ao buscar níveis:', error);
