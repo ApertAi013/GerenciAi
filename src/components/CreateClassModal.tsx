@@ -5,11 +5,18 @@ import type { Modality, Class } from '../types/classTypes';
 import type { Level } from '../types/levelTypes';
 import '../styles/Classes.css';
 
+interface ScheduleSlot {
+  weekday: '' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom';
+  start_time: string;
+  end_time: string;
+}
+
 interface CreateClassModalProps {
   modalities: Modality[];
   onClose: () => void;
   onSuccess: () => void;
-  editClass?: Class; // Prop opcional para modo de edição
+  editClass?: Class;
+  prefilledData?: { weekday: string; start_time: string } | null;
 }
 
 export default function CreateClassModal({
@@ -17,19 +24,28 @@ export default function CreateClassModal({
   onClose,
   onSuccess,
   editClass,
+  prefilledData,
 }: CreateClassModalProps) {
   const isEditMode = !!editClass;
 
   const [formData, setFormData] = useState({
     modality_id: '',
     name: '',
-    weekday: '' as '' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom',
-    start_time: '',
-    end_time: '',
     location: '',
     capacity: '20',
     level: '' as '' | 'iniciante' | 'intermediario' | 'avancado' | 'todos',
   });
+
+  // Múltiplos horários
+  const [schedules, setSchedules] = useState<ScheduleSlot[]>([{
+    weekday: '' as '' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom',
+    start_time: '',
+    end_time: ''
+  }]);
+
+  // Duração padrão
+  const [duration, setDuration] = useState<30 | 60 | 90>(60);
+
   const [levels, setLevels] = useState<Level[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [error, setError] = useState('');
@@ -44,12 +60,25 @@ export default function CreateClassModal({
     try {
       const response = await levelService.getLevels();
       if (response.success) {
-        setLevels(response.data);
+        // Filtrar níveis não-padrão (criados pelo usuário)
+        const userLevels = response.data.filter((level: Level) => !level.is_default);
+        setLevels(userLevels);
       }
     } catch (error) {
       console.error('Erro ao buscar níveis:', error);
     }
   };
+
+  // Aplicar dados pré-preenchidos da agenda
+  useEffect(() => {
+    if (prefilledData && !isEditMode) {
+      setSchedules([{
+        weekday: prefilledData.weekday as any,
+        start_time: prefilledData.start_time,
+        end_time: calculateEndTime(prefilledData.start_time, duration)
+      }]);
+    }
+  }, [prefilledData, duration, isEditMode]);
 
   // Preencher formulário quando estiver em modo de edição
   useEffect(() => {
@@ -57,19 +86,61 @@ export default function CreateClassModal({
       setFormData({
         modality_id: editClass.modality_id.toString(),
         name: editClass.name || '',
-        weekday: editClass.weekday,
-        start_time: editClass.start_time.substring(0, 5), // Remove segundos
-        end_time: editClass.end_time ? editClass.end_time.substring(0, 5) : '',
         location: editClass.location || '',
         capacity: editClass.capacity.toString(),
         level: editClass.level || '',
       });
-      // Set selected levels from allowed_levels
+
+      // Em modo de edição, apenas um horário
+      setSchedules([{
+        weekday: editClass.weekday,
+        start_time: editClass.start_time.substring(0, 5),
+        end_time: editClass.end_time ? editClass.end_time.substring(0, 5) : '',
+      }]);
+
       if (editClass.allowed_levels && editClass.allowed_levels.length > 0) {
         setSelectedLevels(editClass.allowed_levels);
       }
     }
   }, [editClass]);
+
+  // Calcular horário de término baseado na duração
+  const calculateEndTime = (startTime: string, durationMinutes: number): string => {
+    if (!startTime) return '';
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + durationMinutes;
+    const endHours = Math.floor(totalMinutes / 60);
+    const endMinutes = totalMinutes % 60;
+    return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+  };
+
+  // Atualizar end_time quando mudar start_time ou duration
+  const handleStartTimeChange = (index: number, startTime: string) => {
+    const newSchedules = [...schedules];
+    newSchedules[index].start_time = startTime;
+    newSchedules[index].end_time = calculateEndTime(startTime, duration);
+    setSchedules(newSchedules);
+  };
+
+  const handleDurationChange = (newDuration: 30 | 60 | 90) => {
+    setDuration(newDuration);
+    // Atualizar todos os end_times
+    const updatedSchedules = schedules.map(schedule => ({
+      ...schedule,
+      end_time: schedule.start_time ? calculateEndTime(schedule.start_time, newDuration) : ''
+    }));
+    setSchedules(updatedSchedules);
+  };
+
+  const addSchedule = () => {
+    setSchedules([...schedules, { weekday: '', start_time: '', end_time: '' }]);
+  };
+
+  const removeSchedule = (index: number) => {
+    if (schedules.length > 1) {
+      setSchedules(schedules.filter((_, i) => i !== index));
+    }
+  };
 
   const handleLevelToggle = (levelName: string) => {
     setSelectedLevels((prev) =>
@@ -85,35 +156,56 @@ export default function CreateClassModal({
     setIsSubmitting(true);
 
     try {
-      if (!formData.modality_id || !formData.weekday || !formData.start_time) {
-        setError('Modalidade, dia e horário de início são obrigatórios');
+      // Validar
+      if (!formData.modality_id) {
+        setError('Modalidade é obrigatória');
         setIsSubmitting(false);
         return;
       }
 
-      const payload: any = {
-        modality_id: parseInt(formData.modality_id),
-        weekday: formData.weekday,
-        start_time: formData.start_time,
-        capacity: parseInt(formData.capacity),
-      };
-
-      if (formData.name) payload.name = formData.name;
-      if (formData.end_time) payload.end_time = formData.end_time;
-      if (formData.location) payload.location = formData.location;
-      if (formData.level) payload.level = formData.level;
-
-      // Add allowed levels if any are selected
-      if (selectedLevels.length > 0) {
-        payload.allowed_levels = selectedLevels;
+      // Validar horários
+      for (const schedule of schedules) {
+        if (!schedule.weekday || !schedule.start_time) {
+          setError('Todos os horários devem ter dia da semana e horário de início');
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       if (isEditMode && editClass) {
-        // Modo de edição
+        // Modo de edição - apenas um horário
+        const payload: any = {
+          modality_id: parseInt(formData.modality_id),
+          weekday: schedules[0].weekday,
+          start_time: schedules[0].start_time,
+          capacity: parseInt(formData.capacity),
+        };
+
+        if (formData.name) payload.name = formData.name;
+        if (schedules[0].end_time) payload.end_time = schedules[0].end_time;
+        if (formData.location) payload.location = formData.location;
+        if (formData.level) payload.level = formData.level;
+        if (selectedLevels.length > 0) payload.allowed_levels = selectedLevels;
+
         await classService.updateClass(editClass.id, payload);
       } else {
-        // Modo de criação
-        await classService.createClass(payload);
+        // Modo de criação - criar uma turma para cada horário
+        for (const schedule of schedules) {
+          const payload: any = {
+            modality_id: parseInt(formData.modality_id),
+            weekday: schedule.weekday,
+            start_time: schedule.start_time,
+            capacity: parseInt(formData.capacity),
+          };
+
+          if (formData.name) payload.name = formData.name;
+          if (schedule.end_time) payload.end_time = schedule.end_time;
+          if (formData.location) payload.location = formData.location;
+          if (formData.level) payload.level = formData.level;
+          if (selectedLevels.length > 0) payload.allowed_levels = selectedLevels;
+
+          await classService.createClass(payload);
+        }
       }
 
       onSuccess();
@@ -126,7 +218,7 @@ export default function CreateClassModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <h2>{isEditMode ? 'Editar Turma' : 'Criar Nova Turma'}</h2>
           <button type="button" className="modal-close" onClick={onClose}>✕</button>
@@ -163,47 +255,134 @@ export default function CreateClassModal({
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="weekday">Dia da Semana *</label>
-              <select
-                id="weekday"
-                value={formData.weekday}
-                onChange={(e) => setFormData({ ...formData, weekday: e.target.value as any })}
-                required
-              >
-                <option value="">Selecione...</option>
-                <option value="seg">Segunda-feira</option>
-                <option value="ter">Terça-feira</option>
-                <option value="qua">Quarta-feira</option>
-                <option value="qui">Quinta-feira</option>
-                <option value="sex">Sexta-feira</option>
-                <option value="sab">Sábado</option>
-                <option value="dom">Domingo</option>
-              </select>
+          {/* Duração da Aula */}
+          <div className="form-group">
+            <label>Duração da Aula *</label>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              {[30, 60, 90].map(mins => (
+                <button
+                  key={mins}
+                  type="button"
+                  className={duration === mins ? 'btn-primary' : 'btn-secondary'}
+                  onClick={() => handleDurationChange(mins as 30 | 60 | 90)}
+                  style={{ flex: 1 }}
+                >
+                  {mins} min
+                </button>
+              ))}
+            </div>
+            <small style={{ color: '#666', marginTop: '0.5rem', display: 'block' }}>
+              O horário de término será calculado automaticamente
+            </small>
+          </div>
+
+          {/* Horários Múltiplos */}
+          <div className="form-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ margin: 0 }}>Horários da Turma *</label>
+              {!isEditMode && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={addSchedule}
+                  style={{ fontSize: '0.875rem', padding: '0.375rem 0.75rem' }}
+                >
+                  + Adicionar Horário
+                </button>
+              )}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="level">Nível (Legado)</label>
-              <select
-                id="level"
-                value={formData.level}
-                onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
-              >
-                <option value="">Selecione...</option>
-                <option value="iniciante">Iniciante</option>
-                <option value="intermediario">Intermediário</option>
-                <option value="avancado">Avançado</option>
-                <option value="todos">Todos</option>
-              </select>
-            </div>
+            {schedules.map((schedule, index) => (
+              <div key={index} style={{
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                backgroundColor: '#f9f9f9'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <strong>Horário {index + 1}</strong>
+                  {!isEditMode && schedules.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn-danger"
+                      onClick={() => removeSchedule(index)}
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label>Dia da Semana *</label>
+                    <select
+                      value={schedule.weekday}
+                      onChange={(e) => {
+                        const newSchedules = [...schedules];
+                        newSchedules[index].weekday = e.target.value as any;
+                        setSchedules(newSchedules);
+                      }}
+                      required
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="seg">Segunda-feira</option>
+                      <option value="ter">Terça-feira</option>
+                      <option value="qua">Quarta-feira</option>
+                      <option value="qui">Quinta-feira</option>
+                      <option value="sex">Sexta-feira</option>
+                      <option value="sab">Sábado</option>
+                      <option value="dom">Domingo</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label>Horário Início *</label>
+                    <input
+                      type="time"
+                      value={schedule.start_time}
+                      onChange={(e) => handleStartTimeChange(index, e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label>Horário Fim</label>
+                    <input
+                      type="time"
+                      value={schedule.end_time}
+                      readOnly
+                      style={{ backgroundColor: '#f0f0f0' }}
+                      title="Calculado automaticamente baseado na duração"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Nível Legado */}
+          <div className="form-group">
+            <label htmlFor="level">Nível (Legado)</label>
+            <select
+              id="level"
+              value={formData.level}
+              onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
+            >
+              <option value="">Selecione...</option>
+              <option value="iniciante">Iniciante</option>
+              <option value="intermediario">Intermediário</option>
+              <option value="avancado">Avançado</option>
+              <option value="todos">Todos</option>
+            </select>
           </div>
 
           {/* Multi-Level Selection */}
           {levels.length > 0 && (
             <div className="form-group">
               <label>Níveis Permitidos (Múltipla Escolha)</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>
                 {levels.map((level) => (
                   <label
                     key={level.id}
@@ -212,10 +391,12 @@ export default function CreateClassModal({
                       alignItems: 'center',
                       gap: '0.5rem',
                       cursor: 'pointer',
-                      padding: '0.5rem',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      backgroundColor: selectedLevels.includes(level.name) ? '#e3f2fd' : 'white',
+                      padding: '0.5rem 0.75rem',
+                      border: '2px solid',
+                      borderColor: selectedLevels.includes(level.name) ? '#10b981' : '#ddd',
+                      borderRadius: '6px',
+                      backgroundColor: selectedLevels.includes(level.name) ? '#d1fae5' : 'white',
+                      transition: 'all 0.2s'
                     }}
                   >
                     <input
@@ -224,7 +405,9 @@ export default function CreateClassModal({
                       onChange={() => handleLevelToggle(level.name)}
                       style={{ cursor: 'pointer' }}
                     />
-                    <span>{level.name}</span>
+                    <span style={{ fontWeight: selectedLevels.includes(level.name) ? 600 : 400 }}>
+                      {level.name}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -233,29 +416,6 @@ export default function CreateClassModal({
               </small>
             </div>
           )}
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="start_time">Horário Início *</label>
-              <input
-                id="start_time"
-                type="time"
-                value={formData.start_time}
-                onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="end_time">Horário Fim</label>
-              <input
-                id="end_time"
-                type="time"
-                value={formData.end_time}
-                onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-              />
-            </div>
-          </div>
 
           <div className="form-row">
             <div className="form-group">
@@ -288,7 +448,7 @@ export default function CreateClassModal({
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
               {isSubmitting
                 ? (isEditMode ? 'Salvando...' : 'Criando...')
-                : (isEditMode ? 'Salvar Alterações' : 'Criar Turma')
+                : (isEditMode ? 'Salvar Alterações' : `Criar ${schedules.length > 1 ? `${schedules.length} Turmas` : 'Turma'}`)
               }
             </button>
           </div>

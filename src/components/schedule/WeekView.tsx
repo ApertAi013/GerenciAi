@@ -28,6 +28,7 @@ interface WeekViewProps {
   onDragStart: (event: any) => void;
   onDragEnd: (event: any) => void;
   isSaving: boolean;
+  onSlotClick?: (day: number, hour: string) => void;
 }
 
 const HOURS = [
@@ -265,12 +266,14 @@ function DroppableTimeSlot({
   day,
   hour,
   isHourStart,
-  children
+  children,
+  onClick
 }: {
   day: number;
   hour: string;
   isHourStart: boolean;
   children: React.ReactNode;
+  onClick?: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `slot-${day}-${hour}`,
@@ -281,6 +284,9 @@ function DroppableTimeSlot({
     <div
       ref={setNodeRef}
       className={`time-slot ${isOver ? 'drag-over' : ''} ${isHourStart ? 'hour-start' : 'sub-slot'}`}
+      onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
+      title={onClick ? 'Clique para criar turma' : ''}
     >
       {children}
     </div>
@@ -293,7 +299,8 @@ export default function WeekView({
   activeId,
   onDragStart,
   onDragEnd,
-  isSaving
+  isSaving,
+  onSlotClick
 }: WeekViewProps) {
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
 
@@ -454,6 +461,7 @@ export default function WeekView({
                             day={dayOffset}
                             hour={slot.time}
                             isHourStart={slot.isHourStart}
+                            onClick={onSlotClick ? () => onSlotClick(dayOffset, slot.time) : undefined}
                           >
                             {/* Vazio - cards são renderizados no nível da hora */}
                           </DroppableTimeSlot>

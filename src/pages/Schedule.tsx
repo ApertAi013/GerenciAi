@@ -147,6 +147,7 @@ export default function Schedule() {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [selectedModalities, setSelectedModalities] = useState<number[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
+  const [prefilledData, setPrefilledData] = useState<{ weekday: string; start_time: string } | null>(null);
 
   // Aplicar filtros nas turmas
   const filteredClasses = useMemo(() => {
@@ -322,6 +323,13 @@ export default function Schedule() {
   };
 
   const handleToday = () => setCurrentWeek(new Date());
+
+  const handleSlotClick = (day: number, hour: string) => {
+    // Convert day number to weekday string
+    const weekday = NUMBER_TO_WEEKDAY[day];
+    setPrefilledData({ weekday, start_time: hour });
+    setShowCreateModal(true);
+  };
 
   const handleDragStart = (event: any) => {
     setActiveId(event.active.id as string);
@@ -736,9 +744,9 @@ export default function Schedule() {
 
       {/* Calendar Views */}
       {viewMode === 'month' ? (
-        <MonthView currentDate={currentWeek} classes={filteredClasses} />
+        <MonthView currentDate={currentWeek} classes={filteredClasses} onSlotClick={handleSlotClick} />
       ) : viewMode === 'day' ? (
-        <DayView currentDate={currentWeek} classes={filteredClasses} />
+        <DayView currentDate={currentWeek} classes={filteredClasses} onSlotClick={handleSlotClick} />
       ) : (
         <WeekView
           currentWeek={currentWeek}
@@ -747,6 +755,7 @@ export default function Schedule() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           isSaving={isSaving}
+          onSlotClick={handleSlotClick}
         />
       )}
 
@@ -765,11 +774,16 @@ export default function Schedule() {
       {showCreateModal && (
         <CreateClassModal
           modalities={modalities}
-          onClose={() => setShowCreateModal(false)}
+          onClose={() => {
+            setShowCreateModal(false);
+            setPrefilledData(null);
+          }}
           onSuccess={() => {
             setShowCreateModal(false);
+            setPrefilledData(null);
             fetchClassesAndStudents();
           }}
+          prefilledData={prefilledData}
         />
       )}
     </div>

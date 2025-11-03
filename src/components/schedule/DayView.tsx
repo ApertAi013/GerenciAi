@@ -22,6 +22,7 @@ interface ClassSchedule {
 interface DayViewProps {
   currentDate: Date;
   classes: ClassSchedule[];
+  onSlotClick?: (day: number, hour: string) => void;
 }
 
 const HOURS = [
@@ -30,7 +31,7 @@ const HOURS = [
   '18:00', '19:00', '20:00', '21:00'
 ];
 
-export default function DayView({ currentDate, classes }: DayViewProps) {
+export default function DayView({ currentDate, classes, onSlotClick }: DayViewProps) {
   const dayOfWeek = currentDate.getDay();
   const classesForDay = classes.filter(cls => cls.day === dayOfWeek);
 
@@ -60,8 +61,18 @@ export default function DayView({ currentDate, classes }: DayViewProps) {
           <div className="day-classes-header">Turmas</div>
           {HOURS.map((hour) => {
             const hourClasses = getClassesForHour(hour);
+            const isEmpty = hourClasses.length === 0;
             return (
-              <div key={hour} className="day-time-slot">
+              <div
+                key={hour}
+                className="day-time-slot"
+                onClick={isEmpty && onSlotClick ? () => onSlotClick(dayOfWeek, hour) : undefined}
+                style={{
+                  cursor: isEmpty && onSlotClick ? 'pointer' : 'default',
+                  minHeight: '80px'
+                }}
+                title={isEmpty && onSlotClick ? 'Clique para criar turma' : ''}
+              >
                 {hourClasses.map((cls) => {
                   const filled = cls.students.length;
                   const capacity = cls.capacity;

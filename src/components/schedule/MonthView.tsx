@@ -16,6 +16,7 @@ interface ClassSchedule {
 interface MonthViewProps {
   currentDate: Date;
   classes: ClassSchedule[];
+  onSlotClick?: (day: number, hour: string) => void;
 }
 
 const WEEKDAY_TO_NUMBER: Record<number, number> = {
@@ -28,7 +29,7 @@ const WEEKDAY_TO_NUMBER: Record<number, number> = {
   6: 6, // Saturday
 };
 
-export default function MonthView({ currentDate, classes }: MonthViewProps) {
+export default function MonthView({ currentDate, classes, onSlotClick }: MonthViewProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -71,6 +72,9 @@ export default function MonthView({ currentDate, classes }: MonthViewProps) {
             <div
               key={index}
               className={`month-day-cell ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`}
+              onClick={onSlotClick ? () => onSlotClick(day.getDay(), '06:00') : undefined}
+              style={{ cursor: onSlotClick ? 'pointer' : 'default' }}
+              title={onSlotClick ? 'Clique para criar turma' : ''}
             >
               <div className="month-day-number">{format(day, 'd')}</div>
               <div className="month-day-classes">
