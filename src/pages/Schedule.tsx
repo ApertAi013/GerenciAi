@@ -241,9 +241,16 @@ export default function Schedule() {
       );
 
       // 3. Converter turmas para formato da agenda
-      const scheduleClasses = classesWithStudents.map((dbClass) =>
-        convertClassToSchedule(dbClass)
-      );
+      const scheduleClasses = classesWithStudents.map((dbClass) => {
+        const converted = convertClassToSchedule(dbClass);
+        console.log(`Turma convertida:`, {
+          id: dbClass.id,
+          name: dbClass.name,
+          weekday_db: dbClass.weekday,
+          day_number: converted.day
+        });
+        return converted;
+      });
 
       // 4. Buscar locações da semana/mês/dia atual
       let rentals: CourtRental[] = [];
