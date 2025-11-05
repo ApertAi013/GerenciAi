@@ -190,8 +190,11 @@ export default function Schedule() {
         setModalities([]);
       }
 
-      // 2. Buscar turmas
-      const classesResponse = await classService.getClasses({ status: 'ativa' });
+      // 2. Buscar turmas (limit alto para garantir que todas sejam retornadas)
+      const classesResponse = await classService.getClasses({
+        status: 'ativa',
+        limit: 1000
+      });
 
       if (!classesResponse.success || !classesResponse.data) {
         setError('Erro ao carregar turmas');
