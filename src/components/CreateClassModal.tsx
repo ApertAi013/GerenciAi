@@ -109,8 +109,15 @@ export default function CreateClassModal({
     if (!startTime) return '';
     const [hours, minutes] = startTime.split(':').map(Number);
     const totalMinutes = hours * 60 + minutes + durationMinutes;
-    const endHours = Math.floor(totalMinutes / 60);
+    let endHours = Math.floor(totalMinutes / 60);
     const endMinutes = totalMinutes % 60;
+
+    // Limitar para 23:59 (não permitir horários >= 24:00)
+    if (endHours >= 24) {
+      endHours = 23;
+      return '23:59';
+    }
+
     return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
   };
 
