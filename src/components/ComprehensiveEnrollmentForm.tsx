@@ -52,6 +52,10 @@ export default function ComprehensiveEnrollmentForm({
     new Date().toISOString().split('T')[0]
   );
 
+  // Search and filters
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showOnlyAvailable, setShowOnlyAvailable] = useState<boolean>(true);
+
   // Discount data
   const [discountType, setDiscountType] = useState<'none' | 'fixed' | 'percentage'>('none');
   const [discountValue, setDiscountValue] = useState<number>(0);
@@ -67,37 +71,83 @@ export default function ComprehensiveEnrollmentForm({
   }, []);
 
   useEffect(() => {
-    // Filter classes by student level
-    if (studentData.level && classes.length > 0) {
-      const filtered = classes.filter((cls) => {
-        // Show classes that allow this level
-        if (cls.allowed_levels && cls.allowed_levels.length > 0) {
-          return cls.allowed_levels.includes(studentData.level!);
-        }
-        // If class has no specific level restrictions, show it
-        if (cls.level === 'todos') {
-          return true;
-        }
-        // Match by level field
-        return cls.level === studentData.level;
-      });
+    // Filter classes by student level, search query, and availability
+    if (classes.length > 0) {
+      let filtered = classes;
+
+      // Filter by level
+      if (studentData.level) {
+        filtered = filtered.filter((cls) => {
+          // Show classes that allow this level
+          if (cls.allowed_levels && cls.allowed_levels.length > 0) {
+            return cls.allowed_levels.includes(studentData.level!);
+          }
+          // If class has no specific level restrictions, show it
+          if (cls.level === 'todos') {
+            return true;
+          }
+          // Match by level field
+          return cls.level === studentData.level;
+        });
+      }
+
+      // Filter by availability (classes with available spots)
+      if (showOnlyAvailable) {
+        filtered = filtered.filter((cls) => {
+          const enrolled = cls.enrolled_count || 0;
+          const capacity = cls.capacity || 0;
+          return enrolled < capacity;
+        });
+      }
+
+      // Filter by search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter((cls) => {
+          return (
+            cls.modality_name?.toLowerCase().includes(query) ||
+            cls.name?.toLowerCase().includes(query) ||
+            cls.location?.toLowerCase().includes(query)
+          );
+        });
+      }
+
       setFilteredClasses(filtered);
     } else {
-      setFilteredClasses(classes);
+      setFilteredClasses([]);
     }
-  }, [studentData.level, classes]);
+  }, [studentData.level, classes, searchQuery, showOnlyAvailable]);
 
   const fetchInitialData = async () => {
     try {
       const [levelsRes, plansRes, classesRes] = await Promise.all([
         levelService.getLevels(),
         enrollmentService.getPlans(),
-        classService.getClasses(),
+        classService.getClasses({ limit: 1000 }),
       ]);
 
       if (levelsRes.success) setLevels(levelsRes.data);
       if (plansRes.success) setPlans(plansRes.plans);
-      if (classesRes.success) setClasses(classesRes.data);
+      if (classesRes.success) {
+        // Fetch details for each class to get enrolled_count
+        const classesWithDetails = await Promise.all(
+          classesRes.data.map(async (cls) => {
+            try {
+              const detailsRes = await classService.getClassById(cls.id);
+              if (detailsRes.success && detailsRes.data) {
+                return {
+                  ...cls,
+                  enrolled_count: detailsRes.data.enrolled_count || 0
+                };
+              }
+              return cls;
+            } catch (error) {
+              return cls;
+            }
+          })
+        );
+        setClasses(classesWithDetails);
+      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       setError('Erro ao carregar dados iniciais');
@@ -609,44 +659,129 @@ export default function ComprehensiveEnrollmentForm({
 
         {/* Step 3: Class Selection (Mini Calendar) */}
         {currentStep === 'classes' && (
-          <div className="step-content">
-            <h3>Selecione as Turmas</h3>
-            {selectedPlan && (
-              <p className="info-text">
-                Selecione {selectedPlan.sessions_per_week} turma(s) compatível(is) com o nível{' '}
-                <strong>{studentData.level}</strong>
-              </p>
-            )}
+          <div className="step-content classes-step">
+            <div className="classes-header">
+              <div>
+                <h3>Selecione as Turmas</h3>
+                {selectedPlan && (
+                  <p className="info-text">
+                    Selecione {selectedPlan.sessions_per_week} turma(s) compatível(is) com o nível{' '}
+                    <strong>{studentData.level}</strong>
+                  </p>
+                )}
+              </div>
 
-            <div className="mini-calendar">
+              {/* Search and Filters */}
+              <div className="classes-filters">
+                <div className="search-box">
+                  <input
+                    type="text"
+                    placeholder="Buscar turma por nome, modalidade ou local..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
+                  {searchQuery && (
+                    <button
+                      className="clear-search"
+                      onClick={() => setSearchQuery('')}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                <label className="checkbox-filter">
+                  <input
+                    type="checkbox"
+                    checked={showOnlyAvailable}
+                    onChange={(e) => setShowOnlyAvailable(e.target.checked)}
+                  />
+                  <span>Mostrar apenas com vagas</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="mini-calendar-modern">
               {classesByWeekday.map((dayData) => (
-                <div key={dayData.day} className="calendar-day-column">
-                  <div className="day-header">{dayData.label}</div>
-                  <div className="day-classes">
+                <div key={dayData.day} className="calendar-day-column-modern">
+                  <div className="day-header-modern">{dayData.label}</div>
+                  <div className="day-classes-modern">
                     {dayData.classes.length === 0 ? (
-                      <div className="no-classes">Sem turmas</div>
+                      <div className="no-classes-modern">Sem turmas disponíveis</div>
                     ) : (
-                      dayData.classes.map((cls) => (
-                        <div
-                          key={cls.id}
-                          className={`class-card ${selectedClassIds.includes(cls.id) ? 'selected' : ''}`}
-                          onClick={() => handleClassToggle(cls.id)}
-                        >
-                          <div className="class-time">{cls.start_time}</div>
-                          <div className="class-modality">{cls.modality_name}</div>
-                          {cls.name && <div className="class-name">{cls.name}</div>}
-                          <div className="class-level-badge">{cls.level || 'Todos'}</div>
-                        </div>
-                      ))
+                      dayData.classes.map((cls) => {
+                        const enrolled = cls.enrolled_count || 0;
+                        const capacity = cls.capacity || 0;
+                        const available = capacity - enrolled;
+                        const isFull = available <= 0;
+                        const isSelected = selectedClassIds.includes(cls.id);
+
+                        return (
+                          <div
+                            key={cls.id}
+                            className={`class-card-modern ${isSelected ? 'selected' : ''} ${isFull ? 'full' : ''}`}
+                            onClick={() => !isFull && handleClassToggle(cls.id)}
+                            style={{ cursor: isFull ? 'not-allowed' : 'pointer' }}
+                          >
+                            {/* Time Badge */}
+                            <div className="class-time-badge">
+                              {cls.start_time.substring(0, 5)}
+                            </div>
+
+                            {/* Class Info */}
+                            <div className="class-info-section">
+                              <div className="class-modality-name">{cls.modality_name}</div>
+                              {cls.name && <div className="class-custom-name">{cls.name}</div>}
+                              {cls.location && <div className="class-location">📍 {cls.location}</div>}
+                            </div>
+
+                            {/* Availability Badge */}
+                            <div className={`availability-badge ${isFull ? 'full' : available <= 3 ? 'low' : 'available'}`}>
+                              {isFull ? (
+                                'LOTADA'
+                              ) : (
+                                <>
+                                  <span className="available-count">{available}</span>
+                                  <span className="available-label">
+                                    {available === 1 ? 'vaga' : 'vagas'}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Selection Indicator */}
+                            {isSelected && (
+                              <div className="selection-indicator">
+                                ✓ Selecionada
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="selected-count">
-              Selecionadas: {selectedClassIds.length} /{' '}
-              {selectedPlan?.sessions_per_week || 0}
+            {filteredClasses.length === 0 && (
+              <div className="no-results">
+                <p>Nenhuma turma encontrada com os filtros aplicados.</p>
+                <button
+                  className="btn-secondary"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowOnlyAvailable(false);
+                  }}
+                >
+                  Limpar Filtros
+                </button>
+              </div>
+            )}
+
+            <div className="selected-count-modern">
+              <strong>Turmas Selecionadas:</strong> {selectedClassIds.length} / {selectedPlan?.sessions_per_week || 0}
             </div>
 
             <div className="modal-actions">
