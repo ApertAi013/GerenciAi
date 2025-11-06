@@ -1,3 +1,10 @@
+export interface ClassStudent {
+  student_id: number;
+  student_name: string;
+  enrollment_id: number;
+  plan_name?: string;
+}
+
 export interface Class {
   id: number;
   modality_id: number;
@@ -11,6 +18,8 @@ export interface Class {
   level?: 'iniciante' | 'intermediario' | 'avancado' | 'todos';
   allowed_levels?: string[]; // Array of level names that can attend this class
   current_students?: number; // Number of enrolled students
+  enrolled_count?: number; // Number of enrolled students (from backend)
+  students?: ClassStudent[]; // List of enrolled students with details
   status: 'ativa' | 'suspensa' | 'cancelada';
   created_at?: string;
 }

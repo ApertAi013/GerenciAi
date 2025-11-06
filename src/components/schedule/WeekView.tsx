@@ -29,6 +29,7 @@ interface WeekViewProps {
   onDragEnd: (event: any) => void;
   isSaving: boolean;
   onSlotClick?: (day: number, hour: string) => void;
+  onStudentClick?: (studentId: number) => void;
 }
 
 const HOURS = [
@@ -57,7 +58,7 @@ const generateTimeSlots = () => {
 const TIME_SLOTS = generateTimeSlots();
 
 // Componente de aluno arrastável
-function DraggableStudent({ student, classId }: { student: Student; classId: string }) {
+function DraggableStudent({ student, classId, onStudentClick }: { student: Student; classId: string; onStudentClick?: (studentId: number) => void }) {
   const uniqueId = `student-${student.id}-class-${classId}`;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -72,6 +73,13 @@ function DraggableStudent({ student, classId }: { student: Student; classId: str
       }
     : undefined;
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onStudentClick) {
+      onStudentClick(parseInt(student.id));
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -79,6 +87,7 @@ function DraggableStudent({ student, classId }: { student: Student; classId: str
       {...listeners}
       {...attributes}
       className="student-chip draggable"
+      onClick={handleClick}
     >
       {student.name}
     </div>
@@ -165,12 +174,14 @@ function ClassCard({
   classSchedule,
   slotHour,
   lane = 0,
-  totalLanes = 1
+  totalLanes = 1,
+  onStudentClick
 }: {
   classSchedule: ClassSchedule;
   slotHour: string;
   lane?: number;
   totalLanes?: number;
+  onStudentClick?: (studentId: number) => void;
 }) {
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
     id: `class-${classSchedule.id}`,
@@ -252,7 +263,12 @@ function ClassCard({
         {classSchedule.students.length > 0 && (
           <div className="class-students">
             {classSchedule.students.map((student) => (
-              <DraggableStudent key={student.id} student={student} classId={classSchedule.id} />
+              <DraggableStudent
+                key={student.id}
+                student={student}
+                classId={classSchedule.id}
+                onStudentClick={onStudentClick}
+              />
             ))}
           </div>
         )}
@@ -300,7 +316,8 @@ export default function WeekView({
   onDragStart,
   onDragEnd,
   isSaving,
-  onSlotClick
+  onSlotClick,
+  onStudentClick
 }: WeekViewProps) {
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
 
@@ -450,6 +467,7 @@ export default function WeekView({
                               slotHour={hour}
                               lane={laneInfo.lane}
                               totalLanes={laneInfo.totalLanes}
+                              onStudentClick={onStudentClick}
                             />
                           );
                         })}

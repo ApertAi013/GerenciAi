@@ -9,6 +9,7 @@ import { rentalService } from '../services/rentalService';
 import type { Class, Modality } from '../types/classTypes';
 import type { CourtRental } from '../types/rentalTypes';
 import CreateClassModal from '../components/CreateClassModal';
+import StudentPreviewModal from '../components/StudentPreviewModal';
 import MonthView from '../components/schedule/MonthView';
 import DayView from '../components/schedule/DayView';
 import WeekView from '../components/schedule/WeekView';
@@ -148,6 +149,7 @@ export default function Schedule() {
   const [selectedModalities, setSelectedModalities] = useState<number[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [prefilledData, setPrefilledData] = useState<{ weekday: string; start_time: string } | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
 
   // Aplicar filtros nas turmas
   const filteredClasses = useMemo(() => {
@@ -766,6 +768,7 @@ export default function Schedule() {
           onDragEnd={handleDragEnd}
           isSaving={isSaving}
           onSlotClick={handleSlotClick}
+          onStudentClick={setSelectedStudentId}
         />
       )}
 
@@ -794,6 +797,14 @@ export default function Schedule() {
             fetchClassesAndStudents();
           }}
           prefilledData={prefilledData}
+        />
+      )}
+
+      {/* Student Preview Modal */}
+      {selectedStudentId && (
+        <StudentPreviewModal
+          studentId={selectedStudentId}
+          onClose={() => setSelectedStudentId(null)}
         />
       )}
     </div>

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faTrash, faVolleyball, faCalendarDays, faClock, faLocationDot, faUsers, faChartSimple, faPlus, faList } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faTrash, faVolleyball, faCalendarDays, faClock, faLocationDot, faUsers, faChartSimple, faPlus, faList, faUserGroup } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../services/classService';
-import type { Class, Modality } from '../types/classTypes';
+import type { Class, Modality, ClassStudent } from '../types/classTypes';
 import CreateClassModal from '../components/CreateClassModal';
+import StudentPreviewModal from '../components/StudentPreviewModal';
 import '../styles/Classes.css';
 
 export default function Classes() {
@@ -13,6 +14,8 @@ export default function Classes() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showModalitiesModal, setShowModalitiesModal] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | undefined>(undefined);
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [expandedClassId, setExpandedClassId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -38,7 +41,28 @@ export default function Classes() {
         console.log('Buscando turmas...');
         const classesRes = await classService.getClasses({ limit: 1000 });
         console.log('Turmas OK:', classesRes);
-        setClasses(classesRes.data || []);
+
+        // Buscar detalhes de cada turma com alunos
+        const classesWithDetails = await Promise.all(
+          (classesRes.data || []).map(async (cls) => {
+            try {
+              const detailsRes = await classService.getClassById(cls.id);
+              if (detailsRes.success && detailsRes.data) {
+                return {
+                  ...cls,
+                  students: detailsRes.data.students || [],
+                  enrolled_count: detailsRes.data.enrolled_count || 0
+                };
+              }
+              return cls;
+            } catch (error) {
+              console.error(`Erro ao buscar detalhes da turma ${cls.id}:`, error);
+              return cls;
+            }
+          })
+        );
+
+        setClasses(classesWithDetails);
       } catch (err: any) {
         console.error('Erro ao buscar turmas:', err);
         console.error('Erro detalhado:', err.response?.data);
@@ -127,91 +151,127 @@ export default function Classes() {
       </div>
 
       {/* Classes Grid */}
-      <div className="classes-grid">
-        {classes.map((cls) => (
-          <div key={cls.id} className="class-card">
-            <div className="class-card-header">
-              <h3>{cls.name || `${cls.modality_name} - ${getWeekdayLabel(cls.weekday)}`}</h3>
-              <span className={`status-badge status-${cls.status}`}>
-                {cls.status === 'ativa' ? 'Ativa' : cls.status === 'suspensa' ? 'Suspensa' : 'Cancelada'}
-              </span>
-            </div>
+      <div className="classes-grid-modern">
+        {classes.map((cls) => {
+          const statusColor = cls.status === 'ativa' ? '#10b981' : cls.status === 'suspensa' ? '#f59e0b' : '#ef4444';
+          const statusLabel = cls.status === 'ativa' ? 'OPERANDO' : cls.status === 'suspensa' ? 'SUSPENSA' : 'CANCELADA';
+          const enrolledCount = cls.enrolled_count || cls.students?.length || 0;
+          const isExpanded = expandedClassId === cls.id;
 
-            <div className="class-card-body">
-              <div className="class-info-row">
-                <span className="label">
-                  <FontAwesomeIcon icon={faVolleyball} style={{ marginRight: '6px', fontSize: '14px' }} />
-                  Modalidade:
-                </span>
-                <span className="value">{cls.modality_name}</span>
+          return (
+            <div key={cls.id} className="class-card-modern">
+              {/* Status Header */}
+              <div className="class-status-header" style={{ backgroundColor: statusColor }}>
+                <h3>{cls.name || cls.modality_name}</h3>
+                <span className="status-label">{statusLabel}</span>
               </div>
 
-              <div className="class-info-row">
-                <span className="label">
-                  <FontAwesomeIcon icon={faCalendarDays} style={{ marginRight: '6px', fontSize: '14px' }} />
-                  Dia:
-                </span>
-                <span className="value">{getWeekdayLabel(cls.weekday)}</span>
+              {/* Class Info Grid */}
+              <div className="class-info-grid">
+                <div className="info-column">
+                  <div className="info-item">
+                    <span className="info-label">Modalidade:</span>
+                    <span className="info-value">{cls.modality_name}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Dia:</span>
+                    <span className="info-value">{getWeekdayLabel(cls.weekday)}</span>
+                  </div>
+                  {cls.location && (
+                    <div className="info-item">
+                      <span className="info-label">Local:</span>
+                      <span className="info-value">{cls.location}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="info-column">
+                  <div className="info-item">
+                    <span className="info-label">Horário Início:</span>
+                    <span className="info-value">{cls.start_time.substring(0, 5)}</span>
+                  </div>
+                  {cls.end_time && (
+                    <div className="info-item">
+                      <span className="info-label">Horário Fim:</span>
+                      <span className="info-value">{cls.end_time.substring(0, 5)}</span>
+                    </div>
+                  )}
+                  <div className="info-item">
+                    <span className="info-label">Nível:</span>
+                    <span className="info-value">{getLevelLabel(cls.level)}</span>
+                  </div>
+                </div>
+
+                <div className="info-column">
+                  <div className="info-item">
+                    <span className="info-label">Capacidade:</span>
+                    <span className="info-value">{cls.capacity} alunos</span>
+                  </div>
+                  <div className="info-item highlight">
+                    <span className="info-label">
+                      <FontAwesomeIcon icon={faUserGroup} style={{ marginRight: '4px' }} />
+                      Alunos Matriculados:
+                    </span>
+                    <span className="info-value-highlight">{enrolledCount}</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="class-info-row">
-                <span className="label">
-                  <FontAwesomeIcon icon={faClock} style={{ marginRight: '6px', fontSize: '14px' }} />
-                  Horário:
-                </span>
-                <span className="value" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                  <span>{cls.start_time.substring(0, 5)}</span>
-                  {cls.end_time && <span>{cls.end_time.substring(0, 5)}</span>}
-                </span>
-              </div>
+              {/* Students Section */}
+              {enrolledCount > 0 && (
+                <div className="students-section">
+                  <button
+                    className="students-toggle"
+                    onClick={() => setExpandedClassId(isExpanded ? null : cls.id)}
+                  >
+                    <FontAwesomeIcon icon={faUsers} />
+                    <span>{isExpanded ? 'Ocultar' : 'Ver'} Alunos ({enrolledCount})</span>
+                  </button>
 
-              {cls.location && (
-                <div className="class-info-row">
-                  <span className="label">
-                    <FontAwesomeIcon icon={faLocationDot} style={{ marginRight: '6px', fontSize: '14px' }} />
-                    Local:
-                  </span>
-                  <span className="value">{cls.location}</span>
+                  {isExpanded && cls.students && cls.students.length > 0 && (
+                    <div className="students-list">
+                      {cls.students.map((student: ClassStudent) => (
+                        <div
+                          key={student.enrollment_id}
+                          className="student-chip"
+                          onClick={() => setSelectedStudentId(student.student_id)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <span className="student-name">{student.student_name}</span>
+                          {student.plan_name && (
+                            <span className="student-plan">{student.plan_name}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div className="class-info-row">
-                <span className="label">
-                  <FontAwesomeIcon icon={faUsers} style={{ marginRight: '6px', fontSize: '14px' }} />
-                  Capacidade:
-                </span>
-                <span className="value">{cls.capacity} alunos</span>
-              </div>
-
-              <div className="class-info-row">
-                <span className="label">
-                  <FontAwesomeIcon icon={faChartSimple} style={{ marginRight: '6px', fontSize: '14px' }} />
-                  Nível:
-                </span>
-                <span className="value">{getLevelLabel(cls.level)}</span>
+              {/* Action Buttons */}
+              <div className="class-card-actions-modern">
+                <button
+                  type="button"
+                  className="btn-action edit"
+                  onClick={() => handleEditClass(cls)}
+                  title="Editar turma"
+                >
+                  <FontAwesomeIcon icon={faPenToSquare} />
+                  <span>Editar</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-action delete"
+                  onClick={() => handleDeleteClass(cls.id)}
+                  title="Excluir turma"
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                  <span>Excluir</span>
+                </button>
               </div>
             </div>
-
-            <div className="class-card-actions">
-              <button
-                type="button"
-                className="btn-icon"
-                onClick={() => handleEditClass(cls)}
-                title="Editar turma"
-              >
-                <FontAwesomeIcon icon={faPenToSquare} />
-              </button>
-              <button
-                type="button"
-                className="btn-icon"
-                onClick={() => handleDeleteClass(cls.id)}
-                title="Excluir turma"
-              >
-                <FontAwesomeIcon icon={faTrash} />
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {classes.length === 0 && (
           <div className="empty-state">
@@ -248,6 +308,14 @@ export default function Classes() {
           onUpdate={() => {
             fetchData();
           }}
+        />
+      )}
+
+      {/* Student Preview Modal */}
+      {selectedStudentId && (
+        <StudentPreviewModal
+          studentId={selectedStudentId}
+          onClose={() => setSelectedStudentId(null)}
         />
       )}
     </div>
