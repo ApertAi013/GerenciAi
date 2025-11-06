@@ -31,6 +31,12 @@ export default function Enrollments() {
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
 
+  // Class filtering state for create modal
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
+  const [classesWithDetails, setClassesWithDetails] = useState<Class[]>([]);
+  const [filteredClasses, setFilteredClasses] = useState<Class[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -50,6 +56,73 @@ export default function Enrollments() {
       setFilteredStudents(filtered);
     }
   }, [studentSearch, students]);
+
+  // Fetch class details with enrolled counts
+  useEffect(() => {
+    const fetchClassDetails = async () => {
+      if (classes.length > 0) {
+        const classesWithCounts = await Promise.all(
+          classes.map(async (cls) => {
+            try {
+              const detailsRes = await classService.getClassById(cls.id);
+              if (detailsRes.success && detailsRes.data) {
+                return {
+                  ...cls,
+                  enrolled_count: detailsRes.data.enrolled_count || 0
+                };
+              }
+              return cls;
+            } catch (error) {
+              return cls;
+            }
+          })
+        );
+        setClassesWithDetails(classesWithCounts);
+      }
+    };
+
+    fetchClassDetails();
+  }, [classes]);
+
+  // Filter classes based on student level, availability, and search
+  useEffect(() => {
+    if (classesWithDetails.length > 0) {
+      let filtered = classesWithDetails;
+
+      // Filter by student level if student is selected
+      const selectedStudent = getSelectedStudent();
+      if (selectedStudent && selectedStudent.level) {
+        filtered = filtered.filter((cls) => {
+          if (cls.allowed_levels && cls.allowed_levels.length > 0) {
+            return cls.allowed_levels.includes(selectedStudent.level!);
+          }
+          if (cls.level === 'todos') return true;
+          return cls.level === selectedStudent.level;
+        });
+      }
+
+      // Filter by availability
+      if (showOnlyAvailable) {
+        filtered = filtered.filter((cls) => {
+          const enrolled = cls.enrolled_count || 0;
+          const capacity = cls.capacity || 0;
+          return enrolled < capacity;
+        });
+      }
+
+      // Filter by search
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter((cls) =>
+          cls.modality_name?.toLowerCase().includes(query) ||
+          cls.name?.toLowerCase().includes(query) ||
+          cls.location?.toLowerCase().includes(query)
+        );
+      }
+
+      setFilteredClasses(filtered);
+    }
+  }, [classesWithDetails, searchQuery, showOnlyAvailable, formData.student_id]);
 
   const loadData = async () => {
     try {
@@ -408,25 +481,130 @@ export default function Enrollments() {
                     </span>
                   )}
                 </label>
-                <div className="enrollment-classes-grid">
-                  {classes.map(classItem => (
-                    <div
-                      key={classItem.id}
-                      className={`class-card ${formData.class_ids.includes(classItem.id) ? 'selected' : ''}`}
-                      onClick={() => handleClassToggle(classItem.id)}
-                    >
-                      <h4>{classItem.name}</h4>
-                      <p>{classItem.weekday} - {classItem.start_time}</p>
-                      <p className="class-level">{classItem.level}</p>
-                      <input
-                        type="checkbox"
-                        checked={formData.class_ids.includes(classItem.id)}
-                        onChange={() => {}}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                  ))}
+
+                {/* Search and Filters */}
+                <div className="classes-filters">
+                  <div className="search-box">
+                    <input
+                      type="text"
+                      placeholder="Buscar turma por nome, modalidade ou local..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="search-input"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        className="clear-search"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  <label className="checkbox-filter">
+                    <input
+                      type="checkbox"
+                      checked={showOnlyAvailable}
+                      onChange={(e) => setShowOnlyAvailable(e.target.checked)}
+                    />
+                    <span>Apenas com vagas</span>
+                  </label>
                 </div>
+
+                {/* Mini Calendar */}
+                <div className="mini-calendar-modern">
+                  {['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'].map((day) => {
+                    const dayClasses = filteredClasses.filter((cls) => cls.weekday === day);
+                    const dayLabels: Record<string, string> = {
+                      seg: 'Segunda',
+                      ter: 'Terça',
+                      qua: 'Quarta',
+                      qui: 'Quinta',
+                      sex: 'Sexta',
+                      sab: 'Sábado',
+                      dom: 'Domingo',
+                    };
+
+                    return (
+                      <div key={day} className="calendar-day-column-modern">
+                        <div className="day-header-modern">{dayLabels[day]}</div>
+                        <div className="day-classes-modern">
+                          {dayClasses.length === 0 ? (
+                            <div className="no-classes-modern">Sem turmas</div>
+                          ) : (
+                            dayClasses.map((cls) => {
+                              const enrolled = cls.enrolled_count || 0;
+                              const capacity = cls.capacity || 0;
+                              const available = capacity - enrolled;
+                              const isFull = enrolled >= capacity;
+                              const isSelected = formData.class_ids.includes(cls.id);
+
+                              return (
+                                <div
+                                  key={cls.id}
+                                  className={`class-card-modern ${isSelected ? 'selected' : ''} ${isFull ? 'full' : ''}`}
+                                  onClick={() => !isFull && handleClassToggle(cls.id)}
+                                >
+                                  {isSelected && (
+                                    <div className="selection-indicator">✓ SELECIONADA</div>
+                                  )}
+
+                                  <div className="class-time-badge">
+                                    {cls.start_time.substring(0, 5)}
+                                  </div>
+
+                                  <div className="class-info-section">
+                                    <div className="class-modality-name">
+                                      {cls.modality_name}
+                                    </div>
+                                    {cls.name && (
+                                      <div className="class-custom-name">{cls.name}</div>
+                                    )}
+                                    {cls.location && (
+                                      <div className="class-location">📍 {cls.location}</div>
+                                    )}
+                                  </div>
+
+                                  <div
+                                    className={`availability-badge ${
+                                      isFull ? 'full' : available <= 3 ? 'low' : 'available'
+                                    }`}
+                                  >
+                                    {isFull ? (
+                                      'LOTADA'
+                                    ) : (
+                                      <>
+                                        <span className="available-count">{available}</span>
+                                        <span className="available-label">
+                                          {available === 1 ? 'vaga' : 'vagas'}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {filteredClasses.length === 0 && (
+                  <div className="no-results">
+                    <p>Nenhuma turma encontrada com os filtros aplicados.</p>
+                  </div>
+                )}
+
+                {selectedPlan && (
+                  <div className="selected-count-modern">
+                    <strong>{formData.class_ids.length}</strong> de{' '}
+                    <strong>{selectedPlan.sessions_per_week}</strong> turma(s) selecionada(s)
+                  </div>
+                )}
               </div>
 
               <div className="modal-actions">
