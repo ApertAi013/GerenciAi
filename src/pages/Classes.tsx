@@ -33,10 +33,10 @@ export default function Classes() {
         setModalities([]);
       }
 
-      // Buscar turmas
+      // Buscar turmas (limit alto para garantir que todas sejam retornadas)
       try {
         console.log('Buscando turmas...');
-        const classesRes = await classService.getClasses({});
+        const classesRes = await classService.getClasses({ limit: 1000 });
         console.log('Turmas OK:', classesRes);
         setClasses(classesRes.data || []);
       } catch (err: any) {
