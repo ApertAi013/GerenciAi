@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { enrollmentService } from '../services/enrollmentService';
 import { studentService } from '../services/studentService';
 import { classService } from '../services/classService';
+import { financialService } from '../services/financialService';
 import type { Enrollment, Plan, CreateEnrollmentRequest } from '../types/enrollmentTypes';
 import type { Student } from '../types/studentTypes';
 import type { Class } from '../types/classTypes';
@@ -25,6 +26,14 @@ export default function Enrollments() {
     due_day: 10,
     class_ids: [],
   });
+
+  // Payment flow state
+  const [hasDiscount, setHasDiscount] = useState(false);
+  const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('percentage');
+  const [discountValue, setDiscountValue] = useState(0);
+  const [discountUntil, setDiscountUntil] = useState('');
+  const [willPayNow, setWillPayNow] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'dinheiro' | 'credito' | 'debito' | 'pix' | 'transferencia'>('pix');
 
   // Student search state
   const [studentSearch, setStudentSearch] = useState('');
@@ -203,9 +212,81 @@ export default function Enrollments() {
     }
 
     try {
-      const response = await enrollmentService.createEnrollment(formData);
+      // Preparar dados da matrícula
+      const enrollmentData: any = {
+        ...formData,
+      };
+
+      // Adicionar desconto se aplicável
+      if (hasDiscount && discountValue > 0) {
+        enrollmentData.discount_type = discountType;
+        enrollmentData.discount_value = discountValue;
+        if (discountUntil) {
+          enrollmentData.discount_until = discountUntil;
+        }
+      }
+
+      // Criar matrícula
+      const response = await enrollmentService.createEnrollment(enrollmentData);
       if (response.success) {
-        toast.success('Matrícula criada com sucesso!');
+        const enrollmentId = response.enrollment.id;
+
+        // Se o usuário escolheu pagar agora, gerar fatura e registrar pagamento
+        if (willPayNow) {
+          try {
+            // Gerar fatura para o mês atual
+            const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
+            const invoiceGenResponse = await financialService.generateInvoices({
+              reference_month: currentMonth
+            });
+
+            if (invoiceGenResponse.status === 'success') {
+              // Buscar a fatura gerada para esta matrícula
+              const invoicesResponse = await financialService.getInvoices({
+                reference_month: currentMonth,
+                student_id: formData.student_id,
+                status: 'aberta'
+              });
+
+              // Encontrar a fatura da matrícula recém-criada
+              const invoice = invoicesResponse.data.invoices.find(
+                inv => inv.enrollment_id === enrollmentId
+              );
+
+              if (invoice) {
+                // Mapear payment method para o formato esperado pela API
+                const methodMap: Record<string, 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'outro'> = {
+                  pix: 'pix',
+                  dinheiro: 'dinheiro',
+                  credito: 'cartao',
+                  debito: 'cartao',
+                  transferencia: 'outro'
+                };
+
+                // Registrar pagamento
+                await financialService.registerPayment({
+                  invoice_id: invoice.id,
+                  paid_at: new Date().toISOString().split('T')[0],
+                  method: methodMap[paymentMethod],
+                  amount_cents: invoice.final_amount_cents,
+                  notes: `Pagamento registrado na criação da matrícula - ${paymentMethod}`
+                });
+
+                toast.success('Matrícula criada e pagamento registrado com sucesso!');
+              } else {
+                toast.warning('Matrícula criada, mas não foi possível encontrar a fatura para registrar o pagamento');
+              }
+            } else {
+              toast.warning('Matrícula criada, mas houve erro ao gerar a fatura para pagamento');
+            }
+          } catch (paymentError: any) {
+            console.error('Erro ao processar pagamento:', paymentError);
+            toast.warning('Matrícula criada, mas houve erro ao registrar o pagamento. Você pode registrá-lo na página de Financeiro.');
+          }
+        } else {
+          toast.success('Matrícula criada com sucesso!');
+        }
+
         setShowModal(false);
         resetForm();
         loadData();
@@ -226,6 +307,14 @@ export default function Enrollments() {
     });
     setStudentSearch('');
     setShowStudentDropdown(false);
+    setHasDiscount(false);
+    setDiscountType('percentage');
+    setDiscountValue(0);
+    setDiscountUntil('');
+    setWillPayNow(false);
+    setPaymentMethod('pix');
+    setSearchQuery('');
+    setShowOnlyAvailable(false);
   };
 
   const handleSelectStudent = (student: Student) => {
@@ -471,6 +560,95 @@ export default function Enrollments() {
                   />
                 </div>
               </div>
+
+              {/* Discount Section */}
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={hasDiscount}
+                    onChange={(e) => {
+                      setHasDiscount(e.target.checked);
+                      if (!e.target.checked) {
+                        setDiscountValue(0);
+                        setDiscountUntil('');
+                      }
+                    }}
+                  />
+                  <span>Aplicar Desconto?</span>
+                </label>
+              </div>
+
+              {hasDiscount && (
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="discount_type">Tipo de Desconto</label>
+                    <select
+                      id="discount_type"
+                      value={discountType}
+                      onChange={(e) => setDiscountType(e.target.value as 'fixed' | 'percentage')}
+                    >
+                      <option value="percentage">Percentual (%)</option>
+                      <option value="fixed">Valor Fixo (R$)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="discount_value">
+                      Valor do Desconto {discountType === 'percentage' ? '(%)' : '(R$)'}
+                    </label>
+                    <input
+                      type="number"
+                      id="discount_value"
+                      min="0"
+                      step={discountType === 'percentage' ? '1' : '0.01'}
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(Number(e.target.value))}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="discount_until">Válido até (opcional)</label>
+                    <input
+                      type="date"
+                      id="discount_until"
+                      value={discountUntil}
+                      onChange={(e) => setDiscountUntil(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Section */}
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={willPayNow}
+                    onChange={(e) => setWillPayNow(e.target.checked)}
+                  />
+                  <span>Vai pagar agora?</span>
+                </label>
+              </div>
+
+              {willPayNow && (
+                <div className="form-group">
+                  <label htmlFor="payment_method">Forma de Pagamento</label>
+                  <select
+                    id="payment_method"
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value as any)}
+                    required
+                  >
+                    <option value="pix">PIX</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="credito">Cartão de Crédito</option>
+                    <option value="debito">Cartão de Débito</option>
+                    <option value="transferencia">Transferência Bancária</option>
+                  </select>
+                </div>
+              )}
 
               <div className="form-group">
                 <label>
