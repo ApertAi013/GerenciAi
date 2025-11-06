@@ -157,12 +157,24 @@
   z-index: 1000;
 }
 
-.modal-content {
+/* Enrollment modals specifically - wide for calendar */
+.enrollments-container .modal-content {
   background: white;
   border-radius: 16px;
   width: fit-content;
   min-width: 90%;
   max-width: 98vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+/* Default modal style for other modals */
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
   max-height: 92vh;
   overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
