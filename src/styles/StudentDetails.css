@@ -3,10 +3,9 @@
   max-width: 1400px;
   margin: 0 auto;
   background-color: #f5f5f5;
-  min-height: 100vh;
 }
 
-/* ========== HEADER ========== */
+/* Header */
 .btn-back {
   background: none;
   border: none;
@@ -15,6 +14,9 @@
   cursor: pointer;
   padding: 0.5rem 0;
   margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-back:hover {
@@ -44,22 +46,23 @@
 }
 
 .student-avatar-large {
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
+  font-size: 3rem;
   color: white;
   font-weight: bold;
-  flex-shrink: 0;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .student-info h1 {
   margin: 0 0 0.5rem 0;
-  font-size: 1.75rem;
+  font-size: 2rem;
   color: #333;
 }
 
@@ -70,10 +73,60 @@
   align-items: center;
 }
 
+.status-badge {
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.status-badge.status-ativo,
+.status-badge.status-ativa {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.status-inativo,
+.status-badge.status-inativa {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-badge.status-paga {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.status-pendente,
+.status-badge.status-aberta {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-badge.status-vencida {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.level-badge {
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
 .student-subtitle {
   margin: 0;
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .student-header-actions {
@@ -94,6 +147,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: background-color 0.2s;
 }
 
 .btn-whatsapp:hover {
@@ -104,10 +158,10 @@
   font-size: 1.25rem;
 }
 
-/* ========== FINANCIAL CARDS - 3 EM LINHA ========== */
+/* Financial Cards */
 .financial-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -144,7 +198,6 @@
   justify-content: center;
   background-color: #f8f9fa;
   border-radius: 12px;
-  flex-shrink: 0;
 }
 
 .financial-card-content {
@@ -171,21 +224,18 @@
   color: #999;
 }
 
-/* ========== CONTENT GRID - 2 COLUNAS ========== */
+/* Content Grid */
 .student-content-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 1.5rem;
 }
 
-/* ========== CONTENT CARDS ========== */
 .content-card {
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  height: fit-content;
+  overflow: hidden;
 }
 
 .content-card-full {
@@ -198,12 +248,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #fafafa;
 }
 
 .content-card-header h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   color: #333;
   display: flex;
   align-items: center;
@@ -214,18 +263,23 @@
   background: none;
   border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 0.5rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.25rem;
+  transition: all 0.2s;
 }
 
 .btn-icon:hover {
   background-color: #f5f5f5;
+  border-color: #999;
 }
 
 .content-card-body {
   padding: 1.5rem;
-  flex: 1;
 }
 
 .empty-state {
@@ -235,52 +289,7 @@
   font-style: italic;
 }
 
-/* ========== BADGES ========== */
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.status-badge.status-ativo,
-.status-badge.status-ativa {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.status-badge.status-inativo,
-.status-badge.status-inativa {
-  background-color: #ffebee;
-  color: #c62828;
-}
-
-.status-badge.status-paga {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.status-badge.status-pendente,
-.status-badge.status-aberta {
-  background-color: #fff3e0;
-  color: #ef6c00;
-}
-
-.status-badge.status-vencida {
-  background-color: #ffebee;
-  color: #c62828;
-}
-
-.level-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: white;
-}
-
-/* ========== ENROLLMENTS ========== */
+/* Enrollments */
 .enrollments-list {
   display: flex;
   flex-direction: column;
@@ -304,7 +313,7 @@
 .enrollment-header h4 {
   margin: 0;
   color: #333;
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 
 .enrollment-details {
@@ -313,15 +322,42 @@
 
 .enrollment-details p {
   margin: 0.25rem 0;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: #666;
 }
 
-/* ========== INFO GRID ========== */
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-sm.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-sm.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-sm.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-sm.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+/* Info Grid */
 .info-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
 }
 
 .info-item label {
@@ -335,10 +371,10 @@
 .info-item p {
   margin: 0;
   color: #333;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
-/* ========== INVOICES TABLE ========== */
+/* Invoices Table */
 .invoices-table-container {
   overflow-x: auto;
 }
@@ -372,70 +408,8 @@
   background-color: #f8f9fa;
 }
 
-/* ========== BUTTONS ========== */
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-}
-
-.btn-primary:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
-}
-
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-sm.btn-secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-sm.btn-secondary:hover {
-  background-color: #5a6268;
-}
-
-.btn-sm.btn-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-sm.btn-primary:hover {
-  background-color: #0056b3;
-}
-
-/* ========== MODALS ========== */
-.student-details .modal-overlay {
+/* Modal */
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -448,17 +422,15 @@
   z-index: 1000;
 }
 
-.student-details .modal-content {
+.modal-content {
   background: white;
   border-radius: 12px;
   width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-width: 500px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-.student-details .modal-header {
+.modal-header {
   padding: 1.5rem;
   border-bottom: 1px solid #e0e0e0;
   display: flex;
@@ -466,13 +438,13 @@
   align-items: center;
 }
 
-.student-details .modal-header h2 {
+.modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
   color: #333;
 }
 
-.student-details .modal-close {
+.modal-close {
   background: none;
   border: none;
   font-size: 1.5rem;
@@ -487,16 +459,16 @@
   border-radius: 4px;
 }
 
-.student-details .modal-close:hover {
+.modal-close:hover {
   background-color: #f5f5f5;
   color: #333;
 }
 
-.student-details .modal-body {
+.modal-body {
   padding: 1.5rem;
 }
 
-.student-details .modal-footer {
+.modal-footer {
   padding: 1.5rem;
   border-top: 1px solid #e0e0e0;
   display: flex;
@@ -537,33 +509,85 @@
   border-radius: 6px;
 }
 
-/* ========== LOADING ========== */
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.btn-primary:hover {
+  background-color: #0056b3;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.btn-primary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
-.error-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  gap: 1rem;
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .student-content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .student-details {
+    padding: 1rem;
+  }
+
+  .student-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .student-avatar-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .student-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .student-header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-whatsapp,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .financial-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
 }
