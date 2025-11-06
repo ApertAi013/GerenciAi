@@ -383,21 +383,22 @@
 /* Modern Mini Calendar */
 .mini-calendar-modern {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: repeat(7, minmax(200px, 1fr));
+  gap: 1.5rem;
   margin: 1.5rem 0;
-  min-height: 600px;
+  min-height: 650px;
   max-height: none;
-  padding: 1.5rem;
+  padding: 2rem;
   background: #f9fafb;
   border-radius: 12px;
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
 }
 
 .calendar-day-column-modern {
   display: flex;
   flex-direction: column;
-  min-width: 160px;
+  min-width: 200px;
   flex: 1;
 }
 
