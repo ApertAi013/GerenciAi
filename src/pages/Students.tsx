@@ -164,7 +164,7 @@ export default function Students() {
       (student.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.cpf.includes(searchTerm);
 
-    const matchesLevel = !levelFilter || student.level === levelFilter;
+    const matchesLevel = !levelFilter || student.level_name === levelFilter;
 
     return matchesSearch && matchesLevel;
   });
@@ -360,7 +360,7 @@ export default function Students() {
                     {getStatusLabel(student.status)}
                   </span>
                 </td>
-                <td>{student.level || '-'}</td>
+                <td>{student.level_name || '-'}</td>
                 <td>{calculateAge(student.birth_date)}</td>
                 <td>{student.sex || '-'}</td>
                 <td>
@@ -726,7 +726,7 @@ function ViewStudentModal({ student, onClose }: { student: Student; onClose: () 
 
             <div className="profile-info-item">
               <span className="profile-label">Nível</span>
-              <span className="profile-value">{student.level || '-'}</span>
+              <span className="profile-value">{student.level_name || '-'}</span>
             </div>
 
             <div className="profile-info-item">

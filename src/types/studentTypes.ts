@@ -8,6 +8,7 @@ export interface Student {
   sex?: 'Masculino' | 'Feminino' | 'Outro' | 'N/I';
   level?: 'iniciante' | 'intermediario' | 'avançado' | string;
   level_id?: number;
+  level_name?: string; // Nome do nível customizado (da tabela levels)
   status: 'ativo' | 'inativo' | 'pendente';
   created_at: string;
   gender?: string;
