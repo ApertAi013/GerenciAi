@@ -1,12 +1,12 @@
 .student-details {
   padding: 2rem;
-  max-width: 1600px;
+  max-width: 1400px;
   margin: 0 auto;
   background-color: #f5f5f5;
   min-height: 100vh;
 }
 
-/* Header */
+/* ===== HEADER SECTION ===== */
 .btn-back {
   background: none;
   border: none;
@@ -35,9 +35,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 2rem;
-  flex-wrap: wrap;
 }
 
 .student-avatar-section {
@@ -60,6 +59,11 @@
   font-weight: bold;
   border: 4px solid #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.student-info {
+  flex: 1;
 }
 
 .student-info h1 {
@@ -73,13 +77,14 @@
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .status-badge {
-  padding: 0.15rem 0.4rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 4px;
-  font-size: 0.65rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
   text-transform: capitalize;
   display: inline-flex;
   align-items: center;
@@ -88,37 +93,37 @@
 
 .status-badge.status-ativo,
 .status-badge.status-ativa {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+  background-color: #d4edda;
+  color: #155724;
 }
 
 .status-badge.status-inativo,
 .status-badge.status-inativa {
-  background-color: #ffebee;
-  color: #c62828;
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 .status-badge.status-paga {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+  background-color: #d4edda;
+  color: #155724;
 }
 
 .status-badge.status-pendente,
 .status-badge.status-aberta {
-  background-color: #fff3e0;
-  color: #ef6c00;
+  background-color: #fff3cd;
+  color: #856404;
 }
 
 .status-badge.status-vencida {
-  background-color: #ffebee;
-  color: #c62828;
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 .level-badge {
-  padding: 0.15rem 0.4rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 4px;
-  font-size: 0.65rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: white;
   display: inline-flex;
   align-items: center;
@@ -150,6 +155,7 @@
   align-items: center;
   gap: 0.5rem;
   transition: background-color 0.2s;
+  white-space: nowrap;
 }
 
 .btn-whatsapp:hover {
@@ -160,18 +166,12 @@
   font-size: 1.25rem;
 }
 
-/* Financial Cards */
+/* ===== FINANCIAL CARDS ===== */
 .financial-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
-}
-
-@media (max-width: 1200px) {
-  .financial-cards {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
 }
 
 .financial-card {
@@ -206,6 +206,7 @@
   justify-content: center;
   background-color: #f8f9fa;
   border-radius: 12px;
+  flex-shrink: 0;
 }
 
 .financial-card-content {
@@ -232,12 +233,11 @@
   color: #999;
 }
 
-/* Content Grid */
+/* ===== CONTENT GRID ===== */
 .student-content-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
-  align-items: start;
 }
 
 .content-card {
@@ -245,9 +245,6 @@
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: fit-content;
 }
 
 .content-card-full {
@@ -275,13 +272,14 @@
   background: none;
   border: 1px solid #ddd;
   border-radius: 8px;
-  width: 36px;
+  padding: 0.5rem;
+  min-width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: 1rem;
   transition: all 0.2s;
 }
 
@@ -301,7 +299,7 @@
   font-style: italic;
 }
 
-/* Enrollments */
+/* ===== ENROLLMENTS ===== */
 .enrollments-list {
   display: flex;
   flex-direction: column;
@@ -365,10 +363,10 @@
   background-color: #0056b3;
 }
 
-/* Info Grid */
+/* ===== INFO GRID ===== */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
 }
 
@@ -386,7 +384,7 @@
   font-size: 1rem;
 }
 
-/* Invoices Table */
+/* ===== INVOICES TABLE ===== */
 .invoices-table-container {
   overflow-x: auto;
 }
@@ -420,7 +418,7 @@
   background-color: #f8f9fa;
 }
 
-/* Modal */
+/* ===== MODALS (SCOPED) ===== */
 .student-details .modal-overlay {
   position: fixed;
   top: 0;
@@ -560,8 +558,12 @@
   background-color: #5a6268;
 }
 
-/* Responsive */
-@media (max-width: 1400px) {
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .financial-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .student-content-grid {
     grid-template-columns: 1fr;
   }
@@ -614,6 +616,12 @@
   }
 
   .student-content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .financial-cards {
     grid-template-columns: 1fr;
   }
 }
