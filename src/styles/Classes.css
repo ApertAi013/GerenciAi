@@ -640,6 +640,17 @@
   color: white;
 }
 
+.btn-action.add-students {
+  background: white;
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.btn-action.add-students:hover {
+  background: #10b981;
+  color: white;
+}
+
 @media (max-width: 1024px) {
   .class-info-grid {
     grid-template-columns: 1fr;

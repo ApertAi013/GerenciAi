@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faTrash, faVolleyball, faCalendarDays, faClock, faLocationDot, faUsers, faChartSimple, faPlus, faList, faUserGroup } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faTrash, faVolleyball, faCalendarDays, faClock, faLocationDot, faUsers, faChartSimple, faPlus, faList, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../services/classService';
 import type { Class, Modality, ClassStudent } from '../types/classTypes';
 import CreateClassModal from '../components/CreateClassModal';
 import StudentPreviewModal from '../components/StudentPreviewModal';
+import AddMultipleStudentsModal from '../components/AddMultipleStudentsModal';
 import '../styles/Classes.css';
 
 export default function Classes() {
@@ -16,6 +17,7 @@ export default function Classes() {
   const [editingClass, setEditingClass] = useState<Class | undefined>(undefined);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [expandedClassId, setExpandedClassId] = useState<number | null>(null);
+  const [addStudentsClassId, setAddStudentsClassId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -252,6 +254,15 @@ export default function Classes() {
               <div className="class-card-actions-modern">
                 <button
                   type="button"
+                  className="btn-action add-students"
+                  onClick={() => setAddStudentsClassId(cls.id)}
+                  title="Adicionar vários alunos"
+                >
+                  <FontAwesomeIcon icon={faUserPlus} />
+                  <span>Adicionar Alunos</span>
+                </button>
+                <button
+                  type="button"
                   className="btn-action edit"
                   onClick={() => handleEditClass(cls)}
                   title="Editar turma"
@@ -316,6 +327,18 @@ export default function Classes() {
         <StudentPreviewModal
           studentId={selectedStudentId}
           onClose={() => setSelectedStudentId(null)}
+        />
+      )}
+
+      {/* Add Multiple Students Modal */}
+      {addStudentsClassId && (
+        <AddMultipleStudentsModal
+          classData={classes.find(c => c.id === addStudentsClassId)!}
+          onClose={() => setAddStudentsClassId(null)}
+          onSuccess={() => {
+            setAddStudentsClassId(null);
+            fetchData();
+          }}
         />
       )}
     </div>
