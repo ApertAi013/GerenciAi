@@ -43,11 +43,12 @@
 .plan-selection {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 8px;
-  border: 2px solid #e5e7eb;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .plan-selection label {
@@ -125,10 +126,16 @@
 
 /* Select All Row */
 .select-all-row {
-  padding: 0.75rem 1rem;
-  background: #eff6ff;
-  border-radius: 6px;
-  border: 2px solid #3b82f6;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 10px;
+  border: 2px solid #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.select-all-row:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 2px 8px rgba(100, 116, 139, 0.08);
 }
 
 .student-checkbox-label {
@@ -148,7 +155,7 @@
 .student-checkbox-label span {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1e40af;
+  color: #475569;
 }
 
 /* Students List */
@@ -167,23 +174,25 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
+  padding: 1.25rem;
   background: white;
   border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 .student-item:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+  border-color: #60a5fa;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
 }
 
 .student-item.selected {
   border-color: #10b981;
-  background: #d1fae5;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.12);
 }
 
 .student-item input[type="checkbox"] {
@@ -216,13 +225,14 @@
 
 .level-badge {
   display: inline-flex;
-  padding: 0.25rem 0.5rem;
-  background: #dbeafe;
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
   color: #1e40af;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+  border: 1px solid #93c5fd;
 }
 
 .check-icon {
@@ -245,16 +255,18 @@
 
 /* Enrolled Info */
 .enrolled-info {
-  padding: 0.75rem 1rem;
-  background: #fef3c7;
-  border-left: 4px solid #f59e0b;
-  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+  border-left: 4px solid #eab308;
+  border-radius: 10px;
   font-size: 0.875rem;
-  color: #92400e;
+  color: #713f12;
+  box-shadow: 0 1px 3px rgba(234, 179, 8, 0.1);
 }
 
 .enrolled-info strong {
-  color: #78350f;
+  color: #854d0e;
+  font-weight: 700;
 }
 
 /* Loading */
