@@ -130,7 +130,7 @@ export default function Enrollments() {
       const [enrollmentsRes, studentsRes, classesRes, plansRes] = await Promise.all([
         enrollmentService.getEnrollments(),
         studentService.getStudents({ status: 'ativo' }),
-        classService.getClasses(),
+        classService.getClasses({ limit: 1000 }),
         enrollmentService.getPlans(),
       ]);
 
