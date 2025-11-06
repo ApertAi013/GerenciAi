@@ -1,11 +1,12 @@
 .student-details {
   padding: 2rem;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   background-color: #f5f5f5;
+  min-height: 100vh;
 }
 
-/* Header */
+/* ========== HEADER SECTION ========== */
 .btn-back {
   background: none;
   border: none;
@@ -46,23 +47,24 @@
 }
 
 .student-avatar-large {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 3rem;
+  font-size: 2.5rem;
   color: white;
   font-weight: bold;
   border: 4px solid #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
 }
 
 .student-info h1 {
   margin: 0 0 0.5rem 0;
-  font-size: 2rem;
+  font-size: 1.75rem;
   color: #333;
 }
 
@@ -126,7 +128,7 @@
 .student-subtitle {
   margin: 0;
   color: #666;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .student-header-actions {
@@ -158,10 +160,10 @@
   font-size: 1.25rem;
 }
 
-/* Financial Cards */
+/* ========== FINANCIAL CARDS - HORIZONTAL ROW ========== */
 .financial-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -198,6 +200,7 @@
   justify-content: center;
   background-color: #f8f9fa;
   border-radius: 12px;
+  flex-shrink: 0;
 }
 
 .financial-card-content {
@@ -224,18 +227,22 @@
   color: #999;
 }
 
-/* Content Grid */
+/* ========== CONTENT GRID - 3 COLUMNS ========== */
 .student-content-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
+/* ========== CONTENT CARDS ========== */
 .content-card {
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .content-card-full {
@@ -248,11 +255,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background-color: #fafafa;
 }
 
 .content-card-header h3 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   color: #333;
   display: flex;
   align-items: center;
@@ -269,8 +277,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-icon:hover {
@@ -280,6 +289,7 @@
 
 .content-card-body {
   padding: 1.5rem;
+  flex: 1;
 }
 
 .empty-state {
@@ -289,7 +299,7 @@
   font-style: italic;
 }
 
-/* Enrollments */
+/* ========== ENROLLMENTS ========== */
 .enrollments-list {
   display: flex;
   flex-direction: column;
@@ -313,7 +323,7 @@
 .enrollment-header h4 {
   margin: 0;
   color: #333;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .enrollment-details {
@@ -322,7 +332,7 @@
 
 .enrollment-details p {
   margin: 0.25rem 0;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   color: #666;
 }
 
@@ -353,11 +363,11 @@
   background-color: #0056b3;
 }
 
-/* Info Grid */
+/* ========== INFO GRID ========== */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
 .info-item label {
@@ -371,10 +381,10 @@
 .info-item p {
   margin: 0;
   color: #333;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
-/* Invoices Table */
+/* ========== INVOICES TABLE ========== */
 .invoices-table-container {
   overflow-x: auto;
 }
@@ -408,7 +418,7 @@
   background-color: #f8f9fa;
 }
 
-/* Modal */
+/* ========== MODALS (SCOPED) ========== */
 .student-details .modal-overlay {
   position: fixed;
   top: 0;
@@ -546,50 +556,4 @@
 
 .btn-secondary:hover {
   background-color: #5a6268;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .student-content-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .student-details {
-    padding: 1rem;
-  }
-
-  .student-header-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .student-avatar-section {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .student-info h1 {
-    font-size: 1.5rem;
-  }
-
-  .student-header-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .btn-whatsapp,
-  .btn-secondary {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .financial-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
 }
