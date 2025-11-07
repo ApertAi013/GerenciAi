@@ -229,7 +229,7 @@ export default function Enrollments() {
       // Criar matrícula
       const response = await enrollmentService.createEnrollment(enrollmentData);
       if (response.success) {
-        const enrollmentId = response.enrollment.id;
+        const enrollmentId = response.data.id;
 
         // Se o usuário escolheu pagar agora, gerar fatura e registrar pagamento
         if (willPayNow) {
