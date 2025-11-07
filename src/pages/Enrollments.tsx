@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { enrollmentService } from '../services/enrollmentService';
 import { studentService } from '../services/studentService';
@@ -11,6 +12,7 @@ import '../styles/Enrollments.css';
 import '../components/ComprehensiveEnrollmentForm.css';
 
 export default function Enrollments() {
+  const navigate = useNavigate();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [allEnrollments, setAllEnrollments] = useState<Enrollment[]>([]); // For counting
   const [students, setStudents] = useState<Student[]>([]);
@@ -21,6 +23,7 @@ export default function Enrollments() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
   const [statusFilter, setStatusFilter] = useState<'ativa' | 'cancelada' | 'suspensa' | ''>('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState<CreateEnrollmentRequest>({
     student_id: 0,
     plan_id: 0,
@@ -443,6 +446,27 @@ export default function Enrollments() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="search-section">
+        <input
+          type="text"
+          placeholder="Buscar aluno por nome..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="enrollment-search-input"
+        />
+        {searchTerm && (
+          <button
+            type="button"
+            className="clear-search-btn"
+            onClick={() => setSearchTerm('')}
+            title="Limpar busca"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       {/* Status Filter Tabs */}
       <div className="filter-tabs">
         <button
@@ -486,17 +510,42 @@ export default function Enrollments() {
             </tr>
           </thead>
           <tbody>
-            {enrollments.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="empty-state">
-                  Nenhuma matrícula encontrada. Clique em "Nova Matrícula" para começar.
-                </td>
-              </tr>
-            ) : (
-              enrollments.map(enrollment => (
+            {(() => {
+              // Filter enrollments by search term
+              const filteredEnrollments = searchTerm.trim()
+                ? enrollments.filter(enrollment =>
+                    (enrollment.student_name || getStudentName(enrollment.student_id))
+                      .toLowerCase()
+                      .includes(searchTerm.toLowerCase())
+                  )
+                : enrollments;
+
+              return filteredEnrollments.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="empty-state">
+                    {searchTerm
+                      ? `Nenhuma matrícula encontrada para "${searchTerm}"`
+                      : 'Nenhuma matrícula encontrada. Clique em "Nova Matrícula" para começar.'}
+                  </td>
+                </tr>
+              ) : (
+                filteredEnrollments.map(enrollment => (
                 <tr key={enrollment.id}>
                   <td>#{enrollment.id}</td>
-                  <td>{enrollment.student_name || getStudentName(enrollment.student_id)}</td>
+                  <td>
+                    <span
+                      onClick={() => navigate(`/alunos/${enrollment.student_id}`)}
+                      style={{
+                        cursor: 'pointer',
+                        color: '#007bff',
+                        textDecoration: 'none'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                      onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                    >
+                      {enrollment.student_name || getStudentName(enrollment.student_id)}
+                    </span>
+                  </td>
                   <td>{enrollment.plan_name || getPlanName(enrollment.plan_id)}</td>
                   <td>{new Date(enrollment.start_date).toLocaleDateString('pt-BR')}</td>
                   <td>Dia {enrollment.due_day}</td>
@@ -525,7 +574,8 @@ export default function Enrollments() {
                   </td>
                 </tr>
               ))
-            )}
+              );
+            })()}
           </tbody>
         </table>
       </div>
@@ -937,6 +987,9 @@ function EditEnrollmentModal({
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPlanChangeConfirm, setShowPlanChangeConfirm] = useState(false);
+  const [pendingPlanId, setPendingPlanId] = useState<number | null>(null);
+  const [updateOpenInvoices, setUpdateOpenInvoices] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
   const [studentData, setStudentData] = useState<Student | null>(null);
@@ -1029,6 +1082,30 @@ function EditEnrollmentModal({
     }));
   };
 
+  const handlePlanChange = (newPlanId: number) => {
+    // If plan is changing, show confirmation modal
+    if (newPlanId !== enrollment.plan_id) {
+      setPendingPlanId(newPlanId);
+      setShowPlanChangeConfirm(true);
+    } else {
+      setFormData({ ...formData, plan_id: newPlanId, class_ids: [] });
+    }
+  };
+
+  const confirmPlanChange = (shouldUpdateInvoices: boolean) => {
+    if (pendingPlanId !== null) {
+      setFormData({ ...formData, plan_id: pendingPlanId, class_ids: [] });
+      setUpdateOpenInvoices(shouldUpdateInvoices);
+      setShowPlanChangeConfirm(false);
+      setPendingPlanId(null);
+    }
+  };
+
+  const cancelPlanChange = () => {
+    setShowPlanChangeConfirm(false);
+    setPendingPlanId(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -1061,6 +1138,11 @@ function EditEnrollmentModal({
         }
       } else {
         payload.discount_type = 'none';
+      }
+
+      // Add update_open_invoices flag if plan changed
+      if (formData.plan_id !== enrollment.plan_id) {
+        payload.update_open_invoices = updateOpenInvoices;
       }
 
       console.log('🔵 ATUALIZANDO MATRÍCULA (dados gerais):', {
@@ -1130,13 +1212,7 @@ function EditEnrollmentModal({
             <select
               id="plan_id"
               value={formData.plan_id}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  plan_id: Number(e.target.value),
-                  class_ids: [],
-                })
-              }
+              onChange={(e) => handlePlanChange(Number(e.target.value))}
               required
             >
               {plans.map((plan) => (
@@ -1415,6 +1491,53 @@ function EditEnrollmentModal({
           </div>
         </form>
       </div>
+
+      {/* Plan Change Confirmation Modal */}
+      {showPlanChangeConfirm && pendingPlanId && (
+        <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Alterar Plano</h2>
+              <button type="button" className="modal-close" onClick={cancelPlanChange}>×</button>
+            </div>
+            <div style={{ padding: '2rem' }}>
+              <p style={{ marginBottom: '1.5rem', color: '#2c3e50' }}>
+                O plano desta matrícula será alterado. O que deseja fazer com as faturas em aberto?
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => confirmPlanChange(true)}
+                  style={{ width: '100%', textAlign: 'left', padding: '1rem' }}
+                >
+                  <strong>Atualizar faturas em aberto</strong>
+                  <br />
+                  <small style={{ opacity: 0.9 }}>As faturas em aberto serão atualizadas com o novo valor do plano</small>
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => confirmPlanChange(false)}
+                  style={{ width: '100%', textAlign: 'left', padding: '1rem' }}
+                >
+                  <strong>Manter faturas com valor antigo</strong>
+                  <br />
+                  <small style={{ opacity: 0.9 }}>As faturas em aberto manterão o valor antigo, apenas novas faturas terão o novo valor</small>
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={cancelPlanChange}
+                  style={{ width: '100%' }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { financialService } from '../services/financialService';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
 
 export default function Financial() {
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'aberta' | 'paga' | 'vencida'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [paymentData, setPaymentData] = useState<RegisterPaymentRequest>({
@@ -224,6 +227,27 @@ export default function Financial() {
         </button>
       </div>
 
+      {/* Search Bar */}
+      <div className="search-section">
+        <input
+          type="text"
+          placeholder="Buscar aluno por nome..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="financial-search-input"
+        />
+        {searchTerm && (
+          <button
+            type="button"
+            className="clear-search-btn"
+            onClick={() => setSearchTerm('')}
+            title="Limpar busca"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       <div className="invoices-table-container">
         <table className="invoices-table">
           <thead>
@@ -239,20 +263,45 @@ export default function Financial() {
             </tr>
           </thead>
           <tbody>
-            {invoices.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="empty-state">
-                  {filter === 'all'
-                    ? 'Nenhuma fatura encontrada. Clique em "Gerar Faturas do Mês" para começar.'
-                    : `Nenhuma fatura ${filter} encontrada.`
-                  }
-                </td>
-              </tr>
-            ) : (
-              invoices.map(invoice => (
-                <tr key={invoice.id}>
-                  <td>#{invoice.id}</td>
-                  <td>{invoice.student_name || `ID ${invoice.student_id}`}</td>
+            {(() => {
+              // Filter invoices by search term
+              const filteredInvoices = searchTerm.trim()
+                ? invoices.filter(invoice =>
+                    (invoice.student_name || '')
+                      .toLowerCase()
+                      .includes(searchTerm.toLowerCase())
+                  )
+                : invoices;
+
+              return filteredInvoices.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="empty-state">
+                    {searchTerm
+                      ? `Nenhuma fatura encontrada para "${searchTerm}"`
+                      : filter === 'all'
+                      ? 'Nenhuma fatura encontrada. Clique em "Gerar Faturas do Mês" para começar.'
+                      : `Nenhuma fatura ${filter} encontrada.`
+                    }
+                  </td>
+                </tr>
+              ) : (
+                filteredInvoices.map(invoice => (
+                  <tr key={invoice.id}>
+                    <td>#{invoice.id}</td>
+                    <td>
+                      <span
+                        onClick={() => navigate(`/alunos/${invoice.student_id}`)}
+                        style={{
+                          cursor: 'pointer',
+                          color: '#007bff',
+                          textDecoration: 'none'
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                      >
+                        {invoice.student_name || `ID ${invoice.student_id}`}
+                      </span>
+                    </td>
                   <td>{invoice.plan_name || '-'}</td>
                   <td>{invoice.reference_month}</td>
                   <td>{formatDate(invoice.due_date)}</td>
@@ -295,7 +344,8 @@ export default function Financial() {
                   </td>
                 </tr>
               ))
-            )}
+              );
+            })()}
           </tbody>
         </table>
       </div>
