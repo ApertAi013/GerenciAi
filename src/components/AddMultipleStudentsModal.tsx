@@ -443,7 +443,7 @@ export default function AddMultipleStudentsModal({
                       />
                       <div className="student-info">
                         <div className="student-name">{student.full_name}</div>
-                        <div className="add-multiple-students-details>
+                        <div className="add-multiple-students-details">
                           <span>{student.email}</span>
                           {student.level && <span className="level-badge">{student.level}</span>}
                         </div>
