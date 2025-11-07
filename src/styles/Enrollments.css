@@ -51,6 +51,36 @@
   margin-bottom: 2rem;
 }
 
+/* Filter Tabs */
+.filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.filter-tab {
+  background: none;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+
+.filter-tab:hover {
+  color: #333;
+}
+
+.filter-tab.active {
+  color: #ff6b35;
+  border-bottom-color: #ff6b35;
+  font-weight: 600;
+}
+
 .stat-card {
   background: white;
   padding: 1.5rem;

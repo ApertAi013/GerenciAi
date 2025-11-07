@@ -12,6 +12,7 @@ import '../components/ComprehensiveEnrollmentForm.css';
 
 export default function Enrollments() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [allEnrollments, setAllEnrollments] = useState<Enrollment[]>([]); // For counting
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -19,6 +20,7 @@ export default function Enrollments() {
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'ativa' | 'cancelada' | 'suspensa' | ''>('');
   const [formData, setFormData] = useState<CreateEnrollmentRequest>({
     student_id: 0,
     plan_id: 0,
@@ -31,9 +33,32 @@ export default function Enrollments() {
   const [hasDiscount, setHasDiscount] = useState(false);
   const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('percentage');
   const [discountValue, setDiscountValue] = useState(0);
+  const [discountValueDisplay, setDiscountValueDisplay] = useState(''); // For fixed discount display (R$)
   const [discountUntil, setDiscountUntil] = useState('');
   const [willPayNow, setWillPayNow] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'dinheiro' | 'credito' | 'debito' | 'pix' | 'transferencia'>('pix');
+
+  // Format currency input (converts centavos to R$ display)
+  const formatCurrency = (cents: number): string => {
+    return (cents / 100).toFixed(2).replace('.', ',');
+  };
+
+  // Parse currency input (converts R$ display to centavos)
+  const parseCurrency = (value: string): number => {
+    const numbers = value.replace(/[^\d]/g, '');
+    return parseInt(numbers) || 0;
+  };
+
+  // Handle discount value change
+  const handleDiscountValueChange = (value: string) => {
+    if (discountType === 'fixed') {
+      const cents = parseCurrency(value);
+      setDiscountValue(cents);
+      setDiscountValueDisplay(formatCurrency(cents));
+    } else {
+      setDiscountValue(Number(value));
+    }
+  };
 
   // Student search state
   const [studentSearch, setStudentSearch] = useState('');
@@ -48,7 +73,7 @@ export default function Enrollments() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => {
     // Filter students based on search
@@ -136,8 +161,18 @@ export default function Enrollments() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [enrollmentsRes, studentsRes, classesRes, plansRes] = await Promise.all([
-        enrollmentService.getEnrollments(),
+
+      // Always fetch all enrollments for counting
+      const allEnrollmentsRes = await enrollmentService.getEnrollments();
+
+      // Fetch filtered enrollments if filter is active
+      const params: any = {};
+      if (statusFilter) params.status = statusFilter;
+      const enrollmentsRes = statusFilter
+        ? await enrollmentService.getEnrollments(params)
+        : allEnrollmentsRes;
+
+      const [studentsRes, classesRes, plansRes] = await Promise.all([
         studentService.getStudents({ status: 'ativo' }),
         classService.getClasses({ limit: 1000 }),
         enrollmentService.getPlans(),
@@ -178,6 +213,22 @@ export default function Enrollments() {
 
         setEnrollments(enrollmentsWithMappedClasses);
       }
+
+      // Set all enrollments for counting
+      if (allEnrollmentsRes.success && allEnrollmentsRes.data) {
+        const allMapped = allEnrollmentsRes.data.map((enrollment: any) => {
+          if (enrollment.classes && Array.isArray(enrollment.classes)) {
+            return {
+              ...enrollment,
+              class_ids: enrollment.classes.map((c: any) => c.class_id),
+              class_names: enrollment.classes.map((c: any) => c.class_name || `Turma ${c.class_id}`)
+            };
+          }
+          return enrollment;
+        });
+        setAllEnrollments(allMapped);
+      }
+
       if (studentsRes.success && studentsRes.data) {
         setStudents(studentsRes.data);
       }
@@ -310,6 +361,7 @@ export default function Enrollments() {
     setHasDiscount(false);
     setDiscountType('percentage');
     setDiscountValue(0);
+    setDiscountValueDisplay('');
     setDiscountUntil('');
     setWillPayNow(false);
     setPaymentMethod('pix');
@@ -389,6 +441,34 @@ export default function Enrollments() {
           <h3>Planos Disponíveis</h3>
           <p className="stat-value">{plans.length}</p>
         </div>
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div className="filter-tabs">
+        <button
+          className={statusFilter === '' ? 'filter-tab active' : 'filter-tab'}
+          onClick={() => setStatusFilter('')}
+        >
+          Todas ({allEnrollments.length})
+        </button>
+        <button
+          className={statusFilter === 'ativa' ? 'filter-tab active' : 'filter-tab'}
+          onClick={() => setStatusFilter('ativa')}
+        >
+          Ativas ({allEnrollments.filter(e => e.status === 'ativa').length})
+        </button>
+        <button
+          className={statusFilter === 'suspensa' ? 'filter-tab active' : 'filter-tab'}
+          onClick={() => setStatusFilter('suspensa')}
+        >
+          Suspensas ({allEnrollments.filter(e => e.status === 'suspensa').length})
+        </button>
+        <button
+          className={statusFilter === 'cancelada' ? 'filter-tab active' : 'filter-tab'}
+          onClick={() => setStatusFilter('cancelada')}
+        >
+          Canceladas ({allEnrollments.filter(e => e.status === 'cancelada').length})
+        </button>
       </div>
 
       <div className="enrollments-table-container">
@@ -597,15 +677,27 @@ export default function Enrollments() {
                     <label htmlFor="discount_value">
                       Valor do Desconto {discountType === 'percentage' ? '(%)' : '(R$)'}
                     </label>
-                    <input
-                      type="number"
-                      id="discount_value"
-                      min="0"
-                      step={discountType === 'percentage' ? '1' : '0.01'}
-                      value={discountValue}
-                      onChange={(e) => setDiscountValue(Number(e.target.value))}
-                      required
-                    />
+                    {discountType === 'fixed' ? (
+                      <input
+                        type="text"
+                        id="discount_value"
+                        value={discountValueDisplay}
+                        onChange={(e) => handleDiscountValueChange(e.target.value)}
+                        placeholder="0,00"
+                        required
+                      />
+                    ) : (
+                      <input
+                        type="number"
+                        id="discount_value"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={discountValue}
+                        onChange={(e) => setDiscountValue(Number(e.target.value))}
+                        required
+                      />
+                    )}
                   </div>
 
                   <div className="form-group">
