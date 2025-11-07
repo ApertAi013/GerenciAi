@@ -366,7 +366,7 @@ export default function UserManagement() {
         ) : (
           users.map(user => (
             <div key={user.id} className="user-card">
-              <div className="user-info">
+              <div className="user-info-management">
                 <div className="user-header">
                   <h3>{user.full_name}</h3>
                   <div className="user-actions">

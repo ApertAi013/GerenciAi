@@ -443,7 +443,7 @@ export default function AddMultipleStudentsModal({
                       />
                       <div className="student-info">
                         <div className="student-name">{student.full_name}</div>
-                        <div className="student-details">
+                        <div className="add-multiple-students-details>
                           <span>{student.email}</span>
                           {student.level && <span className="level-badge">{student.level}</span>}
                         </div>
@@ -545,7 +545,7 @@ export default function AddMultipleStudentsModal({
                   <div key={student.id} className="student-enrollment-item">
                     <div className="student-enrollment-info">
                       <div className="student-name">{student.full_name}</div>
-                      <div className="student-details">
+                      <div className="add-multiple-students-details">
                         {student.email && <span>{student.email}</span>}
                         {student.level && <span className="level-badge">{student.level}</span>}
                       </div>
