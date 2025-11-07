@@ -990,6 +990,9 @@ function EditEnrollmentModal({
   const [showPlanChangeConfirm, setShowPlanChangeConfirm] = useState(false);
   const [pendingPlanId, setPendingPlanId] = useState<number | null>(null);
   const [updateOpenInvoices, setUpdateOpenInvoices] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [cancelInvoices, setCancelInvoices] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
   const [studentData, setStudentData] = useState<Student | null>(null);
@@ -1106,6 +1109,30 @@ function EditEnrollmentModal({
     setPendingPlanId(null);
   };
 
+  const handleStatusChange = (newStatus: string) => {
+    // If changing to cancelled, show confirmation modal
+    if (newStatus === 'cancelada' && enrollment.status !== 'cancelada') {
+      setPendingStatus(newStatus);
+      setShowCancelConfirm(true);
+    } else {
+      setFormData({ ...formData, status: newStatus as any });
+    }
+  };
+
+  const confirmStatusChange = (shouldCancelInvoices: boolean) => {
+    if (pendingStatus) {
+      setFormData({ ...formData, status: pendingStatus as any });
+      setCancelInvoices(shouldCancelInvoices);
+      setShowCancelConfirm(false);
+      setPendingStatus(null);
+    }
+  };
+
+  const cancelStatusChange = () => {
+    setShowCancelConfirm(false);
+    setPendingStatus(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -1143,6 +1170,11 @@ function EditEnrollmentModal({
       // Add update_open_invoices flag if plan changed
       if (formData.plan_id !== enrollment.plan_id) {
         payload.update_open_invoices = updateOpenInvoices;
+      }
+
+      // Add cancel_invoices flag if status changed to cancelada
+      if (formData.status === 'cancelada' && enrollment.status !== 'cancelada') {
+        payload.cancel_invoices = cancelInvoices;
       }
 
       console.log('🔵 ATUALIZANDO MATRÍCULA (dados gerais):', {
@@ -1458,12 +1490,7 @@ function EditEnrollmentModal({
             <select
               id="status"
               value={formData.status}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  status: e.target.value as any,
-                })
-              }
+              onChange={(e) => handleStatusChange(e.target.value)}
             >
               <option value="ativa">Ativa</option>
               <option value="suspensa">Suspensa</option>
@@ -1532,6 +1559,53 @@ function EditEnrollmentModal({
                   style={{ width: '100%' }}
                 >
                   Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Enrollment Confirmation Modal */}
+      {showCancelConfirm && pendingStatus && (
+        <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Cancelar Matrícula</h2>
+              <button type="button" className="modal-close" onClick={cancelStatusChange}>×</button>
+            </div>
+            <div style={{ padding: '2rem' }}>
+              <p style={{ marginBottom: '1.5rem', color: '#2c3e50' }}>
+                Você está cancelando esta matrícula. O que deseja fazer com as faturas em aberto?
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => confirmStatusChange(true)}
+                  style={{ width: '100%', textAlign: 'left', padding: '1rem', background: '#e74c3c', borderColor: '#e74c3c' }}
+                >
+                  <strong>Cancelar faturas em aberto</strong>
+                  <br />
+                  <small style={{ opacity: 0.9 }}>As faturas em aberto serão canceladas junto com a matrícula</small>
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => confirmStatusChange(false)}
+                  style={{ width: '100%', textAlign: 'left', padding: '1rem' }}
+                >
+                  <strong>Manter faturas em aberto</strong>
+                  <br />
+                  <small style={{ opacity: 0.9 }}>As faturas em aberto continuarão ativas para cobrança</small>
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={cancelStatusChange}
+                  style={{ width: '100%' }}
+                >
+                  Voltar
                 </button>
               </div>
             </div>

@@ -500,7 +500,7 @@ Qualquer dúvida, estou à disposição!`;
             <button
               type="button"
               className="btn-icon"
-              onClick={() => navigate(`/financeiro?student=${student.id}`)}
+              onClick={() => navigate(`/financeiro?student_id=${student.id}`)}
               title="Ver financeiro completo"
             >
               📊
@@ -536,7 +536,7 @@ Qualquer dúvida, estou à disposição!`;
                           <button
                             type="button"
                             className="btn-sm btn-primary"
-                            onClick={() => navigate(`/financeiro?invoice=${invoice.id}`)}
+                            onClick={() => navigate(`/financeiro?student_id=${student.id}`)}
                           >
                             Ver
                           </button>

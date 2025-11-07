@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { financialService } from '../services/financialService';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
 
 export default function Financial() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'aberta' | 'paga' | 'vencida'>('all');
@@ -31,7 +32,20 @@ export default function Financial() {
         console.error('Error parsing user data:', e);
       }
     }
-    loadInvoices();
+
+    // Check if there's a student_id in URL params
+    const studentIdParam = searchParams.get('student_id');
+    if (studentIdParam) {
+      // Find the student name from invoices to set searchTerm
+      loadInvoices().then(() => {
+        const studentInvoice = invoices.find(inv => inv.student_id === Number(studentIdParam));
+        if (studentInvoice?.student_name) {
+          setSearchTerm(studentInvoice.student_name);
+        }
+      });
+    } else {
+      loadInvoices();
+    }
   }, [filter]);
 
   const loadInvoices = async () => {
