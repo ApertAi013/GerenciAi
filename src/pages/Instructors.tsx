@@ -61,12 +61,14 @@ export default function Instructors() {
   const fetchClasses = async () => {
     try {
       const response = await classService.getClasses({ status: 'ativa' });
-      if (response.success) {
-        console.log('Turmas carregadas:', response.data); // Debug
+      console.log('Resposta da API de turmas:', response); // Debug
+      if (response.status === 'success' && response.data) {
+        console.log('Turmas carregadas:', response.data);
         setClasses(response.data);
       }
     } catch (error) {
       console.error('Erro ao buscar turmas:', error);
+      toast.error('Erro ao carregar turmas');
     }
   };
 
