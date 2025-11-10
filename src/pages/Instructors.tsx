@@ -60,8 +60,9 @@ export default function Instructors() {
 
   const fetchClasses = async () => {
     try {
-      const response = await classService.getClasses();
+      const response = await classService.getClasses({ status: 'ativa' });
       if (response.success) {
+        console.log('Turmas carregadas:', response.data); // Debug
         setClasses(response.data);
       }
     } catch (error) {
