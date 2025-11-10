@@ -16,7 +16,8 @@ import {
   faSquare,
   faBrain,
   faCrown,
-  faGauge
+  faGauge,
+  faChalkboardTeacher
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -39,6 +40,7 @@ const menuItems: MenuItem[] = [
   { path: '/alunos', label: 'Alunos', icon: faUsers },
   { path: '/turmas', label: 'Turmas', icon: faUserGroup },
   { path: '/matriculas', label: 'Matrículas', icon: faClipboardList },
+  { path: '/instrutores', label: 'Instrutores', icon: faChalkboardTeacher },
   { path: '/quadras', label: 'Quadras', icon: faSquare },
   { path: '/locacoes', label: 'Locações', icon: faBaseballBall },
   { path: '/financeiro', label: 'Financeiro', icon: faMoneyBillWave },

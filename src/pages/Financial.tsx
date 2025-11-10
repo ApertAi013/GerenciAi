@@ -9,7 +9,7 @@ export default function Financial() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'aberta' | 'paga' | 'vencida'>('all');
+  const [filter, setFilter] = useState<'all' | 'aberta' | 'paga' | 'vencida' | 'due_soon'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -51,8 +51,9 @@ export default function Financial() {
   const loadInvoices = async () => {
     try {
       setLoading(true);
-      // Don't pass status parameter at all when filter is "all"
-      const params = filter !== 'all' ? { status: filter } : undefined;
+      // Don't pass status parameter for "all" or "due_soon" filters
+      // "due_soon" will be filtered client-side
+      const params = (filter !== 'all' && filter !== 'due_soon') ? { status: filter } : undefined;
 
       console.log('Loading invoices with params:', params);
       const response = await financialService.getInvoices(params);
@@ -228,16 +229,22 @@ export default function Financial() {
           Abertas
         </button>
         <button
-          className={`filter-btn ${filter === 'paga' ? 'active' : ''}`}
-          onClick={() => setFilter('paga')}
+          className={`filter-btn ${filter === 'due_soon' ? 'active' : ''}`}
+          onClick={() => setFilter('due_soon')}
         >
-          Pagas
+          Próximas a Vencer
         </button>
         <button
           className={`filter-btn ${filter === 'vencida' ? 'active' : ''}`}
           onClick={() => setFilter('vencida')}
         >
           Vencidas
+        </button>
+        <button
+          className={`filter-btn ${filter === 'paga' ? 'active' : ''}`}
+          onClick={() => setFilter('paga')}
+        >
+          Pagas
         </button>
       </div>
 
@@ -278,14 +285,30 @@ export default function Financial() {
           </thead>
           <tbody>
             {(() => {
-              // Filter invoices by search term
-              const filteredInvoices = searchTerm.trim()
-                ? invoices.filter(invoice =>
-                    (invoice.student_name || '')
-                      .toLowerCase()
-                      .includes(searchTerm.toLowerCase())
-                  )
-                : invoices;
+              // Filter invoices by search term and "due soon"
+              let filteredInvoices = invoices;
+
+              // Apply "due soon" filter (next 7 days)
+              if (filter === 'due_soon') {
+                const today = new Date();
+                const sevenDaysFromNow = new Date();
+                sevenDaysFromNow.setDate(today.getDate() + 7);
+
+                filteredInvoices = filteredInvoices.filter(invoice => {
+                  if (invoice.status !== 'aberta') return false;
+                  const dueDate = new Date(invoice.due_date);
+                  return dueDate >= today && dueDate <= sevenDaysFromNow;
+                });
+              }
+
+              // Apply search filter
+              if (searchTerm.trim()) {
+                filteredInvoices = filteredInvoices.filter(invoice =>
+                  (invoice.student_name || '')
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+                );
+              }
 
               return filteredInvoices.length === 0 ? (
                 <tr>
@@ -294,6 +317,8 @@ export default function Financial() {
                       ? `Nenhuma fatura encontrada para "${searchTerm}"`
                       : filter === 'all'
                       ? 'Nenhuma fatura encontrada. Clique em "Gerar Faturas do Mês" para começar.'
+                      : filter === 'due_soon'
+                      ? 'Nenhuma fatura próxima a vencer (próximos 7 dias).'
                       : `Nenhuma fatura ${filter} encontrada.`
                     }
                   </td>
