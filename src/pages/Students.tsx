@@ -36,7 +36,7 @@ export default function Students() {
   const fetchLevels = async () => {
     try {
       const response = await levelService.getLevels();
-      if (response.success) {
+      if (response.status === 'success') {
         // Filtrar apenas níveis não-padrão (criados pelo usuário)
         const userLevels = response.data.filter((level: Level) => !level.is_default);
         setLevels(userLevels);
@@ -131,7 +131,7 @@ export default function Students() {
             status: 'aberta',
           });
 
-          if (invoicesRes.success && invoicesRes.data.length > 0) {
+          if (invoicesRes.status === 'success' && invoicesRes.data.length > 0) {
             // Register payment for the first pending invoice
             const invoice = invoicesRes.data[0];
             await financialService.registerPayment({
@@ -515,7 +515,7 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   const fetchLevels = async () => {
     try {
       const response = await levelService.getLevels();
-      if (response.success) {
+      if (response.status === 'success') {
         // Filtrar apenas níveis não-padrão (criados pelo usuário)
         const userLevels = response.data.filter((level: Level) => !level.is_default);
         setLevels(userLevels);

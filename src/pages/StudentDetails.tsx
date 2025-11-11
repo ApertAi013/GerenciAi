@@ -58,20 +58,20 @@ export default function StudentDetails() {
         levelService.getLevels(),
       ]);
 
-      if (studentRes.success && studentRes.data) {
+      if (studentRes.status === 'success' && studentRes.data) {
         setStudent(studentRes.data);
         // Define o nível selecionado (prioriza level_id, senão busca pelo nome)
         if (studentRes.data.level_id) {
           setSelectedLevel(studentRes.data.level_id);
         } else if (studentRes.data.level) {
-          const levelMatch = levelsRes.success
+          const levelMatch = levelsRes.status === 'success'
             ? levelsRes.data.find(l => l.name.toLowerCase() === studentRes.data.level?.toLowerCase())
             : null;
           setSelectedLevel(levelMatch?.id || null);
         }
       }
 
-      if (enrollmentsRes.success) {
+      if (enrollmentsRes.status === 'success') {
         // Mapear o array 'classes' retornado pelo backend para os campos esperados pelo frontend
         const enrollmentsWithMappedClasses = enrollmentsRes.data.map((enrollment: any) => {
           // Se o backend retornou um array 'classes', extrair class_ids e class_names
@@ -87,12 +87,12 @@ export default function StudentDetails() {
         setEnrollments(enrollmentsWithMappedClasses);
       }
 
-      if (invoicesRes.success) {
+      if (invoicesRes.status === 'success') {
         setInvoices(invoicesRes.data);
         calculateFinancialStats(invoicesRes.data);
       }
 
-      if (levelsRes.success) {
+      if (levelsRes.status === 'success') {
         setLevels(levelsRes.data);
       }
     } catch (error) {
@@ -168,7 +168,7 @@ export default function StudentDetails() {
       // Buscar todas as turmas ativas
       const classesRes = await classService.getClasses({ status: 'ativa' });
 
-      if (classesRes.success) {
+      if (classesRes.status === 'success') {
         // Filtrar turmas que o aluno ainda não está matriculado
         const currentClassIds = activeEnrollment.class_ids || [];
         const available = classesRes.data.filter(
