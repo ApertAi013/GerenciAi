@@ -273,17 +273,8 @@ export default function ComprehensiveEnrollmentForm({
 
       const enrollmentResponse = await enrollmentService.createEnrollment(enrollmentPayload);
 
-      console.log('📝 Enrollment response:', enrollmentResponse);
-
-      // Suporta ambos formatos de resposta
-      const enrollmentSuccess = (enrollmentResponse as any).status === 'success' || (enrollmentResponse as any).success === true;
-      const enrollmentData = (enrollmentResponse as any).data || (enrollmentResponse as any).enrollment;
-
-      console.log('✅ Enrollment success:', enrollmentSuccess, 'Data:', enrollmentData);
-
       // If first payment should be marked as paid
-      if (markFirstAsPaid && enrollmentData) {
-        console.log('💰 Marking first payment as paid...');
+      if (markFirstAsPaid && enrollmentResponse.data) {
         try {
           // Get invoices for this enrollment
           const invoicesResponse = await financialService.getInvoices({
@@ -319,11 +310,8 @@ export default function ComprehensiveEnrollmentForm({
         }
       }
 
-      console.log('🎉 About to call onSuccess()');
       onSuccess();
-      console.log('✨ onSuccess() called successfully');
     } catch (err: any) {
-      console.error('❌ Error creating enrollment:', err);
       setError(err.response?.data?.message || 'Erro ao criar matrícula');
     } finally {
       setIsSubmitting(false);
