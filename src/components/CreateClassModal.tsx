@@ -197,7 +197,13 @@ export default function CreateClassModal({
         if (formData.color) payload.color = formData.color;
         if (selectedLevels.length > 0) payload.allowed_levels = selectedLevels;
 
-        await classService.updateClass(editClass.id, payload);
+        const response = await classService.updateClass(editClass.id, payload);
+
+        // Verificar resposta (suporta ambos formatos: success e status)
+        const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+        if (!isSuccess) {
+          throw new Error((response as any).message || 'Erro ao atualizar turma');
+        }
       } else {
         // Modo de criação - criar uma turma para cada horário
         for (const schedule of schedules) {
@@ -215,7 +221,13 @@ export default function CreateClassModal({
           if (formData.color) payload.color = formData.color;
           if (selectedLevels.length > 0) payload.allowed_levels = selectedLevels;
 
-          await classService.createClass(payload);
+          const response = await classService.createClass(payload);
+
+          // Verificar resposta (suporta ambos formatos: success e status)
+          const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+          if (!isSuccess) {
+            throw new Error((response as any).message || 'Erro ao criar turma');
+          }
         }
       }
 
