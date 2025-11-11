@@ -37,7 +37,7 @@ export default function StudentPreviewModal({
       setIsLoading(true);
       const response = await studentService.getStudentById(studentId);
 
-      if (response.success) {
+      if (response.status === 'success') {
         setStudent(response.data);
       } else {
         setError('Erro ao carregar dados do aluno');

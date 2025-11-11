@@ -19,7 +19,7 @@ export default function Plans() {
     try {
       setIsLoading(true);
       const response = await planService.getPlans();
-      if (response.success) {
+      if (response.status === 'success') {
         setPlans(response.data);
       }
     } catch (error) {

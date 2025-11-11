@@ -64,7 +64,7 @@ export default function Header() {
 
         // Search students
         const studentsRes = await studentService.getStudents({ search: searchTerm, limit: 5 });
-        if (studentsRes.success && studentsRes.data) {
+        if (studentsRes.status === 'success' && studentsRes.data) {
           studentsRes.data.forEach((student) => {
             results.push({
               type: 'student',
@@ -77,7 +77,7 @@ export default function Header() {
 
         // Search classes
         const classesRes = await classService.getClasses({ search: searchTerm });
-        if (classesRes.success && classesRes.data) {
+        if (classesRes.status === 'success' && classesRes.data) {
           classesRes.data.slice(0, 5).forEach((cls) => {
             results.push({
               type: 'class',
@@ -90,7 +90,7 @@ export default function Header() {
 
         // Search enrollments
         const enrollmentsRes = await enrollmentService.getEnrollments({ search: searchTerm });
-        if (enrollmentsRes.success && enrollmentsRes.data) {
+        if (enrollmentsRes.status === 'success' && enrollmentsRes.data) {
           enrollmentsRes.data.slice(0, 5).forEach((enrollment) => {
             results.push({
               type: 'enrollment',

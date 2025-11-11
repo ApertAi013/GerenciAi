@@ -36,7 +36,7 @@ export default function Instructors() {
     try {
       setIsLoading(true);
       const response = await instructorService.getInstructors();
-      if (response.success) {
+      if (response.status === 'success') {
         setInstructors(response.data);
       }
     } catch (error: any) {
@@ -50,7 +50,7 @@ export default function Instructors() {
   const fetchAvailablePermissions = async () => {
     try {
       const response = await instructorService.getAvailablePermissions();
-      if (response.success) {
+      if (response.status === 'success') {
         setAvailablePermissions(response.data);
       }
     } catch (error) {
@@ -82,7 +82,7 @@ export default function Instructors() {
 
     try {
       const response = await instructorService.createInstructor(formData);
-      if (response.success) {
+      if (response.status === 'success') {
         toast.success('Instrutor criado com sucesso!');
         setShowCreateModal(false);
         setFormData({
@@ -107,7 +107,7 @@ export default function Instructors() {
         selectedInstructor.id,
         { permissions: tempPermissions }
       );
-      if (response.success) {
+      if (response.status === 'success') {
         toast.success('Permissões atualizadas com sucesso!');
         setShowPermissionsModal(false);
         fetchInstructors();
@@ -142,7 +142,7 @@ export default function Instructors() {
   const openClassesModal = async (instructor: Instructor) => {
     try {
       const response = await instructorService.getInstructorById(instructor.id);
-      if (response.success) {
+      if (response.status === 'success') {
         setSelectedInstructor(response.data);
         setShowClassesModal(true);
       }
@@ -161,7 +161,7 @@ export default function Instructors() {
 
       // Refresh instructor details
       const response = await instructorService.getInstructorById(selectedInstructor.id);
-      if (response.success) {
+      if (response.status === 'success') {
         setSelectedInstructor(response.data);
       }
       fetchInstructors();
@@ -184,7 +184,7 @@ export default function Instructors() {
 
       // Refresh instructor details
       const response = await instructorService.getInstructorById(selectedInstructor.id);
-      if (response.success) {
+      if (response.status === 'success') {
         setSelectedInstructor(response.data);
       }
       fetchInstructors();

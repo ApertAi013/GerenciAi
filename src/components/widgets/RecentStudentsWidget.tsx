@@ -15,7 +15,7 @@ export default function RecentStudentsWidget() {
       try {
         const response = await studentService.getStudents({});
 
-        if (response.success) {
+        if (response.status === 'success') {
           const recentStudents = response.data
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             .slice(0, 5);

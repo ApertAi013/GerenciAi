@@ -15,7 +15,7 @@ export default function SchedulePreviewWidget() {
       try {
         const response = await classService.getClasses({ status: 'ativa' });
 
-        if (response.success) {
+        if (response.status === 'success') {
           // Sort by weekday and time
           const sortedClasses = response.data
             .sort((a, b) => a.start_time.localeCompare(b.start_time))

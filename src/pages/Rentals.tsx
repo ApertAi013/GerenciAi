@@ -80,7 +80,7 @@ export default function Rentals() {
   const fetchRentals = async () => {
     try {
       const response = await rentalService.getRentals(filters);
-      if (response.success) {
+      if (response.status === 'success') {
         setRentals(response.data);
       }
     } catch (error) {
@@ -93,7 +93,7 @@ export default function Rentals() {
   const fetchStudents = async () => {
     try {
       const response = await studentService.getStudents();
-      if (response.success) {
+      if (response.status === 'success') {
         setStudents(response.data);
       }
     } catch (error) {
@@ -104,7 +104,7 @@ export default function Rentals() {
   const fetchCourts = async () => {
     try {
       const response = await courtService.getCourts();
-      if (response.success) {
+      if (response.status === 'success') {
         // Filtra apenas quadras ativas
         setCourts(response.data.filter((court: Court) => court.status === 'ativa'));
       }
@@ -125,8 +125,8 @@ export default function Rentals() {
         .reduce((sum, r) => sum + r.price_cents, 0);
 
       setStats({
-        today: todayRes.success ? todayRes.data.length : 0,
-        pending: pendingRes.success ? pendingRes.data.length : 0,
+        today: todayRes.status === 'success' ? todayRes.data.length : 0,
+        pending: pendingRes.status === 'success' ? pendingRes.data.length : 0,
         revenue: revenue,
       });
     } catch (error) {
@@ -156,7 +156,7 @@ export default function Rentals() {
 
       // Criar locação
       const response = await rentalService.createRental(formData);
-      if (response.success) {
+      if (response.status === 'success') {
         alert('Locação criada com sucesso!');
         setShowCreateModal(false);
         resetForm();
@@ -178,7 +178,7 @@ export default function Rentals() {
         paid_at: new Date().toISOString(),
       });
 
-      if (response.success) {
+      if (response.status === 'success') {
         alert('Pagamento registrado com sucesso!');
         setShowPaymentModal(false);
         setSelectedRental(null);
@@ -196,7 +196,7 @@ export default function Rentals() {
 
     try {
       const response = await rentalService.cancelRental(id);
-      if (response.success) {
+      if (response.status === 'success') {
         alert('Locação cancelada com sucesso!');
         fetchRentals();
         fetchStats();

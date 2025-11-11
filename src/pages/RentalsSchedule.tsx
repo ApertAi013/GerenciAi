@@ -70,7 +70,7 @@ export default function RentalsSchedule() {
         end_date: endDate,
       });
 
-      if (response.success) {
+      if (response.status === 'success') {
         setRentals(response.data.filter(r => r.status !== 'cancelada'));
       }
     } catch (error) {

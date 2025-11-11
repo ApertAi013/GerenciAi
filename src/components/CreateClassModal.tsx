@@ -60,7 +60,7 @@ export default function CreateClassModal({
   const fetchLevels = async () => {
     try {
       const response = await levelService.getLevels();
-      if (response.success) {
+      if (response.status === 'success') {
         // Filtrar níveis não-padrão (criados pelo usuário)
         const userLevels = response.data.filter((level: Level) => !level.is_default);
         setLevels(userLevels);

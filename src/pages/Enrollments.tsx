@@ -102,7 +102,7 @@ export default function Enrollments() {
           classes.map(async (cls) => {
             try {
               const detailsRes = await classService.getClassById(cls.id);
-              if (detailsRes.success && detailsRes.data) {
+              if (detailsRes.status === 'success' && detailsRes.data) {
                 return {
                   ...cls,
                   enrolled_count: detailsRes.data.enrolled_count || 0
@@ -238,7 +238,7 @@ export default function Enrollments() {
       if (classesRes.status === 'success' && classesRes.data) {
         setClasses(classesRes.data);
       }
-      if (plansRes.success && plansRes.plans) {
+      if (plansRes.status === 'success' && plansRes.plans) {
         setPlans(plansRes.plans);
       }
     } catch (error) {
@@ -282,7 +282,7 @@ export default function Enrollments() {
 
       // Criar matrícula
       const response = await enrollmentService.createEnrollment(enrollmentData);
-      if (response.success) {
+      if (response.status === 'success') {
         const enrollmentId = response.data.id;
 
         // Se o usuário escolheu pagar agora, gerar fatura e registrar pagamento
@@ -1026,7 +1026,7 @@ function EditEnrollmentModal({
       try {
         // Fetch student data
         const studentRes = await studentService.getStudentById(enrollment.student_id);
-        if (studentRes.success) {
+        if (studentRes.status === 'success') {
           setStudentData(studentRes.data);
         }
 
@@ -1035,7 +1035,7 @@ function EditEnrollmentModal({
           classes.map(async (cls) => {
             try {
               const detailsRes = await classService.getClassById(cls.id);
-              if (detailsRes.success && detailsRes.data) {
+              if (detailsRes.status === 'success' && detailsRes.data) {
                 return {
                   ...cls,
                   enrolled_count: detailsRes.data.enrolled_count || 0
@@ -1207,7 +1207,7 @@ function EditEnrollmentModal({
 
       console.log('🟢 RESPOSTA (dados gerais):', response);
 
-      if (!response.success) {
+      if (response.status !== 'success') {
         console.error('❌ Erro ao atualizar dados gerais:', response);
         toast.error(response.message || 'Erro ao atualizar matrícula');
         return;
@@ -1226,7 +1226,7 @@ function EditEnrollmentModal({
 
       console.log('🟢 RESPOSTA (turmas):', classesResponse);
 
-      if (classesResponse.success) {
+      if (classesResponse.status === 'success') {
         toast.success('Matrícula e turmas atualizadas com sucesso!');
       } else {
         console.error('❌ Erro ao atualizar turmas:', classesResponse);

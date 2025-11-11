@@ -49,7 +49,7 @@ export default function Classes() {
           (classesRes.data || []).map(async (cls) => {
             try {
               const detailsRes = await classService.getClassById(cls.id);
-              if (detailsRes.success && detailsRes.data) {
+              if (detailsRes.status === 'success' && detailsRes.data) {
                 return {
                   ...cls,
                   students: detailsRes.data.students || [],
@@ -116,7 +116,7 @@ export default function Classes() {
     try {
       const response = await classService.deleteClass(classId);
 
-      if (response.success) {
+      if (response.status === 'success') {
         alert('Turma excluída com sucesso!');
         // Atualizar lista removendo a turma deletada
         setClasses(classes.filter(c => c.id !== classId));

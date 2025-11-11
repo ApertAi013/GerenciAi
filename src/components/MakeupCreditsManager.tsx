@@ -33,7 +33,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
     try {
       setIsLoading(true);
       const response = await courtReservationService.getStudentCredits(studentId);
-      if (response.success) {
+      if (response.status === 'success') {
         setCredits(response.data.student.makeup_credits);
         setHistory(response.data.history);
       }
@@ -57,7 +57,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
         notes: addNotes || undefined,
       });
 
-      if (response.success) {
+      if (response.status === 'success') {
         toast.success(response.message);
         setShowAddModal(false);
         setCreditsToAdd(1);
@@ -86,7 +86,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
         notes: removeNotes || undefined,
       });
 
-      if (response.success) {
+      if (response.status === 'success') {
         toast.success(response.message);
         setShowRemoveModal(false);
         setCreditsToRemove(1);
@@ -114,7 +114,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
         password: newPassword,
       });
 
-      if (response.success) {
+      if (response.status === 'success') {
         toast.success(response.message);
         setShowPasswordModal(false);
         setNewPassword('');

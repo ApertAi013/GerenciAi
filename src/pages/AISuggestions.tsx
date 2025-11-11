@@ -93,7 +93,7 @@ export default function AISuggestions() {
       if (filterPriority !== 'all') params.priority = filterPriority;
 
       const response = await aiService.getSuggestions(params);
-      if (response.success) {
+      if (response.status === 'success') {
         setSuggestions(response.data);
       }
     } catch (error: any) {
@@ -107,7 +107,7 @@ export default function AISuggestions() {
   const handleMarkAsRead = async (id: number) => {
     try {
       const response = await aiService.markAsRead(id);
-      if (response.success) {
+      if (response.status === 'success') {
         setSuggestions(suggestions.map(s => s.id === id ? response.data : s));
         toast.success('Sugestão marcada como lida');
       }
@@ -123,7 +123,7 @@ export default function AISuggestions() {
       const response = await aiService.executeAction(suggestion.id);
       console.log('Resposta da ação:', response);
 
-      if (response.success) {
+      if (response.status === 'success') {
         // Validar se os dados retornados são válidos
         if (!response.data || typeof response.data !== 'object') {
           console.error('Dados inválidos retornados:', response.data);
@@ -158,7 +158,7 @@ export default function AISuggestions() {
 
     try {
       const response = await aiService.deleteSuggestion(id);
-      if (response.success) {
+      if (response.status === 'success') {
         setSuggestions(suggestions.filter(s => s.id !== id));
         toast.success('Sugestão deletada');
       }

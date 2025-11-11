@@ -81,7 +81,7 @@ export default function AISettings() {
     try {
       setLoading(true);
       const response = await aiService.getSettings();
-      if (response.success) {
+      if (response.status === 'success') {
         setSettings(response.data);
       }
     } catch (error: any) {
@@ -112,7 +112,7 @@ export default function AISettings() {
         preferred_notification_time: settings.preferred_notification_time,
       });
 
-      if (response.success) {
+      if (response.status === 'success') {
         setSettings(response.data);
         toast.success('Configurações salvas com sucesso!');
       }
@@ -128,7 +128,7 @@ export default function AISettings() {
     try {
       setSaving(true);
       const response = await aiService.generateSuggestions();
-      if (response.success) {
+      if (response.status === 'success') {
         toast.success(`${response.data.suggestions_created} sugestões geradas!`);
       }
     } catch (error: any) {

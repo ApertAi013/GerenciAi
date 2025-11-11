@@ -126,15 +126,15 @@ export default function ComprehensiveEnrollmentForm({
         classService.getClasses({ limit: 1000 }),
       ]);
 
-      if (levelsRes.success) setLevels(levelsRes.data);
-      if (plansRes.success) setPlans(plansRes.plans);
-      if (classesRes.success) {
+      if (levelsRes.status === 'success') setLevels(levelsRes.data);
+      if (plansRes.status === 'success') setPlans(plansRes.plans);
+      if (classesRes.status === 'success') {
         // Fetch details for each class to get enrolled_count
         const classesWithDetails = await Promise.all(
           classesRes.data.map(async (cls) => {
             try {
               const detailsRes = await classService.getClassById(cls.id);
-              if (detailsRes.success && detailsRes.data) {
+              if (detailsRes.status === 'success' && detailsRes.data) {
                 return {
                   ...cls,
                   enrolled_count: detailsRes.data.enrolled_count || 0
@@ -180,7 +180,7 @@ export default function ComprehensiveEnrollmentForm({
 
       const response = await studentService.createStudent(cleanedData);
 
-      if (response.success && response.data) {
+      if (response.status === 'success' && response.data) {
         setCreatedStudent(response.data);
         setCurrentStep('plan');
       } else {

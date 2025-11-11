@@ -29,7 +29,7 @@ export default function Login() {
       const response = await authService.login({ email, password });
       console.log('Resposta recebida:', response);
 
-      if (response.success) {
+      if (response.status === 'success') {
         console.log('Login bem-sucedido, salvando auth...');
         console.log('User:', response.data.user);
         console.log('Token:', response.data.token);
@@ -51,7 +51,7 @@ export default function Login() {
           navigate('/dashboard');
         }, 500);
       } else {
-        console.log('Login falhou - success = false');
+        console.log('Login falhou - status != success');
         setError('Email ou senha inválidos');
         toast.error('Email ou senha inválidos');
       }

@@ -54,7 +54,7 @@ export default function AddMultipleStudentsModal({
         }).then(r => r.json())
       ]);
 
-      if (studentsRes.success) {
+      if (studentsRes.status === 'success') {
         // Filtrar alunos compatíveis com o nível da turma
         let filteredStudents = studentsRes.data;
 
@@ -73,7 +73,7 @@ export default function AddMultipleStudentsModal({
         setStudentOffset(STUDENTS_PER_PAGE);
       }
 
-      if (plansRes.success) {
+      if (plansRes.status === 'success') {
         setPlans(plansRes.plans);
         // Selecionar primeiro plano por padrão
         if (plansRes.plans.length > 0) {
@@ -82,7 +82,7 @@ export default function AddMultipleStudentsModal({
       }
 
       // Extrair IDs dos alunos já matriculados
-      if (classDetailsRes.success && classDetailsRes.data.students) {
+      if (classDetailsRes.status === 'success' && classDetailsRes.data.students) {
         const enrolledIds = classDetailsRes.data.students.map((s: any) => s.student_id);
         setEnrolledStudentIds(enrolledIds);
       }
@@ -103,7 +103,7 @@ export default function AddMultipleStudentsModal({
         offset: studentOffset
       });
 
-      if (studentsRes.success) {
+      if (studentsRes.status === 'success') {
         // Filtrar alunos compatíveis com o nível da turma
         let filteredStudents = studentsRes.data;
 
@@ -160,7 +160,7 @@ export default function AddMultipleStudentsModal({
     try {
       // Buscar matrículas ativas de todos os alunos
       const enrollmentsRes = await enrollmentService.getEnrollments();
-      const activeEnrollments = enrollmentsRes.success && enrollmentsRes.data
+      const activeEnrollments = enrollmentsRes.status === 'success' && enrollmentsRes.data
         ? enrollmentsRes.data.filter((e: any) => e.status === 'ativa')
         : [];
 
@@ -275,7 +275,7 @@ export default function AddMultipleStudentsModal({
 
       // Buscar matrículas atualizadas e adicionar turma aos alunos que já tinham matrícula
       const enrollmentsRes = await enrollmentService.getEnrollments();
-      const activeEnrollments = enrollmentsRes.success && enrollmentsRes.data
+      const activeEnrollments = enrollmentsRes.status === 'success' && enrollmentsRes.data
         ? enrollmentsRes.data.filter((e: any) => e.status === 'ativa')
         : [];
 

@@ -32,8 +32,8 @@ export default function WhatsAppAutomation() {
         whatsappService.getTemplates(),
       ]);
 
-      if (settingsRes.success) setSettings(settingsRes.data);
-      if (templatesRes.success) setTemplates(templatesRes.data);
+      if (settingsRes.status === 'success') setSettings(settingsRes.data);
+      if (templatesRes.status === 'success') setTemplates(templatesRes.data);
     } catch (error: any) {
       console.error('Erro ao carregar dados:', error);
       toast.error('Erro ao carregar configurações');
@@ -49,7 +49,7 @@ export default function WhatsAppAutomation() {
       setSaving(true);
       const response = await whatsappService.updateAutomationSettings(settings);
 
-      if (response.success) {
+      if (response.status === 'success') {
         setSettings(response.data);
         toast.success('Configurações salvas com sucesso!');
       }

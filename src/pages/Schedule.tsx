@@ -285,7 +285,7 @@ export default function Schedule() {
           end_date: endDate,
         });
 
-        if (rentalsResponse.success && rentalsResponse.data) {
+        if (rentalsResponse.status === 'success' && rentalsResponse.data) {
           // Filtrar locações não canceladas
           rentals = rentalsResponse.data.filter(r => r.status !== 'cancelada');
         }
@@ -568,7 +568,7 @@ export default function Schedule() {
 
         console.log('Resposta da atualização:', updateResponse);
 
-        if (!updateResponse.success) {
+        if (updateResponse.status !== 'success') {
           throw new Error(updateResponse.message || 'Erro ao atualizar matrícula');
         }
 

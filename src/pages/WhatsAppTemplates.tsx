@@ -44,7 +44,7 @@ export default function WhatsAppTemplates() {
     try {
       setLoading(true);
       const response = await whatsappService.getTemplates();
-      if (response.success) {
+      if (response.status === 'success') {
         setTemplates(response.data);
       }
     } catch (error: any) {
@@ -104,7 +104,7 @@ export default function WhatsAppTemplates() {
           messageTemplate: formData.message_template,
           isActive: formData.is_active,
         });
-        if (response.success) {
+        if (response.status === 'success') {
           toast.success('Template criado com sucesso!');
           fetchTemplates();
           handleCancel();
@@ -115,7 +115,7 @@ export default function WhatsAppTemplates() {
           messageTemplate: formData.message_template,
           isActive: formData.is_active,
         });
-        if (response.success) {
+        if (response.status === 'success') {
           toast.success('Template atualizado com sucesso!');
           fetchTemplates();
           handleCancel();
@@ -134,7 +134,7 @@ export default function WhatsAppTemplates() {
 
     try {
       const response = await whatsappService.deleteTemplate(id);
-      if (response.success) {
+      if (response.status === 'success') {
         toast.success('Template deletado com sucesso!');
         fetchTemplates();
       }

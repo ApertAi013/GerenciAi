@@ -42,7 +42,7 @@ export function useNotifications() {
 
       // Buscar novos alunos (últimos 7 dias)
       const studentResponse = await studentService.getStudents({});
-      if (studentResponse.success) {
+      if (studentResponse.status === 'success') {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
