@@ -310,10 +310,8 @@ export default function ComprehensiveEnrollmentForm({
         }
       }
 
-      alert('Matrícula criada! Fechando modal...');
       onSuccess();
     } catch (err: any) {
-      alert('Erro: ' + (err.response?.data?.message || err.message));
       setError(err.response?.data?.message || 'Erro ao criar matrícula');
     } finally {
       setIsSubmitting(false);
