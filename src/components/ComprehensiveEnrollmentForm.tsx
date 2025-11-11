@@ -272,8 +272,12 @@ export default function ComprehensiveEnrollmentForm({
 
       const enrollmentResponse = await enrollmentService.createEnrollment(enrollmentPayload);
 
+      // Suporta ambos formatos de resposta
+      const enrollmentSuccess = (enrollmentResponse as any).status === 'success' || (enrollmentResponse as any).success === true;
+      const enrollmentData = (enrollmentResponse as any).data || (enrollmentResponse as any).enrollment;
+
       // If first payment should be marked as paid
-      if (markFirstAsPaid && enrollmentResponse.enrollment) {
+      if (markFirstAsPaid && enrollmentSuccess && enrollmentData) {
         try {
           // Get invoices for this enrollment
           const invoicesResponse = await financialService.getInvoices({
