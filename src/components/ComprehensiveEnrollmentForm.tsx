@@ -126,15 +126,25 @@ export default function ComprehensiveEnrollmentForm({
         classService.getClasses({ limit: 1000 }),
       ]);
 
-      if (levelsRes.status === 'success') setLevels(levelsRes.data);
-      if (plansRes.status === 'success') setPlans(plansRes.plans);
-      if (classesRes.status === 'success') {
+      // Suporta ambos formatos: { success: true, data } e { status: 'success', data }
+      const levelsSuccess = (levelsRes as any).status === 'success' || (levelsRes as any).success === true;
+      if (levelsSuccess && levelsRes.data) setLevels(levelsRes.data);
+
+      // Suporta ambos formatos: { success: true, data } e { status: 'success', data/plans }
+      const plansSuccess = (plansRes as any).status === 'success' || (plansRes as any).success === true;
+      const plansData = (plansRes as any).data || (plansRes as any).plans;
+      if (plansSuccess && plansData) setPlans(plansData);
+
+      const classesSuccess = (classesRes as any).status === 'success' || (classesRes as any).success === true;
+      if (classesSuccess) {
         // Fetch details for each class to get enrolled_count
         const classesWithDetails = await Promise.all(
           classesRes.data.map(async (cls) => {
             try {
               const detailsRes = await classService.getClassById(cls.id);
-              if (detailsRes.status === 'success' && detailsRes.data) {
+              // Suporta ambos formatos: { success: true, data } e { status: 'success', data }
+              const isSuccess = (detailsRes as any).status === 'success' || (detailsRes as any).success === true;
+              if (isSuccess && detailsRes.data) {
                 return {
                   ...cls,
                   enrolled_count: detailsRes.data.enrolled_count || 0
@@ -180,7 +190,9 @@ export default function ComprehensiveEnrollmentForm({
 
       const response = await studentService.createStudent(cleanedData);
 
-      if (response.status === 'success' && response.data) {
+      // Suporta ambos formatos: { success: true, data } e { status: 'success', data }
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
         setCreatedStudent(response.data);
         setCurrentStep('plan');
       } else {
