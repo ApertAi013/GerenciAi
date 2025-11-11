@@ -198,7 +198,7 @@ export default function Schedule() {
         limit: 1000
       });
 
-      if (!classesResponse.success || !classesResponse.data) {
+      if (classesResponse.status !== 'success' || !classesResponse.data) {
         setError('Erro ao carregar turmas');
         return;
       }
@@ -210,7 +210,7 @@ export default function Schedule() {
             // Buscar turma por ID para obter os alunos
             const classDetailsResponse = await classService.getClassById(dbClass.id);
 
-            if (!classDetailsResponse.success || !classDetailsResponse.data) {
+            if (classDetailsResponse.status !== 'success' || !classDetailsResponse.data) {
               return {
                 ...dbClass,
                 students: []
