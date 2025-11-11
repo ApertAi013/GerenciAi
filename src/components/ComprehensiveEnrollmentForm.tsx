@@ -1,3 +1,4 @@
+// Comprehensive Enrollment Form - v2.0
 import { useState, useEffect } from 'react';
 import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
