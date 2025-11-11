@@ -67,8 +67,9 @@ const NUMBER_TO_WEEKDAY: Record<number, 'dom' | 'seg' | 'ter' | 'qua' | 'qui' | 
 // Função para converter turma do banco para formato da agenda
 const convertClassToSchedule = (dbClass: Class & { students?: any[] }): ClassSchedule => {
   // Cores predefinidas baseadas no ID da modalidade
-  const colors = ['#8B5CF6', '#EF4444', '#10B981', '#3B82F6', '#F59E0B', '#EC4899', '#A78BFA'];
-  const color = colors[dbClass.modality_id % colors.length];
+  // Usar cor do banco ou cor padrão baseada na modalidade como fallback
+  const defaultColors = ['#8B5CF6', '#EF4444', '#10B981', '#3B82F6', '#F59E0B', '#EC4899', '#A78BFA'];
+  const color = dbClass.color || defaultColors[dbClass.modality_id % defaultColors.length];
 
   // Remover segundos do horário (18:00:00 -> 18:00)
   const startTime = dbClass.start_time.substring(0, 5);
@@ -84,7 +85,7 @@ const convertClassToSchedule = (dbClass: Class & { students?: any[] }): ClassSch
     endTime: endTime,
     capacity: dbClass.capacity || 0,
     students: dbClass.students || [],
-    color: color,
+    color: color, // Agora usa a cor do banco!
     modality_id: dbClass.modality_id,
     level: dbClass.level,
   };
