@@ -13,7 +13,7 @@ export interface User {
 }
 
 export interface AuthResponse {
-  success: boolean;
+  status: string;
   message: string;
   data: {
     token: string;

@@ -26,7 +26,11 @@ export default function ProtectedRoute() {
       try {
         setLoading(true);
         const response = await authService.getMe();
-        setAuth(response.user, token);
+        if (response.status === 'success') {
+          setAuth(response.data, token);
+        } else {
+          throw new Error('Falha na autenticação');
+        }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
         authService.removeToken();

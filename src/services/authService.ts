@@ -9,8 +9,8 @@ export const authService = {
   },
 
   // Obter usuário atual
-  async getMe(): Promise<{ success: boolean; user: User }> {
-    const response = await api.get<{ success: boolean; user: User }>('/api/auth/me');
+  async getMe(): Promise<{ status: string; data: User }> {
+    const response = await api.get<{ status: string; data: User }>('/api/auth/me');
     return response.data;
   },
 
