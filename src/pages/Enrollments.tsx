@@ -238,8 +238,11 @@ export default function Enrollments() {
       if (classesRes.status === 'success' && classesRes.data) {
         setClasses(classesRes.data);
       }
-      if (plansRes.status === 'success' && plansRes.plans) {
-        setPlans(plansRes.plans);
+      // Suporta ambos formatos: { success: true, data } e { status: 'success', data/plans }
+      const plansSuccess = (plansRes as any).status === 'success' || (plansRes as any).success === true;
+      const plansData = (plansRes as any).data || (plansRes as any).plans;
+      if (plansSuccess && plansData) {
+        setPlans(plansData);
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
