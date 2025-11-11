@@ -36,7 +36,9 @@ export default function Instructors() {
     try {
       setIsLoading(true);
       const response = await instructorService.getInstructors();
-      if (response.status === 'success') {
+      // Suporta ambos formatos: { success: true } e { status: 'success' }
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
         setInstructors(response.data);
       }
     } catch (error: any) {
@@ -50,7 +52,9 @@ export default function Instructors() {
   const fetchAvailablePermissions = async () => {
     try {
       const response = await instructorService.getAvailablePermissions();
-      if (response.status === 'success') {
+      // Suporta ambos formatos: { success: true } e { status: 'success' }
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
         setAvailablePermissions(response.data);
       }
     } catch (error) {
@@ -82,7 +86,9 @@ export default function Instructors() {
 
     try {
       const response = await instructorService.createInstructor(formData);
-      if (response.status === 'success') {
+      // Suporta ambos formatos: { success: true } e { status: 'success' }
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess) {
         toast.success('Instrutor criado com sucesso!');
         setShowCreateModal(false);
         setFormData({
@@ -107,7 +113,9 @@ export default function Instructors() {
         selectedInstructor.id,
         { permissions: tempPermissions }
       );
-      if (response.status === 'success') {
+      // Suporta ambos formatos: { success: true } e { status: 'success' }
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess) {
         toast.success('Permissões atualizadas com sucesso!');
         setShowPermissionsModal(false);
         fetchInstructors();
@@ -142,7 +150,9 @@ export default function Instructors() {
   const openClassesModal = async (instructor: Instructor) => {
     try {
       const response = await instructorService.getInstructorById(instructor.id);
-      if (response.status === 'success') {
+      // Suporta ambos formatos: { success: true } e { status: 'success' }
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
         setSelectedInstructor(response.data);
         setShowClassesModal(true);
       }
@@ -161,7 +171,9 @@ export default function Instructors() {
 
       // Refresh instructor details
       const response = await instructorService.getInstructorById(selectedInstructor.id);
-      if (response.status === 'success') {
+      // Suporta ambos formatos: { success: true } e { status: 'success' }
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
         setSelectedInstructor(response.data);
       }
       fetchInstructors();
@@ -184,7 +196,9 @@ export default function Instructors() {
 
       // Refresh instructor details
       const response = await instructorService.getInstructorById(selectedInstructor.id);
-      if (response.status === 'success') {
+      // Suporta ambos formatos: { success: true } e { status: 'success' }
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
         setSelectedInstructor(response.data);
       }
       fetchInstructors();
