@@ -29,7 +29,10 @@ export default function Login() {
       const response = await authService.login({ email, password });
       console.log('Resposta recebida:', response);
 
-      if (response.status === 'success') {
+      // Suporta ambos os formatos: { success: true } e { status: 'success' }
+      const isSuccess = response.status === 'success' || (response as any).success === true;
+
+      if (isSuccess) {
         console.log('Login bem-sucedido, salvando auth...');
         console.log('User:', response.data.user);
         console.log('Token:', response.data.token);
@@ -51,7 +54,7 @@ export default function Login() {
           navigate('/dashboard');
         }, 500);
       } else {
-        console.log('Login falhou - status != success');
+        console.log('Login falhou - formato de resposta inválido');
         setError('Email ou senha inválidos');
         toast.error('Email ou senha inválidos');
       }

@@ -26,8 +26,13 @@ export default function ProtectedRoute() {
       try {
         setLoading(true);
         const response = await authService.getMe();
-        if (response.status === 'success') {
-          setAuth(response.data, token);
+
+        // Suporta ambos os formatos: { success: true, user } e { status: 'success', data }
+        const isSuccess = response.status === 'success' || (response as any).success === true;
+        const userData = response.data || (response as any).user;
+
+        if (isSuccess && userData) {
+          setAuth(userData, token);
         } else {
           throw new Error('Falha na autenticação');
         }
