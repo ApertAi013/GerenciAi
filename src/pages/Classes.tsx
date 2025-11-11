@@ -161,11 +161,32 @@ export default function Classes() {
           const isExpanded = expandedClassId === cls.id;
 
           return (
-            <div key={cls.id} className="class-card-modern">
+            <div key={cls.id} className="class-card-modern" style={{ borderTop: `4px solid ${cls.color || '#3B82F6'}` }}>
+              {/* Color Bar */}
+              <div style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: '6px',
+                backgroundColor: cls.color || '#3B82F6',
+                borderRadius: '8px 0 0 8px'
+              }} />
+
               {/* Status Header */}
               <div className="class-status-header" style={{ backgroundColor: statusColor }}>
                 <h3>{cls.name || cls.modality_name}</h3>
-                <span className="status-label">{statusLabel}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    backgroundColor: cls.color || '#3B82F6',
+                    border: '2px solid white',
+                    boxShadow: '0 0 4px rgba(0,0,0,0.2)'
+                  }} title={`Cor: ${cls.color || '#3B82F6'}`} />
+                  <span className="status-label">{statusLabel}</span>
+                </div>
               </div>
 
               {/* Class Info Grid */}

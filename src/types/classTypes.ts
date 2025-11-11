@@ -21,6 +21,7 @@ export interface Class {
   enrolled_count?: number; // Number of enrolled students (from backend)
   students?: ClassStudent[]; // List of enrolled students with details
   status: 'ativa' | 'suspensa' | 'cancelada';
+  color?: string; // Hex color for visual identification (#RRGGBB)
   created_at?: string;
 }
 
@@ -52,4 +53,5 @@ export interface CreateClassRequest {
   capacity?: number;
   level?: 'iniciante' | 'intermediario' | 'avancado' | 'todos';
   allowed_levels?: string[];
+  color?: string; // Hex color for visual identification (#RRGGBB)
 }

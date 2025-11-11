@@ -866,12 +866,33 @@ export default function Enrollments() {
                                   key={cls.id}
                                   className={`class-card-modern ${isSelected ? 'selected' : ''} ${isFull ? 'full' : ''}`}
                                   onClick={() => !isFull && handleClassToggle(cls.id)}
+                                  style={{
+                                    borderLeft: `6px solid ${cls.color || '#3B82F6'}`,
+                                    position: 'relative'
+                                  }}
                                 >
+                                  {/* Color indicator dot */}
+                                  <div style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '8px',
+                                    width: '12px',
+                                    height: '12px',
+                                    borderRadius: '50%',
+                                    backgroundColor: cls.color || '#3B82F6',
+                                    border: '2px solid white',
+                                    boxShadow: '0 0 4px rgba(0,0,0,0.2)',
+                                    zIndex: 1
+                                  }} />
+
                                   {isSelected && (
                                     <div className="selection-indicator">✓ SELECIONADA</div>
                                   )}
 
-                                  <div className="class-time-badge">
+                                  <div className="class-time-badge" style={{
+                                    backgroundColor: cls.color || '#3B82F6',
+                                    color: 'white'
+                                  }}>
                                     {cls.start_time.substring(0, 5)}
                                   </div>
 
@@ -1370,12 +1391,33 @@ function EditEnrollmentModal({
                               key={cls.id}
                               className={`class-card-modern ${isSelected ? 'selected' : ''} ${isFull ? 'full' : ''}`}
                               onClick={() => !isFull && handleClassToggle(cls.id)}
+                              style={{
+                                borderLeft: `6px solid ${cls.color || '#3B82F6'}`,
+                                position: 'relative'
+                              }}
                             >
+                              {/* Color indicator dot */}
+                              <div style={{
+                                position: 'absolute',
+                                top: '8px',
+                                right: '8px',
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                backgroundColor: cls.color || '#3B82F6',
+                                border: '2px solid white',
+                                boxShadow: '0 0 4px rgba(0,0,0,0.2)',
+                                zIndex: 1
+                              }} />
+
                               {isSelected && (
                                 <div className="selection-indicator">✓ SELECIONADA</div>
                               )}
 
-                              <div className="class-time-badge">
+                              <div className="class-time-badge" style={{
+                                backgroundColor: cls.color || '#3B82F6',
+                                color: 'white'
+                              }}>
                                 {cls.start_time.substring(0, 5)}
                               </div>
 

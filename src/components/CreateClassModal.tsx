@@ -34,6 +34,7 @@ export default function CreateClassModal({
     location: '',
     capacity: '20',
     level: '' as '' | 'iniciante' | 'intermediario' | 'avancado' | 'todos',
+    color: '#3B82F6', // Default blue color
   });
 
   // Múltiplos horários
@@ -89,6 +90,7 @@ export default function CreateClassModal({
         location: editClass.location || '',
         capacity: editClass.capacity.toString(),
         level: editClass.level || '',
+        color: editClass.color || '#3B82F6',
       });
 
       // Em modo de edição, apenas um horário
@@ -192,6 +194,7 @@ export default function CreateClassModal({
         if (schedules[0].end_time) payload.end_time = schedules[0].end_time;
         if (formData.location) payload.location = formData.location;
         if (formData.level) payload.level = formData.level;
+        if (formData.color) payload.color = formData.color;
         if (selectedLevels.length > 0) payload.allowed_levels = selectedLevels;
 
         await classService.updateClass(editClass.id, payload);
@@ -209,6 +212,7 @@ export default function CreateClassModal({
           if (schedule.end_time) payload.end_time = schedule.end_time;
           if (formData.location) payload.location = formData.location;
           if (formData.level) payload.level = formData.level;
+          if (formData.color) payload.color = formData.color;
           if (selectedLevels.length > 0) payload.allowed_levels = selectedLevels;
 
           await classService.createClass(payload);
@@ -423,6 +427,64 @@ export default function CreateClassModal({
               </small>
             </div>
           )}
+
+          {/* Color Picker */}
+          <div className="form-group">
+            <label>Cor da Turma *</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+              {/* Preset Colors */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', flex: 1 }}>
+                {[
+                  { color: '#3B82F6', name: 'Azul' },
+                  { color: '#10B981', name: 'Verde' },
+                  { color: '#F59E0B', name: 'Laranja' },
+                  { color: '#EF4444', name: 'Vermelho' },
+                  { color: '#8B5CF6', name: 'Roxo' },
+                  { color: '#EC4899', name: 'Rosa' },
+                  { color: '#06B6D4', name: 'Ciano' },
+                  { color: '#F97316', name: 'Amber' },
+                ].map(({ color, name }) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, color })}
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      backgroundColor: color,
+                      border: formData.color === color ? '3px solid #000' : '2px solid #ddd',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: formData.color === color ? '0 0 0 2px white, 0 0 0 4px ' + color : 'none'
+                    }}
+                    title={name}
+                  />
+                ))}
+              </div>
+
+              {/* Custom Color Picker */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                <input
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  style={{
+                    width: '50px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    border: '2px solid #ddd',
+                    cursor: 'pointer'
+                  }}
+                  title="Escolher cor customizada"
+                />
+                <small style={{ fontSize: '0.7rem', color: '#666' }}>Custom</small>
+              </div>
+            </div>
+            <small style={{ color: '#666', marginTop: '0.5rem', display: 'block' }}>
+              Esta cor será usada no calendário e na visualização de matrículas
+            </small>
+          </div>
 
           <div className="form-row">
             <div className="form-group">
