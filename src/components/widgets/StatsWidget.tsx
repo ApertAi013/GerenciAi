@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faChartLine, faUserGroup, faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import { studentService } from '../../services/studentService';
+import { enrollmentService } from '../../services/enrollmentService';
 
 export default function StatsWidget() {
   const [stats, setStats] = useState({
@@ -15,7 +16,16 @@ export default function StatsWidget() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const activeResponse = await studentService.getStudents({ status: 'ativo' });
+        // Buscar matrículas ativas para contar alunos ativos
+        const enrollmentsResponse = await enrollmentService.getEnrollments({ status: 'ativa' });
+
+        // Extrair IDs únicos de alunos com matrículas ativas
+        const uniqueStudentIds = new Set(
+          enrollmentsResponse.data.map(enrollment => enrollment.student_id)
+        );
+        const activeStudentsCount = uniqueStudentIds.size;
+
+        // Buscar todos os alunos para calcular novos alunos
         const allResponse = await studentService.getStudents({});
 
         const thirtyDaysAgo = new Date();
@@ -27,7 +37,7 @@ export default function StatsWidget() {
         }).length;
 
         setStats({
-          activeStudents: activeResponse.data.length,
+          activeStudents: activeStudentsCount,
           newStudents,
           activeClasses: 0, // TODO: Implementar
           monthRevenue: 0, // TODO: Implementar
