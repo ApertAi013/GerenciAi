@@ -38,12 +38,12 @@ export const enrollmentService = {
   async createEnrollment(data: CreateEnrollmentRequest): Promise<{
     success: boolean;
     message: string;
-    enrollment: Enrollment;
+    data: Enrollment;
   }> {
     const response = await api.post<{
       success: boolean;
       message: string;
-      enrollment: Enrollment;
+      data: Enrollment;
     }>('/api/enrollments', data);
     return response.data;
   },
