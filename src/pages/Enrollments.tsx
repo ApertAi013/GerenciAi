@@ -181,7 +181,7 @@ export default function Enrollments() {
         enrollmentService.getPlans(),
       ]);
 
-      if (enrollmentsRes.success && enrollmentsRes.data) {
+      if (enrollmentsRes.status === 'success' && enrollmentsRes.data) {
         console.log('📋 Matrículas carregadas (raw):', enrollmentsRes.data);
 
         // Mapear o array 'classes' retornado pelo backend para os campos esperados pelo frontend
@@ -218,7 +218,7 @@ export default function Enrollments() {
       }
 
       // Set all enrollments for counting
-      if (allEnrollmentsRes.success && allEnrollmentsRes.data) {
+      if (allEnrollmentsRes.status === 'success' && allEnrollmentsRes.data) {
         const allMapped = allEnrollmentsRes.data.map((enrollment: any) => {
           if (enrollment.classes && Array.isArray(enrollment.classes)) {
             return {
@@ -232,10 +232,10 @@ export default function Enrollments() {
         setAllEnrollments(allMapped);
       }
 
-      if (studentsRes.success && studentsRes.data) {
+      if (studentsRes.status === 'success' && studentsRes.data) {
         setStudents(studentsRes.data);
       }
-      if (classesRes.success && classesRes.data) {
+      if (classesRes.status === 'success' && classesRes.data) {
         setClasses(classesRes.data);
       }
       if (plansRes.success && plansRes.plans) {
