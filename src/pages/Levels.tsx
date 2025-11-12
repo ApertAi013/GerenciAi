@@ -18,7 +18,8 @@ export default function Levels() {
     try {
       setIsLoading(true);
       const response = await levelService.getLevels();
-      if (response.status === 'success') {
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
         setLevels(response.data);
       }
     } catch (error) {
