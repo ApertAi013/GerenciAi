@@ -81,7 +81,7 @@ export default function UserManagement() {
   const loadFeatures = async () => {
     try {
       const response = await monitoringService.listFeatures();
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         setFeatures(response.data);
       }
     } catch (error: any) {
@@ -105,7 +105,7 @@ export default function UserManagement() {
       }
 
       const response = await monitoringService.listUsers(params);
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         setUsers(response.data.users);
         setPagination(response.data.pagination);
       }
@@ -154,7 +154,7 @@ export default function UserManagement() {
 
       console.log('Update response:', response);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         // Update local state
         setUsers(users.map(u =>
           u.id === userId
@@ -202,7 +202,7 @@ export default function UserManagement() {
     try {
       const response = await monitoringService.createUser(newUserForm);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success('Usuário criado com sucesso!');
         setShowCreateModal(false);
         setNewUserForm({
@@ -237,7 +237,7 @@ export default function UserManagement() {
 
       const response = await monitoringService.updateUser(selectedUser.id, updateData);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success('Usuário atualizado com sucesso!');
         setShowEditModal(false);
         setSelectedUser(null);
@@ -258,7 +258,7 @@ export default function UserManagement() {
     try {
       const response = await monitoringService.deleteUser(selectedUser.id);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success('Usuário deletado com sucesso!');
         setShowDeleteModal(false);
         setSelectedUser(null);

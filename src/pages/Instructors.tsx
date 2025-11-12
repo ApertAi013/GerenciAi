@@ -66,7 +66,7 @@ export default function Instructors() {
     try {
       const response = await classService.getClasses({ status: 'ativa' });
       console.log('Resposta da API de turmas:', response); // Debug
-      if (response.status === 'success' && response.data) {
+      if (((response as any).status === 'success' || (response as any).success === true) && response.data) {
         console.log('Turmas carregadas:', response.data);
         setClasses(response.data);
       }

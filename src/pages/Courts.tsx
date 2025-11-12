@@ -26,7 +26,7 @@ const Courts: React.FC = () => {
     try {
       setLoading(true);
       const response = await courtService.getCourts();
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         setCourts(response.data);
       }
     } catch (error) {

@@ -52,7 +52,7 @@ export default function Reports() {
     const fetchModalities = async () => {
       try {
         const response = await modalityService.getModalities();
-        if (response.status === 'success') {
+        if ((response as any).status === 'success' || (response as any).success === true) {
           setModalities(response.data);
         }
       } catch (error) {

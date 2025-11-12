@@ -15,7 +15,7 @@ export default function OverdueInvoicesWidget() {
       try {
         const response = await financialService.getInvoices({ status: 'vencida' });
 
-        if (response.status === 'success') {
+        if ((response as any).status === 'success' || (response as any).success === true) {
           // Ordenar por data de vencimento (mais antigo primeiro)
           const sorted = response.data.invoices
             .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())

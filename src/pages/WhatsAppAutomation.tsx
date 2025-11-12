@@ -49,7 +49,7 @@ export default function WhatsAppAutomation() {
       setSaving(true);
       const response = await whatsappService.updateAutomationSettings(settings);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         setSettings(response.data);
         toast.success('Configurações salvas com sucesso!');
       }

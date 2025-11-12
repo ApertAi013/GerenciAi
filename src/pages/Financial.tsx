@@ -98,7 +98,7 @@ export default function Financial() {
       console.log('Generate invoices response:', response);
 
       // A resposta pode vir como { status: 'success' } ou { message: 'success' }
-      if (response.status === 'success' || response.message) {
+      if ((response as any).status === 'success' || (response as any).success === true || response.message) {
         alert(response.message || 'Faturas geradas com sucesso!');
         // Aguardar um momento antes de recarregar para garantir que o backend processou
         setTimeout(() => {
@@ -129,7 +129,7 @@ export default function Financial() {
     try {
       const response = await financialService.registerPayment(paymentData);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         alert('Pagamento registrado com sucesso!');
         setShowPaymentModal(false);
         setSelectedInvoice(null);
@@ -147,7 +147,7 @@ export default function Financial() {
     try {
       const response = await financialService.cancelInvoice(invoiceId);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         alert('Fatura cancelada com sucesso!');
         loadInvoices();
       }

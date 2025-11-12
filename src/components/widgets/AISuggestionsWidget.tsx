@@ -39,7 +39,7 @@ export default function AISuggestionsWidget() {
       if (access.hasAccess) {
         // Carregar sugestões pendentes
         const response = await aiService.getSuggestions({ status: 'pendente', limit: 5 });
-        if (response.status === 'success') {
+        if ((response as any).status === 'success' || (response as any).success === true) {
           setSuggestions(response.data);
         }
       }

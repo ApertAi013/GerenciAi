@@ -138,7 +138,7 @@ export default function StudentDetails() {
         level: selectedLevelObj.name
       } as any);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success('Nível do aluno atualizado com sucesso!');
         setShowLevelModal(false);
         fetchStudentData();
@@ -207,7 +207,7 @@ export default function StudentDetails() {
         { class_ids: updatedClassIds }
       );
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success(`Aluno adicionado a ${selectedClasses.length} turma(s) com sucesso!`);
         setShowAddToClassModal(false);
         setSelectedClasses([]);

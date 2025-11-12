@@ -121,7 +121,7 @@ export default function AdminMonitoring() {
   const loadDashboard = async () => {
     try {
       const response = await monitoringService.getDashboard();
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         setDashboard(response.data);
 
         // Adicionar ao histórico de métricas
@@ -151,7 +151,7 @@ export default function AdminMonitoring() {
   const loadGCP = async () => {
     try {
       const response = await monitoringService.getGCPMetrics();
-      if (response.status === 'success') setGCPMetrics(response.data);
+      if ((response as any).status === 'success' || (response as any).success === true) setGCPMetrics(response.data);
     } catch (error: any) {
       console.error('Erro ao carregar GCP:', error);
       // GCP é opcional, não mostra erro
@@ -161,7 +161,7 @@ export default function AdminMonitoring() {
   const loadHealth = async () => {
     try {
       const response = await monitoringService.getHealthCheck();
-      if (response.status === 'success') setHealth(response.data);
+      if ((response as any).status === 'success' || (response as any).success === true) setHealth(response.data);
     } catch (error: any) {
       console.error('Erro ao carregar health:', error);
       toast.error('Erro ao carregar status de saúde');

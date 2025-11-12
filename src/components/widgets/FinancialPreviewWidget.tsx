@@ -20,7 +20,7 @@ export default function FinancialPreviewWidget() {
       try {
         const response = await financialService.getInvoices();
 
-        if (response.status === 'success') {
+        if ((response as any).status === 'success' || (response as any).success === true) {
           const invoices = response.data.invoices;
 
           const pending = invoices.filter((inv: Invoice) => inv.status === 'aberta');

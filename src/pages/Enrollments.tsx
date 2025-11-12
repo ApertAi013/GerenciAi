@@ -1211,7 +1211,7 @@ function EditEnrollmentModal({
 
       console.log('🟢 RESPOSTA (dados gerais):', response);
 
-      if (response.status !== 'success') {
+      if (!((response as any).status === 'success' || (response as any).success === true)) {
         console.error('❌ Erro ao atualizar dados gerais:', response);
         toast.error(response.message || 'Erro ao atualizar matrícula');
         return;

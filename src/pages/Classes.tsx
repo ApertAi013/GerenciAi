@@ -116,7 +116,7 @@ export default function Classes() {
     try {
       const response = await classService.deleteClass(classId);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         alert('Turma excluída com sucesso!');
         // Atualizar lista removendo a turma deletada
         setClasses(classes.filter(c => c.id !== classId));

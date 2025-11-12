@@ -42,7 +42,7 @@ export default function WhatsAppLogs() {
         limit: 100,
       });
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         setLogs(response.data);
       }
     } catch (error: any) {

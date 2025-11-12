@@ -21,7 +21,7 @@ export default function UpcomingClassesWidget() {
       try {
         const response = await classService.getClasses({ status: 'ativa' });
 
-        if (response.status === 'success') {
+        if ((response as any).status === 'success' || (response as any).success === true) {
           const now = new Date();
           const today = now.getDay(); // 0 = domingo, 1 = segunda, etc.
           const tomorrow = (today + 1) % 7;

@@ -18,7 +18,7 @@ export default function Modalities() {
     try {
       setIsLoading(true);
       const response = await modalityService.getModalities();
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         setModalities(response.data);
       }
     } catch (error) {

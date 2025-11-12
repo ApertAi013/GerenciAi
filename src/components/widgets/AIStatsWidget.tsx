@@ -40,7 +40,7 @@ export default function AIStatsWidget() {
       if (access.hasAccess) {
         // Carregar estatísticas
         const response = await aiService.getStats();
-        if (response.status === 'success') {
+        if ((response as any).status === 'success' || (response as any).success === true) {
           setStats(response.data);
         }
       }

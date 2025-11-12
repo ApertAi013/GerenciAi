@@ -34,7 +34,7 @@ export default function WhatsAppConfig() {
     try {
       setLoading(true);
       const response = await whatsappService.getConfig();
-      if (response.status === 'success' && response.data) {
+      if (((response as any).status === 'success' || (response as any).success === true) && response.data) {
         setConfig(response.data);
       }
     } catch (error: any) {
@@ -58,7 +58,7 @@ export default function WhatsAppConfig() {
       const newState = !config.is_active;
       const response = await whatsappService.toggleActive(newState);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         setConfig({ ...config, is_active: newState });
         toast.success(newState ? 'WhatsApp ativado!' : 'WhatsApp desativado!');
       }
@@ -85,7 +85,7 @@ export default function WhatsAppConfig() {
       setTesting(true);
       const response = await whatsappService.sendTest(cleaned);
 
-      if (response.status === 'success') {
+      if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success('Mensagem de teste enviada com sucesso!');
         setTestPhoneNumber('');
       }
