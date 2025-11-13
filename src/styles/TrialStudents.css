@@ -1,0 +1,706 @@
+/* Trial Students Page Styles */
+
+.trial-students-page {
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Header Section */
+.trial-students-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.trial-students-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.trial-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trial-students-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Metrics Cards */
+.trial-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.trial-metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.trial-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.trial-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.trial-metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.trial-metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.trial-metric-icon.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.trial-metric-icon.converted {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.trial-metric-icon.rate {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.trial-metric-icon.days {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.trial-metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.trial-metric-label {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.trial-metric-change {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  display: inline-block;
+}
+
+.trial-metric-change.positive {
+  background: #e6f7f1;
+  color: #11998e;
+}
+
+.trial-metric-change.negative {
+  background: #ffe6e6;
+  color: #f5576c;
+}
+
+/* Filters Section */
+.trial-filters {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+}
+
+.trial-filters-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.trial-filter-item {
+  flex: 1;
+  min-width: 200px;
+}
+
+.trial-filter-item label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.trial-filter-item select,
+.trial-filter-item input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.trial-filter-item select:focus,
+.trial-filter-item input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Table Section */
+.trial-students-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+}
+
+.trial-students-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trial-students-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.trial-students-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trial-students-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.2s;
+}
+
+.trial-students-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.trial-students-table td {
+  padding: 1rem;
+  font-size: 0.95rem;
+  color: #333;
+  vertical-align: middle;
+}
+
+/* Status Badges */
+.trial-status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trial-status-badge.active {
+  background: #e6f7f1;
+  color: #11998e;
+}
+
+.trial-status-badge.inactive {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.trial-status-badge.expired {
+  background: #ffe6e6;
+  color: #f5576c;
+}
+
+.trial-status-badge.converted {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+/* Expiration Indicator */
+.trial-expiration {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.trial-expiration-icon {
+  font-size: 1rem;
+}
+
+.trial-expiration.warning {
+  color: #f5a623;
+}
+
+.trial-expiration.danger {
+  color: #f5576c;
+}
+
+.trial-expiration.normal {
+  color: #666;
+}
+
+.trial-expiration.unlimited {
+  color: #11998e;
+}
+
+/* Action Buttons */
+.trial-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.trial-action-btn {
+  padding: 0.5rem;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trial-action-btn:hover {
+  background: #667eea;
+  color: white;
+  transform: scale(1.05);
+}
+
+.trial-action-btn.convert {
+  background: #e6f7f1;
+  color: #11998e;
+}
+
+.trial-action-btn.convert:hover {
+  background: #11998e;
+  color: white;
+}
+
+.trial-action-btn.delete {
+  background: #ffe6e6;
+  color: #f5576c;
+}
+
+.trial-action-btn.delete:hover {
+  background: #f5576c;
+  color: white;
+}
+
+/* Empty State */
+.trial-empty-state {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.trial-empty-state-icon {
+  font-size: 4rem;
+  color: #e0e0e0;
+  margin-bottom: 1rem;
+}
+
+.trial-empty-state h3 {
+  font-size: 1.5rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.trial-empty-state p {
+  color: #999;
+  font-size: 1rem;
+}
+
+/* Loading State */
+.trial-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem;
+}
+
+.trial-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f0f0f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Modals */
+.trial-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.trial-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.trial-modal-header {
+  padding: 2rem;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trial-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.trial-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s;
+}
+
+.trial-modal-close:hover {
+  color: #f5576c;
+}
+
+.trial-modal-body {
+  padding: 2rem;
+}
+
+.trial-modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+/* Form Styles */
+.trial-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.trial-form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.trial-form-group label.required::after {
+  content: ' *';
+  color: #f5576c;
+}
+
+.trial-form-group input,
+.trial-form-group select,
+.trial-form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.trial-form-group input:focus,
+.trial-form-group select:focus,
+.trial-form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.trial-form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.trial-form-group small {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.trial-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Email Automation Config */
+.trial-email-config {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.trial-email-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.trial-toggle {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+}
+
+.trial-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.trial-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 28px;
+}
+
+.trial-toggle-slider:before {
+  position: absolute;
+  content: '';
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.trial-toggle input:checked + .trial-toggle-slider {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.trial-toggle input:checked + .trial-toggle-slider:before {
+  transform: translateX(24px);
+}
+
+/* Conversion Progress Steps */
+.trial-conversion-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.trial-conversion-steps::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #e0e0e0;
+  z-index: 0;
+}
+
+.trial-conversion-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.trial-conversion-step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #999;
+  transition: all 0.3s;
+}
+
+.trial-conversion-step.active .trial-conversion-step-circle {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+}
+
+.trial-conversion-step.completed .trial-conversion-step-circle {
+  background: #11998e;
+  border-color: #11998e;
+  color: white;
+}
+
+.trial-conversion-step-label {
+  font-size: 0.75rem;
+  color: #999;
+  text-align: center;
+}
+
+.trial-conversion-step.active .trial-conversion-step-label {
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .trial-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .trial-students-page {
+    padding: 1rem;
+  }
+
+  .trial-students-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .trial-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trial-filters-row {
+    flex-direction: column;
+  }
+
+  .trial-filter-item {
+    width: 100%;
+  }
+
+  .trial-students-table {
+    font-size: 0.875rem;
+  }
+
+  .trial-students-table th,
+  .trial-students-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .trial-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .trial-modal {
+    width: 95%;
+    max-width: none;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
