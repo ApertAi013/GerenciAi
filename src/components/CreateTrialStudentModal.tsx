@@ -32,7 +32,7 @@ export default function CreateTrialStudentModal({
     const fetchLevels = async () => {
       try {
         const response = await levelService.getLevels();
-        if (response.success && response.data) {
+        if (response.status === 'success' && response.data) {
           setLevels(response.data);
           // Set first level as default
           if (response.data.length > 0) {

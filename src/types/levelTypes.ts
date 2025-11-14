@@ -23,7 +23,7 @@ export interface UpdateLevelRequest {
 }
 
 export interface LevelsResponse {
-  success: boolean;
+  status: 'success' | 'error';
   message: string;
   data: Level[];
 }
