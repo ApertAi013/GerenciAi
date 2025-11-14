@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, User, Phone, Mail, Calendar, FileText, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { trialStudentService } from '../services/trialStudentService';
+import { levelService } from '../services/levelService';
 import type { CreateTrialStudentRequest } from '../types/trialStudentTypes';
+import type { Level } from '../types/levelTypes';
 import '../styles/TrialStudents.css';
 
 interface CreateTrialStudentModalProps {
@@ -20,9 +22,33 @@ export default function CreateTrialStudentModal({
     email: '',
     retention_days: 30,
     notes: '',
-    level: 'iniciante',
+    level: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [levels, setLevels] = useState<Level[]>([]);
+  const [isLoadingLevels, setIsLoadingLevels] = useState(true);
+
+  useEffect(() => {
+    const fetchLevels = async () => {
+      try {
+        const response = await levelService.getLevels();
+        if (response.success && response.data) {
+          setLevels(response.data);
+          // Set first level as default
+          if (response.data.length > 0) {
+            setFormData((prev) => ({ ...prev, level: response.data[0].name }));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading levels:', error);
+        toast.error('Erro ao carregar níveis');
+      } finally {
+        setIsLoadingLevels(false);
+      }
+    };
+
+    fetchLevels();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,13 +169,22 @@ export default function CreateTrialStudentModal({
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      level: e.target.value as 'iniciante' | 'intermediario' | 'avancado',
+                      level: e.target.value,
                     })
                   }
+                  disabled={isLoadingLevels}
                 >
-                  <option value="iniciante">Iniciante</option>
-                  <option value="intermediario">Intermediário</option>
-                  <option value="avancado">Avançado</option>
+                  {isLoadingLevels ? (
+                    <option value="">Carregando...</option>
+                  ) : levels.length === 0 ? (
+                    <option value="">Nenhum nível cadastrado</option>
+                  ) : (
+                    levels.map((level) => (
+                      <option key={level.id} value={level.name}>
+                        {level.name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
