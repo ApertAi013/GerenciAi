@@ -678,10 +678,12 @@ function TrialStudentDetailsModal({
                       {student.status}
                     </span>
                   </div>
-                  <div>
-                    <strong>Criado em:</strong>{' '}
-                    {new Date(student.created_at).toLocaleDateString('pt-BR')}
-                  </div>
+                  {student.created_at && (
+                    <div>
+                      <strong>Criado em:</strong>{' '}
+                      {new Date(student.created_at).toLocaleDateString('pt-BR')}
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -9,7 +9,7 @@ export interface TrialStudent {
   cpf?: string;
   birth_date?: string;
   sex?: 'M' | 'F' | 'N/I';
-  level?: 'iniciante' | 'intermediario' | 'avancado';
+  level?: string; // Any level from the system, not restricted to specific values
   status: 'ativo' | 'inativo';
   is_trial: boolean;
   trial_retention_days?: number;
@@ -21,7 +21,7 @@ export interface TrialStudent {
   trial_classes_count?: number;
   followups_count?: number;
   is_expired?: boolean;
-  created_at: string;
+  created_at?: string; // Optional in case backend doesn't return it
   updated_at?: string;
 }
 
@@ -66,7 +66,7 @@ export interface CreateTrialStudentRequest {
   email?: string;
   retention_days?: 30 | 60 | 90 | null;
   notes?: string;
-  level?: 'iniciante' | 'intermediario' | 'avancado';
+  level?: string; // Any level from the system
 }
 
 export interface UpdateTrialStudentRequest {
@@ -75,7 +75,7 @@ export interface UpdateTrialStudentRequest {
   email?: string;
   trial_retention_days?: 30 | 60 | 90 | null;
   trial_notes?: string;
-  level?: 'iniciante' | 'intermediario' | 'avancado';
+  level?: string; // Any level from the system
   status?: 'ativo' | 'inativo';
 }
 
