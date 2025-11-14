@@ -214,7 +214,7 @@ export default function TrialStudents() {
           <div className="trial-metric-header">
             <div>
               <h3 className="trial-metric-value">
-                {metrics.conversion_rate_percentage.toFixed(1)}%
+                {(metrics.conversion_rate_percentage ?? 0).toFixed(1)}%
               </h3>
               <p className="trial-metric-label">Taxa de Conversão</p>
             </div>
@@ -228,7 +228,7 @@ export default function TrialStudents() {
           <div className="trial-metric-header">
             <div>
               <h3 className="trial-metric-value">
-                {metrics.avg_days_to_convert.toFixed(0)}
+                {(metrics.avg_days_to_convert ?? 0).toFixed(0)}
               </h3>
               <p className="trial-metric-label">Dias até Conversão</p>
             </div>
@@ -244,7 +244,7 @@ export default function TrialStudents() {
             <div>
               <h3 className="trial-metric-value">
                 R${' '}
-                {(metrics.total_conversion_value_cents / 100).toLocaleString(
+                {((metrics.total_conversion_value_cents ?? 0) / 100).toLocaleString(
                   'pt-BR',
                   {
                     minimumFractionDigits: 2,
