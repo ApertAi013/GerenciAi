@@ -15,6 +15,7 @@ import {
   Calendar,
   Settings,
   BarChart3,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { trialStudentService } from '../services/trialStudentService';
