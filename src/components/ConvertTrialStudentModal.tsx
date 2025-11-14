@@ -46,8 +46,12 @@ export default function ConvertTrialStudentModal({
   const fetchPlans = async () => {
     try {
       const response = await planService.getPlans();
-      if (response.success) {
-        setPlans(response.data.filter((p) => p.status === 'ativo'));
+      // Backend returns either success: boolean OR status: 'success'
+      if (response.success || (response as any).status === 'success') {
+        const planData = response.data || (response as any).data;
+        if (Array.isArray(planData)) {
+          setPlans(planData.filter((p) => p.status === 'ativo'));
+        }
       }
     } catch (error) {
       console.error('Error fetching plans:', error);
@@ -58,8 +62,12 @@ export default function ConvertTrialStudentModal({
   const fetchClasses = async () => {
     try {
       const response = await classService.getClasses();
-      if (response.success) {
-        setClasses(response.data.filter((c) => c.status === 'ativa'));
+      // Backend returns either success: boolean OR status: 'success'
+      if (response.success || (response as any).status === 'success') {
+        const classData = response.data || (response as any).data;
+        if (Array.isArray(classData)) {
+          setClasses(classData.filter((c) => c.status === 'ativa'));
+        }
       }
     } catch (error) {
       console.error('Error fetching classes:', error);
