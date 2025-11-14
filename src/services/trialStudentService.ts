@@ -14,6 +14,9 @@ import type {
   UpgradeResponse,
 } from '../types/trialStudentTypes';
 
+/**
+ * Service for managing trial students (alunos experimentais)
+ */
 export const trialStudentService = {
   /**
    * Get all trial students with optional filtering
