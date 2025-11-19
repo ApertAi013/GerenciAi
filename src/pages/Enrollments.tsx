@@ -346,6 +346,7 @@ export default function Enrollments() {
           const selectedPlan = plans.find(p => p.id === formData.plan_id);
 
           if (selectedStudent && selectedPlan) {
+            toast.success('Matrícula criada com sucesso!');
             const enrollmentData = {
               id: enrollmentId,
               studentName: selectedStudent.full_name,
