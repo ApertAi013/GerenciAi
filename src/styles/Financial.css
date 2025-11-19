@@ -146,15 +146,14 @@
 }
 
 .amount-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  white-space: nowrap;
 }
 
 .original-amount {
   text-decoration: line-through;
   color: #95a5a6;
   font-size: 0.85rem;
+  margin-right: 0.5rem;
 }
 
 .final-amount {
