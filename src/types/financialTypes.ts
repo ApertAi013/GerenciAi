@@ -9,6 +9,7 @@ export interface Invoice {
   amount_cents: number;
   discount_cents?: number;
   final_amount_cents: number;
+  paid_amount_cents?: number;
   status: 'aberta' | 'paga' | 'vencida' | 'cancelada';
   paid_at?: string;
   created_at?: string;

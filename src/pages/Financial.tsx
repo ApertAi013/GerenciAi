@@ -219,7 +219,7 @@ export default function Financial() {
   const totalAmount = invoices.reduce((sum, inv) => sum + inv.final_amount_cents, 0);
   const paidAmount = invoices
     .filter(inv => inv.status === 'paga')
-    .reduce((sum, inv) => sum + inv.final_amount_cents, 0);
+    .reduce((sum, inv) => sum + (inv.paid_amount_cents || inv.final_amount_cents), 0);
   const overdueAmount = invoices
     .filter(inv => inv.status === 'vencida')
     .reduce((sum, inv) => sum + inv.final_amount_cents, 0);
@@ -369,6 +369,7 @@ export default function Financial() {
               <th>Referência</th>
               <th>Vencimento</th>
               <th>Valor</th>
+              <th>Pago</th>
               <th>Status</th>
               <th>Ações</th>
             </tr>
@@ -402,7 +403,7 @@ export default function Financial() {
 
               return filteredInvoices.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="empty-state">
+                  <td colSpan={9} className="empty-state">
                     {searchTerm
                       ? `Nenhuma fatura encontrada para "${searchTerm}"`
                       : filter === 'all'
@@ -443,6 +444,11 @@ export default function Financial() {
                     ) : (
                       formatPrice(invoice.final_amount_cents)
                     )}
+                  </td>
+                  <td className="amount-cell">
+                    {invoice.status === 'paga' && invoice.paid_amount_cents
+                      ? formatPrice(invoice.paid_amount_cents)
+                      : '-'}
                   </td>
                   <td>{getStatusBadge(invoice.status)}</td>
                   <td>
