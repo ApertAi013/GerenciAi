@@ -1699,24 +1699,97 @@ function EditEnrollmentModal({
 
       {/* Modal para gerar primeira fatura */}
       {showFirstInvoiceModal && createdEnrollmentData && (
-        <GenerateFirstInvoiceModal
-          enrollmentId={createdEnrollmentData.id}
-          studentName={createdEnrollmentData.studentName}
-          planPrice={createdEnrollmentData.planPrice}
-          dueDay={createdEnrollmentData.dueDay}
-          discountType={createdEnrollmentData.discountType}
-          discountValue={createdEnrollmentData.discountValue}
-          onClose={() => {
-            setShowFirstInvoiceModal(false);
-            setCreatedEnrollmentData(null);
-            resetForm();
-            loadData();
-          }}
-          onSuccess={() => {
-            resetForm();
-            loadData();
-          }}
-        />
+        <div className="modal-overlay" style={{ zIndex: 9999 }}>
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2>Gerar Primeira Fatura</h2>
+              <button
+                className="close-btn"
+                onClick={() => {
+                  setShowFirstInvoiceModal(false);
+                  setCreatedEnrollmentData(null);
+                  resetForm();
+                  loadData();
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: '1rem' }}>
+                <strong>{createdEnrollmentData.studentName}</strong> foi matriculado(a) com sucesso!
+              </p>
+              <p>Como deseja gerar a primeira fatura?</p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ width: '100%' }}
+                  onClick={async () => {
+                    try {
+                      const response = await enrollmentService.generateFirstInvoice({
+                        enrollment_id: createdEnrollmentData.id,
+                        invoice_type: 'full'
+                      });
+                      if (response.success) {
+                        toast.success('Fatura cheia gerada com sucesso!');
+                      }
+                    } catch (error: any) {
+                      toast.error(error.response?.data?.message || 'Erro ao gerar fatura');
+                    }
+                    setShowFirstInvoiceModal(false);
+                    setCreatedEnrollmentData(null);
+                    resetForm();
+                    loadData();
+                  }}
+                >
+                  Fatura Cheia - Vencimento Hoje
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ width: '100%' }}
+                  onClick={async () => {
+                    try {
+                      const response = await enrollmentService.generateFirstInvoice({
+                        enrollment_id: createdEnrollmentData.id,
+                        invoice_type: 'proportional'
+                      });
+                      if (response.success) {
+                        toast.success('Fatura proporcional gerada com sucesso!');
+                      }
+                    } catch (error: any) {
+                      toast.error(error.response?.data?.message || 'Erro ao gerar fatura');
+                    }
+                    setShowFirstInvoiceModal(false);
+                    setCreatedEnrollmentData(null);
+                    resetForm();
+                    loadData();
+                  }}
+                >
+                  Fatura Proporcional (até dia {createdEnrollmentData.dueDay})
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ width: '100%' }}
+                  onClick={() => {
+                    toast('Fatura será gerada no fechamento mensal', { icon: '📝' });
+                    setShowFirstInvoiceModal(false);
+                    setCreatedEnrollmentData(null);
+                    resetForm();
+                    loadData();
+                  }}
+                >
+                  Pular (gerar no fechamento)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
