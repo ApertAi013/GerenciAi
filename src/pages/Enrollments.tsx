@@ -742,13 +742,14 @@ export default function Enrollments() {
                       />
                     ) : (
                       <input
-                        type="number"
+                        type="text"
                         id="discount_value"
-                        min="0"
-                        max="100"
-                        step="1"
                         value={discountValue}
-                        onChange={(e) => setDiscountValue(Number(e.target.value))}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setDiscountValue(val ? Math.min(100, Number(val)) : 0);
+                        }}
+                        placeholder="0"
                         required
                       />
                     )}
@@ -1503,17 +1504,22 @@ function EditEnrollmentModal({
                   {formData.discount_type === 'percentage' ? '(%)' : '(R$)'}
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   id="discount_value"
-                  min="0"
-                  step={formData.discount_type === 'percentage' ? '1' : '0.01'}
-                  value={formData.discount_value}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      discount_value: Number(e.target.value),
-                    })
-                  }
+                  value={formData.discount_type === 'fixed'
+                    ? (formData.discount_value / 100).toFixed(2).replace('.', ',')
+                    : formData.discount_value}
+                  onChange={(e) => {
+                    if (formData.discount_type === 'fixed') {
+                      const val = e.target.value.replace(/[^0-9,]/g, '').replace(',', '.');
+                      const cents = Math.round(parseFloat(val || '0') * 100);
+                      setFormData({ ...formData, discount_value: cents });
+                    } else {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setFormData({ ...formData, discount_value: val ? Math.min(100, Number(val)) : 0 });
+                    }
+                  }}
+                  placeholder={formData.discount_type === 'fixed' ? '0,00' : '0'}
                 />
               </div>
 

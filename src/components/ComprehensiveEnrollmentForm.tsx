@@ -588,12 +588,20 @@ export default function ComprehensiveEnrollmentForm({
                     </label>
                     <input
                       id="discount_value"
-                      type="number"
-                      min="0"
-                      step={discountType === 'percentage' ? '1' : '0.01'}
-                      max={discountType === 'percentage' ? '100' : undefined}
-                      value={discountValue}
-                      onChange={(e) => setDiscountValue(parseFloat(e.target.value))}
+                      type="text"
+                      value={discountType === 'fixed'
+                        ? discountValue.toFixed(2).replace('.', ',')
+                        : discountValue}
+                      onChange={(e) => {
+                        if (discountType === 'fixed') {
+                          const val = e.target.value.replace(/[^0-9,]/g, '').replace(',', '.');
+                          setDiscountValue(parseFloat(val || '0'));
+                        } else {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setDiscountValue(val ? Math.min(100, Number(val)) : 0);
+                        }
+                      }}
+                      placeholder={discountType === 'fixed' ? '0,00' : '0'}
                     />
                   </div>
 
