@@ -345,6 +345,10 @@ export default function Enrollments() {
           const selectedStudent = students.find(s => s.id === formData.student_id);
           const selectedPlan = plans.find(p => p.id === formData.plan_id);
 
+          console.log('Debug - selectedStudent:', selectedStudent, 'selectedPlan:', selectedPlan);
+          console.log('Debug - formData:', formData);
+          console.log('Debug - students count:', students.length, 'plans count:', plans.length);
+
           if (selectedStudent && selectedPlan) {
             setCreatedEnrollmentData({
               id: enrollmentId,
@@ -357,12 +361,16 @@ export default function Enrollments() {
             setShowModal(false);
             setShowFirstInvoiceModal(true);
           } else {
+            console.warn('Student ou Plan não encontrado, mostrando toast de sucesso');
             toast.success('Matrícula criada com sucesso!');
             setShowModal(false);
             resetForm();
             loadData();
           }
         }
+      } else {
+        console.error('Resposta da API não foi sucesso:', response);
+        toast.error('Erro ao criar matrícula');
       }
     } catch (error: any) {
       console.error('Erro ao criar matrícula:', error);
