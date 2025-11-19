@@ -304,48 +304,32 @@ export default function Enrollments() {
         // Se o usuário escolheu pagar agora, gerar fatura e registrar pagamento
         if (willPayNow) {
           try {
-            // Gerar fatura para o mês atual
-            const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
-            const invoiceGenResponse = await financialService.generateInvoices({
-              reference_month: currentMonth
+            // Gerar fatura apenas para esta matrícula
+            const invoiceResponse = await enrollmentService.generateFirstInvoice({
+              enrollment_id: enrollmentId,
+              invoice_type: 'full'
             });
 
-            if (invoiceGenResponse.status === 'success') {
-              // Buscar a fatura gerada para esta matrícula
-              const invoicesResponse = await financialService.getInvoices({
-                reference_month: currentMonth,
-                student_id: formData.student_id,
-                status: 'aberta'
+            if (invoiceResponse.success && invoiceResponse.data) {
+              // Mapear payment method para o formato esperado pela API
+              const methodMap: Record<string, 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'outro'> = {
+                pix: 'pix',
+                dinheiro: 'dinheiro',
+                credito: 'cartao',
+                debito: 'cartao',
+                transferencia: 'outro'
+              };
+
+              // Registrar pagamento
+              await financialService.registerPayment({
+                invoice_id: invoiceResponse.data.id,
+                paid_at: new Date().toISOString().split('T')[0],
+                method: methodMap[paymentMethod],
+                amount_cents: invoiceResponse.data.final_amount_cents,
+                notes: `Pagamento registrado na criação da matrícula - ${paymentMethod}`
               });
 
-              // Encontrar a fatura da matrícula recém-criada
-              const invoice = invoicesResponse.data.invoices.find(
-                inv => inv.enrollment_id === enrollmentId
-              );
-
-              if (invoice) {
-                // Mapear payment method para o formato esperado pela API
-                const methodMap: Record<string, 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'outro'> = {
-                  pix: 'pix',
-                  dinheiro: 'dinheiro',
-                  credito: 'cartao',
-                  debito: 'cartao',
-                  transferencia: 'outro'
-                };
-
-                // Registrar pagamento
-                await financialService.registerPayment({
-                  invoice_id: invoice.id,
-                  paid_at: new Date().toISOString().split('T')[0],
-                  method: methodMap[paymentMethod],
-                  amount_cents: invoice.final_amount_cents,
-                  notes: `Pagamento registrado na criação da matrícula - ${paymentMethod}`
-                });
-
-                toast.success('Matrícula criada e pagamento registrado com sucesso!');
-              } else {
-                toast.warning('Matrícula criada, mas não foi possível encontrar a fatura para registrar o pagamento');
-              }
+              toast.success('Matrícula criada e pagamento registrado com sucesso!');
             } else {
               toast.warning('Matrícula criada, mas houve erro ao gerar a fatura para pagamento');
             }
