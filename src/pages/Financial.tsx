@@ -216,13 +216,13 @@ export default function Financial() {
     return <span className={`status-badge ${info.class}`}>{info.label}</span>;
   };
 
-  const totalAmount = invoices.reduce((sum, inv) => sum + inv.final_amount_cents, 0);
+  const totalAmount = invoices.reduce((sum, inv) => sum + Number(inv.final_amount_cents), 0);
   const paidAmount = invoices
     .filter(inv => inv.status === 'paga')
-    .reduce((sum, inv) => sum + (inv.paid_amount_cents || inv.final_amount_cents), 0);
+    .reduce((sum, inv) => sum + Number(inv.paid_amount_cents || inv.final_amount_cents), 0);
   const overdueAmount = invoices
     .filter(inv => inv.status === 'vencida')
-    .reduce((sum, inv) => sum + inv.final_amount_cents, 0);
+    .reduce((sum, inv) => sum + Number(inv.final_amount_cents), 0);
 
   if (loading) {
     return <div className="loading">Carregando informações financeiras...</div>;
