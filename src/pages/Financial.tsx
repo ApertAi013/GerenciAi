@@ -198,7 +198,7 @@ export default function Financial() {
   };
 
   const formatPrice = (cents: number) => {
-    return `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`;
+    return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
   const formatDate = (dateString: string) => {
