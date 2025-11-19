@@ -350,15 +350,19 @@ export default function Enrollments() {
           console.log('Debug - students count:', students.length, 'plans count:', plans.length);
 
           if (selectedStudent && selectedPlan) {
-            setCreatedEnrollmentData({
+            console.log('Debug - Configurando modal de primeira fatura');
+            const enrollmentData = {
               id: enrollmentId,
               studentName: selectedStudent.full_name,
               planPrice: selectedPlan.price_cents,
               dueDay: formData.due_day,
-              discountType: hasDiscount ? discountType : 'none',
+              discountType: hasDiscount ? discountType : 'none' as const,
               discountValue: hasDiscount ? discountValue : 0,
-            });
+            };
+            console.log('Debug - createdEnrollmentData:', enrollmentData);
+            setCreatedEnrollmentData(enrollmentData);
             setShowModal(false);
+            console.log('Debug - Chamando setShowFirstInvoiceModal(true)');
             setShowFirstInvoiceModal(true);
           } else {
             console.warn('Student ou Plan não encontrado, mostrando toast de sucesso');
