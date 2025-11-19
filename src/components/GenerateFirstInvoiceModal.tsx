@@ -25,6 +25,8 @@ export default function GenerateFirstInvoiceModal({
   onClose,
   onSuccess,
 }: GenerateFirstInvoiceModalProps) {
+  console.log('GenerateFirstInvoiceModal renderizado com props:', { enrollmentId, studentName, planPrice, dueDay, discountType, discountValue });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedType, setSelectedType] = useState<'full' | 'proportional' | null>(null);
 

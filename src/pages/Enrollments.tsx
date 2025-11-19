@@ -90,6 +90,11 @@ export default function Enrollments() {
     loadData();
   }, [statusFilter]);
 
+  // Debug: monitor first invoice modal state
+  useEffect(() => {
+    console.log('Debug useEffect - showFirstInvoiceModal:', showFirstInvoiceModal, 'createdEnrollmentData:', createdEnrollmentData);
+  }, [showFirstInvoiceModal, createdEnrollmentData]);
+
   useEffect(() => {
     // Filter students based on search
     if (studentSearch.trim() === '') {
