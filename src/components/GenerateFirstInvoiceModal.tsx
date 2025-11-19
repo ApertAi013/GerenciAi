@@ -25,10 +25,15 @@ export default function GenerateFirstInvoiceModal({
   onClose,
   onSuccess,
 }: GenerateFirstInvoiceModalProps) {
-  console.log('GenerateFirstInvoiceModal renderizado com props:', { enrollmentId, studentName, planPrice, dueDay, discountType, discountValue });
+  console.log('GenerateFirstInvoiceModal MONTANDO - props:', { enrollmentId, studentName, planPrice, dueDay, discountType, discountValue });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedType, setSelectedType] = useState<'full' | 'proportional' | null>(null);
+
+  // Debug: verificar se está sendo renderizado
+  if (!enrollmentId) {
+    console.error('GenerateFirstInvoiceModal - enrollmentId is falsy:', enrollmentId);
+  }
 
   // Calcular valores
   const today = new Date();
@@ -117,8 +122,10 @@ export default function GenerateFirstInvoiceModal({
     onClose();
   };
 
+  console.log('GenerateFirstInvoiceModal - prestes a renderizar JSX');
+
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" style={{ zIndex: 9999 }}>
       <div className="modal-content" style={{ maxWidth: '600px' }}>
         <div className="modal-header">
           <h2><Receipt size={20} /> Gerar Primeira Fatura</h2>
