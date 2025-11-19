@@ -162,4 +162,41 @@ export const enrollmentService = {
     );
     return response.data;
   },
+
+  // Gerar primeira fatura da matrícula
+  async generateFirstInvoice(data: {
+    enrollment_id: number;
+    invoice_type: 'full' | 'proportional';
+  }): Promise<{
+    success: boolean;
+    message: string;
+    data: {
+      id: number;
+      enrollment_id: number;
+      student_name: string;
+      reference_month: string;
+      due_date: string;
+      amount_cents: number;
+      discount_cents: number;
+      final_amount_cents: number;
+      description: string;
+    };
+  }> {
+    const response = await api.post<{
+      success: boolean;
+      message: string;
+      data: {
+        id: number;
+        enrollment_id: number;
+        student_name: string;
+        reference_month: string;
+        due_date: string;
+        amount_cents: number;
+        discount_cents: number;
+        final_amount_cents: number;
+        description: string;
+      };
+    }>('/api/invoices/generate-first', data);
+    return response.data;
+  },
 };

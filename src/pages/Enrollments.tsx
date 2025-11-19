@@ -5,6 +5,7 @@ import { enrollmentService } from '../services/enrollmentService';
 import { studentService } from '../services/studentService';
 import { classService } from '../services/classService';
 import { financialService } from '../services/financialService';
+import GenerateFirstInvoiceModal from '../components/GenerateFirstInvoiceModal';
 import type { Enrollment, Plan, CreateEnrollmentRequest } from '../types/enrollmentTypes';
 import type { Student } from '../types/studentTypes';
 import type { Class } from '../types/classTypes';
@@ -40,6 +41,17 @@ export default function Enrollments() {
   const [discountUntil, setDiscountUntil] = useState('');
   const [willPayNow, setWillPayNow] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'dinheiro' | 'credito' | 'debito' | 'pix' | 'transferencia'>('pix');
+
+  // First invoice modal state
+  const [showFirstInvoiceModal, setShowFirstInvoiceModal] = useState(false);
+  const [createdEnrollmentData, setCreatedEnrollmentData] = useState<{
+    id: number;
+    studentName: string;
+    planPrice: number;
+    dueDay: number;
+    discountType: 'none' | 'fixed' | 'percentage';
+    discountValue: number;
+  } | null>(null);
 
   // Format currency input (converts centavos to R$ display)
   const formatCurrency = (cents: number): string => {
@@ -341,13 +353,32 @@ export default function Enrollments() {
             console.error('Erro ao processar pagamento:', paymentError);
             toast.warning('Matrícula criada, mas houve erro ao registrar o pagamento. Você pode registrá-lo na página de Financeiro.');
           }
+          setShowModal(false);
+          resetForm();
+          loadData();
         } else {
-          toast.success('Matrícula criada com sucesso!');
-        }
+          // Mostrar modal para gerar primeira fatura
+          const selectedStudent = students.find(s => s.id === formData.student_id);
+          const selectedPlan = plans.find(p => p.id === formData.plan_id);
 
-        setShowModal(false);
-        resetForm();
-        loadData();
+          if (selectedStudent && selectedPlan) {
+            setCreatedEnrollmentData({
+              id: enrollmentId,
+              studentName: selectedStudent.full_name,
+              planPrice: selectedPlan.price_cents,
+              dueDay: formData.due_day,
+              discountType: hasDiscount ? discountType : 'none',
+              discountValue: hasDiscount ? discountValue : 0,
+            });
+            setShowModal(false);
+            setShowFirstInvoiceModal(true);
+          } else {
+            toast.success('Matrícula criada com sucesso!');
+            setShowModal(false);
+            resetForm();
+            loadData();
+          }
+        }
       }
     } catch (error: any) {
       console.error('Erro ao criar matrícula:', error);
@@ -1663,6 +1694,28 @@ function EditEnrollmentModal({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal para gerar primeira fatura */}
+      {showFirstInvoiceModal && createdEnrollmentData && (
+        <GenerateFirstInvoiceModal
+          enrollmentId={createdEnrollmentData.id}
+          studentName={createdEnrollmentData.studentName}
+          planPrice={createdEnrollmentData.planPrice}
+          dueDay={createdEnrollmentData.dueDay}
+          discountType={createdEnrollmentData.discountType}
+          discountValue={createdEnrollmentData.discountValue}
+          onClose={() => {
+            setShowFirstInvoiceModal(false);
+            setCreatedEnrollmentData(null);
+            resetForm();
+            loadData();
+          }}
+          onSuccess={() => {
+            resetForm();
+            loadData();
+          }}
+        />
       )}
     </div>
   );
