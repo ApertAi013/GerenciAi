@@ -1698,6 +1698,7 @@ function EditEnrollmentModal({
       )}
 
       {/* Modal para gerar primeira fatura */}
+      {console.log('RENDER CHECK - showFirstInvoiceModal:', showFirstInvoiceModal, 'createdEnrollmentData:', !!createdEnrollmentData)}
       {showFirstInvoiceModal && createdEnrollmentData && (
         <div className="modal-overlay" style={{ zIndex: 9999 }}>
           <div className="modal-content" style={{ maxWidth: '500px' }}>
