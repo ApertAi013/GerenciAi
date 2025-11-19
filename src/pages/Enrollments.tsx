@@ -90,11 +90,6 @@ export default function Enrollments() {
     loadData();
   }, [statusFilter]);
 
-  // Debug: monitor first invoice modal state
-  useEffect(() => {
-    console.log('Debug useEffect - showFirstInvoiceModal:', showFirstInvoiceModal, 'createdEnrollmentData:', createdEnrollmentData);
-  }, [showFirstInvoiceModal, createdEnrollmentData]);
-
   useEffect(() => {
     // Filter students based on search
     if (studentSearch.trim() === '') {
@@ -350,12 +345,7 @@ export default function Enrollments() {
           const selectedStudent = students.find(s => s.id === formData.student_id);
           const selectedPlan = plans.find(p => p.id === formData.plan_id);
 
-          console.log('Debug - selectedStudent:', selectedStudent, 'selectedPlan:', selectedPlan);
-          console.log('Debug - formData:', formData);
-          console.log('Debug - students count:', students.length, 'plans count:', plans.length);
-
           if (selectedStudent && selectedPlan) {
-            console.log('Debug - Configurando modal de primeira fatura');
             const enrollmentData = {
               id: enrollmentId,
               studentName: selectedStudent.full_name,
@@ -364,13 +354,10 @@ export default function Enrollments() {
               discountType: hasDiscount ? discountType : 'none' as const,
               discountValue: hasDiscount ? discountValue : 0,
             };
-            console.log('Debug - createdEnrollmentData:', enrollmentData);
             setCreatedEnrollmentData(enrollmentData);
             setShowModal(false);
-            console.log('Debug - Chamando setShowFirstInvoiceModal(true)');
             setShowFirstInvoiceModal(true);
           } else {
-            console.warn('Student ou Plan não encontrado, mostrando toast de sucesso');
             toast.success('Matrícula criada com sucesso!');
             setShowModal(false);
             resetForm();
