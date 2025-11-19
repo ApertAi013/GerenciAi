@@ -21,6 +21,27 @@ export default function Financial() {
     notes: '',
   });
 
+  // New filter states
+  const [instructorFilter, setInstructorFilter] = useState<string>('');
+  const [modalityFilter, setModalityFilter] = useState<string>('');
+  const [instructors, setInstructors] = useState<Array<{ id: number; name: string; email: string }>>([]);
+  const [modalities, setModalities] = useState<Array<{ id: number; name: string }>>([]);
+
+  useEffect(() => {
+    // Load filters on mount
+    const loadFilters = async () => {
+      try {
+        const response = await financialService.getFilters();
+        const data = response.data || response;
+        setInstructors(data.instructors || []);
+        setModalities(data.modalities || []);
+      } catch (error) {
+        console.error('Erro ao carregar filtros:', error);
+      }
+    };
+    loadFilters();
+  }, []);
+
   useEffect(() => {
     // Log current user info for debugging
     const userDataStr = localStorage.getItem('userData');
@@ -46,17 +67,36 @@ export default function Financial() {
     } else {
       loadInvoices();
     }
-  }, [filter]);
+  }, [filter, instructorFilter, modalityFilter]);
 
   const loadInvoices = async () => {
     try {
       setLoading(true);
+      // Build params object
+      const params: {
+        status?: string;
+        instructor_id?: number;
+        modality_id?: number;
+      } = {};
+
       // Don't pass status parameter for "all" or "due_soon" filters
       // "due_soon" will be filtered client-side
-      const params = (filter !== 'all' && filter !== 'due_soon') ? { status: filter } : undefined;
+      if (filter !== 'all' && filter !== 'due_soon') {
+        params.status = filter;
+      }
+
+      // Add instructor filter
+      if (instructorFilter) {
+        params.instructor_id = Number(instructorFilter);
+      }
+
+      // Add modality filter
+      if (modalityFilter) {
+        params.modality_id = Number(modalityFilter);
+      }
 
       console.log('Loading invoices with params:', params);
-      const response = await financialService.getInvoices(params);
+      const response = await financialService.getInvoices(Object.keys(params).length > 0 ? params : undefined);
 
       console.log('Load invoices response:', response);
       console.log('Filter:', filter);
@@ -248,7 +288,7 @@ export default function Financial() {
         </button>
       </div>
 
-      {/* Search Bar */}
+      {/* Search and Filters */}
       <div className="search-section">
         <input
           type="text"
@@ -265,6 +305,56 @@ export default function Financial() {
             title="Limpar busca"
           >
             ✕
+          </button>
+        )}
+      </div>
+
+      {/* Advanced Filters */}
+      <div className="advanced-filters">
+        <div className="filter-group">
+          <label htmlFor="instructor-filter">Instrutor:</label>
+          <select
+            id="instructor-filter"
+            value={instructorFilter}
+            onChange={(e) => setInstructorFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">Todos</option>
+            {instructors.map((instructor) => (
+              <option key={instructor.id} value={instructor.id}>
+                {instructor.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label htmlFor="modality-filter">Modalidade:</label>
+          <select
+            id="modality-filter"
+            value={modalityFilter}
+            onChange={(e) => setModalityFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">Todas</option>
+            {modalities.map((modality) => (
+              <option key={modality.id} value={modality.id}>
+                {modality.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {(instructorFilter || modalityFilter) && (
+          <button
+            type="button"
+            className="btn-clear-filters"
+            onClick={() => {
+              setInstructorFilter('');
+              setModalityFilter('');
+            }}
+          >
+            Limpar filtros
           </button>
         )}
       </div>

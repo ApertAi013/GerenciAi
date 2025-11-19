@@ -11,10 +11,23 @@ export const financialService = {
     status?: string;
     reference_month?: string;
     student_id?: number;
+    instructor_id?: number;
+    modality_id?: number;
     page?: number;
     limit?: number;
   }): Promise<InvoicesResponse> {
     const response = await api.get<InvoicesResponse>('/api/invoices', { params });
+    return response.data;
+  },
+
+  // Buscar filtros disponíveis (instrutores e modalidades)
+  async getFilters(): Promise<{
+    data: {
+      instructors: Array<{ id: number; name: string; email: string }>;
+      modalities: Array<{ id: number; name: string }>;
+    };
+  }> {
+    const response = await api.get('/api/invoices/filters');
     return response.data;
   },
 
