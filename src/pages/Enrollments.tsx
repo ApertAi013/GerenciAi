@@ -1225,12 +1225,14 @@ function EditEnrollmentModal({
         });
       }
 
-      // Filter by availability
+      // Filter by availability (mas sempre mostra turmas onde o aluno já está)
       if (showOnlyAvailable) {
         filtered = filtered.filter((cls) => {
           const enrolled = cls.enrolled_count || 0;
           const capacity = cls.capacity || 0;
-          return enrolled < capacity;
+          const isOriginalClass = enrollment.class_ids?.includes(cls.id) || false;
+          // Mostra se tem vaga OU se o aluno já está nesta turma
+          return enrolled < capacity || isOriginalClass;
         });
       }
 
@@ -1246,7 +1248,7 @@ function EditEnrollmentModal({
 
       setFilteredClasses(filtered);
     }
-  }, [studentData, classesWithDetails, searchQuery, showOnlyAvailable]);
+  }, [studentData, classesWithDetails, searchQuery, showOnlyAvailable, enrollment.class_ids]);
 
   const selectedPlan = plans.find((p) => p.id === formData.plan_id);
 
@@ -1535,18 +1537,25 @@ function EditEnrollmentModal({
                         dayClasses.map((cls) => {
                           const enrolled = cls.enrolled_count || 0;
                           const capacity = cls.capacity || 0;
-                          const available = capacity - enrolled;
-                          const isFull = enrolled >= capacity;
                           const isSelected = formData.class_ids.includes(cls.id);
+                          // Se o aluno já está na turma (turma original), não conta ele na ocupação
+                          const isOriginalClass = enrollment.class_ids?.includes(cls.id) || false;
+                          const effectiveEnrolled = isOriginalClass ? enrolled - 1 : enrolled;
+                          const available = capacity - effectiveEnrolled;
+                          // Turma está cheia apenas se não há vagas E o aluno não está nela originalmente
+                          const isFull = effectiveEnrolled >= capacity;
+                          // Permite clicar se está selecionada (para desmarcar) ou se tem vaga
+                          const canClick = isSelected || !isFull;
 
                           return (
                             <div
                               key={cls.id}
-                              className={`class-card-modern ${isSelected ? 'selected' : ''} ${isFull ? 'full' : ''}`}
-                              onClick={() => !isFull && handleClassToggle(cls.id)}
+                              className={`class-card-modern ${isSelected ? 'selected' : ''} ${isFull && !isSelected ? 'full' : ''}`}
+                              onClick={() => canClick && handleClassToggle(cls.id)}
                               style={{
                                 borderLeft: `6px solid ${cls.color || '#3B82F6'}`,
-                                position: 'relative'
+                                position: 'relative',
+                                cursor: canClick ? 'pointer' : 'not-allowed'
                               }}
                             >
                               {/* Color indicator dot */}
@@ -1588,10 +1597,10 @@ function EditEnrollmentModal({
 
                               <div
                                 className={`availability-badge ${
-                                  isFull ? 'full' : available <= 3 ? 'low' : 'available'
+                                  isFull && !isSelected ? 'full' : available <= 3 ? 'low' : 'available'
                                 }`}
                               >
-                                {isFull ? (
+                                {isFull && !isSelected ? (
                                   'LOTADA'
                                 ) : (
                                   <>
