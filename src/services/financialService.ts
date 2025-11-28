@@ -78,4 +78,36 @@ export const financialService = {
     }>('/api/invoices/update-overdue');
     return response.data;
   },
+
+  // Editar pagamento
+  async updatePayment(
+    paymentId: number,
+    data: {
+      amount_cents?: number;
+      paid_at?: string;
+      method?: 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'outro';
+      notes?: string;
+    }
+  ): Promise<{
+    status: string;
+    message: string;
+    data: {
+      payment: any;
+      old_amount_cents: number;
+      new_amount_cents: number;
+      difference_cents: number;
+    };
+  }> {
+    const response = await api.put<{
+      status: string;
+      message: string;
+      data: {
+        payment: any;
+        old_amount_cents: number;
+        new_amount_cents: number;
+        difference_cents: number;
+      };
+    }>(`/api/invoices/payment/${paymentId}`, data);
+    return response.data;
+  },
 };

@@ -12,8 +12,10 @@ export interface Enrollment {
   id: number;
   student_id: number;
   student_name?: string;
+  student_phone?: string;
   plan_id: number;
   plan_name?: string;
+  plan_price_cents?: number;
   start_date: string;
   end_date?: string;
   due_day: number;
@@ -24,7 +26,9 @@ export interface Enrollment {
   discount_until?: string;
   created_at?: string;
   class_ids?: number[];
+  class_names?: string[];
   classes?: any[]; // Full class details
+  sessions_per_week?: number;
 }
 
 export interface EnrollmentClass {

@@ -3,6 +3,7 @@ export interface Invoice {
   enrollment_id: number;
   student_id?: number;
   student_name?: string;
+  student_phone?: string;
   plan_name?: string;
   reference_month: string;
   due_date: string;
@@ -10,6 +11,8 @@ export interface Invoice {
   discount_cents?: number;
   final_amount_cents: number;
   paid_amount_cents?: number;
+  payment_id?: number;
+  payment_method?: 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'outro';
   status: 'aberta' | 'paga' | 'vencida' | 'cancelada';
   paid_at?: string;
   created_at?: string;

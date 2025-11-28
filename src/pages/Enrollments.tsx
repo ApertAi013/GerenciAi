@@ -681,17 +681,43 @@ export default function Enrollments() {
                     )}
                   </td>
                   <td>
-                    <button
-                      type="button"
-                      className="btn-icon"
-                      onClick={() => {
-                        setEditingEnrollment(enrollment);
-                        setShowEditModal(true);
-                      }}
-                      title="Editar matrícula"
-                    >
-                      ✏️
-                    </button>
+                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                      {enrollment.student_phone && (
+                        <button
+                          type="button"
+                          className="btn-icon btn-whatsapp-small"
+                          onClick={() => {
+                            const phone = enrollment.student_phone?.replace(/\D/g, '') || '';
+                            const message = `Olá ${enrollment.student_name}!`;
+                            const whatsappUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(message)}`;
+                            window.open(whatsappUrl, '_blank');
+                          }}
+                          title="Enviar WhatsApp"
+                          style={{
+                            backgroundColor: '#25D366',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '6px 8px',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                          }}
+                        >
+                          📱
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        onClick={() => {
+                          setEditingEnrollment(enrollment);
+                          setShowEditModal(true);
+                        }}
+                        title="Editar matrícula"
+                      >
+                        ✏️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { financialService } from '../services/financialService';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
@@ -17,6 +18,14 @@ export default function Financial() {
     invoice_id: 0,
     paid_at: new Date().toISOString().split('T')[0],
     method: 'pix',
+    amount_cents: 0,
+    notes: '',
+  });
+
+  // Estado para edição de pagamento
+  const [showEditPaymentModal, setShowEditPaymentModal] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [editPaymentData, setEditPaymentData] = useState({
     amount_cents: 0,
     notes: '',
   });
@@ -197,6 +206,47 @@ export default function Financial() {
     }
   };
 
+  const openEditPaymentModal = (invoice: Invoice) => {
+    setEditingInvoice(invoice);
+    setEditPaymentData({
+      amount_cents: invoice.paid_amount_cents || invoice.final_amount_cents,
+      notes: '',
+    });
+    setShowEditPaymentModal(true);
+  };
+
+  const handleEditPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editingInvoice || !editingInvoice.payment_id) {
+      toast.error('Não foi possível identificar o pagamento');
+      return;
+    }
+
+    const confirmMessage = `Tem certeza que deseja alterar o valor pago de ${formatPrice(editingInvoice.paid_amount_cents || 0)} para ${formatPrice(editPaymentData.amount_cents)}?\n\nIsso irá alterar o balanço financeiro.`;
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const response = await financialService.updatePayment(editingInvoice.payment_id, {
+        amount_cents: editPaymentData.amount_cents,
+        notes: editPaymentData.notes || undefined,
+      });
+
+      if ((response as any).status === 'success' || (response as any).success === true) {
+        const diff = response.data?.difference_cents || 0;
+        const diffText = diff > 0 ? `+${formatPrice(diff)}` : diff < 0 ? formatPrice(diff) : 'sem alteração';
+        toast.success(`Pagamento atualizado! Diferença no balanço: ${diffText}`);
+        setShowEditPaymentModal(false);
+        setEditingInvoice(null);
+        loadInvoices();
+      }
+    } catch (error: any) {
+      console.error('Erro ao editar pagamento:', error);
+      toast.error(error.response?.data?.message || 'Erro ao editar pagamento');
+    }
+  };
+
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
@@ -216,13 +266,20 @@ export default function Financial() {
     return <span className={`status-badge ${info.class}`}>{info.label}</span>;
   };
 
-  const totalAmount = invoices.reduce((sum, inv) => sum + Number(inv.final_amount_cents), 0);
+  // Total: soma apenas faturas não canceladas (abertas, pagas e vencidas)
+  const totalAmount = invoices
+    .filter(inv => inv.status !== 'cancelada')
+    .reduce((sum, inv) => sum + Number(inv.final_amount_cents || 0), 0);
+
+  // Recebido: soma o valor REAL pago nas faturas pagas
   const paidAmount = invoices
     .filter(inv => inv.status === 'paga')
-    .reduce((sum, inv) => sum + Number(inv.paid_amount_cents || inv.final_amount_cents), 0);
+    .reduce((sum, inv) => sum + Number(inv.paid_amount_cents || 0), 0);
+
+  // Inadimplente: soma apenas faturas vencidas
   const overdueAmount = invoices
     .filter(inv => inv.status === 'vencida')
-    .reduce((sum, inv) => sum + Number(inv.final_amount_cents), 0);
+    .reduce((sum, inv) => sum + Number(inv.final_amount_cents || 0), 0);
 
   if (loading) {
     return <div className="loading">Carregando informações financeiras...</div>;
@@ -436,7 +493,7 @@ export default function Financial() {
                   <td>{invoice.reference_month}</td>
                   <td>{formatDate(invoice.due_date)}</td>
                   <td className="amount-cell">
-                    {invoice.discount_cents ? (
+                    {invoice.discount_cents && invoice.discount_cents > 0 ? (
                       <>
                         <span className="original-amount">{formatPrice(invoice.amount_cents)}</span>
                         <span className="final-amount">{formatPrice(invoice.final_amount_cents)}</span>
@@ -446,9 +503,25 @@ export default function Financial() {
                     )}
                   </td>
                   <td className="amount-cell">
-                    {invoice.status === 'paga' && invoice.paid_amount_cents
-                      ? formatPrice(invoice.paid_amount_cents)
-                      : '-'}
+                    {invoice.status === 'paga' && invoice.paid_amount_cents ? (
+                      <span
+                        onClick={() => openEditPaymentModal(invoice)}
+                        style={{
+                          cursor: 'pointer',
+                          color: '#007bff',
+                          textDecoration: 'underline',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                        title="Clique para editar o valor pago"
+                      >
+                        {formatPrice(invoice.paid_amount_cents)}
+                        <span style={{ fontSize: '10px', opacity: 0.7 }}>✏️</span>
+                      </span>
+                    ) : (
+                      '-'
+                    )}
                   </td>
                   <td>{getStatusBadge(invoice.status)}</td>
                   <td>
@@ -560,6 +633,83 @@ export default function Financial() {
                 </button>
                 <button type="submit" className="btn-primary">
                   Confirmar Pagamento
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição de Pagamento */}
+      {showEditPaymentModal && editingInvoice && (
+        <div className="modal-overlay" onClick={() => setShowEditPaymentModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Editar Pagamento</h2>
+              <button type="button" className="modal-close" onClick={() => setShowEditPaymentModal(false)}>×</button>
+            </div>
+
+            <div className="invoice-details">
+              <h3>Detalhes da Fatura</h3>
+              <p><strong>Aluno:</strong> {editingInvoice.student_name}</p>
+              <p><strong>Valor da fatura:</strong> {formatPrice(editingInvoice.final_amount_cents)}</p>
+              <p><strong>Valor pago atual:</strong> {formatPrice(editingInvoice.paid_amount_cents || 0)}</p>
+              <p><strong>Pago em:</strong> {editingInvoice.paid_at ? formatDate(editingInvoice.paid_at) : '-'}</p>
+            </div>
+
+            <div style={{
+              backgroundColor: '#fff3cd',
+              border: '1px solid #ffc107',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '16px',
+              fontSize: '14px',
+              color: '#856404'
+            }}>
+              ⚠️ <strong>Atenção:</strong> Alterar o valor do pagamento irá afetar o balanço financeiro.
+            </div>
+
+            <form onSubmit={handleEditPayment} className="payment-form">
+              <div className="form-group">
+                <label htmlFor="edit_amount_cents">Novo Valor Pago (R$) *</label>
+                <input
+                  type="number"
+                  id="edit_amount_cents"
+                  step="0.01"
+                  value={(editPaymentData.amount_cents / 100).toFixed(2)}
+                  onChange={(e) => setEditPaymentData({
+                    ...editPaymentData,
+                    amount_cents: Math.round(parseFloat(e.target.value) * 100)
+                  })}
+                  required
+                />
+                {editPaymentData.amount_cents !== (editingInvoice.paid_amount_cents || 0) && (
+                  <small style={{
+                    color: editPaymentData.amount_cents > (editingInvoice.paid_amount_cents || 0) ? '#28a745' : '#dc3545',
+                    fontWeight: 'bold'
+                  }}>
+                    Diferença: {formatPrice(editPaymentData.amount_cents - (editingInvoice.paid_amount_cents || 0))}
+                  </small>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit_notes">Motivo da alteração</label>
+                <textarea
+                  id="edit_notes"
+                  rows={3}
+                  value={editPaymentData.notes}
+                  onChange={(e) => setEditPaymentData({ ...editPaymentData, notes: e.target.value })}
+                  placeholder="Descreva o motivo da alteração (opcional)"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowEditPaymentModal(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary">
+                  Confirmar Alteração
                 </button>
               </div>
             </form>
