@@ -163,6 +163,34 @@ export const enrollmentService = {
     return response.data;
   },
 
+  // Buscar faturas abertas/vencidas de uma matrícula
+  async getOpenInvoices(enrollmentId: number): Promise<{
+    success: boolean;
+    data: Array<{
+      id: number;
+      reference_month: string;
+      due_date: string;
+      amount_cents: number;
+      discount_cents: number;
+      final_amount_cents: number;
+      status: string;
+    }>;
+  }> {
+    const response = await api.get<{
+      success: boolean;
+      data: Array<{
+        id: number;
+        reference_month: string;
+        due_date: string;
+        amount_cents: number;
+        discount_cents: number;
+        final_amount_cents: number;
+        status: string;
+      }>;
+    }>(`/api/enrollments/${enrollmentId}/open-invoices`);
+    return response.data;
+  },
+
   // Gerar primeira fatura da matrícula
   async generateFirstInvoice(data: {
     enrollment_id: number;

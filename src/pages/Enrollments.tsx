@@ -1167,11 +1167,28 @@ function EditEnrollmentModal({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [cancelInvoices, setCancelInvoices] = useState(false);
+  const [applyDiscountToInvoices, setApplyDiscountToInvoices] = useState(false);
+  const [openInvoicesCount, setOpenInvoicesCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
   const [studentData, setStudentData] = useState<Student | null>(null);
   const [classesWithDetails, setClassesWithDetails] = useState<Class[]>([]);
   const [filteredClasses, setFilteredClasses] = useState<Class[]>([]);
+
+  // Fetch open invoices count
+  useEffect(() => {
+    const fetchOpenInvoices = async () => {
+      try {
+        const response = await enrollmentService.getOpenInvoices(enrollment.id);
+        if (response.success || (response as any).status === 'success') {
+          setOpenInvoicesCount(response.data.length);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar faturas abertas:', error);
+      }
+    };
+    fetchOpenInvoices();
+  }, [enrollment.id]);
 
   // Fetch student data and classes with enrolled counts
   useEffect(() => {
@@ -1341,6 +1358,14 @@ function EditEnrollmentModal({
         }
       } else {
         payload.discount_type = 'none';
+        payload.discount_value = 0;
+      }
+
+      // Add apply_discount_to_open_invoices flag if discount changed
+      const discountChanged = formData.discount_type !== enrollment.discount_type ||
+                             formData.discount_value !== enrollment.discount_value;
+      if (discountChanged && applyDiscountToInvoices) {
+        payload.apply_discount_to_open_invoices = true;
       }
 
       // Add update_open_invoices flag if plan changed
@@ -1691,6 +1716,22 @@ function EditEnrollmentModal({
                   }
                 />
               </div>
+            </div>
+          )}
+
+          {/* Checkbox para aplicar desconto em faturas abertas */}
+          {openInvoicesCount > 0 && (formData.discount_type !== enrollment.discount_type || formData.discount_value !== enrollment.discount_value) && (
+            <div className="form-group" style={{ marginTop: '12px', padding: '12px', backgroundColor: '#fff3cd', borderRadius: '8px', border: '1px solid #ffc107' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
+                <input
+                  type="checkbox"
+                  checked={applyDiscountToInvoices}
+                  onChange={(e) => setApplyDiscountToInvoices(e.target.checked)}
+                />
+                <span>
+                  Aplicar novo desconto nas <strong>{openInvoicesCount} fatura(s) aberta(s)</strong> existente(s)
+                </span>
+              </label>
             </div>
           )}
 
