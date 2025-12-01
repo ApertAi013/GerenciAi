@@ -306,6 +306,11 @@ export default function Financial() {
     .filter(inv => inv.status === 'paga')
     .reduce((sum, inv) => sum + Number(inv.paid_amount_cents || 0), 0);
 
+  // A Vencer: soma faturas abertas (ainda não venceram e não foram pagas)
+  const pendingAmount = invoices
+    .filter(inv => inv.status === 'aberta')
+    .reduce((sum, inv) => sum + Number(inv.final_amount_cents || 0), 0);
+
   // Inadimplente: soma apenas faturas vencidas
   const overdueAmount = invoices
     .filter(inv => inv.status === 'vencida')
@@ -430,12 +435,17 @@ export default function Financial() {
         <div className="stat-card stat-total">
           <h3>Total</h3>
           <p className="stat-value">{formatPrice(totalAmount)}</p>
-          <small>{invoices.length} faturas</small>
+          <small>{invoices.filter(i => i.status !== 'cancelada').length} faturas</small>
         </div>
         <div className="stat-card stat-paid">
           <h3>Recebido</h3>
           <p className="stat-value">{formatPrice(paidAmount)}</p>
           <small>{invoices.filter(i => i.status === 'paga').length} pagas</small>
+        </div>
+        <div className="stat-card stat-pending">
+          <h3>A Vencer</h3>
+          <p className="stat-value">{formatPrice(pendingAmount)}</p>
+          <small>{invoices.filter(i => i.status === 'aberta').length} abertas</small>
         </div>
         <div className="stat-card stat-overdue">
           <h3>Inadimplente</h3>

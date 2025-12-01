@@ -25,6 +25,10 @@
   border-left-color: #27ae60;
 }
 
+.stat-card.stat-pending {
+  border-left-color: #f39c12;
+}
+
 .stat-card.stat-overdue {
   border-left-color: #e74c3c;
 }
