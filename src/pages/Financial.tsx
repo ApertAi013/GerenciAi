@@ -27,6 +27,7 @@ export default function Financial() {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [editPaymentData, setEditPaymentData] = useState({
     amount_cents: 0,
+    paid_at: '',
     notes: '',
   });
 
@@ -217,8 +218,13 @@ export default function Financial() {
 
   const openEditPaymentModal = (invoice: Invoice) => {
     setEditingInvoice(invoice);
+    // Formata a data para o input date (YYYY-MM-DD)
+    const paidAtDate = invoice.paid_at
+      ? new Date(invoice.paid_at).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
     setEditPaymentData({
       amount_cents: invoice.paid_amount_cents || invoice.final_amount_cents,
+      paid_at: paidAtDate,
       notes: '',
     });
     setShowEditPaymentModal(true);
@@ -232,13 +238,28 @@ export default function Financial() {
       return;
     }
 
-    const confirmMessage = `Tem certeza que deseja alterar o valor pago de ${formatPrice(editingInvoice.paid_amount_cents || 0)} para ${formatPrice(editPaymentData.amount_cents)}?\n\nIsso irá alterar o balanço financeiro.`;
+    const changes = [];
+    if (editPaymentData.amount_cents !== (editingInvoice.paid_amount_cents || 0)) {
+      changes.push(`Valor: ${formatPrice(editingInvoice.paid_amount_cents || 0)} → ${formatPrice(editPaymentData.amount_cents)}`);
+    }
+    const originalDate = editingInvoice.paid_at ? new Date(editingInvoice.paid_at).toISOString().split('T')[0] : '';
+    if (editPaymentData.paid_at !== originalDate) {
+      changes.push(`Data: ${formatDate(originalDate)} → ${formatDate(editPaymentData.paid_at)}`);
+    }
+
+    if (changes.length === 0) {
+      toast.error('Nenhuma alteração foi feita');
+      return;
+    }
+
+    const confirmMessage = `Confirma as seguintes alterações?\n\n${changes.join('\n')}\n\nIsso irá alterar o registro do pagamento.`;
 
     if (!confirm(confirmMessage)) return;
 
     try {
       const response = await financialService.updatePayment(editingInvoice.payment_id, {
         amount_cents: editPaymentData.amount_cents,
+        paid_at: editPaymentData.paid_at,
         notes: editPaymentData.notes || undefined,
       });
 
@@ -782,7 +803,21 @@ export default function Financial() {
 
             <form onSubmit={handleEditPayment} className="payment-form">
               <div className="form-group">
-                <label htmlFor="edit_amount_cents">Novo Valor Pago (R$) *</label>
+                <label htmlFor="edit_paid_at">Data do Pagamento *</label>
+                <input
+                  type="date"
+                  id="edit_paid_at"
+                  value={editPaymentData.paid_at}
+                  onChange={(e) => setEditPaymentData({
+                    ...editPaymentData,
+                    paid_at: e.target.value
+                  })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit_amount_cents">Valor Pago (R$) *</label>
                 <input
                   type="number"
                   id="edit_amount_cents"
