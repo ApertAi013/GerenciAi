@@ -31,6 +31,9 @@ export default function Financial() {
     notes: '',
   });
 
+  // Estado para evitar duplo clique nos botões de submit
+  const [submitting, setSubmitting] = useState(false);
+
   // New filter states
   const [instructorFilter, setInstructorFilter] = useState<string>('');
   const [modalityFilter, setModalityFilter] = useState<string>('');
@@ -185,18 +188,23 @@ export default function Financial() {
   const handleRegisterPayment = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (submitting) return; // Evita duplo clique
+    setSubmitting(true);
+
     try {
       const response = await financialService.registerPayment(paymentData);
 
       if ((response as any).status === 'success' || (response as any).success === true) {
-        alert('Pagamento registrado com sucesso!');
+        toast.success('Pagamento registrado com sucesso!');
         setShowPaymentModal(false);
         setSelectedInvoice(null);
         loadInvoices();
       }
     } catch (error: any) {
       console.error('Erro ao registrar pagamento:', error);
-      alert(error.response?.data?.message || 'Erro ao registrar pagamento');
+      toast.error(error.response?.data?.message || 'Erro ao registrar pagamento');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -233,6 +241,8 @@ export default function Financial() {
   const handleEditPayment = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (submitting) return; // Evita duplo clique
+
     if (!editingInvoice || !editingInvoice.payment_id) {
       toast.error('Não foi possível identificar o pagamento');
       return;
@@ -256,6 +266,8 @@ export default function Financial() {
 
     if (!confirm(confirmMessage)) return;
 
+    setSubmitting(true);
+
     try {
       const response = await financialService.updatePayment(editingInvoice.payment_id, {
         amount_cents: editPaymentData.amount_cents,
@@ -274,6 +286,8 @@ export default function Financial() {
     } catch (error: any) {
       console.error('Erro ao editar pagamento:', error);
       toast.error(error.response?.data?.message || 'Erro ao editar pagamento');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -790,11 +804,11 @@ export default function Financial() {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowPaymentModal(false)}>
+                <button type="button" className="btn-secondary" onClick={() => setShowPaymentModal(false)} disabled={submitting}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary">
-                  Confirmar Pagamento
+                <button type="submit" className="btn-primary" disabled={submitting}>
+                  {submitting ? 'Processando...' : 'Confirmar Pagamento'}
                 </button>
               </div>
             </form>
@@ -881,11 +895,11 @@ export default function Financial() {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowEditPaymentModal(false)}>
+                <button type="button" className="btn-secondary" onClick={() => setShowEditPaymentModal(false)} disabled={submitting}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary">
-                  Confirmar Alteração
+                <button type="submit" className="btn-primary" disabled={submitting}>
+                  {submitting ? 'Processando...' : 'Confirmar Alteração'}
                 </button>
               </div>
             </form>
