@@ -36,6 +36,9 @@ export default function Financial() {
   const [instructors, setInstructors] = useState<Array<{ id: number; name: string; email: string }>>([]);
   const [modalities, setModalities] = useState<Array<{ id: number; name: string }>>([]);
 
+  // Filtro de mês - padrão é o mês atual
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+
   useEffect(() => {
     // Load filters on mount
     const loadFilters = async () => {
@@ -76,7 +79,7 @@ export default function Financial() {
     } else {
       loadInvoices();
     }
-  }, [filter, instructorFilter, modalityFilter]);
+  }, [filter, instructorFilter, modalityFilter, selectedMonth]);
 
   const loadInvoices = async () => {
     try {
@@ -86,6 +89,7 @@ export default function Financial() {
         status?: string;
         instructor_id?: number;
         modality_id?: number;
+        reference_month?: string;
       } = {};
 
       // Don't pass status parameter for "all" or "due_soon" filters
@@ -102,6 +106,11 @@ export default function Financial() {
       // Add modality filter
       if (modalityFilter) {
         params.modality_id = Number(modalityFilter);
+      }
+
+      // Add month filter
+      if (selectedMonth) {
+        params.reference_month = selectedMonth;
       }
 
       console.log('Loading invoices with params:', params);
@@ -285,13 +294,115 @@ export default function Financial() {
     return <div className="loading">Carregando informações financeiras...</div>;
   }
 
+  // Função para formatar o nome do mês
+  const formatMonthName = (monthStr: string) => {
+    const [year, month] = monthStr.split('-');
+    const date = new Date(Number(year), Number(month) - 1);
+    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
+  // Gerar lista de meses (últimos 12 meses + próximos 2)
+  const getMonthOptions = () => {
+    const months = [];
+    const today = new Date();
+
+    // 12 meses anteriores
+    for (let i = 12; i >= 0; i--) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const value = date.toISOString().slice(0, 7);
+      months.push({
+        value,
+        label: date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      });
+    }
+
+    // 2 meses futuros
+    for (let i = 1; i <= 2; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const value = date.toISOString().slice(0, 7);
+      months.push({
+        value,
+        label: date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      });
+    }
+
+    return months;
+  };
+
   return (
     <div className="financial-container">
       <div className="page-header">
         <h1>Financeiro</h1>
-        <button type="button" className="btn-primary" onClick={handleGenerateInvoices}>
-          Gerar Faturas do Mês
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Seletor de Mês */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                const months = getMonthOptions();
+                const currentIndex = months.findIndex(m => m.value === selectedMonth);
+                if (currentIndex > 0) {
+                  setSelectedMonth(months[currentIndex - 1].value);
+                }
+              }}
+              style={{
+                background: 'none',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                padding: '8px 12px',
+                cursor: 'pointer',
+                fontSize: '16px'
+              }}
+              title="Mês anterior"
+            >
+              ◀
+            </button>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid #ddd',
+                fontSize: '16px',
+                fontWeight: '500',
+                minWidth: '200px',
+                cursor: 'pointer',
+                textTransform: 'capitalize'
+              }}
+            >
+              {getMonthOptions().map(month => (
+                <option key={month.value} value={month.value} style={{ textTransform: 'capitalize' }}>
+                  {month.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                const months = getMonthOptions();
+                const currentIndex = months.findIndex(m => m.value === selectedMonth);
+                if (currentIndex < months.length - 1) {
+                  setSelectedMonth(months[currentIndex + 1].value);
+                }
+              }}
+              style={{
+                background: 'none',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                padding: '8px 12px',
+                cursor: 'pointer',
+                fontSize: '16px'
+              }}
+              title="Próximo mês"
+            >
+              ▶
+            </button>
+          </div>
+          <button type="button" className="btn-primary" onClick={handleGenerateInvoices}>
+            Gerar Faturas do Mês
+          </button>
+        </div>
       </div>
 
       <div className="financial-stats">
