@@ -296,8 +296,13 @@ export default function Financial() {
     return <span className={`status-badge ${info.class}`}>{info.label}</span>;
   };
 
-  // Total: soma apenas faturas não canceladas (abertas, pagas e vencidas)
-  const totalAmount = invoices
+  // Total SEM desconto: soma o valor bruto (amount_cents) das faturas não canceladas
+  const totalAmountGross = invoices
+    .filter(inv => inv.status !== 'cancelada')
+    .reduce((sum, inv) => sum + Number(inv.amount_cents || 0), 0);
+
+  // Total COM desconto: soma o valor final (final_amount_cents) das faturas não canceladas
+  const totalAmountNet = invoices
     .filter(inv => inv.status !== 'cancelada')
     .reduce((sum, inv) => sum + Number(inv.final_amount_cents || 0), 0);
 
@@ -305,6 +310,11 @@ export default function Financial() {
   const paidAmount = invoices
     .filter(inv => inv.status === 'paga')
     .reduce((sum, inv) => sum + Number(inv.paid_amount_cents || 0), 0);
+
+  // Previsto (valor das faturas pagas, sem considerar diferenças de pagamento)
+  const expectedPaidAmount = invoices
+    .filter(inv => inv.status === 'paga')
+    .reduce((sum, inv) => sum + Number(inv.final_amount_cents || 0), 0);
 
   // A Vencer: soma faturas abertas (ainda não venceram e não foram pagas)
   const pendingAmount = invoices
@@ -433,14 +443,24 @@ export default function Financial() {
 
       <div className="financial-stats">
         <div className="stat-card stat-total">
-          <h3>Total</h3>
-          <p className="stat-value">{formatPrice(totalAmount)}</p>
+          <h3>Total (sem desconto)</h3>
+          <p className="stat-value">{formatPrice(totalAmountGross)}</p>
           <small>{invoices.filter(i => i.status !== 'cancelada').length} faturas</small>
+          {totalAmountGross !== totalAmountNet && (
+            <small style={{ display: 'block', marginTop: '4px', color: '#27ae60' }}>
+              Com desconto: {formatPrice(totalAmountNet)}
+            </small>
+          )}
         </div>
         <div className="stat-card stat-paid">
           <h3>Recebido</h3>
           <p className="stat-value">{formatPrice(paidAmount)}</p>
           <small>{invoices.filter(i => i.status === 'paga').length} pagas</small>
+          {paidAmount !== expectedPaidAmount && (
+            <small style={{ display: 'block', marginTop: '4px', color: '#7f8c8d' }}>
+              Previsto: {formatPrice(expectedPaidAmount)}
+            </small>
+          )}
         </div>
         <div className="stat-card stat-pending">
           <h3>A Vencer</h3>
