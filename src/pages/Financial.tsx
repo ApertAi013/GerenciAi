@@ -43,6 +43,67 @@ export default function Financial() {
   // Filtro de mês - padrão é o mês atual
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
 
+  // Ordenação
+  const [sortField, setSortField] = useState<'id' | 'student_name' | 'reference_month' | 'due_date' | 'final_amount_cents' | 'status'>('student_name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Handle sort
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Sort invoices
+  const sortInvoices = (invoicesToSort: Invoice[]) => {
+    return [...invoicesToSort].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      switch (sortField) {
+        case 'id':
+          aValue = a.id;
+          bValue = b.id;
+          break;
+        case 'student_name':
+          aValue = (a.student_name || '').toLowerCase();
+          bValue = (b.student_name || '').toLowerCase();
+          break;
+        case 'reference_month':
+          aValue = a.reference_month;
+          bValue = b.reference_month;
+          break;
+        case 'due_date':
+          aValue = a.due_date;
+          bValue = b.due_date;
+          break;
+        case 'final_amount_cents':
+          aValue = a.final_amount_cents;
+          bValue = b.final_amount_cents;
+          break;
+        case 'status':
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
+  // Render sort indicator
+  const renderSortIndicator = (field: typeof sortField) => {
+    if (sortField !== field) return <span style={{ opacity: 0.3, marginLeft: '4px' }}>⇅</span>;
+    return <span style={{ marginLeft: '4px' }}>{sortDirection === 'asc' ? '↑' : '↓'}</span>;
+  };
+
   useEffect(() => {
     // Load filters on mount
     const loadFilters = async () => {
@@ -600,14 +661,26 @@ export default function Financial() {
         <table className="invoices-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Aluno</th>
+              <th onClick={() => handleSort('id')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                ID {renderSortIndicator('id')}
+              </th>
+              <th onClick={() => handleSort('student_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Aluno {renderSortIndicator('student_name')}
+              </th>
               <th>Plano</th>
-              <th>Referência</th>
-              <th>Vencimento</th>
-              <th>Valor</th>
+              <th onClick={() => handleSort('reference_month')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Referência {renderSortIndicator('reference_month')}
+              </th>
+              <th onClick={() => handleSort('due_date')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Vencimento {renderSortIndicator('due_date')}
+              </th>
+              <th onClick={() => handleSort('final_amount_cents')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Valor {renderSortIndicator('final_amount_cents')}
+              </th>
               <th>Pago</th>
-              <th>Status</th>
+              <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Status {renderSortIndicator('status')}
+              </th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -638,7 +711,10 @@ export default function Financial() {
                 );
               }
 
-              return filteredInvoices.length === 0 ? (
+              // Apply sorting
+              const sortedInvoices = sortInvoices(filteredInvoices);
+
+              return sortedInvoices.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="empty-state">
                     {searchTerm
@@ -652,7 +728,7 @@ export default function Financial() {
                   </td>
                 </tr>
               ) : (
-                filteredInvoices.map(invoice => (
+                sortedInvoices.map(invoice => (
                   <tr key={invoice.id}>
                     <td>#{invoice.id}</td>
                     <td>
