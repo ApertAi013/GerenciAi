@@ -27,6 +27,8 @@ export default function Enrollments() {
   const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
   const [statusFilter, setStatusFilter] = useState<'ativa' | 'cancelada' | 'suspensa' | ''>('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState<'id' | 'student_name' | 'plan_name' | 'start_date' | 'due_day' | 'status'>('student_name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [formData, setFormData] = useState<CreateEnrollmentRequest>({
     student_id: 0,
     plan_id: 0,
@@ -81,6 +83,63 @@ export default function Enrollments() {
   const [studentSearch, setStudentSearch] = useState('');
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+
+  // Handle sort
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Sort enrollments
+  const sortEnrollments = (enrollmentsToSort: Enrollment[]) => {
+    return [...enrollmentsToSort].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      switch (sortField) {
+        case 'id':
+          aValue = a.id;
+          bValue = b.id;
+          break;
+        case 'student_name':
+          aValue = (a.student_name || getStudentName(a.student_id)).toLowerCase();
+          bValue = (b.student_name || getStudentName(b.student_id)).toLowerCase();
+          break;
+        case 'plan_name':
+          aValue = (a.plan_name || getPlanName(a.plan_id)).toLowerCase();
+          bValue = (b.plan_name || getPlanName(b.plan_id)).toLowerCase();
+          break;
+        case 'start_date':
+          aValue = a.start_date;
+          bValue = b.start_date;
+          break;
+        case 'due_day':
+          aValue = a.due_day;
+          bValue = b.due_day;
+          break;
+        case 'status':
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
+  // Render sort indicator
+  const renderSortIndicator = (field: typeof sortField) => {
+    if (sortField !== field) return <span style={{ opacity: 0.3, marginLeft: '4px' }}>⇅</span>;
+    return <span style={{ marginLeft: '4px' }}>{sortDirection === 'asc' ? '↑' : '↓'}</span>;
+  };
 
   // Class filtering state for create modal
   const [searchQuery, setSearchQuery] = useState('');
@@ -622,12 +681,24 @@ export default function Enrollments() {
         <table className="enrollments-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Aluno</th>
-              <th>Plano</th>
-              <th>Início</th>
-              <th>Vencimento</th>
-              <th>Status</th>
+              <th onClick={() => handleSort('id')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                ID {renderSortIndicator('id')}
+              </th>
+              <th onClick={() => handleSort('student_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Aluno {renderSortIndicator('student_name')}
+              </th>
+              <th onClick={() => handleSort('plan_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Plano {renderSortIndicator('plan_name')}
+              </th>
+              <th onClick={() => handleSort('start_date')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Início {renderSortIndicator('start_date')}
+              </th>
+              <th onClick={() => handleSort('due_day')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Vencimento {renderSortIndicator('due_day')}
+              </th>
+              <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Status {renderSortIndicator('status')}
+              </th>
               <th>Desconto</th>
               <th>Ações</th>
             </tr>
@@ -643,16 +714,19 @@ export default function Enrollments() {
                   )
                 : enrollments;
 
-              return filteredEnrollments.length === 0 ? (
+              // Apply sorting
+              const sortedEnrollments = sortEnrollments(filteredEnrollments);
+
+              return sortedEnrollments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="empty-state">
+                  <td colSpan={8} className="empty-state">
                     {searchTerm
                       ? `Nenhuma matrícula encontrada para "${searchTerm}"`
                       : 'Nenhuma matrícula encontrada. Clique em "Nova Matrícula" para começar.'}
                   </td>
                 </tr>
               ) : (
-                filteredEnrollments.map(enrollment => (
+                sortedEnrollments.map(enrollment => (
                 <tr key={enrollment.id}>
                   <td>#{enrollment.id}</td>
                   <td>

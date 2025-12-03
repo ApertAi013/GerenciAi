@@ -74,12 +74,33 @@ export default function StudentDetails() {
       if (enrollmentsRes.status === 'success') {
         // Mapear o array 'classes' retornado pelo backend para os campos esperados pelo frontend
         const enrollmentsWithMappedClasses = enrollmentsRes.data.map((enrollment: any) => {
+          // Parse classes se vier como string JSON
+          let classesArray = enrollment.classes;
+          if (typeof classesArray === 'string') {
+            try {
+              classesArray = JSON.parse(classesArray);
+            } catch {
+              classesArray = null;
+            }
+          }
+
           // Se o backend retornou um array 'classes', extrair class_ids e class_names
-          if (enrollment.classes && Array.isArray(enrollment.classes)) {
+          if (classesArray && Array.isArray(classesArray) && classesArray.length > 0) {
+            const weekdayMap: Record<string, string> = {
+              'seg': 'Segunda', 'ter': 'Terça', 'qua': 'Quarta',
+              'qui': 'Quinta', 'sex': 'Sexta', 'sab': 'Sábado', 'dom': 'Domingo'
+            };
             return {
               ...enrollment,
-              class_ids: enrollment.classes.map((c: any) => c.class_id),
-              class_names: enrollment.classes.map((c: any) => c.class_name || `Turma ${c.class_id}`)
+              class_ids: classesArray.map((c: any) => c.class_id),
+              class_names: classesArray.map((c: any) => c.class_name || `Turma ${c.class_id}`),
+              class_details: classesArray.map((c: any) => ({
+                id: c.class_id,
+                name: c.class_name,
+                weekday: weekdayMap[c.weekday] || c.weekday,
+                time: c.start_time ? c.start_time.slice(0, 5) : '',
+                modality: c.modality
+              }))
             };
           }
           return enrollment;
@@ -417,10 +438,27 @@ Qualquer dúvida, estou à disposição!`;
                       <p>
                         <strong>Vencimento:</strong> Dia {enrollment.due_day}
                       </p>
-                      {enrollment.class_names && enrollment.class_names.length > 0 && (
-                        <p>
-                          <strong>Turmas:</strong> {enrollment.class_names.join(', ')}
-                        </p>
+                      {enrollment.class_details && enrollment.class_details.length > 0 && (
+                        <div style={{ marginTop: '8px' }}>
+                          <strong>Turmas:</strong>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                            {enrollment.class_details.map((c: any) => (
+                              <span
+                                key={c.id}
+                                style={{
+                                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                  color: 'white',
+                                  padding: '4px 10px',
+                                  borderRadius: '12px',
+                                  fontSize: '12px',
+                                  fontWeight: 500
+                                }}
+                              >
+                                {c.weekday} {c.time}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                     <button
