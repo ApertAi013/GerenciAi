@@ -41,6 +41,7 @@ export default function OverdueInvoicesWidget() {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
     // Adiciona T00:00:00 para interpretar como meia-noite local, não UTC
     const dateOnly = dateString.split('T')[0];
     const date = new Date(dateOnly + 'T00:00:00');
@@ -48,6 +49,7 @@ export default function OverdueInvoicesWidget() {
   };
 
   const getDaysOverdue = (dateString: string) => {
+    if (!dateString) return 0;
     const dateOnly = dateString.split('T')[0];
     const dueDate = new Date(dateOnly + 'T00:00:00');
     const today = new Date();
