@@ -19,20 +19,21 @@ export default function FinancialPreviewWidget() {
     const fetchFinancialData = async () => {
       try {
         const response = await financialService.getInvoices();
+        console.log('FinancialPreviewWidget response:', response);
 
-        if ((response as any).status === 'success' || (response as any).success === true) {
-          const invoices = response.data.invoices;
+        // Verifica diferentes formatos de resposta
+        const invoices = response?.data?.invoices || (response as any)?.invoices || [];
+        console.log('FinancialPreviewWidget invoices:', invoices.length);
 
+        if (invoices.length > 0) {
           const pending = invoices.filter((inv: Invoice) => inv.status === 'aberta');
-          const overdue = invoices.filter((inv: Invoice) =>
-            inv.status === 'vencida'
-          );
+          const overdue = invoices.filter((inv: Invoice) => inv.status === 'vencida');
 
           setStats({
             pending: pending.length,
             overdue: overdue.length,
-            pendingAmount: pending.reduce((sum: number, inv: Invoice) => sum + inv.final_amount_cents / 100, 0),
-            overdueAmount: overdue.reduce((sum: number, inv: Invoice) => sum + inv.final_amount_cents / 100, 0),
+            pendingAmount: pending.reduce((sum: number, inv: Invoice) => sum + (inv.final_amount_cents || 0) / 100, 0),
+            overdueAmount: overdue.reduce((sum: number, inv: Invoice) => sum + (inv.final_amount_cents || 0) / 100, 0),
           });
         }
       } catch (error) {
