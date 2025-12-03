@@ -104,6 +104,64 @@ export default function Financial() {
     return <span style={{ marginLeft: '4px' }}>{sortDirection === 'asc' ? '↑' : '↓'}</span>;
   };
 
+  // Exportar para Excel (CSV)
+  const exportToExcel = () => {
+    // Cabeçalho
+    const headers = ['ID', 'Aluno', 'Plano', 'Referência', 'Vencimento', 'Valor Bruto', 'Desconto', 'Valor Final', 'Valor Pago', 'Status'];
+
+    // Dados
+    const rows = invoices.map(inv => [
+      inv.id,
+      `"${inv.student_name || ''}"`,
+      `"${inv.plan_name || ''}"`,
+      inv.reference_month,
+      inv.due_date ? formatDate(inv.due_date) : '',
+      (inv.amount_cents / 100).toFixed(2).replace('.', ','),
+      (inv.discount_cents / 100).toFixed(2).replace('.', ','),
+      (inv.final_amount_cents / 100).toFixed(2).replace('.', ','),
+      ((inv.paid_amount_cents || 0) / 100).toFixed(2).replace('.', ','),
+      inv.status
+    ]);
+
+    // Linha em branco e totais
+    const notCancelled = invoices.filter(i => i.status !== 'cancelada');
+    const totalBruto = notCancelled.reduce((sum, i) => sum + i.amount_cents, 0) / 100;
+    const totalDesconto = notCancelled.reduce((sum, i) => sum + i.discount_cents, 0) / 100;
+    const totalFinal = notCancelled.reduce((sum, i) => sum + i.final_amount_cents, 0) / 100;
+    const totalPago = invoices.filter(i => i.status === 'paga').reduce((sum, i) => sum + (i.paid_amount_cents || 0), 0) / 100;
+    const totalAberta = invoices.filter(i => i.status === 'aberta').reduce((sum, i) => sum + i.final_amount_cents, 0) / 100;
+    const totalVencida = invoices.filter(i => i.status === 'vencida').reduce((sum, i) => sum + i.final_amount_cents, 0) / 100;
+
+    rows.push([]);
+    rows.push(['', '', '', '', 'TOTAIS:', totalBruto.toFixed(2).replace('.', ','), totalDesconto.toFixed(2).replace('.', ','), totalFinal.toFixed(2).replace('.', ','), totalPago.toFixed(2).replace('.', ','), '']);
+    rows.push([]);
+    rows.push(['RESUMO']);
+    rows.push(['Total Bruto (sem desconto)', `R$ ${totalBruto.toFixed(2).replace('.', ',')}`]);
+    rows.push(['Total Descontos', `R$ ${totalDesconto.toFixed(2).replace('.', ',')}`]);
+    rows.push(['Total Final (com desconto)', `R$ ${totalFinal.toFixed(2).replace('.', ',')}`]);
+    rows.push(['Total Recebido', `R$ ${totalPago.toFixed(2).replace('.', ',')}`]);
+    rows.push(['Total A Vencer', `R$ ${totalAberta.toFixed(2).replace('.', ',')}`]);
+    rows.push(['Total Inadimplente', `R$ ${totalVencida.toFixed(2).replace('.', ',')}`]);
+    rows.push(['Quantidade de Faturas', invoices.length]);
+
+    // Criar CSV com BOM para Excel reconhecer UTF-8
+    const BOM = '\uFEFF';
+    const csvContent = BOM + headers.join(';') + '\n' + rows.map(row => row.join(';')).join('\n');
+
+    // Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `financeiro_${selectedMonth}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success('Planilha exportada com sucesso!');
+  };
+
   useEffect(() => {
     // Load filters on mount
     const loadFilters = async () => {
@@ -516,6 +574,25 @@ export default function Financial() {
           </div>
           <button type="button" className="btn-primary" onClick={handleGenerateInvoices}>
             Gerar Faturas do Mês
+          </button>
+          <button
+            type="button"
+            onClick={exportToExcel}
+            style={{
+              background: '#217346',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 20px',
+              cursor: 'pointer',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            title="Exportar para Excel"
+          >
+            📊 Exportar Excel
           </button>
         </div>
       </div>
