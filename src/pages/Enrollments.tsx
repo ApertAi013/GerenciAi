@@ -670,7 +670,7 @@ export default function Enrollments() {
                     </span>
                   </td>
                   <td>{enrollment.plan_name || getPlanName(enrollment.plan_id)}</td>
-                  <td>{new Date(enrollment.start_date).toLocaleDateString('pt-BR')}</td>
+                  <td>{new Date(enrollment.start_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                   <td>Dia {enrollment.due_day}</td>
                   <td>{getStatusBadge(enrollment.status)}</td>
                   <td>

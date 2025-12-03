@@ -407,11 +407,11 @@ Qualquer dúvida, estou à disposição!`;
                     </div>
                     <div className="enrollment-details">
                       <p>
-                        <strong>Início:</strong> {new Date(enrollment.start_date).toLocaleDateString('pt-BR')}
+                        <strong>Início:</strong> {new Date(enrollment.start_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR')}
                       </p>
                       {enrollment.end_date && (
                         <p>
-                          <strong>Fim:</strong> {new Date(enrollment.end_date).toLocaleDateString('pt-BR')}
+                          <strong>Fim:</strong> {new Date(enrollment.end_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR')}
                         </p>
                       )}
                       <p>
@@ -466,7 +466,7 @@ Qualquer dúvida, estou à disposição!`;
               </div>
               <div className="info-item">
                 <label>Data de Nascimento</label>
-                <p>{student.birth_date ? new Date(student.birth_date).toLocaleDateString('pt-BR') : '--'}</p>
+                <p>{student.birth_date ? new Date(student.birth_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR') : '--'}</p>
               </div>
               <div className="info-item">
                 <label>Endereço</label>

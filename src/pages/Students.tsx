@@ -715,7 +715,7 @@ function ViewStudentModal({ student, onClose }: { student: Student; onClose: () 
             <div className="profile-info-item">
               <span className="profile-label">Data de Nascimento</span>
               <span className="profile-value">
-                {student.birth_date ? new Date(student.birth_date).toLocaleDateString('pt-BR') : '-'}
+                {student.birth_date ? new Date(student.birth_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
               </span>
             </div>
 

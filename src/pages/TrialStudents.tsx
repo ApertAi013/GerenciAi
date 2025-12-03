@@ -710,13 +710,13 @@ function TrialStudentDetailsModal({
                   {student.trial_start_date && (
                     <div>
                       <strong>Início:</strong>{' '}
-                      {new Date(student.trial_start_date).toLocaleDateString('pt-BR')}
+                      {new Date(student.trial_start_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR')}
                     </div>
                   )}
                   {student.trial_expiration_date && student.trial_retention_days ? (
                     <div>
                       <strong>Expiração:</strong>{' '}
-                      {new Date(student.trial_expiration_date).toLocaleDateString(
+                      {new Date(student.trial_expiration_date.split('T')[0] + 'T00:00:00').toLocaleDateString(
                         'pt-BR'
                       )}{' '}
                       ({student.trial_retention_days} dias)
@@ -766,7 +766,7 @@ function TrialStudentDetailsModal({
                           {classItem.class_name}
                         </div>
                         <div style={{ color: '#666' }}>
-                          Data: {new Date(classItem.attendance_date).toLocaleDateString('pt-BR')}
+                          Data: {new Date(classItem.attendance_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR')}
                           {' · '}
                           {classItem.attended ? (
                             <span style={{ color: '#11998e' }}>✓ Presente</span>
