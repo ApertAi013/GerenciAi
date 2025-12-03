@@ -296,7 +296,10 @@ export default function Financial() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    // Adiciona T00:00:00 para interpretar como meia-noite local, não UTC
+    // Isso evita o bug de mostrar 1 dia antes devido ao fuso horário
+    const dateOnly = dateString.split('T')[0]; // Remove qualquer horário existente
+    return new Date(dateOnly + 'T00:00:00').toLocaleDateString('pt-BR');
   };
 
   const getStatusBadge = (status: string) => {

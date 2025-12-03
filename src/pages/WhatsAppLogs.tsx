@@ -176,7 +176,7 @@ export default function WhatsAppLogs() {
                 {log.invoice_id && (
                   <div className="log-invoice">
                     <span>Fatura: {log.reference_month}</span>
-                    <span>Vencimento: {log.due_date ? new Date(log.due_date).toLocaleDateString() : '-'}</span>
+                    <span>Vencimento: {log.due_date ? new Date(log.due_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</span>
                     <span>Valor: {formatAmount(log.final_amount_cents)}</span>
                   </div>
                 )}

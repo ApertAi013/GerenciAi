@@ -525,7 +525,7 @@ Qualquer dúvida, estou à disposição!`;
                     {invoices.slice(0, 10).map((invoice) => (
                       <tr key={invoice.id}>
                         <td>{invoice.reference_month}</td>
-                        <td>{new Date(invoice.due_date).toLocaleDateString('pt-BR')}</td>
+                        <td>{new Date(invoice.due_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                         <td>{formatCurrency(invoice.final_amount_cents)}</td>
                         <td>
                           <span className={`status-badge status-${invoice.status}`}>

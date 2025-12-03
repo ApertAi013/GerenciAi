@@ -41,13 +41,17 @@ export default function OverdueInvoicesWidget() {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Adiciona T00:00:00 para interpretar como meia-noite local, não UTC
+    const dateOnly = dateString.split('T')[0];
+    const date = new Date(dateOnly + 'T00:00:00');
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   };
 
   const getDaysOverdue = (dateString: string) => {
-    const dueDate = new Date(dateString);
+    const dateOnly = dateString.split('T')[0];
+    const dueDate = new Date(dateOnly + 'T00:00:00');
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normaliza para meia-noite local
     const diffTime = today.getTime() - dueDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
