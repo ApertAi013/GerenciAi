@@ -11,7 +11,11 @@ import {
   faBell,
   faRobot,
   faComments,
-  faCheck
+  faCheck,
+  faGift,
+  faPlay,
+  faVideo,
+  faPercent
 } from '@fortawesome/free-solid-svg-icons';
 import '../styles/LandingPage.css';
 
@@ -55,7 +59,7 @@ export default function LandingPage() {
       });
     }, observerOptions);
 
-    document.querySelectorAll('.recursos-section, .ia-section, .contato-section').forEach(section => {
+    document.querySelectorAll('.recursos-section, .ia-section, .parceria-section, .contato-section').forEach(section => {
       sectionObserver.observe(section);
     });
 
@@ -426,6 +430,110 @@ export default function LandingPage() {
                 <button>
                   <FontAwesomeIcon icon={faComments} />
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PARCERIA APERTAI SECTION */}
+      <section id="parceria" className="parceria-section">
+        <div className="parceria-bg-shapes">
+          <div className="parceria-shape shape-1"></div>
+          <div className="parceria-shape shape-2"></div>
+          <div className="parceria-shape shape-3"></div>
+        </div>
+
+        <div className="parceria-content">
+          <div className="parceria-left">
+            <div className="parceria-badge">
+              <FontAwesomeIcon icon={faGift} />
+              <span>Oferta Exclusiva</span>
+            </div>
+
+            <h2 className="parceria-title">
+              Duas plataformas.<br />
+              <span className="parceria-accent">Um ecossistema completo.</span>
+            </h2>
+
+            <p className="parceria-description">
+              <strong>ArenaAi</strong> cuida da gestão da sua quadra. <strong>Apertai</strong> eterniza os melhores momentos
+              dos seus alunos com replays esportivos em alta qualidade. Juntos, oferecem a experiência completa
+              para sua arena esportiva.
+            </p>
+
+            <div className="parceria-benefits">
+              <div className="benefit-card">
+                <div className="benefit-icon">
+                  <FontAwesomeIcon icon={faGift} />
+                </div>
+                <div className="benefit-content">
+                  <h4>1 Mês Grátis</h4>
+                  <p>Contratando qualquer plataforma, ganhe 1 mês de teste grátis da outra</p>
+                </div>
+              </div>
+
+              <div className="benefit-card">
+                <div className="benefit-icon">
+                  <FontAwesomeIcon icon={faPercent} />
+                </div>
+                <div className="benefit-content">
+                  <h4>25% OFF Vitalício</h4>
+                  <p>Desconto permanente na mensalidade da segunda plataforma</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="parceria-cta-group">
+              <button className="btn-parceria-primary" onClick={handleContratar}>
+                Quero aproveitar
+              </button>
+              <a href="https://apertai.com.br" target="_blank" rel="noopener noreferrer" className="btn-parceria-secondary">
+                Conhecer o Apertai
+                <FontAwesomeIcon icon={faPlay} />
+              </a>
+            </div>
+          </div>
+
+          <div className="parceria-right">
+            <div className="apertai-showcase">
+              <div className="apertai-logo-container">
+                <img src="/apertai-logo.png" alt="Apertai Sports Replay" className="apertai-logo" />
+              </div>
+
+              <div className="apertai-player-container">
+                <img src="/tennis-player.png" alt="Jogador de Tênis" className="tennis-player" />
+
+                <div className="floating-video-card card-replay">
+                  <div className="video-card-icon">
+                    <FontAwesomeIcon icon={faVideo} />
+                  </div>
+                  <div className="video-card-content">
+                    <p className="video-card-label">Seus vídeos</p>
+                    <p className="video-card-value">em alta qualidade</p>
+                  </div>
+                </div>
+
+                <div className="floating-video-card card-fullhd">
+                  <div className="video-card-icon fullhd-icon">
+                    <span>FULL</span>
+                    <span className="hd">HD</span>
+                  </div>
+                  <div className="video-card-content">
+                    <p className="video-card-label">Filmagem</p>
+                    <p className="video-card-value">1080p</p>
+                  </div>
+                </div>
+
+                <div className="play-button-overlay">
+                  <div className="play-button">
+                    <FontAwesomeIcon icon={faPlay} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="apertai-tagline">
+                <p>Eternize suas jogadas</p>
               </div>
             </div>
           </div>
