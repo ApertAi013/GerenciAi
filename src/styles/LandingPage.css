@@ -183,9 +183,9 @@ body {
 
 .btn-primary {
     padding: 12px 28px;
-    background: var(--orange-primary);
+    background: #f04f28 !important;
     border: none;
-    color: var(--white);
+    color: #ffffff !important;
     font-size: 14px;
     font-weight: 600;
     border-radius: 6px;
@@ -195,7 +195,7 @@ body {
 }
 
 .btn-primary:hover {
-    background: #d9421e;
+    background: #d9421e !important;
     box-shadow: 0 6px 20px rgba(240, 79, 40, 0.4);
     transform: translateY(-2px);
 }
