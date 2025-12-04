@@ -196,6 +196,12 @@ export default function LandingPage() {
               <li><a href="#inicio">Início</a></li>
               <li><a href="#recursos">Recursos</a></li>
               <li><a href="#ia">IA</a></li>
+              <li>
+                <a href="#parceria" className="nav-promo">
+                  <FontAwesomeIcon icon={faGift} className="promo-icon" />
+                  <span>Promoção</span>
+                </a>
+              </li>
               <li><a href="#contato">Contato</a></li>
             </ul>
 
@@ -498,7 +504,7 @@ export default function LandingPage() {
           <div className="parceria-right">
             <div className="apertai-showcase">
               <div className="apertai-logo-container">
-                <img src="/apertai-logo.png" alt="Apertai Sports Replay" className="apertai-logo" />
+                <img src="/apertai-logo.svg" alt="Apertai Sports Replay" className="apertai-logo" />
               </div>
 
               <div className="apertai-player-container">

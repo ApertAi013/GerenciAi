@@ -122,6 +122,43 @@ body {
     color: var(--white);
 }
 
+/* Promo Link Animation */
+.nav-promo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #f5a623 !important;
+    font-weight: 600 !important;
+    animation: promoGlow 1.5s ease-in-out infinite;
+    position: relative;
+}
+
+.nav-promo:hover {
+    color: #ffc107 !important;
+}
+
+.promo-icon {
+    animation: promoPulse 1s ease-in-out infinite;
+}
+
+@keyframes promoGlow {
+    0%, 100% {
+        text-shadow: 0 0 5px rgba(245, 166, 35, 0.5);
+    }
+    50% {
+        text-shadow: 0 0 20px rgba(245, 166, 35, 0.8), 0 0 30px rgba(245, 166, 35, 0.4);
+    }
+}
+
+@keyframes promoPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
 .nav-buttons {
     display: flex;
     gap: 12px;
