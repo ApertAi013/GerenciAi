@@ -277,11 +277,36 @@
   border-bottom: none;
 }
 
+.classes-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
 .classes-section h3 {
   font-size: 1.125rem;
   font-weight: 600;
   color: #1f2937;
-  margin: 0 0 1rem 0;
+  margin: 0;
+}
+
+.modality-filter {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #374151;
+  background-color: white;
+  min-width: 180px;
+  cursor: pointer;
+}
+
+.modality-filter:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .classes-list {
@@ -453,5 +478,14 @@
 
   .instructor-actions button {
     width: 100%;
+  }
+
+  .classes-section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modality-filter {
+    min-width: 100%;
   }
 }

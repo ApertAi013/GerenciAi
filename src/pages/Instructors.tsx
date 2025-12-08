@@ -1,20 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { instructorService } from '../services/instructorService';
 import { classService } from '../services/classService';
+import { modalityService } from '../services/modalityService';
 import type { Instructor, InstructorPermissions, CreateInstructorRequest, InstructorClass } from '../types/instructorTypes';
 import type { Class } from '../types/classTypes';
+import type { Modality } from '../types/modalityTypes';
 import toast from 'react-hot-toast';
 import '../styles/Instructors.css';
 
 export default function Instructors() {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
+  const [modalities, setModalities] = useState<Modality[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [showClassesModal, setShowClassesModal] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
   const [availablePermissions, setAvailablePermissions] = useState<Record<string, string>>({});
+  const [modalityFilter, setModalityFilter] = useState<number | 'all'>('all');
 
   // Form states
   const [formData, setFormData] = useState<CreateInstructorRequest>({
@@ -30,6 +34,7 @@ export default function Instructors() {
     fetchInstructors();
     fetchAvailablePermissions();
     fetchClasses();
+    fetchModalities();
   }, []);
 
   const fetchInstructors = async () => {
@@ -75,6 +80,33 @@ export default function Instructors() {
       toast.error('Erro ao carregar turmas');
     }
   };
+
+  const fetchModalities = async () => {
+    try {
+      const response = await modalityService.getModalities();
+      if (((response as any).status === 'success' || (response as any).success === true) && response.data) {
+        setModalities(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar modalidades:', error);
+    }
+  };
+
+  const getAssignedClassIds = () => {
+    return selectedInstructor?.classes?.map(c => c.id) || [];
+  };
+
+  // Filtrar turmas disponíveis por modalidade
+  const filteredAvailableClasses = useMemo(() => {
+    const assignedIds = selectedInstructor?.classes?.map(c => c.id) || [];
+    let available = classes.filter((classItem) => !assignedIds.includes(classItem.id));
+
+    if (modalityFilter !== 'all') {
+      available = available.filter((classItem) => classItem.modality_id === modalityFilter);
+    }
+
+    return available;
+  }, [classes, selectedInstructor, modalityFilter]);
 
   const handleCreateInstructor = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,10 +258,6 @@ export default function Instructors() {
       dom: 'Domingo'
     };
     return labels[weekday] || weekday;
-  };
-
-  const getAssignedClassIds = () => {
-    return selectedInstructor?.classes?.map(c => c.id) || [];
   };
 
   if (isLoading) {
@@ -466,28 +494,44 @@ export default function Instructors() {
             </div>
 
             <div className="classes-section">
-              <h3>Atribuir Novas Turmas</h3>
-              <div className="classes-list">
-                {classes
-                  .filter((classItem) => !getAssignedClassIds().includes(classItem.id))
-                  .map((classItem) => (
-                    <div key={classItem.id} className="class-item available">
-                      <div className="class-info">
-                        <strong>{classItem.name || classItem.modality_name}</strong>
-                        <span>{getWeekdayLabel(classItem.weekday)} - {classItem.start_time}</span>
-                        {classItem.location && <span>{classItem.location}</span>}
-                      </div>
-                      <button
-                        type="button"
-                        className="btn-primary btn-sm"
-                        onClick={() => handleAssignClass(classItem.id)}
-                      >
-                        Atribuir
-                      </button>
-                    </div>
+              <div className="classes-section-header">
+                <h3>Atribuir Novas Turmas</h3>
+                <select
+                  className="modality-filter"
+                  value={modalityFilter}
+                  onChange={(e) => setModalityFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                >
+                  <option value="all">Todas as modalidades</option>
+                  {modalities.map((modality) => (
+                    <option key={modality.id} value={modality.id}>
+                      {modality.name}
+                    </option>
                   ))}
-                {classes.filter((classItem) => !getAssignedClassIds().includes(classItem.id)).length === 0 && (
-                  <p className="empty-message">Todas as turmas já foram atribuídas.</p>
+                </select>
+              </div>
+              <div className="classes-list">
+                {filteredAvailableClasses.map((classItem) => (
+                  <div key={classItem.id} className="class-item available">
+                    <div className="class-info">
+                      <strong>{classItem.name || classItem.modality_name}</strong>
+                      <span>{getWeekdayLabel(classItem.weekday)} - {classItem.start_time}</span>
+                      {classItem.location && <span>{classItem.location}</span>}
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-primary btn-sm"
+                      onClick={() => handleAssignClass(classItem.id)}
+                    >
+                      Atribuir
+                    </button>
+                  </div>
+                ))}
+                {filteredAvailableClasses.length === 0 && (
+                  <p className="empty-message">
+                    {modalityFilter === 'all'
+                      ? 'Todas as turmas já foram atribuídas.'
+                      : 'Nenhuma turma disponível para esta modalidade.'}
+                  </p>
                 )}
               </div>
             </div>
