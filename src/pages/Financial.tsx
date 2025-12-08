@@ -599,12 +599,12 @@ export default function Financial() {
 
       <div className="financial-stats">
         <div className="stat-card stat-total">
-          <h3>Total (sem desconto)</h3>
-          <p className="stat-value">{formatPrice(totalAmountGross)}</p>
+          <h3>Total a Receber</h3>
+          <p className="stat-value">{formatPrice(totalAmountNet)}</p>
           <small>{invoices.filter(i => i.status !== 'cancelada').length} faturas</small>
           {totalAmountGross !== totalAmountNet && (
-            <small style={{ display: 'block', marginTop: '4px', color: '#27ae60' }}>
-              Com desconto: {formatPrice(totalAmountNet)}
+            <small style={{ display: 'block', marginTop: '4px', color: '#7f8c8d' }}>
+              Sem desconto: {formatPrice(totalAmountGross)}
             </small>
           )}
         </div>
