@@ -438,10 +438,20 @@ export default function Financial() {
     .filter(inv => inv.status !== 'cancelada')
     .reduce((sum, inv) => sum + Number(inv.amount_cents || 0), 0);
 
-  // Total COM desconto: soma o valor final (final_amount_cents) das faturas não canceladas
+  // Total COM desconto (esperado): soma o valor final (final_amount_cents) das faturas não canceladas
   const totalAmountNet = invoices
     .filter(inv => inv.status !== 'cancelada')
     .reduce((sum, inv) => sum + Number(inv.final_amount_cents || 0), 0);
+
+  // Total REAL: para pagas usa paid_amount_cents, para abertas/vencidas usa final_amount_cents
+  const totalAmountReal = invoices
+    .filter(inv => inv.status !== 'cancelada')
+    .reduce((sum, inv) => {
+      if (inv.status === 'paga') {
+        return sum + Number(inv.paid_amount_cents || 0);
+      }
+      return sum + Number(inv.final_amount_cents || 0);
+    }, 0);
 
   // Recebido: soma o valor REAL pago nas faturas pagas
   const paidAmount = invoices
@@ -599,12 +609,12 @@ export default function Financial() {
 
       <div className="financial-stats">
         <div className="stat-card stat-total">
-          <h3>Total a Receber</h3>
-          <p className="stat-value">{formatPrice(totalAmountNet)}</p>
+          <h3>Total</h3>
+          <p className="stat-value">{formatPrice(totalAmountReal)}</p>
           <small>{invoices.filter(i => i.status !== 'cancelada').length} faturas</small>
-          {totalAmountGross !== totalAmountNet && (
+          {totalAmountReal !== totalAmountNet && (
             <small style={{ display: 'block', marginTop: '4px', color: '#7f8c8d' }}>
-              Sem desconto: {formatPrice(totalAmountGross)}
+              Esperado: {formatPrice(totalAmountNet)}
             </small>
           )}
         </div>
