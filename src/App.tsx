@@ -28,6 +28,7 @@ import WhatsAppLogs from './pages/WhatsAppLogs'
 import AdminMonitoring from './pages/AdminMonitoring'
 import Instructors from './pages/Instructors'
 import TrialStudents from './pages/TrialStudents'
+import Preferences from './pages/Preferences'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -102,6 +103,7 @@ export default function App() {
             <Route path="/admin/monitoring" element={<AdminMonitoring />} />
             <Route path="/instrutores" element={<Instructors />} />
             <Route path="/alunos-experimentais" element={<TrialStudents />} />
+            <Route path="/preferencias" element={<Preferences />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/migracao" element={<DataMigration />} />
           </Route>

@@ -47,6 +47,54 @@ export default function Financial() {
   const [sortField, setSortField] = useState<'id' | 'student_name' | 'reference_month' | 'due_date' | 'final_amount_cents' | 'status'>('student_name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  // Mensagem padrão do WhatsApp
+  const [whatsappTemplate, setWhatsappTemplate] = useState<string>('');
+
+  // Carregar template do WhatsApp das preferências
+  useEffect(() => {
+    const savedTemplate = localStorage.getItem('whatsapp_payment_template');
+    if (savedTemplate) {
+      setWhatsappTemplate(savedTemplate);
+    } else {
+      // Template padrão
+      setWhatsappTemplate(`Olá [Nome], tudo bem?
+
+Passando para lembrar do vencimento da sua mensalidade.
+
+*Pix 48.609.350/0001-86*
+
+Caso não for fazer aulas esse mês, favor nos informar!
+
+Obrigado!`);
+    }
+  }, []);
+
+  // Função para abrir WhatsApp com mensagem personalizada
+  const handleWhatsAppClick = (invoice: Invoice) => {
+    if (!invoice.student_phone) {
+      toast.error('Aluno não possui telefone cadastrado');
+      return;
+    }
+
+    const phone = invoice.student_phone.replace(/\D/g, '');
+    if (phone.length < 10) {
+      toast.error('Telefone do aluno é inválido');
+      return;
+    }
+
+    // Substituir variáveis na mensagem
+    const firstName = (invoice.student_name || '').split(' ')[0];
+    const message = whatsappTemplate
+      .replace(/\[Nome\]/g, firstName)
+      .replace(/\[NomeCompleto\]/g, invoice.student_name || '')
+      .replace(/\[Valor\]/g, formatPrice(invoice.final_amount_cents))
+      .replace(/\[Vencimento\]/g, formatDate(invoice.due_date))
+      .replace(/\[Referencia\]/g, invoice.reference_month);
+
+    const whatsappUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   // Handle sort
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -871,6 +919,14 @@ export default function Financial() {
                     <div className="action-buttons">
                       {invoice.status === 'aberta' || invoice.status === 'vencida' ? (
                         <>
+                          <button
+                            className="btn-action btn-whatsapp"
+                            onClick={() => handleWhatsAppClick(invoice)}
+                            title="Enviar cobrança via WhatsApp"
+                            style={{ backgroundColor: '#25D366' }}
+                          >
+                            📱
+                          </button>
                           <button
                             className="btn-action btn-pay"
                             onClick={() => openPaymentModal(invoice)}
