@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { financialService } from '../services/financialService';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
@@ -923,9 +925,9 @@ Obrigado!`);
                             className="btn-action btn-whatsapp"
                             onClick={() => handleWhatsAppClick(invoice)}
                             title="Enviar cobrança via WhatsApp"
-                            style={{ backgroundColor: '#25D366' }}
+                            style={{ backgroundColor: '#25D366', color: 'white' }}
                           >
-                            📱
+                            <FontAwesomeIcon icon={faWhatsapp} />
                           </button>
                           <button
                             className="btn-action btn-pay"
