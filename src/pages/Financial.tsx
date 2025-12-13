@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { faMoneyBillWave, faXmark, faCheck, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { financialService } from '../services/financialService';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
@@ -976,19 +977,19 @@ Obrigado!`);
                             onClick={() => openPaymentModal(invoice)}
                             title="Dar baixa"
                           >
-                            💰
+                            <FontAwesomeIcon icon={faMoneyBillWave} />
                           </button>
                           <button
                             className="btn-action btn-cancel"
                             onClick={() => handleCancelInvoice(invoice.id)}
                             title="Cancelar"
                           >
-                            ❌
+                            <FontAwesomeIcon icon={faXmark} />
                           </button>
                         </>
                       ) : invoice.status === 'paga' ? (
                         <span className="paid-indicator" title={`Pago em ${formatDate(invoice.paid_at!)}`}>
-                          ✅
+                          <FontAwesomeIcon icon={faCheck} style={{ color: '#27ae60' }} />
                         </span>
                       ) : null}
                     </div>
@@ -1131,7 +1132,7 @@ Obrigado!`);
                 gap: '8px'
               }}
             >
-              ↩️ Estornar Pagamento
+              <FontAwesomeIcon icon={faUndo} /> Estornar Pagamento
             </button>
 
             <form onSubmit={handleEditPayment} className="payment-form">
@@ -1201,7 +1202,7 @@ Obrigado!`);
         <div className="modal-overlay" onClick={() => setShowRefundModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
-              <h2>↩️ Estornar Pagamento</h2>
+              <h2><FontAwesomeIcon icon={faUndo} /> Estornar Pagamento</h2>
               <button type="button" className="modal-close" onClick={() => setShowRefundModal(false)} style={{ color: 'white' }}>×</button>
             </div>
 

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { faCreditCard, faCoins, faCalendarDays, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
 import { financialService } from '../services/financialService';
@@ -340,7 +343,7 @@ Qualquer dúvida, estou à disposição!`;
               onClick={handleWhatsAppClick}
               title="Enviar mensagem de cobrança"
             >
-              <span className="whatsapp-icon">📱</span>
+              <FontAwesomeIcon icon={faWhatsapp} className="whatsapp-icon" />
               WHATSAPP
             </button>
             <button
@@ -348,7 +351,7 @@ Qualquer dúvida, estou à disposição!`;
               className="btn-secondary"
               onClick={() => setShowEditModal(true)}
             >
-              ✏️ EDITAR
+              <FontAwesomeIcon icon={faPenToSquare} /> EDITAR
             </button>
           </div>
         </div>
@@ -357,7 +360,9 @@ Qualquer dúvida, estou à disposição!`;
       {/* Financial Cards */}
       <div className="financial-cards">
         <div className="financial-card financial-card-danger">
-          <div className="financial-card-icon">💳</div>
+          <div className="financial-card-icon">
+            <FontAwesomeIcon icon={faCreditCard} />
+          </div>
           <div className="financial-card-content">
             <p className="financial-card-label">Saldo devedor</p>
             <h2 className="financial-card-value">{formatCurrency(financialStats.saldo_devedor)}</h2>
@@ -365,7 +370,9 @@ Qualquer dúvida, estou à disposição!`;
         </div>
 
         <div className="financial-card financial-card-success">
-          <div className="financial-card-icon">💰</div>
+          <div className="financial-card-icon">
+            <FontAwesomeIcon icon={faCoins} />
+          </div>
           <div className="financial-card-content">
             <p className="financial-card-label">Créditos</p>
             <h2 className="financial-card-value">{formatCurrency(financialStats.creditos)}</h2>
@@ -373,7 +380,9 @@ Qualquer dúvida, estou à disposição!`;
         </div>
 
         <div className="financial-card financial-card-warning">
-          <div className="financial-card-icon">📅</div>
+          <div className="financial-card-icon">
+            <FontAwesomeIcon icon={faCalendarDays} />
+          </div>
           <div className="financial-card-content">
             <p className="financial-card-label">Próx. vencimento</p>
             <h2 className="financial-card-value">
