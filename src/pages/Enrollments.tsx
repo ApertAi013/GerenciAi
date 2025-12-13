@@ -1878,6 +1878,30 @@ function EditEnrollmentModal({
                 </button>
                 <button
                   type="button"
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '1rem',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    confirmPlanChange(true);
+                    toast('Para estornar uma fatura paga, vá em Financeiro > clique no valor pago > Estornar', {
+                      icon: 'ℹ️',
+                      duration: 6000
+                    });
+                  }}
+                >
+                  <strong>↩️ Estornar fatura paga e gerar nova</strong>
+                  <br />
+                  <small style={{ opacity: 0.9 }}>Se já houver fatura paga, estorne-a pelo Financeiro e gere nova fatura</small>
+                </button>
+                <button
+                  type="button"
                   className="btn-secondary"
                   onClick={cancelPlanChange}
                   style={{ width: '100%' }}

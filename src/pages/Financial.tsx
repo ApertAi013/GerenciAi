@@ -33,6 +33,11 @@ export default function Financial() {
     notes: '',
   });
 
+  // Estado para modal de estorno
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundInvoice, setRefundInvoice] = useState<Invoice | null>(null);
+  const [refundReason, setRefundReason] = useState('');
+
   // Estado para evitar duplo clique nos botões de submit
   const [submitting, setSubmitting] = useState(false);
 
@@ -460,6 +465,42 @@ Obrigado!`);
     }
   };
 
+  // Função para abrir modal de estorno
+  const openRefundModal = (invoice: Invoice) => {
+    setRefundInvoice(invoice);
+    setRefundReason('');
+    setShowRefundModal(true);
+    setShowEditPaymentModal(false);
+  };
+
+  // Função para processar estorno
+  const handleRefund = async () => {
+    if (submitting || !refundInvoice) return;
+
+    const confirmMessage = `Confirma o estorno do pagamento?\n\nAluno: ${refundInvoice.student_name}\nValor pago: ${formatPrice(refundInvoice.paid_amount_cents || 0)}\n\nO pagamento será removido e a fatura marcada como estornada.`;
+
+    if (!confirm(confirmMessage)) return;
+
+    setSubmitting(true);
+
+    try {
+      const response = await financialService.refundPayment(refundInvoice.id, refundReason);
+
+      if ((response as any).status === 'success') {
+        toast.success(`Estorno realizado com sucesso! Valor: ${formatPrice(response.data.refunded_amount_cents)}`);
+        setShowRefundModal(false);
+        setRefundInvoice(null);
+        setRefundReason('');
+        loadInvoices();
+      }
+    } catch (error: any) {
+      console.error('Erro ao estornar pagamento:', error);
+      toast.error(error.response?.data?.message || 'Erro ao estornar pagamento');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
@@ -478,24 +519,25 @@ Obrigado!`);
       paga: { label: 'Paga', class: 'status-paid' },
       vencida: { label: 'Vencida', class: 'status-overdue' },
       cancelada: { label: 'Cancelada', class: 'status-cancelled' },
+      estornada: { label: 'Estornada', class: 'status-refunded' },
     };
     const info = statusMap[status] || { label: status, class: '' };
     return <span className={`status-badge ${info.class}`}>{info.label}</span>;
   };
 
-  // Total SEM desconto: soma o valor bruto (amount_cents) das faturas não canceladas
+  // Total SEM desconto: soma o valor bruto (amount_cents) das faturas não canceladas/estornadas
   const totalAmountGross = invoices
-    .filter(inv => inv.status !== 'cancelada')
+    .filter(inv => inv.status !== 'cancelada' && inv.status !== 'estornada')
     .reduce((sum, inv) => sum + Number(inv.amount_cents || 0), 0);
 
-  // Total COM desconto (esperado): soma o valor final (final_amount_cents) das faturas não canceladas
+  // Total COM desconto (esperado): soma o valor final (final_amount_cents) das faturas não canceladas/estornadas
   const totalAmountNet = invoices
-    .filter(inv => inv.status !== 'cancelada')
+    .filter(inv => inv.status !== 'cancelada' && inv.status !== 'estornada')
     .reduce((sum, inv) => sum + Number(inv.final_amount_cents || 0), 0);
 
   // Total REAL: para pagas usa paid_amount_cents, para abertas/vencidas usa final_amount_cents
   const totalAmountReal = invoices
-    .filter(inv => inv.status !== 'cancelada')
+    .filter(inv => inv.status !== 'cancelada' && inv.status !== 'estornada')
     .reduce((sum, inv) => {
       if (inv.status === 'paga') {
         return sum + Number(inv.paid_amount_cents || 0);
@@ -1070,6 +1112,28 @@ Obrigado!`);
               ⚠️ <strong>Atenção:</strong> Alterar o valor do pagamento irá afetar o balanço financeiro.
             </div>
 
+            <button
+              type="button"
+              onClick={() => openRefundModal(editingInvoice)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginBottom: '16px',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              ↩️ Estornar Pagamento
+            </button>
+
             <form onSubmit={handleEditPayment} className="payment-form">
               <div className="form-group">
                 <label htmlFor="edit_paid_at">Data do Pagamento *</label>
@@ -1128,6 +1192,70 @@ Obrigado!`);
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Estorno */}
+      {showRefundModal && refundInvoice && (
+        <div className="modal-overlay" onClick={() => setShowRefundModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
+              <h2>↩️ Estornar Pagamento</h2>
+              <button type="button" className="modal-close" onClick={() => setShowRefundModal(false)} style={{ color: 'white' }}>×</button>
+            </div>
+
+            <div style={{
+              backgroundColor: '#f8d7da',
+              border: '1px solid #f5c6cb',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '16px',
+              color: '#721c24'
+            }}>
+              <strong>⚠️ Atenção: Esta ação não pode ser desfeita!</strong>
+              <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                O pagamento será removido e a fatura será marcada como estornada (valor R$ 0,00).
+                O histórico do estorno ficará registrado nas observações da fatura.
+              </p>
+            </div>
+
+            <div className="invoice-details">
+              <h3>Detalhes do Pagamento</h3>
+              <p><strong>Aluno:</strong> {refundInvoice.student_name}</p>
+              <p><strong>Valor da fatura:</strong> {formatPrice(refundInvoice.final_amount_cents)}</p>
+              <p><strong>Valor pago:</strong> {formatPrice(refundInvoice.paid_amount_cents || 0)}</p>
+              <p><strong>Método:</strong> {refundInvoice.payment_method || '-'}</p>
+              <p><strong>Pago em:</strong> {refundInvoice.paid_at ? formatDate(refundInvoice.paid_at) : '-'}</p>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="refund_reason">Motivo do Estorno *</label>
+              <textarea
+                id="refund_reason"
+                rows={3}
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                placeholder="Descreva o motivo do estorno (ex: pagamento duplicado, mudança de plano, etc.)"
+                required
+                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={() => setShowRefundModal(false)} disabled={submitting}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleRefund}
+                disabled={submitting || !refundReason.trim()}
+                style={{ backgroundColor: '#dc3545', borderColor: '#dc3545' }}
+              >
+                {submitting ? 'Processando...' : 'Confirmar Estorno'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -110,4 +110,33 @@ export const financialService = {
     }>(`/api/invoices/payment/${paymentId}`, data);
     return response.data;
   },
+
+  // Estornar pagamento
+  async refundPayment(
+    invoiceId: number,
+    reason?: string
+  ): Promise<{
+    status: string;
+    message: string;
+    data: {
+      invoice_id: number;
+      student_name: string;
+      original_amount_cents: number;
+      refunded_amount_cents: number;
+      reason: string;
+    };
+  }> {
+    const response = await api.post<{
+      status: string;
+      message: string;
+      data: {
+        invoice_id: number;
+        student_name: string;
+        original_amount_cents: number;
+        refunded_amount_cents: number;
+        reason: string;
+      };
+    }>(`/api/invoices/${invoiceId}/refund`, { reason });
+    return response.data;
+  },
 };

@@ -13,7 +13,8 @@ export interface Invoice {
   paid_amount_cents?: number;
   payment_id?: number;
   payment_method?: 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'outro';
-  status: 'aberta' | 'paga' | 'vencida' | 'cancelada';
+  status: 'aberta' | 'paga' | 'vencida' | 'cancelada' | 'estornada';
+  notes?: string;
   paid_at?: string;
   created_at?: string;
 }
