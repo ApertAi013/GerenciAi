@@ -216,64 +216,57 @@ export default function Dashboard() {
         .sort((a: Class, b: Class) => a.start_time.localeCompare(b.start_time));
       setClassesToday(todayClasses);
 
-      // Modality summary - improved logic
-      // Create a map of enrollment_id to class_ids for quick lookup
-      const enrollmentClassMap = new Map<number, number[]>();
-      enrollments.forEach((enr: any) => {
-        if (enr.class_ids && enr.id) {
-          enrollmentClassMap.set(enr.id, enr.class_ids);
+      // Modality summary - fetch data per modality using backend API
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      // Fetch invoices per modality in parallel for accurate revenue data
+      const modalityDataPromises = modalities.map(async (mod: Modality) => {
+        const modalityClasses = classes.filter((cls: Class) => cls.modality_id === mod.id);
+
+        if (modalityClasses.length === 0) {
+          return null;
+        }
+
+        // Get invoices for this modality filtered by current month
+        try {
+          const modalityInvoicesRes = await financialService.getInvoices({
+            modality_id: mod.id,
+            reference_month: currentMonth,
+            status: 'paga',
+          });
+
+          const modalityInvoices = modalityInvoicesRes.data || [];
+
+          // Calculate revenue from paid invoices
+          const revenue = modalityInvoices.reduce(
+            (sum: number, inv: Invoice) => sum + (inv.paid_amount_cents || inv.final_amount_cents),
+            0
+          );
+
+          // Count unique students from invoices
+          const uniqueStudents = new Set(modalityInvoices.map((inv: Invoice) => inv.student_id));
+
+          return {
+            id: mod.id,
+            name: mod.name,
+            studentCount: uniqueStudents.size,
+            classCount: modalityClasses.length,
+            revenue,
+          };
+        } catch (error) {
+          console.error(`Erro ao carregar dados da modalidade ${mod.name}:`, error);
+          return {
+            id: mod.id,
+            name: mod.name,
+            studentCount: 0,
+            classCount: modalityClasses.length,
+            revenue: 0,
+          };
         }
       });
 
-      // Get current month for revenue calculation
-      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-      const modalitySummaryData: ModalitySummary[] = modalities.map((mod: Modality) => {
-        const modalityClasses = classes.filter((cls: Class) => cls.modality_id === mod.id);
-        const modalityClassIds = modalityClasses.map((cls: Class) => cls.id);
-
-        // Count students in this modality (from active enrollments)
-        const studentsInModality = new Set<number>();
-        enrollments.forEach((enr: any) => {
-          if (enr.class_ids && enr.status === 'ativa') {
-            const hasModalityClass = enr.class_ids.some((id: number) => modalityClassIds.includes(id));
-            if (hasModalityClass) {
-              studentsInModality.add(enr.student_id);
-            }
-          }
-        });
-
-        // Revenue from this modality (current month invoices paid)
-        // Match invoices by enrollment_id and check if enrollment has classes in this modality
-        let modalityRevenue = 0;
-        invoices.forEach((inv: Invoice) => {
-          // Only count paid invoices from current month
-          if (inv.status === 'paga' && inv.reference_month === currentMonth && inv.enrollment_id) {
-            const enrollmentClassIds = enrollmentClassMap.get(inv.enrollment_id);
-            if (enrollmentClassIds) {
-              const hasModalityClass = enrollmentClassIds.some((id: number) => modalityClassIds.includes(id));
-              if (hasModalityClass) {
-                // Divide revenue proportionally if enrollment has multiple modalities
-                const enrollmentModalities = new Set<number>();
-                enrollmentClassIds.forEach((classId: number) => {
-                  const cls = classes.find((c: Class) => c.id === classId);
-                  if (cls) enrollmentModalities.add(cls.modality_id);
-                });
-                const proportion = 1 / enrollmentModalities.size;
-                modalityRevenue += (inv.paid_amount_cents || inv.final_amount_cents) * proportion;
-              }
-            }
-          }
-        });
-
-        return {
-          id: mod.id,
-          name: mod.name,
-          studentCount: studentsInModality.size,
-          classCount: modalityClasses.length,
-          revenue: Math.round(modalityRevenue),
-        };
-      }).filter((mod: ModalitySummary) => mod.classCount > 0);
+      const modalityResults = await Promise.all(modalityDataPromises);
+      const modalitySummaryData = modalityResults.filter((mod): mod is ModalitySummary => mod !== null);
 
       setModalitySummary(modalitySummaryData);
 
