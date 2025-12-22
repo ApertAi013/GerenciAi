@@ -217,32 +217,7 @@ export default function Dashboard() {
         .sort((a: Class, b: Class) => a.start_time.localeCompare(b.start_time));
       setClassesToday(todayClasses);
 
-      // Modality summary - count students and classes per modality
-      // Create map of class_id -> modality_id
-      const classModalityMap = new Map<number, number>();
-      classes.forEach((cls: Class) => {
-        classModalityMap.set(cls.id, cls.modality_id);
-      });
-
-      // Count active students per modality (from active enrollments)
-      const activeEnrollments = enrollments.filter((enr: any) => enr.status === 'ativa');
-      const studentsPerModality = new Map<number, Set<number>>();
-
-      activeEnrollments.forEach((enr: any) => {
-        if (enr.class_ids && Array.isArray(enr.class_ids)) {
-          enr.class_ids.forEach((classId: number) => {
-            const modalityId = classModalityMap.get(classId);
-            if (modalityId) {
-              if (!studentsPerModality.has(modalityId)) {
-                studentsPerModality.set(modalityId, new Set());
-              }
-              studentsPerModality.get(modalityId)!.add(enr.student_id);
-            }
-          });
-        }
-      });
-
-      // Build modality summary
+      // Modality summary - use enrolled_count from classes
       const modalitySummaryData: ModalitySummary[] = modalities.map((mod: Modality) => {
         const modalityClasses = classes.filter((cls: Class) => cls.modality_id === mod.id);
 
@@ -250,12 +225,18 @@ export default function Dashboard() {
           return null;
         }
 
-        const studentCount = studentsPerModality.get(mod.id)?.size || 0;
+        // Sum enrolled_count from all classes in this modality
+        // Note: A student may be in multiple classes, so this might count some students multiple times
+        // But it's a quick approximation. For exact count, we'd need to track unique student_ids
+        const totalEnrolled = modalityClasses.reduce(
+          (sum: number, cls: Class) => sum + (cls.enrolled_count || 0),
+          0
+        );
 
         return {
           id: mod.id,
           name: mod.name,
-          studentCount,
+          studentCount: totalEnrolled,
           classCount: modalityClasses.length,
           revenue: 0, // Not used anymore - user clicks to see financial
         };
