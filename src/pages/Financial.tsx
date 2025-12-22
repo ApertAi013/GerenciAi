@@ -231,7 +231,13 @@ Obrigado!`);
       }
     };
     loadFilters();
-  }, []);
+
+    // Read modality filter from URL params (from Dashboard redirect)
+    const modalityParam = searchParams.get('modality');
+    if (modalityParam) {
+      setModalityFilter(modalityParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // Log current user info for debugging

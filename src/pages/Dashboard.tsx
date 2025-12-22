@@ -217,32 +217,32 @@ export default function Dashboard() {
         .sort((a: Class, b: Class) => a.start_time.localeCompare(b.start_time));
       setClassesToday(todayClasses);
 
-      // Modality summary - calculate from loaded data (same approach as Financial page)
-      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      // Modality summary - count students and classes per modality
+      // Create map of class_id -> modality_id
+      const classModalityMap = new Map<number, number>();
+      classes.forEach((cls: Class) => {
+        classModalityMap.set(cls.id, cls.modality_id);
+      });
 
-      // Create map of enrollment_id -> modality_ids
-      const enrollmentModalityMap = new Map<number, Set<number>>();
-      enrollments.forEach((enr: any) => {
-        if (enr.id && enr.class_ids && Array.isArray(enr.class_ids)) {
-          const modalityIds = new Set<number>();
+      // Count active students per modality (from active enrollments)
+      const activeEnrollments = enrollments.filter((enr: any) => enr.status === 'ativa');
+      const studentsPerModality = new Map<number, Set<number>>();
+
+      activeEnrollments.forEach((enr: any) => {
+        if (enr.class_ids && Array.isArray(enr.class_ids)) {
           enr.class_ids.forEach((classId: number) => {
-            const cls = classes.find((c: Class) => c.id === classId);
-            if (cls) {
-              modalityIds.add(cls.modality_id);
+            const modalityId = classModalityMap.get(classId);
+            if (modalityId) {
+              if (!studentsPerModality.has(modalityId)) {
+                studentsPerModality.set(modalityId, new Set());
+              }
+              studentsPerModality.get(modalityId)!.add(enr.student_id);
             }
           });
-          if (modalityIds.size > 0) {
-            enrollmentModalityMap.set(enr.id, modalityIds);
-          }
         }
       });
 
-      // Filter invoices for current month
-      const currentMonthInvoices = invoices.filter((inv: Invoice) =>
-        inv.reference_month === currentMonth
-      );
-
-      // Calculate data per modality
+      // Build modality summary
       const modalitySummaryData: ModalitySummary[] = modalities.map((mod: Modality) => {
         const modalityClasses = classes.filter((cls: Class) => cls.modality_id === mod.id);
 
@@ -250,31 +250,14 @@ export default function Dashboard() {
           return null;
         }
 
-        // Find invoices that belong to this modality
-        const modalityInvoices = currentMonthInvoices.filter((inv: Invoice) => {
-          if (!inv.enrollment_id) return false;
-          const enrollmentModalities = enrollmentModalityMap.get(inv.enrollment_id);
-          return enrollmentModalities?.has(mod.id) || false;
-        });
-
-        // Calculate revenue from paid invoices (same as Financial page)
-        const paidInvoices = modalityInvoices.filter((inv: Invoice) => inv.status === 'paga');
-        const revenue = paidInvoices.reduce(
-          (sum: number, inv: Invoice) => sum + Number(inv.paid_amount_cents || 0),
-          0
-        );
-
-        // Count unique students from paid invoices
-        const uniqueStudents = new Set(
-          paidInvoices.map((inv: Invoice) => inv.student_id).filter(Boolean)
-        );
+        const studentCount = studentsPerModality.get(mod.id)?.size || 0;
 
         return {
           id: mod.id,
           name: mod.name,
-          studentCount: uniqueStudents.size,
+          studentCount,
           classCount: modalityClasses.length,
-          revenue,
+          revenue: 0, // Not used anymore - user clicks to see financial
         };
       }).filter((mod): mod is ModalitySummary => mod !== null);
 
@@ -491,7 +474,7 @@ export default function Dashboard() {
                   <span>Modalidade</span>
                   <span>Alunos</span>
                   <span>Turmas</span>
-                  <span>Faturamento</span>
+                  <span>Ações</span>
                 </div>
                 {modalitySummary.map((mod, index) => (
                   <div
@@ -511,8 +494,15 @@ export default function Dashboard() {
                       <FontAwesomeIcon icon={faCalendarCheck} />
                       {mod.classCount}
                     </span>
-                    <span className="modality-value revenue">
-                      {formatCurrency(mod.revenue)}
+                    <span className="modality-action">
+                      <button
+                        className="btn-view-financial"
+                        onClick={() => navigate(`/financeiro?modality=${mod.id}`)}
+                        title={`Ver faturamento de ${mod.name}`}
+                      >
+                        <FontAwesomeIcon icon={faMoneyBillWave} />
+                        Ver Faturamento
+                      </button>
                     </span>
                   </div>
                 ))}
