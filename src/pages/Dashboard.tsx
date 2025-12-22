@@ -235,16 +235,17 @@ export default function Dashboard() {
             status: 'paga',
           });
 
-          const modalityInvoices = modalityInvoicesRes.data || [];
+          // Handle response structure: { data: { invoices: [] } } or { data: [] }
+          const modalityInvoices: Invoice[] = modalityInvoicesRes.data?.invoices || modalityInvoicesRes.data || [];
 
-          // Calculate revenue from paid invoices
+          // Calculate revenue from paid invoices (values are in cents)
           const revenue = modalityInvoices.reduce(
-            (sum: number, inv: Invoice) => sum + (inv.paid_amount_cents || inv.final_amount_cents),
+            (sum: number, inv: Invoice) => sum + (inv.paid_amount_cents || inv.final_amount_cents || 0),
             0
           );
 
           // Count unique students from invoices
-          const uniqueStudents = new Set(modalityInvoices.map((inv: Invoice) => inv.student_id));
+          const uniqueStudents = new Set(modalityInvoices.map((inv: Invoice) => inv.student_id).filter(Boolean));
 
           return {
             id: mod.id,
