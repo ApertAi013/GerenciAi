@@ -15,9 +15,19 @@ import {
   faUserGraduate,
   faReceipt,
   faLayerGroup,
+  faCog,
+  faGripVertical,
+  faPuzzlePiece,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useAuthStore } from '../store/authStore';
+import { useWidgets } from '../hooks/useWidgets';
+import WidgetRenderer from '../components/widgets/WidgetRenderer';
+import CustomizationModal from '../components/widgets/CustomizationModal';
+import type { Widget } from '../types/widgetTypes';
 import { financialService } from '../services/financialService';
 import { classService } from '../services/classService';
 import { studentService } from '../services/studentService';
@@ -25,6 +35,55 @@ import { enrollmentService } from '../services/enrollmentService';
 import type { Invoice } from '../types/financialTypes';
 import type { Class, Modality } from '../types/classTypes';
 import '../styles/Dashboard.css';
+
+// Sortable Widget Component
+interface SortableWidgetProps {
+  widget: Widget;
+}
+
+function SortableWidget({ widget }: SortableWidgetProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: widget.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const getWidgetHeight = () => {
+    switch (widget.size) {
+      case 'small': return '250px';
+      case 'medium': return '350px';
+      case 'large': return '450px';
+      default: return '350px';
+    }
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="widget-container">
+      <div className="widget-wrapper" style={{ height: getWidgetHeight() }}>
+        <div
+          {...attributes}
+          {...listeners}
+          className="widget-drag-handle"
+          title="Arrastar para reordenar"
+        >
+          <FontAwesomeIcon icon={faGripVertical} />
+        </div>
+        <div className="widget-content">
+          <WidgetRenderer type={widget.type} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface DashboardStats {
   totalStudents: number;
@@ -46,6 +105,25 @@ interface ModalitySummary {
 export default function Dashboard() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const { activeWidgets, isLoading: widgetsLoading, addWidget, removeWidget, reorderWidgets, widgets } = useWidgets();
+  const [isCustomizing, setIsCustomizing] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = activeWidgets.findIndex((w) => w.id === active.id);
+      const newIndex = activeWidgets.findIndex((w) => w.id === over.id);
+      reorderWidgets(oldIndex, newIndex);
+    }
+  };
 
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
@@ -303,8 +381,8 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Main Content Grid */}
-      <div className="dashboard-grid">
+      {/* Two Column Layout: Agenda + Modalidades */}
+      <div className="dashboard-grid-two-cols">
         {/* Today's Classes - Mini Agenda */}
         <section className="dashboard-card classes-today-card">
           <div className="card-header">
@@ -376,78 +454,34 @@ export default function Dashboard() {
                 <p>Nenhuma modalidade cadastrada</p>
               </div>
             ) : (
-              <div className="modality-list">
+              <div className="modality-table">
+                <div className="modality-table-header">
+                  <span>Modalidade</span>
+                  <span>Alunos</span>
+                  <span>Turmas</span>
+                  <span>Faturamento</span>
+                </div>
                 {modalitySummary.map((mod, index) => (
                   <div
                     key={mod.id}
-                    className="modality-item"
+                    className="modality-table-row"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
-                    <div className="modality-name">
+                    <span className="modality-name-cell">
                       <span className="modality-dot"></span>
                       {mod.name}
-                    </div>
-                    <div className="modality-stats">
-                      <div className="modality-stat">
-                        <FontAwesomeIcon icon={faUserGraduate} />
-                        <span>{mod.studentCount} alunos</span>
-                      </div>
-                      <div className="modality-stat">
-                        <FontAwesomeIcon icon={faCalendarCheck} />
-                        <span>{mod.classCount} turmas</span>
-                      </div>
-                      <div className="modality-stat revenue">
-                        <FontAwesomeIcon icon={faReceipt} />
-                        <span>{formatCurrency(mod.revenue)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Overdue Students */}
-        <section className="dashboard-card overdue-card">
-          <div className="card-header">
-            <h3>
-              <FontAwesomeIcon icon={faExclamationTriangle} />
-              Alunos Inadimplentes
-            </h3>
-            <button className="btn-link" onClick={() => navigate('/financeiro')}>
-              Ver todos <FontAwesomeIcon icon={faArrowRight} />
-            </button>
-          </div>
-          <div className="card-content">
-            {overdueStudents.length === 0 ? (
-              <div className="empty-state-mini success">
-                <FontAwesomeIcon icon={faCalendarCheck} />
-                <p>Nenhum aluno inadimplente!</p>
-                <span>Todas as faturas estão em dia</span>
-              </div>
-            ) : (
-              <div className="overdue-list">
-                {overdueStudents.map((invoice, index) => (
-                  <div
-                    key={invoice.id}
-                    className="overdue-item"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div className="overdue-info">
-                      <span className="student-name">{invoice.student_name}</span>
-                      <span className="overdue-details">
-                        Vencido em {formatDate(invoice.due_date)} • {formatCurrency(invoice.final_amount_cents)}
-                      </span>
-                    </div>
-                    <button
-                      className="btn-whatsapp"
-                      onClick={() => handleWhatsAppClick(invoice.student_phone, invoice.student_name || '')}
-                      disabled={!invoice.student_phone}
-                      title={invoice.student_phone ? 'Enviar mensagem' : 'Telefone não cadastrado'}
-                    >
-                      <FontAwesomeIcon icon={faWhatsapp} />
-                    </button>
+                    </span>
+                    <span className="modality-value">
+                      <FontAwesomeIcon icon={faUserGraduate} />
+                      {mod.studentCount}
+                    </span>
+                    <span className="modality-value">
+                      <FontAwesomeIcon icon={faCalendarCheck} />
+                      {mod.classCount}
+                    </span>
+                    <span className="modality-value revenue">
+                      {formatCurrency(mod.revenue)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -455,6 +489,123 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
+
+      {/* Overdue Students - Full Width */}
+      <section className="dashboard-card overdue-card-full">
+        <div className="card-header">
+          <h3>
+            <FontAwesomeIcon icon={faExclamationTriangle} />
+            Alunos Inadimplentes
+            {stats.overdueInvoices > 0 && (
+              <span className="badge-count">{stats.overdueInvoices}</span>
+            )}
+          </h3>
+          <button className="btn-link" onClick={() => navigate('/financeiro')}>
+            Ver todos <FontAwesomeIcon icon={faArrowRight} />
+          </button>
+        </div>
+        <div className="card-content">
+          {overdueStudents.length === 0 ? (
+            <div className="empty-state-mini success">
+              <FontAwesomeIcon icon={faCalendarCheck} />
+              <p>Nenhum aluno inadimplente!</p>
+              <span>Todas as faturas estão em dia</span>
+            </div>
+          ) : (
+            <div className="overdue-grid">
+              {overdueStudents.map((invoice, index) => (
+                <div
+                  key={invoice.id}
+                  className="overdue-card-item"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="overdue-card-content">
+                    <div className="overdue-avatar">
+                      {invoice.student_name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="overdue-info">
+                      <span className="student-name">{invoice.student_name}</span>
+                      <span className="overdue-amount">{formatCurrency(invoice.final_amount_cents)}</span>
+                      <span className="overdue-date">Venceu em {formatDate(invoice.due_date)}</span>
+                    </div>
+                  </div>
+                  <button
+                    className="btn-whatsapp-small"
+                    onClick={() => handleWhatsAppClick(invoice.student_phone, invoice.student_name || '')}
+                    disabled={!invoice.student_phone}
+                    title={invoice.student_phone ? 'Enviar mensagem' : 'Telefone não cadastrado'}
+                  >
+                    <FontAwesomeIcon icon={faWhatsapp} />
+                    Cobrar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Widgets Personalizáveis Section */}
+      <section className="widgets-section">
+        <div className="widgets-header">
+          <h2>
+            <FontAwesomeIcon icon={faPuzzlePiece} />
+            Widgets Personalizados
+          </h2>
+          <button
+            type="button"
+            className="btn-customize"
+            onClick={() => setIsCustomizing(true)}
+          >
+            <FontAwesomeIcon icon={faCog} />
+            Personalizar
+          </button>
+        </div>
+
+        {activeWidgets.length === 0 ? (
+          <div className="widgets-empty">
+            <div className="widgets-empty-icon">
+              <FontAwesomeIcon icon={faPuzzlePiece} />
+            </div>
+            <h3>Nenhum widget adicionado</h3>
+            <p>Clique em "Personalizar" para adicionar widgets ao seu dashboard</p>
+            <button
+              type="button"
+              className="btn-customize"
+              onClick={() => setIsCustomizing(true)}
+            >
+              <FontAwesomeIcon icon={faCog} />
+              Adicionar Widgets
+            </button>
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={activeWidgets.map((w) => w.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="widgets-grid">
+                {activeWidgets.map((widget) => (
+                  <SortableWidget key={widget.id} widget={widget} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </section>
+
+      {/* Modal de personalização de widgets */}
+      <CustomizationModal
+        isOpen={isCustomizing}
+        onClose={() => setIsCustomizing(false)}
+        widgets={widgets}
+        onAddWidget={addWidget}
+        onRemoveWidget={removeWidget}
+      />
     </div>
   );
 }
