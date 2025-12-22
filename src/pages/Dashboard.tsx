@@ -216,33 +216,62 @@ export default function Dashboard() {
         .sort((a: Class, b: Class) => a.start_time.localeCompare(b.start_time));
       setClassesToday(todayClasses);
 
-      // Modality summary
+      // Modality summary - improved logic
+      // Create a map of enrollment_id to class_ids for quick lookup
+      const enrollmentClassMap = new Map<number, number[]>();
+      enrollments.forEach((enr: any) => {
+        if (enr.class_ids && enr.id) {
+          enrollmentClassMap.set(enr.id, enr.class_ids);
+        }
+      });
+
+      // Get current month for revenue calculation
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
       const modalitySummaryData: ModalitySummary[] = modalities.map((mod: Modality) => {
         const modalityClasses = classes.filter((cls: Class) => cls.modality_id === mod.id);
-        const classIds = modalityClasses.map((cls: Class) => cls.id);
+        const modalityClassIds = modalityClasses.map((cls: Class) => cls.id);
 
-        // Count students in this modality
+        // Count students in this modality (from active enrollments)
         const studentsInModality = new Set<number>();
         enrollments.forEach((enr: any) => {
-          if (enr.class_ids) {
-            const hasModalityClass = enr.class_ids.some((id: number) => classIds.includes(id));
+          if (enr.class_ids && enr.status === 'ativa') {
+            const hasModalityClass = enr.class_ids.some((id: number) => modalityClassIds.includes(id));
             if (hasModalityClass) {
               studentsInModality.add(enr.student_id);
             }
           }
         });
 
-        // Revenue from this modality (approximate based on invoices)
-        const modalityRevenue = invoices
-          .filter((inv: Invoice) => inv.status === 'paga' && inv.modalities?.includes(mod.name))
-          .reduce((sum: number, inv: Invoice) => sum + (inv.paid_amount_cents || inv.final_amount_cents), 0);
+        // Revenue from this modality (current month invoices paid)
+        // Match invoices by enrollment_id and check if enrollment has classes in this modality
+        let modalityRevenue = 0;
+        invoices.forEach((inv: Invoice) => {
+          // Only count paid invoices from current month
+          if (inv.status === 'paga' && inv.reference_month === currentMonth && inv.enrollment_id) {
+            const enrollmentClassIds = enrollmentClassMap.get(inv.enrollment_id);
+            if (enrollmentClassIds) {
+              const hasModalityClass = enrollmentClassIds.some((id: number) => modalityClassIds.includes(id));
+              if (hasModalityClass) {
+                // Divide revenue proportionally if enrollment has multiple modalities
+                const enrollmentModalities = new Set<number>();
+                enrollmentClassIds.forEach((classId: number) => {
+                  const cls = classes.find((c: Class) => c.id === classId);
+                  if (cls) enrollmentModalities.add(cls.modality_id);
+                });
+                const proportion = 1 / enrollmentModalities.size;
+                modalityRevenue += (inv.paid_amount_cents || inv.final_amount_cents) * proportion;
+              }
+            }
+          }
+        });
 
         return {
           id: mod.id,
           name: mod.name,
           studentCount: studentsInModality.size,
           classCount: modalityClasses.length,
-          revenue: modalityRevenue,
+          revenue: Math.round(modalityRevenue),
         };
       }).filter((mod: ModalitySummary) => mod.classCount > 0);
 
