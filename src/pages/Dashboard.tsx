@@ -176,7 +176,8 @@ export default function Dashboard() {
       ]);
 
       const students = studentsRes.data || [];
-      const invoices = invoicesRes.data || [];
+      // Handle invoice response structure (same as Financial page)
+      const invoices: Invoice[] = invoicesRes.data?.invoices || invoicesRes.data || [];
       const classes = classesRes.data || [];
       const modalities = modalitiesRes.data || [];
       const enrollments = enrollmentsRes.data || [];
@@ -216,58 +217,66 @@ export default function Dashboard() {
         .sort((a: Class, b: Class) => a.start_time.localeCompare(b.start_time));
       setClassesToday(todayClasses);
 
-      // Modality summary - fetch data per modality using backend API
+      // Modality summary - calculate from loaded data (same approach as Financial page)
       const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-      // Fetch invoices per modality in parallel for accurate revenue data
-      const modalityDataPromises = modalities.map(async (mod: Modality) => {
+      // Create map of enrollment_id -> modality_ids
+      const enrollmentModalityMap = new Map<number, Set<number>>();
+      enrollments.forEach((enr: any) => {
+        if (enr.id && enr.class_ids && Array.isArray(enr.class_ids)) {
+          const modalityIds = new Set<number>();
+          enr.class_ids.forEach((classId: number) => {
+            const cls = classes.find((c: Class) => c.id === classId);
+            if (cls) {
+              modalityIds.add(cls.modality_id);
+            }
+          });
+          if (modalityIds.size > 0) {
+            enrollmentModalityMap.set(enr.id, modalityIds);
+          }
+        }
+      });
+
+      // Filter invoices for current month
+      const currentMonthInvoices = invoices.filter((inv: Invoice) =>
+        inv.reference_month === currentMonth
+      );
+
+      // Calculate data per modality
+      const modalitySummaryData: ModalitySummary[] = modalities.map((mod: Modality) => {
         const modalityClasses = classes.filter((cls: Class) => cls.modality_id === mod.id);
 
         if (modalityClasses.length === 0) {
           return null;
         }
 
-        // Get invoices for this modality filtered by current month
-        try {
-          const modalityInvoicesRes = await financialService.getInvoices({
-            modality_id: mod.id,
-            reference_month: currentMonth,
-            status: 'paga',
-          });
+        // Find invoices that belong to this modality
+        const modalityInvoices = currentMonthInvoices.filter((inv: Invoice) => {
+          if (!inv.enrollment_id) return false;
+          const enrollmentModalities = enrollmentModalityMap.get(inv.enrollment_id);
+          return enrollmentModalities?.has(mod.id) || false;
+        });
 
-          // Handle response structure: { data: { invoices: [] } } or { data: [] }
-          const modalityInvoices: Invoice[] = modalityInvoicesRes.data?.invoices || modalityInvoicesRes.data || [];
+        // Calculate revenue from paid invoices (same as Financial page)
+        const paidInvoices = modalityInvoices.filter((inv: Invoice) => inv.status === 'paga');
+        const revenue = paidInvoices.reduce(
+          (sum: number, inv: Invoice) => sum + Number(inv.paid_amount_cents || 0),
+          0
+        );
 
-          // Calculate revenue from paid invoices (values are in cents)
-          const revenue = modalityInvoices.reduce(
-            (sum: number, inv: Invoice) => sum + (inv.paid_amount_cents || inv.final_amount_cents || 0),
-            0
-          );
+        // Count unique students from paid invoices
+        const uniqueStudents = new Set(
+          paidInvoices.map((inv: Invoice) => inv.student_id).filter(Boolean)
+        );
 
-          // Count unique students from invoices
-          const uniqueStudents = new Set(modalityInvoices.map((inv: Invoice) => inv.student_id).filter(Boolean));
-
-          return {
-            id: mod.id,
-            name: mod.name,
-            studentCount: uniqueStudents.size,
-            classCount: modalityClasses.length,
-            revenue,
-          };
-        } catch (error) {
-          console.error(`Erro ao carregar dados da modalidade ${mod.name}:`, error);
-          return {
-            id: mod.id,
-            name: mod.name,
-            studentCount: 0,
-            classCount: modalityClasses.length,
-            revenue: 0,
-          };
-        }
-      });
-
-      const modalityResults = await Promise.all(modalityDataPromises);
-      const modalitySummaryData = modalityResults.filter((mod): mod is ModalitySummary => mod !== null);
+        return {
+          id: mod.id,
+          name: mod.name,
+          studentCount: uniqueStudents.size,
+          classCount: modalityClasses.length,
+          revenue,
+        };
+      }).filter((mod): mod is ModalitySummary => mod !== null);
 
       setModalitySummary(modalitySummaryData);
 
