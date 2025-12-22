@@ -259,16 +259,38 @@ export default function StudentDetails() {
     if (!student) return;
 
     const phone = student.phone.replace(/\D/g, '');
+    const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
     const valorMensalidade = (financialStats.valor_proximo_vencimento / 100).toFixed(2).replace('.', ',');
     const vencimento = financialStats.proximo_vencimento?.toLocaleDateString('pt-BR') || 'em breve';
 
-    const message = `Olá ${student.full_name}!
+    // Tentar usar o template salvo nas preferências
+    const savedTemplate = localStorage.getItem('gerenciai_whatsapp_template');
+    let message: string;
+
+    if (savedTemplate) {
+      // Substituir as variáveis do template
+      const firstName = student.full_name.split(' ')[0];
+      // Descobrir o mês de referência baseado na data de vencimento
+      const refMonth = financialStats.proximo_vencimento
+        ? financialStats.proximo_vencimento.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+        : '';
+
+      message = savedTemplate
+        .replace(/\[Nome\]/g, firstName)
+        .replace(/\[NomeCompleto\]/g, student.full_name)
+        .replace(/\[Valor\]/g, `R$ ${valorMensalidade}`)
+        .replace(/\[Vencimento\]/g, vencimento)
+        .replace(/\[Referencia\]/g, refMonth);
+    } else {
+      // Mensagem padrão se não houver template salvo
+      message = `Olá ${student.full_name}!
 
 Passando para lembrar sobre sua mensalidade de *R$ ${valorMensalidade}* com vencimento em *${vencimento}*.
 
 Qualquer dúvida, estou à disposição!`;
+    }
 
-    const whatsappUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 

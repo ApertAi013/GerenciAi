@@ -342,6 +342,13 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
+/* Modal de matrícula completa - precisa ser mais largo */
+.students-page .modal-overlay .modal-content.comprehensive-enrollment-modal,
+.modal-content.comprehensive-enrollment-modal {
+  width: 95% !important;
+  max-width: 1200px !important;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
