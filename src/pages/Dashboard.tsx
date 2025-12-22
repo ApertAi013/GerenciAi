@@ -172,7 +172,7 @@ export default function Dashboard() {
         financialService.getInvoices(),
         classService.getClasses(),
         classService.getModalities(),
-        enrollmentService.getEnrollments({ status: 'ativa' }),
+        enrollmentService.getEnrollments({}), // Get ALL enrollments to map invoices to modalities
       ]);
 
       const students = studentsRes.data || [];
