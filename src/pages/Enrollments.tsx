@@ -1242,6 +1242,16 @@ function EditEnrollmentModal({
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [cancelInvoices, setCancelInvoices] = useState(false);
   const [applyDiscountToInvoices, setApplyDiscountToInvoices] = useState(false);
+
+  // Reactivation flow state
+  const [showReactivationModal, setShowReactivationModal] = useState(false);
+  const [reactivationInvoiceOption, setReactivationInvoiceOption] = useState<'now' | 'due_day' | 'next_month'>('due_day');
+  const [classAvailability, setClassAvailability] = useState<{
+    available: boolean;
+    originalClassesAvailable: boolean;
+    unavailableClasses: Array<{ id: number; name: string; enrolled: number; capacity: number }>;
+  } | null>(null);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [openInvoicesCount, setOpenInvoicesCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
@@ -1376,11 +1386,54 @@ function EditEnrollmentModal({
     setPendingPlanId(null);
   };
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = async (newStatus: string) => {
     // If changing to cancelled, show confirmation modal
     if (newStatus === 'cancelada' && enrollment.status !== 'cancelada') {
       setPendingStatus(newStatus);
       setShowCancelConfirm(true);
+    }
+    // If reactivating from cancelled or suspended, show reactivation modal
+    else if (newStatus === 'ativa' && (enrollment.status === 'cancelada' || enrollment.status === 'suspensa')) {
+      setPendingStatus(newStatus);
+      setIsCheckingAvailability(true);
+      setShowReactivationModal(true);
+
+      // Check availability of original classes
+      try {
+        const originalClassIds = enrollment.class_ids || [];
+        const unavailable: Array<{ id: number; name: string; enrolled: number; capacity: number }> = [];
+
+        for (const classId of originalClassIds) {
+          const cls = classesWithDetails.find(c => c.id === classId);
+          if (cls) {
+            const enrolled = cls.enrolled_count || 0;
+            const capacity = cls.capacity || 0;
+            if (enrolled >= capacity) {
+              unavailable.push({
+                id: cls.id,
+                name: cls.name || cls.modality_name || `Turma ${cls.id}`,
+                enrolled,
+                capacity
+              });
+            }
+          }
+        }
+
+        setClassAvailability({
+          available: unavailable.length === 0,
+          originalClassesAvailable: unavailable.length === 0,
+          unavailableClasses: unavailable
+        });
+      } catch (error) {
+        console.error('Erro ao verificar disponibilidade:', error);
+        setClassAvailability({
+          available: false,
+          originalClassesAvailable: false,
+          unavailableClasses: []
+        });
+      } finally {
+        setIsCheckingAvailability(false);
+      }
     } else {
       setFormData({ ...formData, status: newStatus as any });
     }
@@ -1398,6 +1451,27 @@ function EditEnrollmentModal({
   const cancelStatusChange = () => {
     setShowCancelConfirm(false);
     setPendingStatus(null);
+  };
+
+  const confirmReactivation = (keepOriginalClasses: boolean) => {
+    if (pendingStatus) {
+      if (keepOriginalClasses) {
+        // Keep original classes
+        setFormData({ ...formData, status: pendingStatus as any });
+      } else {
+        // User will select new classes - just update status, classes selection will happen in the form
+        setFormData({ ...formData, status: pendingStatus as any, class_ids: [] });
+      }
+      setShowReactivationModal(false);
+      setPendingStatus(null);
+    }
+  };
+
+  const cancelReactivation = () => {
+    setShowReactivationModal(false);
+    setPendingStatus(null);
+    setClassAvailability(null);
+    setReactivationInvoiceOption('due_day');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1452,9 +1526,14 @@ function EditEnrollmentModal({
         payload.cancel_invoices = cancelInvoices;
       }
 
+      // Check if this is a reactivation
+      const isReactivation = formData.status === 'ativa' &&
+        (enrollment.status === 'cancelada' || enrollment.status === 'suspensa');
+
       console.log('🔵 ATUALIZANDO MATRÍCULA (dados gerais):', {
         enrollmentId: enrollment.id,
-        payload
+        payload,
+        isReactivation
       });
 
       const response = await enrollmentService.updateEnrollment(enrollment.id, payload);
@@ -1481,7 +1560,36 @@ function EditEnrollmentModal({
       console.log('🟢 RESPOSTA (turmas):', classesResponse);
 
       if (classesResponse.status === 'success') {
-        toast.success('Matrícula e turmas atualizadas com sucesso!');
+        // Handle invoice generation for reactivation
+        if (isReactivation && reactivationInvoiceOption !== 'next_month') {
+          try {
+            console.log('🔵 Gerando fatura de reativação...', { reactivationInvoiceOption });
+
+            const invoiceType = reactivationInvoiceOption === 'now' ? 'full' : 'full';
+            const invoiceResponse = await enrollmentService.generateFirstInvoice({
+              enrollment_id: enrollment.id,
+              invoice_type: invoiceType
+            });
+
+            if (invoiceResponse.success) {
+              toast.success('Matrícula reativada e fatura gerada com sucesso!');
+            } else {
+              toast.success('Matrícula reativada! Fatura será gerada no próximo fechamento.');
+            }
+          } catch (invoiceError: any) {
+            console.error('Erro ao gerar fatura de reativação:', invoiceError);
+            // Check if invoice already exists
+            if (invoiceError.response?.data?.message?.includes('já existe')) {
+              toast.success('Matrícula reativada! Já existe fatura para este período.');
+            } else {
+              toast.success('Matrícula reativada! Gere a fatura manualmente em Financeiro.');
+            }
+          }
+        } else if (isReactivation) {
+          toast.success('Matrícula reativada! Cobrança iniciará no próximo mês.');
+        } else {
+          toast.success('Matrícula e turmas atualizadas com sucesso!');
+        }
       } else {
         console.error('❌ Erro ao atualizar turmas:', classesResponse);
         toast.error(classesResponse.message || 'Erro ao atualizar turmas');
@@ -1956,6 +2064,214 @@ function EditEnrollmentModal({
                   Voltar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reactivation Modal */}
+      {showReactivationModal && (
+        <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Reativar Matrícula</h2>
+              <button type="button" className="modal-close" onClick={cancelReactivation}>×</button>
+            </div>
+            <div style={{ padding: '2rem' }}>
+              {isCheckingAvailability ? (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
+                  <p>Verificando disponibilidade das turmas...</p>
+                </div>
+              ) : classAvailability ? (
+                <>
+                  {/* Class Availability Section */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', color: '#2c3e50' }}>
+                      Turmas do Aluno
+                    </h3>
+
+                    {classAvailability.originalClassesAvailable ? (
+                      <div style={{
+                        padding: '1rem',
+                        backgroundColor: '#d4edda',
+                        borderRadius: '8px',
+                        border: '1px solid #28a745',
+                        marginBottom: '1rem'
+                      }}>
+                        <p style={{ margin: 0, color: '#155724', fontWeight: 500 }}>
+                          ✓ As turmas originais possuem vagas disponíveis!
+                        </p>
+                        <p style={{ margin: '0.5rem 0 0', color: '#155724', fontSize: '0.9rem' }}>
+                          O aluno será reinserido nas mesmas turmas de antes.
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{
+                        padding: '1rem',
+                        backgroundColor: '#fff3cd',
+                        borderRadius: '8px',
+                        border: '1px solid #ffc107',
+                        marginBottom: '1rem'
+                      }}>
+                        <p style={{ margin: 0, color: '#856404', fontWeight: 500 }}>
+                          ⚠️ Algumas turmas não possuem vagas:
+                        </p>
+                        <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.5rem', color: '#856404' }}>
+                          {classAvailability.unavailableClasses.map((cls) => (
+                            <li key={cls.id} style={{ fontSize: '0.9rem' }}>
+                              {cls.name} ({cls.enrolled}/{cls.capacity} alunos)
+                            </li>
+                          ))}
+                        </ul>
+                        <p style={{ margin: '0.75rem 0 0', color: '#856404', fontSize: '0.9rem' }}>
+                          Você precisará escolher novas turmas para este aluno.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Invoice Generation Options */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', color: '#2c3e50' }}>
+                      Geração de Fatura
+                    </h3>
+                    <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
+                      Como deseja gerar a fatura para esta reativação?
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem',
+                          padding: '1rem',
+                          border: reactivationInvoiceOption === 'now' ? '2px solid #3498db' : '1px solid #ddd',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          backgroundColor: reactivationInvoiceOption === 'now' ? '#ebf5fb' : 'white'
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="invoiceOption"
+                          checked={reactivationInvoiceOption === 'now'}
+                          onChange={() => setReactivationInvoiceOption('now')}
+                          style={{ marginTop: '2px' }}
+                        />
+                        <div>
+                          <strong>Gerar fatura agora</strong>
+                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#666' }}>
+                            Uma fatura será gerada imediatamente com vencimento para hoje
+                          </p>
+                        </div>
+                      </label>
+
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem',
+                          padding: '1rem',
+                          border: reactivationInvoiceOption === 'due_day' ? '2px solid #3498db' : '1px solid #ddd',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          backgroundColor: reactivationInvoiceOption === 'due_day' ? '#ebf5fb' : 'white'
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="invoiceOption"
+                          checked={reactivationInvoiceOption === 'due_day'}
+                          onChange={() => setReactivationInvoiceOption('due_day')}
+                          style={{ marginTop: '2px' }}
+                        />
+                        <div>
+                          <strong>Gerar no dia de vencimento</strong>
+                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#666' }}>
+                            A fatura será gerada com vencimento no dia {enrollment.due_day} deste mês
+                          </p>
+                        </div>
+                      </label>
+
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem',
+                          padding: '1rem',
+                          border: reactivationInvoiceOption === 'next_month' ? '2px solid #3498db' : '1px solid #ddd',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          backgroundColor: reactivationInvoiceOption === 'next_month' ? '#ebf5fb' : 'white'
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="invoiceOption"
+                          checked={reactivationInvoiceOption === 'next_month'}
+                          onChange={() => setReactivationInvoiceOption('next_month')}
+                          style={{ marginTop: '2px' }}
+                        />
+                        <div>
+                          <strong>Cobrar a partir do próximo mês</strong>
+                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#666' }}>
+                            Não será gerada fatura agora. A cobrança começará no próximo ciclo
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {classAvailability.originalClassesAvailable ? (
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={() => confirmReactivation(true)}
+                        style={{ width: '100%', padding: '1rem' }}
+                      >
+                        <strong>Reativar nas turmas originais</strong>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={() => confirmReactivation(false)}
+                        style={{ width: '100%', padding: '1rem' }}
+                      >
+                        <strong>Continuar e escolher novas turmas</strong>
+                      </button>
+                    )}
+
+                    {classAvailability.originalClassesAvailable && (
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => confirmReactivation(false)}
+                        style={{ width: '100%', padding: '1rem' }}
+                      >
+                        Escolher outras turmas
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={cancelReactivation}
+                      style={{ width: '100%' }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p style={{ color: '#e74c3c' }}>
+                  Erro ao verificar disponibilidade. Tente novamente.
+                </p>
+              )}
             </div>
           </div>
         </div>
