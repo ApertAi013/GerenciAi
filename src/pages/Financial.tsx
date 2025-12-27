@@ -508,6 +508,33 @@ Obrigado!`);
     }
   };
 
+  // Função para cancelar recebimento (volta fatura para aberta)
+  const handleCancelPayment = async () => {
+    if (submitting || !editingInvoice) return;
+
+    const confirmMessage = `Confirma o cancelamento do recebimento?\n\nAluno: ${editingInvoice.student_name}\nValor pago: ${formatPrice(editingInvoice.paid_amount_cents || 0)}\n\nA fatura voltará ao status "aberta" ou "vencida".`;
+
+    if (!confirm(confirmMessage)) return;
+
+    setSubmitting(true);
+
+    try {
+      const response = await financialService.cancelPayment(editingInvoice.id);
+
+      if ((response as any).status === 'success') {
+        toast.success(`Recebimento cancelado! Fatura voltou para "${response.data.new_status}".`);
+        setShowEditPaymentModal(false);
+        setEditingInvoice(null);
+        loadInvoices();
+      }
+    } catch (error: any) {
+      console.error('Erro ao cancelar recebimento:', error);
+      toast.error(error.response?.data?.message || 'Erro ao cancelar recebimento');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const formatPrice = (cents: number) => {
     return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
@@ -1119,27 +1146,52 @@ Obrigado!`);
               ⚠️ <strong>Atenção:</strong> Alterar o valor do pagamento irá afetar o balanço financeiro.
             </div>
 
-            <button
-              type="button"
-              onClick={() => openRefundModal(editingInvoice)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginBottom: '16px',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <FontAwesomeIcon icon={faUndo} /> Estornar Pagamento
-            </button>
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+              <button
+                type="button"
+                onClick={handleCancelPayment}
+                disabled={submitting}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#ffc107',
+                  color: '#212529',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: submitting ? 0.6 : 1
+                }}
+              >
+                <FontAwesomeIcon icon={faXmark} /> Cancelar Recebimento
+              </button>
+              <button
+                type="button"
+                onClick={() => openRefundModal(editingInvoice)}
+                disabled={submitting}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: submitting ? 0.6 : 1
+                }}
+              >
+                <FontAwesomeIcon icon={faUndo} /> Estornar
+              </button>
+            </div>
 
             <form onSubmit={handleEditPayment} className="payment-form">
               <div className="form-group">

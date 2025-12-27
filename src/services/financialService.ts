@@ -139,4 +139,26 @@ export const financialService = {
     }>(`/api/invoices/${invoiceId}/refund`, { reason });
     return response.data;
   },
+
+  // Cancelar recebimento (volta fatura para aberta/vencida)
+  async cancelPayment(invoiceId: number): Promise<{
+    status: string;
+    message: string;
+    data: {
+      invoice_id: number;
+      student_name: string;
+      new_status: string;
+    };
+  }> {
+    const response = await api.post<{
+      status: string;
+      message: string;
+      data: {
+        invoice_id: number;
+        student_name: string;
+        new_status: string;
+      };
+    }>(`/api/invoices/${invoiceId}/cancel-payment`);
+    return response.data;
+  },
 };
