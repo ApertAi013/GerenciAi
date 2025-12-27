@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { studentService } from '../services/studentService';
 import { levelService } from '../services/levelService';
 import { financialService } from '../services/financialService';
@@ -391,7 +393,7 @@ export default function Students() {
                               setOpenDropdown(null);
                             }}
                           >
-                            ✏️ Editar
+                            <FontAwesomeIcon icon={faPenToSquare} style={{ marginRight: '8px' }} /> Editar
                           </button>
                           <button
                             className="dropdown-item danger"
@@ -400,7 +402,7 @@ export default function Students() {
                               setOpenDropdown(null);
                             }}
                           >
-                            🗑️ Excluir
+                            <FontAwesomeIcon icon={faTrash} style={{ marginRight: '8px' }} /> Excluir
                           </button>
                         </div>
                       )}

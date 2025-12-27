@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { faMoneyBillWave, faXmark, faCheck, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faMoneyBillWave, faXmark, faCheck, faUndo, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { financialService } from '../services/financialService';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
@@ -986,7 +986,7 @@ Obrigado!`);
                         title="Clique para editar o valor pago"
                       >
                         {formatPrice(invoice.paid_amount_cents)}
-                        <span style={{ fontSize: '10px', opacity: 0.7 }}>✏️</span>
+                        <FontAwesomeIcon icon={faPenToSquare} style={{ fontSize: '10px', opacity: 0.7, marginLeft: '4px' }} />
                       </span>
                     ) : (
                       '-'

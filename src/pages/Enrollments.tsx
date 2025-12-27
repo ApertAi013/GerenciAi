@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { enrollmentService } from '../services/enrollmentService';
 import { studentService } from '../services/studentService';
 import { classService } from '../services/classService';
@@ -794,7 +795,7 @@ export default function Enrollments() {
                         }}
                         title="Editar matrícula"
                       >
-                        ✏️
+                        <FontAwesomeIcon icon={faPenToSquare} />
                       </button>
                     </div>
                   </td>
