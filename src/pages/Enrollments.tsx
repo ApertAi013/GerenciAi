@@ -1511,17 +1511,23 @@ function EditEnrollmentModal({
                 invoice_type: 'full'
               });
 
-              if (invoiceResponse.success) {
+              console.log('🟢 Resposta geração fatura:', invoiceResponse);
+
+              if (invoiceResponse.success || (invoiceResponse as any).status === 'success') {
                 toast.success('Matrícula reativada e fatura gerada com sucesso!');
               } else {
                 toast.success('Matrícula reativada! Fatura será gerada no próximo fechamento.');
               }
             } catch (invoiceError: any) {
-              console.error('Erro ao gerar fatura:', invoiceError);
-              if (invoiceError.response?.data?.message?.includes('já existe')) {
+              console.error('❌ Erro ao gerar fatura:', invoiceError);
+              console.error('❌ Response data:', invoiceError.response?.data);
+              const errorMessage = invoiceError.response?.data?.message || '';
+              if (errorMessage.includes('já existe') || errorMessage.includes('Já existe')) {
                 toast.success('Matrícula reativada! Já existe fatura para este período.');
               } else {
-                toast.success('Matrícula reativada! Gere a fatura manualmente em Financeiro.');
+                // Mostra o erro real para debug
+                console.error('Mensagem de erro:', errorMessage);
+                toast.error(`Matrícula reativada, mas erro na fatura: ${errorMessage || 'erro desconhecido'}`);
               }
             }
           } else {
