@@ -1454,17 +1454,94 @@ function EditEnrollmentModal({
     setPendingStatus(null);
   };
 
-  const confirmReactivation = (keepOriginalClasses: boolean) => {
+  const confirmReactivation = async (keepOriginalClasses: boolean) => {
     if (pendingStatus) {
       if (keepOriginalClasses) {
-        // Keep original classes
-        setFormData({ ...formData, status: pendingStatus as any });
+        // Keep original classes - save immediately
+        setShowReactivationModal(false);
+        setIsSubmitting(true);
+
+        try {
+          // Update enrollment status to active
+          const payload: any = {
+            plan_id: formData.plan_id,
+            contract_type: formData.contract_type,
+            due_day: formData.due_day,
+            status: 'ativa',
+          };
+
+          // Add discount if applicable
+          if (formData.discount_type !== 'none') {
+            payload.discount_type = formData.discount_type;
+            payload.discount_value = formData.discount_value;
+            if (formData.discount_until) {
+              payload.discount_until = formData.discount_until;
+            }
+          } else {
+            payload.discount_type = 'none';
+            payload.discount_value = 0;
+          }
+
+          console.log('🔵 REATIVANDO MATRÍCULA:', { enrollmentId: enrollment.id, payload });
+
+          const response = await enrollmentService.updateEnrollment(enrollment.id, payload);
+
+          if (!((response as any).status === 'success' || (response as any).success === true)) {
+            toast.error(response.message || 'Erro ao reativar matrícula');
+            return;
+          }
+
+          // Update classes (keep original)
+          const classesResponse = await enrollmentService.updateEnrollmentClasses(
+            enrollment.id,
+            { class_ids: formData.class_ids }
+          );
+
+          if (classesResponse.status !== 'success') {
+            toast.error(classesResponse.message || 'Erro ao atualizar turmas');
+            return;
+          }
+
+          // Generate invoice if selected
+          if (reactivationInvoiceOption !== 'next_month') {
+            try {
+              console.log('🔵 Gerando fatura de reativação...', { reactivationInvoiceOption });
+              const invoiceResponse = await enrollmentService.generateFirstInvoice({
+                enrollment_id: enrollment.id,
+                invoice_type: 'full'
+              });
+
+              if (invoiceResponse.success) {
+                toast.success('Matrícula reativada e fatura gerada com sucesso!');
+              } else {
+                toast.success('Matrícula reativada! Fatura será gerada no próximo fechamento.');
+              }
+            } catch (invoiceError: any) {
+              console.error('Erro ao gerar fatura:', invoiceError);
+              if (invoiceError.response?.data?.message?.includes('já existe')) {
+                toast.success('Matrícula reativada! Já existe fatura para este período.');
+              } else {
+                toast.success('Matrícula reativada! Gere a fatura manualmente em Financeiro.');
+              }
+            }
+          } else {
+            toast.success('Matrícula reativada! Cobrança iniciará no próximo mês.');
+          }
+
+          onSuccess();
+        } catch (err: any) {
+          console.error('Erro ao reativar:', err);
+          toast.error(err.response?.data?.message || 'Erro ao reativar matrícula');
+        } finally {
+          setIsSubmitting(false);
+          setPendingStatus(null);
+        }
       } else {
         // User will select new classes - just update status, classes selection will happen in the form
         setFormData({ ...formData, status: pendingStatus as any, class_ids: [] });
+        setShowReactivationModal(false);
+        setPendingStatus(null);
       }
-      setShowReactivationModal(false);
-      setPendingStatus(null);
     }
   };
 
