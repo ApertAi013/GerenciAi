@@ -15,6 +15,8 @@ export const classService = {
     level?: string;
     status?: string;
     search?: string;
+    limit?: number;
+    page?: number;
   }): Promise<ClassesResponse> {
     const response = await api.get<ClassesResponse>('/api/classes', { params });
     return response.data;

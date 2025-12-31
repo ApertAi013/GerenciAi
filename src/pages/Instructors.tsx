@@ -69,10 +69,11 @@ export default function Instructors() {
 
   const fetchClasses = async () => {
     try {
-      const response = await classService.getClasses({ status: 'ativa' });
+      // Carregar todas as turmas (limit alto para garantir que todas sejam carregadas)
+      const response = await classService.getClasses({ status: 'ativa', limit: 500 });
       console.log('Resposta da API de turmas:', response); // Debug
       if (((response as any).status === 'success' || (response as any).success === true) && response.data) {
-        console.log('Turmas carregadas:', response.data);
+        console.log('Turmas carregadas:', response.data.length);
         setClasses(response.data);
       }
     } catch (error) {
