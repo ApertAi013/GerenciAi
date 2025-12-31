@@ -1239,6 +1239,7 @@ function EditEnrollmentModal({
   const [showPlanChangeConfirm, setShowPlanChangeConfirm] = useState(false);
   const [pendingPlanId, setPendingPlanId] = useState<number | null>(null);
   const [updateOpenInvoices, setUpdateOpenInvoices] = useState(false);
+  const [refundAndRegenerate, setRefundAndRegenerate] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [cancelInvoices, setCancelInvoices] = useState(false);
@@ -1373,10 +1374,11 @@ function EditEnrollmentModal({
     }
   };
 
-  const confirmPlanChange = (shouldUpdateInvoices: boolean) => {
+  const confirmPlanChange = (shouldUpdateInvoices: boolean, shouldRefundAndRegenerate: boolean = false) => {
     if (pendingPlanId !== null) {
       setFormData({ ...formData, plan_id: pendingPlanId, class_ids: [] });
       setUpdateOpenInvoices(shouldUpdateInvoices);
+      setRefundAndRegenerate(shouldRefundAndRegenerate);
       setShowPlanChangeConfirm(false);
       setPendingPlanId(null);
     }
@@ -1603,6 +1605,7 @@ function EditEnrollmentModal({
       // Add update_open_invoices flag if plan changed
       if (formData.plan_id !== enrollment.plan_id) {
         payload.update_open_invoices = updateOpenInvoices;
+        payload.refund_and_regenerate = refundAndRegenerate;
       }
 
       // Add cancel_invoices flag if status changed to cancelada
@@ -2080,17 +2083,11 @@ function EditEnrollmentModal({
                     borderRadius: '8px',
                     cursor: 'pointer'
                   }}
-                  onClick={() => {
-                    confirmPlanChange(true);
-                    toast('Para estornar uma fatura paga, vá em Financeiro > clique no valor pago > Estornar', {
-                      icon: 'ℹ️',
-                      duration: 6000
-                    });
-                  }}
+                  onClick={() => confirmPlanChange(false, true)}
                 >
-                  <strong>↩️ Estornar fatura paga e gerar nova</strong>
+                  <strong>Estornar fatura paga e gerar nova</strong>
                   <br />
-                  <small style={{ opacity: 0.9 }}>Se já houver fatura paga, estorne-a pelo Financeiro e gere nova fatura</small>
+                  <small style={{ opacity: 0.9 }}>A fatura paga do mês será estornada e uma nova será gerada com o novo valor</small>
                 </button>
                 <button
                   type="button"
