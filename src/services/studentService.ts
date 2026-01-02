@@ -36,4 +36,13 @@ export const studentService = {
     const response = await api.delete<{ success: boolean; message: string }>(`/api/students/${id}`);
     return response.data;
   },
+
+  // Obter todos os alunos (sem paginação, para selects)
+  async getAllStudents(): Promise<{ success: boolean; data: Array<{ id: number; full_name: string; email: string }> }> {
+    const response = await api.get<StudentsResponse>('/api/students', { params: { limit: 1000 } });
+    return {
+      success: response.data.success,
+      data: response.data.data || []
+    };
+  },
 };

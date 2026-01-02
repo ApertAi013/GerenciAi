@@ -29,6 +29,7 @@ import AdminMonitoring from './pages/AdminMonitoring'
 import Instructors from './pages/Instructors'
 import TrialStudents from './pages/TrialStudents'
 import Preferences from './pages/Preferences'
+import Announcements from './pages/Announcements'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -92,6 +93,7 @@ export default function App() {
             <Route path="/quadras" element={<Courts />} />
             <Route path="/locacoes" element={<Rentals />} />
             <Route path="/locacoes/agenda" element={<RentalsSchedule />} />
+            <Route path="/avisos" element={<Announcements />} />
             <Route path="/ia" element={<AI />} />
             <Route path="/ia/configuracoes" element={<AISettings />} />
             <Route path="/ia/sugestoes" element={<AISuggestions />} />

@@ -19,7 +19,8 @@ import {
   faGauge,
   faChalkboardTeacher,
   faUserClock,
-  faCog
+  faCog,
+  faBullhorn
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -46,6 +47,7 @@ const menuItems: MenuItem[] = [
   { path: '/instrutores', label: 'Instrutores', icon: faChalkboardTeacher },
   { path: '/quadras', label: 'Quadras', icon: faSquare },
   { path: '/locacoes', label: 'Locações', icon: faBaseballBall },
+  { path: '/avisos', label: 'Avisos', icon: faBullhorn },
   { path: '/financeiro', label: 'Financeiro', icon: faMoneyBillWave },
   { path: '/relatorios', label: 'Relatórios', icon: faChartBar },
   { path: '/niveis', label: 'Níveis', icon: faLayerGroup },
