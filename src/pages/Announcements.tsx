@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { announcementService, Announcement, CreateAnnouncementRequest } from '../services/announcementService';
 import { modalityService } from '../services/modalityService';
 import { levelService } from '../services/levelService';
@@ -53,9 +54,10 @@ export default function Announcements() {
 
     try {
       await announcementService.deleteAnnouncement(id);
+      toast.success('Aviso excluído com sucesso!');
       fetchAnnouncements();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao excluir aviso');
+      toast.error(error.response?.data?.message || 'Erro ao excluir aviso');
     }
   };
 
@@ -64,9 +66,10 @@ export default function Announcements() {
       await announcementService.updateAnnouncement(announcement.id, {
         is_active: !announcement.is_active
       });
+      toast.success(announcement.is_active ? 'Aviso desativado!' : 'Aviso ativado!');
       fetchAnnouncements();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao atualizar aviso');
+      toast.error(error.response?.data?.message || 'Erro ao atualizar aviso');
     }
   };
 
@@ -473,8 +476,10 @@ function AnnouncementModal({
 
       if (isEditMode && announcement) {
         await announcementService.updateAnnouncement(announcement.id, payload);
+        toast.success('Aviso atualizado com sucesso!');
       } else {
         await announcementService.createAnnouncement(payload);
+        toast.success('Aviso criado com sucesso!');
       }
       onSuccess();
     } catch (err: any) {
