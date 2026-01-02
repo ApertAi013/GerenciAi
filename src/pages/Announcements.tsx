@@ -37,9 +37,11 @@ export default function Announcements() {
     try {
       setIsLoading(true);
       const response = await announcementService.getAnnouncements(page, 20);
-      if (response.success && response.data) {
-        setAnnouncements(response.data.announcements);
-        setTotalPages(response.data.pagination.totalPages);
+      // Handle both response formats: { success: true, data } or { status: 'success', data }
+      const isSuccess = response.success === true || (response as any).status === 'success';
+      if (isSuccess && response.data) {
+        setAnnouncements(response.data.announcements || []);
+        setTotalPages(response.data.pagination?.totalPages || 1);
       }
     } catch (error) {
       console.error('Erro ao buscar avisos:', error);
