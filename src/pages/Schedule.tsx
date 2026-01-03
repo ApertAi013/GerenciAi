@@ -20,6 +20,7 @@ interface Student {
   id: string;
   name: string;
   enrollmentId?: number;
+  isMakeup?: boolean;
 }
 
 interface ClassSchedule {
@@ -204,12 +205,20 @@ export default function Schedule() {
         return;
       }
 
-      // 2. Buscar detalhes de cada turma (incluindo alunos)
+      // Calculate week start date for makeup students query
+      const weekStart = format(
+        viewMode === 'week'
+          ? addDays(currentWeek, -currentWeek.getDay() + 1) // Monday of current week
+          : currentWeek,
+        'yyyy-MM-dd'
+      );
+
+      // 2. Buscar detalhes de cada turma (incluindo alunos e remarcações)
       const classesWithStudents = await Promise.all(
         classesResponse.data.map(async (dbClass) => {
           try {
-            // Buscar turma por ID para obter os alunos
-            const classDetailsResponse = await classService.getClassById(dbClass.id);
+            // Buscar turma por ID para obter os alunos (pass weekStart to get makeups)
+            const classDetailsResponse = await classService.getClassById(dbClass.id, weekStart);
 
             if (classDetailsResponse.status !== 'success' || !classDetailsResponse.data) {
               return {
@@ -227,7 +236,8 @@ export default function Schedule() {
                   return {
                     id: s.student_id.toString(),
                     name: s.student_name,
-                    enrollmentId: s.enrollment_id
+                    enrollmentId: s.enrollment_id,
+                    isMakeup: s.is_makeup === true || s.is_makeup === 1
                   };
                 })
               : [];

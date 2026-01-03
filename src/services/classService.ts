@@ -23,8 +23,9 @@ export const classService = {
   },
 
   // Obter turma por ID
-  async getClassById(id: number): Promise<{ success: boolean; data: Class }> {
-    const response = await api.get<{ success: boolean; data: Class }>(`/api/classes/${id}`);
+  async getClassById(id: number, weekStart?: string): Promise<{ success: boolean; data: Class }> {
+    const params = weekStart ? { week_start: weekStart } : {};
+    const response = await api.get<{ success: boolean; data: Class }>(`/api/classes/${id}`, { params });
     return response.data;
   },
 

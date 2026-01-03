@@ -7,6 +7,7 @@ interface Student {
   id: string;
   name: string;
   enrollmentId?: number;
+  isMakeup?: boolean;
 }
 
 interface ClassSchedule {
@@ -63,19 +64,30 @@ function DraggableStudent({ student, classId, onStudentClick }: { student: Stude
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: uniqueId,
-    data: { type: 'student', studentId: student.id, classId }
+    data: { type: 'student', studentId: student.id, classId },
+    disabled: student.isMakeup // Disable dragging for makeup students
   });
 
-  const style = transform
+  const baseStyle: React.CSSProperties = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
         opacity: isDragging ? 0.5 : 1,
       }
-    : undefined;
+    : {};
+
+  // Style for makeup students (yellow)
+  const makeupStyle: React.CSSProperties = student.isMakeup
+    ? {
+        backgroundColor: '#FFB300',
+        color: '#1a1a1a',
+        border: '1px solid #FF8F00',
+        fontWeight: 500,
+      }
+    : {};
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onStudentClick) {
+    if (onStudentClick && !student.isMakeup) {
       onStudentClick(parseInt(student.id));
     }
   };
@@ -83,12 +95,13 @@ function DraggableStudent({ student, classId, onStudentClick }: { student: Stude
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className="student-chip draggable"
+      style={{ ...baseStyle, ...makeupStyle }}
+      {...(student.isMakeup ? {} : { ...listeners, ...attributes })}
+      className={`student-chip ${student.isMakeup ? 'makeup' : 'draggable'}`}
       onClick={handleClick}
+      title={student.isMakeup ? 'Aluno de remarcação' : student.name}
     >
+      {student.isMakeup && '↻ '}
       {student.name}
     </div>
   );
