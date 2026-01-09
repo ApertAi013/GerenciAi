@@ -1990,7 +1990,7 @@ function EditEnrollmentModal({
 
           {/* Checkbox para aplicar desconto em faturas abertas */}
           {openInvoicesCount > 0 && (formData.discount_type !== enrollment.discount_type || formData.discount_value !== enrollment.discount_value) && (
-            <div className="form-group" style={{ marginTop: '12px', padding: '12px', backgroundColor: '#fff3cd', borderRadius: '8px', border: '1px solid #ffc107' }}>
+            <div className="form-group" style={{ marginTop: '12px', padding: '12px', backgroundColor: formData.discount_type === 'none' ? '#f8d7da' : '#fff3cd', borderRadius: '8px', border: `1px solid ${formData.discount_type === 'none' ? '#f5c6cb' : '#ffc107'}` }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
                 <input
                   type="checkbox"
@@ -1998,7 +1998,11 @@ function EditEnrollmentModal({
                   onChange={(e) => setApplyDiscountToInvoices(e.target.checked)}
                 />
                 <span>
-                  Aplicar novo desconto nas <strong>{openInvoicesCount} fatura(s) aberta(s)</strong> existente(s)
+                  {formData.discount_type === 'none' ? (
+                    <>Remover desconto das <strong>{openInvoicesCount} fatura(s) aberta(s)</strong> existente(s) (voltarão ao valor cheio)</>
+                  ) : (
+                    <>Aplicar novo desconto nas <strong>{openInvoicesCount} fatura(s) aberta(s)</strong> existente(s)</>
+                  )}
                 </span>
               </label>
             </div>
