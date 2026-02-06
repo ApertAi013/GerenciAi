@@ -72,9 +72,15 @@ export default function ComprehensiveEnrollmentForm({
   }, []);
 
   useEffect(() => {
-    // Filter classes by student level, search query, and availability
+    // Filter classes by student level, plan modality, search query, and availability
     if (classes.length > 0) {
       let filtered = classes;
+
+      // Filter by plan modality (if plan has a specific modality)
+      const selectedPlanData = plans.find((p) => p.id === selectedPlanId);
+      if (selectedPlanData?.modality_id) {
+        filtered = filtered.filter((cls) => cls.modality_id === selectedPlanData.modality_id);
+      }
 
       // Filter by level
       if (studentData.level) {
@@ -117,7 +123,7 @@ export default function ComprehensiveEnrollmentForm({
     } else {
       setFilteredClasses([]);
     }
-  }, [studentData.level, classes, searchQuery, showOnlyAvailable]);
+  }, [studentData.level, classes, searchQuery, showOnlyAvailable, selectedPlanId, plans]);
 
   const fetchInitialData = async () => {
     try {
@@ -214,6 +220,8 @@ export default function ComprehensiveEnrollmentForm({
       return;
     }
 
+    // Clear selected classes when moving to classes step (modality filter may have changed)
+    setSelectedClassIds([]);
     setCurrentStep('classes');
   };
 
@@ -688,6 +696,9 @@ export default function ComprehensiveEnrollmentForm({
                   <p className="info-text">
                     Selecione {selectedPlan.sessions_per_week} turma(s) compatível(is) com o nível{' '}
                     <strong>{studentData.level}</strong>
+                    {selectedPlan.modality_name && (
+                      <> de <strong>{selectedPlan.modality_name}</strong></>
+                    )}
                   </p>
                 )}
               </div>

@@ -6,6 +6,8 @@ export interface Plan {
   price?: string;
   description?: string;
   status: 'ativo' | 'inativo';
+  modality_id?: number | null;
+  modality_name?: string | null;
 }
 
 export interface Enrollment {
