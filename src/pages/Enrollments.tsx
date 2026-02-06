@@ -200,6 +200,11 @@ export default function Enrollments() {
     if (classesWithDetails.length > 0) {
       let filtered = classesWithDetails;
 
+      // Filter by plan modality (if plan has a specific modality)
+      if (selectedPlan?.modality_id) {
+        filtered = filtered.filter((cls) => cls.modality_id === selectedPlan.modality_id);
+      }
+
       // Filter by student level if student is selected
       const selectedStudent = getSelectedStudent();
       if (selectedStudent && selectedStudent.level) {
@@ -233,7 +238,7 @@ export default function Enrollments() {
 
       setFilteredClasses(filtered);
     }
-  }, [classesWithDetails, searchQuery, showOnlyAvailable, formData.student_id]);
+  }, [classesWithDetails, searchQuery, showOnlyAvailable, formData.student_id, selectedPlan]);
 
   const loadData = async () => {
     try {
@@ -1312,10 +1317,16 @@ function EditEnrollmentModal({
     fetchStudentAndClasses();
   }, [enrollment.student_id, classes]);
 
-  // Filter classes based on student level, availability, and search
+  // Filter classes based on plan modality, student level, availability, and search
   useEffect(() => {
     if (classesWithDetails.length > 0) {
       let filtered = classesWithDetails;
+
+      // Filter by plan modality (if plan has a specific modality)
+      const currentPlan = plans.find((p) => p.id === formData.plan_id);
+      if (currentPlan?.modality_id) {
+        filtered = filtered.filter((cls) => cls.modality_id === currentPlan.modality_id);
+      }
 
       // Filter by student level
       if (studentData && studentData.level) {
@@ -1351,7 +1362,7 @@ function EditEnrollmentModal({
 
       setFilteredClasses(filtered);
     }
-  }, [studentData, classesWithDetails, searchQuery, showOnlyAvailable, enrollment.class_ids]);
+  }, [studentData, classesWithDetails, searchQuery, showOnlyAvailable, enrollment.class_ids, formData.plan_id, plans]);
 
   const selectedPlan = plans.find((p) => p.id === formData.plan_id);
 
