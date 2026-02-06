@@ -1,19 +1,38 @@
 import { useState, useEffect } from 'react';
 import { planService } from '../services/planService';
+import { modalityService } from '../services/modalityService';
 import type { CreatePlanRequest, UpdatePlanRequest } from '../services/planService';
 import type { Plan } from '../types/enrollmentTypes';
+import type { Modality } from '../types/classTypes';
 import '../styles/Settings.css';
 
 export default function Plans() {
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [modalities, setModalities] = useState<Modality[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchPlans();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    await Promise.all([fetchPlans(), fetchModalities()]);
+  };
+
+  const fetchModalities = async () => {
+    try {
+      const response = await modalityService.getModalities();
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
+        setModalities(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar modalidades:', error);
+    }
+  };
 
   const fetchPlans = async () => {
     try {
@@ -108,6 +127,20 @@ export default function Plans() {
                 {plan.sessions_per_week}x por semana
               </div>
 
+              {plan.modality_name && (
+                <div className="plan-modality" style={{ 
+                  fontSize: '0.85rem', 
+                  color: '#666', 
+                  marginTop: '0.5rem',
+                  padding: '0.25rem 0.5rem',
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: '4px',
+                  display: 'inline-block'
+                }}>
+                  🏐 {plan.modality_name}
+                </div>
+              )}
+
               {plan.description && (
                 <p className="plan-description">{plan.description}</p>
               )}
@@ -153,6 +186,7 @@ export default function Plans() {
       {showCreateModal && (
         <PlanModal
           plan={editingPlan}
+          modalities={modalities}
           onClose={() => {
             setShowCreateModal(false);
             setEditingPlan(null);
@@ -170,10 +204,12 @@ export default function Plans() {
 
 function PlanModal({
   plan,
+  modalities,
   onClose,
   onSuccess,
 }: {
   plan: Plan | null;
+  modalities: Modality[];
   onClose: () => void;
   onSuccess: () => void;
 }) {
@@ -183,6 +219,7 @@ function PlanModal({
     sessions_per_week: plan?.sessions_per_week || 1,
     price_cents: plan?.price_cents || 0,
     description: plan?.description || '',
+    modality_id: plan?.modality_id || undefined,
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -292,6 +329,30 @@ function PlanModal({
                 Digite o valor desejado (ex: 150.00)
               </small>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="modality_id">Modalidade</label>
+            <select
+              id="modality_id"
+              value={formData.modality_id || ''}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  modality_id: e.target.value ? parseInt(e.target.value) : undefined,
+                })
+              }
+            >
+              <option value="">Todas as modalidades</option>
+              {modalities.map((modality) => (
+                <option key={modality.id} value={modality.id}>
+                  {modality.name}
+                </option>
+              ))}
+            </select>
+            <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
+              Se definir uma modalidade, só turmas dessa modalidade aparecerão na matrícula
+            </small>
           </div>
 
           <div className="form-group">

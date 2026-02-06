@@ -6,6 +6,7 @@ export interface CreatePlanRequest {
   sessions_per_week: number;
   price_cents: number;
   description?: string;
+  modality_id?: number;
 }
 
 export interface UpdatePlanRequest {
@@ -14,6 +15,7 @@ export interface UpdatePlanRequest {
   price_cents?: number;
   description?: string;
   status?: 'ativo' | 'inativo';
+  modality_id?: number;
 }
 
 export const planService = {
