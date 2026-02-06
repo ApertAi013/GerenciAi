@@ -201,8 +201,9 @@ export default function Enrollments() {
       let filtered = classesWithDetails;
 
       // Filter by plan modality (if plan has a specific modality)
-      if (selectedPlan?.modality_id) {
-        filtered = filtered.filter((cls) => cls.modality_id === selectedPlan.modality_id);
+      const currentSelectedPlan = plans.find(p => p.id === formData.plan_id);
+      if (currentSelectedPlan?.modality_id) {
+        filtered = filtered.filter((cls) => cls.modality_id === currentSelectedPlan.modality_id);
       }
 
       // Filter by student level if student is selected
@@ -238,7 +239,7 @@ export default function Enrollments() {
 
       setFilteredClasses(filtered);
     }
-  }, [classesWithDetails, searchQuery, showOnlyAvailable, formData.student_id, selectedPlan]);
+  }, [classesWithDetails, searchQuery, showOnlyAvailable, formData.student_id, formData.plan_id, plans]);
 
   const loadData = async () => {
     try {
