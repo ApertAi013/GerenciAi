@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { planService } from '../services/planService';
 import { modalityService } from '../services/modalityService';
-import type { CreatePlanRequest, UpdatePlanRequest } from '../services/planService';
+import type { CreatePlanRequest, UpdatePlanRequest, BulkAdjustRequest, BulkAdjustResponse } from '../services/planService';
 import type { Plan } from '../types/enrollmentTypes';
 import type { Modality } from '../types/classTypes';
 import '../styles/Settings.css';
@@ -11,6 +11,7 @@ export default function Plans() {
   const [modalities, setModalities] = useState<Modality[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBulkAdjustModal, setShowBulkAdjustModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [error, setError] = useState('');
 
@@ -90,16 +91,26 @@ export default function Plans() {
     <div className="settings-page">
       <div className="page-header">
         <h1>Gerenciar Planos</h1>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => {
-            setEditingPlan(null);
-            setShowCreateModal(true);
-          }}
-        >
-          + Novo Plano
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => setShowBulkAdjustModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            📊 Reajuste Global
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              setEditingPlan(null);
+              setShowCreateModal(true);
+            }}
+          >
+            + Novo Plano
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -194,6 +205,17 @@ export default function Plans() {
           onSuccess={() => {
             setShowCreateModal(false);
             setEditingPlan(null);
+            fetchPlans();
+          }}
+        />
+      )}
+
+      {showBulkAdjustModal && (
+        <BulkAdjustModal
+          plans={plans}
+          onClose={() => setShowBulkAdjustModal(false)}
+          onSuccess={() => {
+            setShowBulkAdjustModal(false);
             fetchPlans();
           }}
         />
@@ -389,6 +411,339 @@ function PlanModal({
                 : isEditMode
                 ? 'Salvar Alterações'
                 : 'Criar Plano'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function BulkAdjustModal({
+  plans,
+  onClose,
+  onSuccess,
+}: {
+  plans: Plan[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [selectedPlanIds, setSelectedPlanIds] = useState<number[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [adjustmentType, setAdjustmentType] = useState<'percentage' | 'fixed'>('percentage');
+  const [adjustmentValue, setAdjustmentValue] = useState<string>('');
+  const [applyToOpenInvoices, setApplyToOpenInvoices] = useState(false);
+  const [applyFromMonth, setApplyFromMonth] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [result, setResult] = useState<BulkAdjustResponse['data'] | null>(null);
+
+  // Get current month in YYYY-MM format
+  const currentMonth = new Date().toISOString().slice(0, 7);
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedPlanIds(plans.filter(p => p.status === 'ativo').map(p => p.id));
+    } else {
+      setSelectedPlanIds([]);
+    }
+  };
+
+  const handlePlanToggle = (planId: number) => {
+    setSelectedPlanIds(prev => 
+      prev.includes(planId) 
+        ? prev.filter(id => id !== planId)
+        : [...prev, planId]
+    );
+  };
+
+  const calculateNewPrice = (currentPrice: number): number => {
+    const value = parseFloat(adjustmentValue) || 0;
+    if (adjustmentType === 'percentage') {
+      return Math.round(currentPrice * (1 + value / 100));
+    } else {
+      return Math.max(0, currentPrice + Math.round(value * 100));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (selectedPlanIds.length === 0) {
+      setError('Selecione pelo menos um plano');
+      return;
+    }
+
+    const value = parseFloat(adjustmentValue);
+    if (isNaN(value) || value === 0) {
+      setError('Digite um valor válido para o ajuste');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const request: BulkAdjustRequest = {
+        plan_ids: selectedPlanIds,
+        adjustment_type: adjustmentType,
+        adjustment_value: adjustmentType === 'percentage' ? value : Math.round(value * 100),
+        apply_to_open_invoices: applyToOpenInvoices,
+      };
+
+      if (applyToOpenInvoices && applyFromMonth) {
+        request.apply_from_month = applyFromMonth;
+      }
+
+      const response = await planService.bulkAdjustPrices(request);
+      setResult(response.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao aplicar reajuste');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Show result screen after success
+  if (result) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+          <div className="modal-header">
+            <h2>✅ Reajuste Aplicado</h2>
+            <button type="button" className="modal-close" onClick={onSuccess}>
+              ✕
+            </button>
+          </div>
+
+          <div style={{ padding: '1rem' }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              gap: '1rem', 
+              marginBottom: '1.5rem',
+              background: '#f5f5f5',
+              padding: '1rem',
+              borderRadius: '8px'
+            }}>
+              <div>
+                <strong style={{ fontSize: '2rem', color: '#4CAF50' }}>{result.plans_updated}</strong>
+                <div style={{ color: '#666' }}>planos atualizados</div>
+              </div>
+              <div>
+                <strong style={{ fontSize: '2rem', color: '#2196F3' }}>{result.invoices_updated}</strong>
+                <div style={{ color: '#666' }}>faturas atualizadas</div>
+              </div>
+            </div>
+
+            <h3 style={{ marginBottom: '0.5rem' }}>Detalhes:</h3>
+            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ background: '#f0f0f0' }}>
+                    <th style={{ padding: '0.5rem', textAlign: 'left' }}>Plano</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'right' }}>Antes</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'right' }}>Depois</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'right' }}>Faturas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.details.map((detail) => (
+                    <tr key={detail.plan_id} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '0.5rem' }}>{detail.plan_name}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right', color: '#999' }}>{detail.old_price}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right', color: '#4CAF50', fontWeight: 'bold' }}>{detail.new_price}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>{detail.invoices_updated}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn-primary" onClick={onSuccess}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+        <div className="modal-header">
+          <h2>📊 Reajuste Global de Valores</h2>
+          <button type="button" className="modal-close" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+
+        {error && <div className="error-message">{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ padding: '1rem' }}>
+            {/* Plan Selection */}
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                />
+                <strong>Selecionar todos os planos ativos</strong>
+              </label>
+              
+              <div style={{ 
+                maxHeight: '200px', 
+                overflowY: 'auto', 
+                border: '1px solid #ddd', 
+                borderRadius: '8px',
+                padding: '0.5rem'
+              }}>
+                {plans.map((plan) => (
+                  <label 
+                    key={plan.id} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.5rem',
+                      padding: '0.5rem',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      opacity: plan.status === 'inativo' ? 0.5 : 1,
+                      background: selectedPlanIds.includes(plan.id) ? '#e3f2fd' : 'transparent'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedPlanIds.includes(plan.id)}
+                      onChange={() => handlePlanToggle(plan.id)}
+                      disabled={plan.status === 'inativo'}
+                    />
+                    <span style={{ flex: 1 }}>{plan.name}</span>
+                    <span style={{ color: '#666' }}>
+                      R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
+                    </span>
+                    {selectedPlanIds.includes(plan.id) && adjustmentValue && (
+                      <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                        → R$ {(calculateNewPrice(plan.price_cents) / 100).toFixed(2).replace('.', ',')}
+                      </span>
+                    )}
+                  </label>
+                ))}
+              </div>
+              <small style={{ color: '#666' }}>
+                {selectedPlanIds.length} plano(s) selecionado(s)
+              </small>
+            </div>
+
+            {/* Adjustment Type */}
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+              <label><strong>Tipo de Ajuste</strong></label>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="adjustmentType"
+                    checked={adjustmentType === 'percentage'}
+                    onChange={() => setAdjustmentType('percentage')}
+                  />
+                  Porcentagem (%)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="adjustmentType"
+                    checked={adjustmentType === 'fixed'}
+                    onChange={() => setAdjustmentType('fixed')}
+                  />
+                  Valor Fixo (R$)
+                </label>
+              </div>
+            </div>
+
+            {/* Adjustment Value */}
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+              <label htmlFor="adjustmentValue">
+                <strong>Valor do Ajuste</strong>
+                <span style={{ color: '#666', fontWeight: 'normal' }}>
+                  {' '}(use valor negativo para redução)
+                </span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  id="adjustmentValue"
+                  type="number"
+                  step={adjustmentType === 'percentage' ? '0.1' : '0.01'}
+                  value={adjustmentValue}
+                  onChange={(e) => setAdjustmentValue(e.target.value)}
+                  placeholder={adjustmentType === 'percentage' ? 'Ex: 10 para +10%' : 'Ex: 20.00 para +R$20'}
+                  style={{ flex: 1 }}
+                />
+                <span style={{ color: '#666', minWidth: '30px' }}>
+                  {adjustmentType === 'percentage' ? '%' : 'R$'}
+                </span>
+              </div>
+              <small style={{ color: '#666' }}>
+                {adjustmentType === 'percentage' 
+                  ? 'Ex: 10 = aumento de 10%, -5 = redução de 5%'
+                  : 'Ex: 20 = aumento de R$20, -10 = redução de R$10'
+                }
+              </small>
+            </div>
+
+            {/* Apply to Invoices */}
+            <div className="form-group" style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff3e0', borderRadius: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={applyToOpenInvoices}
+                  onChange={(e) => setApplyToOpenInvoices(e.target.checked)}
+                />
+                <strong>Aplicar também nas faturas em aberto</strong>
+              </label>
+              <small style={{ color: '#666', display: 'block', marginTop: '0.5rem' }}>
+                Se marcado, as faturas com status "aberta" ou "vencida" também serão atualizadas com o novo valor.
+              </small>
+
+              {applyToOpenInvoices && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <label htmlFor="applyFromMonth">A partir de qual mês? (opcional)</label>
+                  <input
+                    id="applyFromMonth"
+                    type="month"
+                    value={applyFromMonth}
+                    onChange={(e) => setApplyFromMonth(e.target.value)}
+                    min={currentMonth}
+                    style={{ marginTop: '0.25rem' }}
+                  />
+                  <small style={{ color: '#666', display: 'block' }}>
+                    Deixe em branco para aplicar em todas as faturas em aberto.
+                  </small>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting || selectedPlanIds.length === 0}
+            >
+              {isSubmitting ? 'Aplicando...' : `Aplicar Reajuste (${selectedPlanIds.length} planos)`}
             </button>
           </div>
         </form>

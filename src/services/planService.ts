@@ -18,6 +18,33 @@ export interface UpdatePlanRequest {
   modality_id?: number;
 }
 
+export interface BulkAdjustRequest {
+  plan_ids: number[] | 'all';
+  adjustment_type: 'percentage' | 'fixed';
+  adjustment_value: number;
+  apply_to_open_invoices?: boolean;
+  apply_from_month?: string;
+}
+
+export interface BulkAdjustResponse {
+  success: boolean;
+  message: string;
+  data: {
+    plans_updated: number;
+    invoices_updated: number;
+    details: Array<{
+      plan_id: number;
+      plan_name: string;
+      old_price_cents: number;
+      new_price_cents: number;
+      old_price: string;
+      new_price: string;
+      change: string;
+      invoices_updated: number;
+    }>;
+  };
+}
+
 export const planService = {
   // List all plans
   async getPlans(): Promise<{ success: boolean; data: Plan[] }> {
@@ -46,6 +73,12 @@ export const planService = {
   // Delete plan
   async deletePlan(id: number): Promise<{ success: boolean; message: string }> {
     const response = await api.delete<{ success: boolean; message: string }>(`/api/plans/${id}`);
+    return response.data;
+  },
+
+  // Bulk adjust prices (reajuste em massa)
+  async bulkAdjustPrices(data: BulkAdjustRequest): Promise<BulkAdjustResponse> {
+    const response = await api.post<BulkAdjustResponse>('/api/plans/bulk-adjust', data);
     return response.data;
   },
 };
