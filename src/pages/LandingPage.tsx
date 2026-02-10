@@ -133,18 +133,7 @@ export default function LandingPage() {
       }
     });
 
-    // Animate dashboard cards
-    cards.forEach((card, index) => {
-      const element = card as HTMLElement;
-      element.style.opacity = '0';
-      element.style.transform = 'translateY(30px)';
-
-      setTimeout(() => {
-        element.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-        element.style.opacity = '1';
-        element.style.transform = 'translateY(0)';
-      }, 800 + (index * 200));
-    });
+    // Dashboard cards animation is now handled by CSS (see LandingPage.css)
 
     // Chat auto-scroll
     const chatMessages = document.querySelector('.chat-messages');
