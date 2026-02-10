@@ -598,7 +598,7 @@ function BulkAdjustModal({
               </label>
               
               <div style={{ 
-                maxHeight: '200px', 
+                maxHeight: '250px', 
                 overflowY: 'auto', 
                 border: '1px solid #ddd', 
                 borderRadius: '8px',
@@ -608,14 +608,17 @@ function BulkAdjustModal({
                   <label 
                     key={plan.id} 
                     style={{ 
-                      display: 'flex', 
+                      display: 'grid',
+                      gridTemplateColumns: 'auto 1fr auto auto',
                       alignItems: 'center', 
-                      gap: '0.5rem',
-                      padding: '0.5rem',
-                      borderRadius: '4px',
+                      gap: '0.75rem',
+                      padding: '0.75rem',
+                      borderRadius: '6px',
                       cursor: 'pointer',
                       opacity: plan.status === 'inativo' ? 0.5 : 1,
-                      background: selectedPlanIds.includes(plan.id) ? '#e3f2fd' : 'transparent'
+                      background: selectedPlanIds.includes(plan.id) ? '#e3f2fd' : 'transparent',
+                      borderBottom: '1px solid #eee',
+                      marginBottom: '0.25rem'
                     }}
                   >
                     <input
@@ -623,15 +626,20 @@ function BulkAdjustModal({
                       checked={selectedPlanIds.includes(plan.id)}
                       onChange={() => handlePlanToggle(plan.id)}
                       disabled={plan.status === 'inativo'}
+                      style={{ width: '18px', height: '18px' }}
                     />
-                    <span style={{ flex: 1 }}>{plan.name}</span>
-                    <span style={{ color: '#666' }}>
+                    <span style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {plan.name}
+                    </span>
+                    <span style={{ color: '#666', whiteSpace: 'nowrap', textAlign: 'right' }}>
                       R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
                     </span>
-                    {selectedPlanIds.includes(plan.id) && adjustmentValue && (
-                      <span style={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                    {selectedPlanIds.includes(plan.id) && adjustmentValue ? (
+                      <span style={{ color: '#4CAF50', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                         → R$ {(calculateNewPrice(plan.price_cents) / 100).toFixed(2).replace('.', ',')}
                       </span>
+                    ) : (
+                      <span style={{ minWidth: '100px' }}></span>
                     )}
                   </label>
                 ))}
