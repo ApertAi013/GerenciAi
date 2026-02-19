@@ -987,7 +987,7 @@ Obrigado!`);
                     <td>
                       {invoice.plan_name ? (
                         <span
-                          onClick={() => navigate('/planos')}
+                          onClick={() => navigate(`/alunos/${invoice.student_id}`)}
                           style={{
                             cursor: 'pointer',
                             color: '#007bff',
@@ -995,7 +995,7 @@ Obrigado!`);
                             alignItems: 'center',
                             gap: '4px',
                           }}
-                          title="Clique para ver planos"
+                          title="Clique para ver matrícula do aluno"
                         >
                           {invoice.plan_name}
                           <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '10px', opacity: 0.5 }} />
