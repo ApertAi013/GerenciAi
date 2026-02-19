@@ -2,6 +2,7 @@ export interface Invoice {
   id: number;
   enrollment_id: number;
   student_id?: number;
+  plan_id?: number;
   student_name?: string;
   student_phone?: string;
   plan_name?: string;

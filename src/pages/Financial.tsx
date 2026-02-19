@@ -47,9 +47,6 @@ export default function Financial() {
   const [editingDueDateInvoice, setEditingDueDateInvoice] = useState<Invoice | null>(null);
   const [newDueDate, setNewDueDate] = useState('');
 
-  // Estado para filtro de plano
-  const [planFilter, setPlanFilter] = useState<string>('');
-
   // New filter states
   const [instructorFilter, setInstructorFilter] = useState<string>('');
   const [modalityFilter, setModalityFilter] = useState<string>('');
@@ -932,13 +929,6 @@ Obrigado!`);
                 );
               }
 
-              // Apply plan filter
-              if (planFilter) {
-                filteredInvoices = filteredInvoices.filter(invoice =>
-                  invoice.plan_name === planFilter
-                );
-              }
-
               // Apply sorting
               const sortedInvoices = sortInvoices(filteredInvoices);
 
@@ -997,28 +987,18 @@ Obrigado!`);
                     <td>
                       {invoice.plan_name ? (
                         <span
-                          onClick={() => {
-                            // Filtrar por este plano ou navegar para planos
-                            if (planFilter === invoice.plan_name) {
-                              setPlanFilter('');
-                            } else {
-                              setPlanFilter(invoice.plan_name || '');
-                            }
-                          }}
+                          onClick={() => navigate('/planos')}
                           style={{
                             cursor: 'pointer',
-                            color: planFilter === invoice.plan_name ? '#27ae60' : '#007bff',
+                            color: '#007bff',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            backgroundColor: planFilter === invoice.plan_name ? 'rgba(39, 174, 96, 0.1)' : 'transparent',
                           }}
-                          title={planFilter === invoice.plan_name ? 'Clique para remover filtro' : 'Clique para filtrar por este plano'}
+                          title="Clique para ver planos"
                         >
                           {invoice.plan_name}
-                          {planFilter === invoice.plan_name && <FontAwesomeIcon icon={faCheck} style={{ fontSize: '10px' }} />}
+                          <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '10px', opacity: 0.5 }} />
                         </span>
                       ) : '-'}
                     </td>
@@ -1518,44 +1498,6 @@ Obrigado!`);
               </div>
             </form>
           </div>
-        </div>
-      )}
-
-      {/* Indicador de filtro de plano ativo */}
-      {planFilter && (
-        <div style={{
-          position: 'fixed',
-          bottom: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: '#27ae60',
-          color: 'white',
-          padding: '10px 20px',
-          borderRadius: '25px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          zIndex: 1000,
-        }}>
-          <span>Filtrando por: <strong>{planFilter}</strong></span>
-          <button
-            onClick={() => setPlanFilter('')}
-            style={{
-              background: 'rgba(255,255,255,0.2)',
-              border: 'none',
-              color: 'white',
-              borderRadius: '50%',
-              width: '24px',
-              height: '24px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            ✕
-          </button>
         </div>
       )}
     </div>
