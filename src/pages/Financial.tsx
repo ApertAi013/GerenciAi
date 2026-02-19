@@ -987,7 +987,7 @@ Obrigado!`);
                     <td>
                       {invoice.plan_name ? (
                         <span
-                          onClick={() => navigate(`/alunos/${invoice.student_id}`)}
+                          onClick={() => navigate(`/matriculas?edit=${invoice.enrollment_id}`)}
                           style={{
                             cursor: 'pointer',
                             color: '#007bff',
@@ -995,10 +995,10 @@ Obrigado!`);
                             alignItems: 'center',
                             gap: '4px',
                           }}
-                          title="Clique para ver matrícula do aluno"
+                          title="Clique para editar matrícula"
                         >
                           {invoice.plan_name}
-                          <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '10px', opacity: 0.5 }} />
+                          <FontAwesomeIcon icon={faPenToSquare} style={{ fontSize: '10px', opacity: 0.5 }} />
                         </span>
                       ) : '-'}
                     </td>

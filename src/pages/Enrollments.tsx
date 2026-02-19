@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
@@ -17,6 +17,7 @@ import '../components/ComprehensiveEnrollmentForm.css';
 
 export default function Enrollments() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [allEnrollments, setAllEnrollments] = useState<Enrollment[]>([]); // For counting
   const [students, setStudents] = useState<Student[]>([]);
@@ -151,6 +152,20 @@ export default function Enrollments() {
   useEffect(() => {
     loadData();
   }, [statusFilter]);
+
+  // Auto-open edit modal if ?edit=enrollment_id is in URL
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && enrollments.length > 0) {
+      const enrollmentToEdit = enrollments.find(e => e.id === Number(editId));
+      if (enrollmentToEdit) {
+        setEditingEnrollment(enrollmentToEdit);
+        setShowEditModal(true);
+        // Clear the param so it doesn't reopen on close
+        setSearchParams({});
+      }
+    }
+  }, [searchParams, enrollments]);
 
   useEffect(() => {
     // Filter students based on search
