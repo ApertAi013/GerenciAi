@@ -161,4 +161,16 @@ export const financialService = {
     }>(`/api/invoices/${invoiceId}/cancel-payment`);
     return response.data;
   },
+
+  // Atualizar data de vencimento da fatura
+  async updateInvoiceDueDate(invoiceId: number, dueDate: string): Promise<{
+    status: string;
+    message: string;
+  }> {
+    const response = await api.patch<{
+      status: string;
+      message: string;
+    }>(`/api/invoices/${invoiceId}/due-date`, { due_date: dueDate });
+    return response.data;
+  },
 };

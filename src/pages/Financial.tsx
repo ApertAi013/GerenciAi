@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { faMoneyBillWave, faXmark, faCheck, faUndo, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { faMoneyBillWave, faXmark, faCheck, faUndo, faPenToSquare, faCalendarAlt, faFileInvoice, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { financialService } from '../services/financialService';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
@@ -41,6 +41,14 @@ export default function Financial() {
 
   // Estado para evitar duplo clique nos botões de submit
   const [submitting, setSubmitting] = useState(false);
+
+  // Estado para edição rápida de vencimento
+  const [showDueDateModal, setShowDueDateModal] = useState(false);
+  const [editingDueDateInvoice, setEditingDueDateInvoice] = useState<Invoice | null>(null);
+  const [newDueDate, setNewDueDate] = useState('');
+
+  // Estado para filtro de plano
+  const [planFilter, setPlanFilter] = useState<string>('');
 
   // New filter states
   const [instructorFilter, setInstructorFilter] = useState<string>('');
@@ -924,6 +932,13 @@ Obrigado!`);
                 );
               }
 
+              // Apply plan filter
+              if (planFilter) {
+                filteredInvoices = filteredInvoices.filter(invoice =>
+                  invoice.plan_name === planFilter
+                );
+              }
+
               // Apply sorting
               const sortedInvoices = sortInvoices(filteredInvoices);
 
@@ -943,56 +958,182 @@ Obrigado!`);
               ) : (
                 sortedInvoices.map(invoice => (
                   <tr key={invoice.id}>
-                    <td>#{invoice.id}</td>
+                    <td>
+                      <span
+                        onClick={() => {
+                          // Copiar ID para clipboard e mostrar toast
+                          navigator.clipboard.writeText(`#${invoice.id}`);
+                          toast.success(`ID #${invoice.id} copiado!`, { duration: 1500 });
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          color: '#6c757d',
+                          fontFamily: 'monospace',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          backgroundColor: 'rgba(108, 117, 125, 0.1)',
+                        }}
+                        title="Clique para copiar o ID"
+                      >
+                        #{invoice.id}
+                      </span>
+                    </td>
                     <td>
                       <span
                         onClick={() => navigate(`/alunos/${invoice.student_id}`)}
                         style={{
                           cursor: 'pointer',
                           color: '#007bff',
-                          textDecoration: 'none'
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-                        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                        title="Clique para ver detalhes do aluno"
                       >
                         {invoice.student_name || `ID ${invoice.student_id}`}
+                        <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '10px', opacity: 0.5 }} />
                       </span>
                     </td>
-                  <td>{invoice.plan_name || '-'}</td>
-                  <td>{invoice.reference_month}</td>
-                  <td>{formatDate(invoice.due_date)}</td>
-                  <td className="amount-cell">
-                    {invoice.discount_cents && invoice.discount_cents > 0 ? (
-                      <>
-                        <span className="original-amount">{formatPrice(invoice.amount_cents)}</span>
-                        <span className="final-amount">{formatPrice(invoice.final_amount_cents)}</span>
-                      </>
-                    ) : (
-                      formatPrice(invoice.final_amount_cents)
-                    )}
-                  </td>
-                  <td className="amount-cell">
-                    {invoice.status === 'paga' && invoice.paid_amount_cents ? (
+                    <td>
+                      {invoice.plan_name ? (
+                        <span
+                          onClick={() => {
+                            // Filtrar por este plano ou navegar para planos
+                            if (planFilter === invoice.plan_name) {
+                              setPlanFilter('');
+                            } else {
+                              setPlanFilter(invoice.plan_name || '');
+                            }
+                          }}
+                          style={{
+                            cursor: 'pointer',
+                            color: planFilter === invoice.plan_name ? '#27ae60' : '#007bff',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            backgroundColor: planFilter === invoice.plan_name ? 'rgba(39, 174, 96, 0.1)' : 'transparent',
+                          }}
+                          title={planFilter === invoice.plan_name ? 'Clique para remover filtro' : 'Clique para filtrar por este plano'}
+                        >
+                          {invoice.plan_name}
+                          {planFilter === invoice.plan_name && <FontAwesomeIcon icon={faCheck} style={{ fontSize: '10px' }} />}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td>
                       <span
-                        onClick={() => openEditPaymentModal(invoice)}
+                        onClick={() => {
+                          // Atualizar filtro de mês para este mês de referência
+                          const [year, month] = invoice.reference_month.split('-');
+                          if (year && month) {
+                            setSelectedMonth(`${year}-${month.padStart(2, '0')}`);
+                          }
+                        }}
                         style={{
                           cursor: 'pointer',
                           color: '#007bff',
-                          textDecoration: 'underline',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                        }}
+                        title="Clique para filtrar por este mês"
+                      >
+                        {invoice.reference_month}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        onClick={() => {
+                          if (invoice.status === 'aberta' || invoice.status === 'vencida') {
+                            setEditingDueDateInvoice(invoice);
+                            setNewDueDate(invoice.due_date);
+                            setShowDueDateModal(true);
+                          }
+                        }}
+                        style={{
+                          cursor: (invoice.status === 'aberta' || invoice.status === 'vencida') ? 'pointer' : 'default',
+                          color: (invoice.status === 'aberta' || invoice.status === 'vencida') ? '#007bff' : 'inherit',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '4px'
+                          gap: '4px',
                         }}
-                        title="Clique para editar o valor pago"
+                        title={(invoice.status === 'aberta' || invoice.status === 'vencida') ? 'Clique para alterar o vencimento' : undefined}
                       >
-                        {formatPrice(invoice.paid_amount_cents)}
-                        <FontAwesomeIcon icon={faPenToSquare} style={{ fontSize: '10px', opacity: 0.7, marginLeft: '4px' }} />
+                        {formatDate(invoice.due_date)}
+                        {(invoice.status === 'aberta' || invoice.status === 'vencida') && (
+                          <FontAwesomeIcon icon={faCalendarAlt} style={{ fontSize: '10px', opacity: 0.6 }} />
+                        )}
                       </span>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td>{getStatusBadge(invoice.status)}</td>
+                    </td>
+                    <td className="amount-cell">
+                      <span
+                        onClick={() => {
+                          // Copiar valor para clipboard
+                          const valor = (invoice.final_amount_cents / 100).toFixed(2).replace('.', ',');
+                          navigator.clipboard.writeText(`R$ ${valor}`);
+                          toast.success(`Valor R$ ${valor} copiado!`, { duration: 1500 });
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          display: 'inline-block',
+                        }}
+                        title="Clique para copiar o valor"
+                      >
+                        {invoice.discount_cents && invoice.discount_cents > 0 ? (
+                          <>
+                            <span className="original-amount">{formatPrice(invoice.amount_cents)}</span>
+                            <span className="final-amount">{formatPrice(invoice.final_amount_cents)}</span>
+                          </>
+                        ) : (
+                          formatPrice(invoice.final_amount_cents)
+                        )}
+                      </span>
+                    </td>
+                    <td className="amount-cell">
+                      {invoice.status === 'paga' && invoice.paid_amount_cents ? (
+                        <span
+                          onClick={() => openEditPaymentModal(invoice)}
+                          style={{
+                            cursor: 'pointer',
+                            color: '#007bff',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                          title="Clique para editar o valor pago"
+                        >
+                          {formatPrice(invoice.paid_amount_cents)}
+                          <FontAwesomeIcon icon={faPenToSquare} style={{ fontSize: '10px', opacity: 0.7, marginLeft: '4px' }} />
+                        </span>
+                      ) : (
+                        <span style={{ color: '#999' }}>-</span>
+                      )}
+                    </td>
+                    <td>
+                      <span
+                        onClick={() => {
+                          // Clicar no status abre ações rápidas dependendo do status
+                          if (invoice.status === 'aberta' || invoice.status === 'vencida') {
+                            openPaymentModal(invoice);
+                          } else if (invoice.status === 'paga') {
+                            openEditPaymentModal(invoice);
+                          }
+                        }}
+                        style={{
+                          cursor: (invoice.status !== 'cancelada' && invoice.status !== 'estornada') ? 'pointer' : 'default',
+                        }}
+                        title={
+                          invoice.status === 'aberta' || invoice.status === 'vencida' 
+                            ? 'Clique para dar baixa' 
+                            : invoice.status === 'paga'
+                            ? 'Clique para editar pagamento'
+                            : undefined
+                        }
+                      >
+                        {getStatusBadge(invoice.status)}
+                      </span>
+                    </td>
                   <td>
                     <div className="action-buttons">
                       {invoice.status === 'aberta' || invoice.status === 'vencida' ? (
@@ -1316,6 +1457,105 @@ Obrigado!`);
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Modal de Edição de Vencimento */}
+      {showDueDateModal && editingDueDateInvoice && (
+        <div className="modal-overlay" onClick={() => setShowDueDateModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h2><FontAwesomeIcon icon={faCalendarAlt} /> Alterar Vencimento</h2>
+              <button type="button" className="modal-close" onClick={() => setShowDueDateModal(false)}>×</button>
+            </div>
+
+            <div className="invoice-details">
+              <p><strong>Aluno:</strong> {editingDueDateInvoice.student_name}</p>
+              <p><strong>Plano:</strong> {editingDueDateInvoice.plan_name || '-'}</p>
+              <p><strong>Valor:</strong> {formatPrice(editingDueDateInvoice.final_amount_cents)}</p>
+              <p><strong>Vencimento atual:</strong> {formatDate(editingDueDateInvoice.due_date)}</p>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (submitting) return;
+              
+              try {
+                setSubmitting(true);
+                await financialService.updateInvoiceDueDate(editingDueDateInvoice.id, newDueDate);
+                toast.success('Vencimento atualizado com sucesso!');
+                setShowDueDateModal(false);
+                setEditingDueDateInvoice(null);
+                // Recarregar faturas
+                const response = await financialService.getInvoices({ reference_month: selectedMonth });
+                setInvoices(response.data.invoices);
+              } catch (error: any) {
+                console.error('Erro ao atualizar vencimento:', error);
+                toast.error(error.response?.data?.message || 'Erro ao atualizar vencimento');
+              } finally {
+                setSubmitting(false);
+              }
+            }} className="payment-form">
+              <div className="form-group">
+                <label htmlFor="new_due_date">Novo Vencimento *</label>
+                <input
+                  type="date"
+                  id="new_due_date"
+                  value={newDueDate}
+                  onChange={(e) => setNewDueDate(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowDueDateModal(false)} disabled={submitting}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-primary" disabled={submitting || !newDueDate}>
+                  {submitting ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Indicador de filtro de plano ativo */}
+      {planFilter && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#27ae60',
+          color: 'white',
+          padding: '10px 20px',
+          borderRadius: '25px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          zIndex: 1000,
+        }}>
+          <span>Filtrando por: <strong>{planFilter}</strong></span>
+          <button
+            onClick={() => setPlanFilter('')}
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              color: 'white',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>
