@@ -970,7 +970,7 @@ Obrigado!`);
                     </td>
                     <td>
                       <span
-                        onClick={() => navigate(`/alunos/${invoice.student_id}`)}
+                        onClick={() => window.open(`/alunos/${invoice.student_id}`, '_blank')}
                         style={{
                           cursor: 'pointer',
                           color: '#007bff',
@@ -978,7 +978,7 @@ Obrigado!`);
                           alignItems: 'center',
                           gap: '4px',
                         }}
-                        title="Clique para ver detalhes do aluno"
+                        title="Clique para ver detalhes do aluno (abre em nova aba)"
                       >
                         {invoice.student_name || `ID ${invoice.student_id}`}
                         <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '10px', opacity: 0.5 }} />
@@ -987,7 +987,7 @@ Obrigado!`);
                     <td>
                       {invoice.plan_name ? (
                         <span
-                          onClick={() => navigate(`/matriculas?edit=${invoice.enrollment_id}`)}
+                          onClick={() => window.open(`/matriculas?edit=${invoice.enrollment_id}`, '_blank')}
                           style={{
                             cursor: 'pointer',
                             color: '#007bff',
@@ -995,7 +995,7 @@ Obrigado!`);
                             alignItems: 'center',
                             gap: '4px',
                           }}
-                          title="Clique para editar matrícula"
+                          title="Clique para editar matrícula (abre em nova aba)"
                         >
                           {invoice.plan_name}
                           <FontAwesomeIcon icon={faPenToSquare} style={{ fontSize: '10px', opacity: 0.5 }} />
@@ -1466,9 +1466,8 @@ Obrigado!`);
                 toast.success('Vencimento atualizado com sucesso!');
                 setShowDueDateModal(false);
                 setEditingDueDateInvoice(null);
-                // Recarregar faturas
-                const response = await financialService.getInvoices({ reference_month: selectedMonth });
-                setInvoices(response.data.invoices);
+                // Recarregar faturas preservando filtros
+                await loadInvoices();
               } catch (error: any) {
                 console.error('Erro ao atualizar vencimento:', error);
                 toast.error(error.response?.data?.message || 'Erro ao atualizar vencimento');
