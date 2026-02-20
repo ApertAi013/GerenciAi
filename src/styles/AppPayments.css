@@ -408,6 +408,30 @@
   color: #1a1a2e;
 }
 
+.entity-search {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.entity-search:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.selected-count {
+  font-size: 0.85rem;
+  color: #4f46e5;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
 .entity-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

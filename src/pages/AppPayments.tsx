@@ -100,6 +100,7 @@ export default function AppPayments() {
   const [availableClasses, setAvailableClasses] = useState<Array<{ id: number; name: string }>>([]);
   const [availableStudents, setAvailableStudents] = useState<Array<{ id: number; full_name: string }>>([]);
   const [savingScope, setSavingScope] = useState(false);
+  const [studentSearch, setStudentSearch] = useState('');
 
   // Charges filters
   const [chargeStatusFilter, setChargeStatusFilter] = useState('');
@@ -563,8 +564,20 @@ export default function AppPayments() {
             {scopeType === 'students' && (
               <div className="entity-selector">
                 <h3>Selecione os Alunos</h3>
+                <input
+                  type="text"
+                  className="entity-search"
+                  placeholder="Buscar aluno por nome..."
+                  value={studentSearch}
+                  onChange={e => setStudentSearch(e.target.value)}
+                />
+                {selectedEntityIds.length > 0 && (
+                  <p className="selected-count">{selectedEntityIds.length} aluno(s) selecionado(s)</p>
+                )}
                 <div className="entity-list">
-                  {availableStudents.map(student => (
+                  {availableStudents
+                    .filter(s => s.full_name.toLowerCase().includes(studentSearch.toLowerCase()))
+                    .map(student => (
                     <label key={student.id} className={`entity-item ${selectedEntityIds.includes(student.id) ? 'selected' : ''}`}>
                       <input
                         type="checkbox"
@@ -576,6 +589,9 @@ export default function AppPayments() {
                   ))}
                   {availableStudents.length === 0 && (
                     <p className="empty-msg">Carregando alunos...</p>
+                  )}
+                  {availableStudents.length > 0 && availableStudents.filter(s => s.full_name.toLowerCase().includes(studentSearch.toLowerCase())).length === 0 && (
+                    <p className="empty-msg">Nenhum aluno encontrado</p>
                   )}
                 </div>
               </div>
