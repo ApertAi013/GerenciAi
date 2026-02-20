@@ -8,6 +8,7 @@ import { studentService } from '../../services/studentService';
 import { classService } from '../../services/classService';
 import { enrollmentService } from '../../services/enrollmentService';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useQuickEditStore } from '../../store/quickEditStore';
 import '../../styles/Header.css';
 
 interface SearchResult {
@@ -29,6 +30,7 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { openQuickEdit } = useQuickEditStore();
 
   const handleLogout = () => {
     authService.logout();
@@ -119,7 +121,7 @@ export default function Header() {
 
     switch (result.type) {
       case 'student':
-        navigate(`/alunos/${result.id}`);
+        openQuickEdit(result.id);
         break;
       case 'class':
         navigate('/turmas');

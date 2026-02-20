@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import QuickEditStudentModal from '../QuickEditStudentModal';
 import '../../styles/Layout.css';
 
 export default function Layout() {
@@ -13,6 +14,7 @@ export default function Layout() {
       <main className="layout-content">
         <Outlet />
       </main>
+      <QuickEditStudentModal />
       <a
         href="/guia-do-sistema"
         target="_blank"

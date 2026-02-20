@@ -1,0 +1,640 @@
+/* ===== QUICK EDIT STUDENT MODAL ===== */
+
+@keyframes qe-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes qe-slideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes qe-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Overlay */
+.qe-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: qe-fadeIn 0.15s ease-out;
+  padding: 1rem;
+}
+
+/* Modal */
+.qe-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 780px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
+  animation: qe-slideUp 0.2s ease-out;
+  overflow: hidden;
+}
+
+/* Loading */
+.qe-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  color: #737373;
+}
+
+.qe-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e5e5;
+  border-top-color: #F58A25;
+  border-radius: 50%;
+  animation: qe-spin 0.6s linear infinite;
+}
+
+/* ===== HEADER ===== */
+.qe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.qe-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.qe-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F58A25, #E07B1F);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.qe-header-info {
+  min-width: 0;
+}
+
+.qe-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qe-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.qe-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 50px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.qe-badge-ativo, .qe-badge-ativa { background: #ECFDF5; color: #059669; }
+.qe-badge-inativo, .qe-badge-cancelada { background: #FEF2F2; color: #DC2626; }
+.qe-badge-pendente, .qe-badge-suspensa { background: #FFFBEB; color: #D97706; }
+.qe-badge-concluida { background: #EFF6FF; color: #2563EB; }
+.qe-badge-aberta { background: #EFF6FF; color: #2563EB; }
+.qe-badge-paga { background: #ECFDF5; color: #059669; }
+.qe-badge-vencida { background: #FEF2F2; color: #DC2626; }
+.qe-badge-estornada { background: #F5F5F5; color: #737373; }
+
+.qe-badge-level {
+  color: #fff !important;
+  background: #737373;
+}
+
+.qe-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.qe-btn-icon {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #f5f5f5;
+  color: #525252;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qe-btn-icon:hover {
+  background: #e5e5e5;
+  color: #1a1a1a;
+}
+
+.qe-btn-whatsapp {
+  background: #25D366;
+  color: #fff !important;
+}
+
+.qe-btn-whatsapp:hover {
+  background: #1EB955;
+  color: #fff !important;
+}
+
+.qe-btn-close:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+/* ===== TABS ===== */
+.qe-tabs {
+  display: flex;
+  border-bottom: 2px solid #f0f0f0;
+  padding: 0 1.5rem;
+  flex-shrink: 0;
+}
+
+.qe-tab {
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #a3a3a3;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.qe-tab:hover {
+  color: #525252;
+}
+
+.qe-tab-active {
+  color: #F58A25;
+  border-bottom-color: #F58A25;
+}
+
+.qe-tab-count {
+  background: #F58A25;
+  color: #fff;
+  font-size: 0.6rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qe-tab-count-danger {
+  background: #DC2626;
+}
+
+/* ===== CONTENT ===== */
+.qe-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.qe-tab-content {
+  animation: qe-fadeIn 0.15s ease;
+}
+
+.qe-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #a3a3a3;
+  font-size: 0.9rem;
+}
+
+/* ===== FORM GRID (Dados) ===== */
+.qe-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.qe-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.qe-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.qe-field input,
+.qe-field select {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.88rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #1a1a1a;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.qe-field input:focus,
+.qe-field select:focus {
+  outline: none;
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.1);
+  background: #fff;
+}
+
+/* Save bar */
+.qe-save-bar {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ===== BUTTONS ===== */
+.qe-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.qe-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.qe-btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+.qe-btn-primary {
+  background: #F58A25;
+  color: #fff;
+}
+
+.qe-btn-primary:hover:not(:disabled) {
+  background: #E07B1F;
+}
+
+.qe-btn-secondary {
+  background: #f5f5f5;
+  color: #525252;
+}
+
+.qe-btn-secondary:hover:not(:disabled) {
+  background: #e5e5e5;
+}
+
+.qe-btn-success {
+  background: #059669;
+  color: #fff;
+}
+
+.qe-btn-success:hover:not(:disabled) {
+  background: #047857;
+}
+
+/* ===== ENROLLMENT CARDS ===== */
+.qe-enrollment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.qe-enrollment-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  transition: border-color 0.2s;
+}
+
+.qe-enrollment-card:hover {
+  border-color: #d4d4d4;
+}
+
+.qe-enrollment-inactive {
+  opacity: 0.6;
+}
+
+.qe-enrollment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.6rem;
+}
+
+.qe-enrollment-header > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qe-enrollment-plan {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.qe-enrollment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.qe-enrollment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.8rem;
+  color: #737373;
+}
+
+.qe-discount-badge {
+  color: #059669;
+  font-weight: 600;
+}
+
+.qe-class-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.qe-class-badge {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  padding: 0.2rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.qe-enrollment-edit .qe-form-grid {
+  grid-template-columns: 1fr 1fr 1fr;
+  margin-bottom: 0.75rem;
+}
+
+.qe-enrollment-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* ===== FINANCIAL ===== */
+.qe-fin-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.qe-fin-stat {
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.qe-fin-stat-danger {
+  background: #FEF2F2;
+  border-color: #FECACA;
+}
+
+.qe-fin-stat-ok {
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+}
+
+.qe-fin-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.qe-fin-stat-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+.qe-fin-stat-danger .qe-fin-stat-value { color: #DC2626; }
+.qe-fin-stat-ok .qe-fin-stat-value { color: #059669; }
+
+.qe-fin-stat-sub {
+  font-size: 0.75rem;
+  color: #a3a3a3;
+}
+
+/* Invoice rows */
+.qe-invoices {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.qe-invoice-row {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.qe-invoice-row:last-child {
+  border-bottom: none;
+}
+
+.qe-invoice-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.qe-invoice-ref {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  min-width: 70px;
+}
+
+.qe-invoice-date {
+  font-size: 0.8rem;
+  color: #737373;
+  min-width: 80px;
+}
+
+.qe-invoice-amount {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  min-width: 80px;
+}
+
+/* Payment form inline */
+.qe-payment-form {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.qe-payment-fields {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.qe-payment-fields input,
+.qe-payment-fields select {
+  flex: 1;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  font-family: inherit;
+}
+
+.qe-payment-fields input:focus,
+.qe-payment-fields select:focus {
+  outline: none;
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.1);
+}
+
+.qe-payment-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* History toggle */
+.qe-toggle-history {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  background: none;
+  border: 1px dashed #d4d4d4;
+  border-radius: 8px;
+  color: #737373;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.qe-toggle-history:hover {
+  border-color: #F58A25;
+  color: #F58A25;
+  background: #FFFBF5;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .qe-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .qe-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .qe-header {
+    padding: 1rem;
+  }
+
+  .qe-content {
+    padding: 1rem;
+  }
+
+  .qe-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qe-enrollment-edit .qe-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qe-fin-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .qe-invoice-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .qe-payment-fields {
+    flex-direction: column;
+  }
+}
