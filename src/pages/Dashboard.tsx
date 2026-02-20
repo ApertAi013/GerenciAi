@@ -193,19 +193,19 @@ export default function Dashboard() {
     const currentMonth = getCurrentMonth();
     const monthInvoices = invoices.filter(inv => inv.reference_month === currentMonth);
 
-    const total = monthInvoices.reduce((s, inv) => s + inv.final_amount_cents, 0);
+    const total = monthInvoices.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0);
     const totalCount = monthInvoices.length;
 
     const paid = monthInvoices.filter(inv => inv.status === 'paga');
-    const paidTotal = paid.reduce((s, inv) => s + (inv.paid_amount_cents || inv.final_amount_cents), 0);
+    const paidTotal = paid.reduce((s, inv) => s + Number(inv.paid_amount_cents || inv.final_amount_cents || 0), 0);
     const paidCount = paid.length;
 
     const pending = monthInvoices.filter(inv => inv.status === 'aberta');
-    const pendingTotal = pending.reduce((s, inv) => s + inv.final_amount_cents, 0);
+    const pendingTotal = pending.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0);
     const pendingCount = pending.length;
 
     const overdue = monthInvoices.filter(inv => inv.status === 'vencida');
-    const overdueTotal = overdue.reduce((s, inv) => s + inv.final_amount_cents, 0);
+    const overdueTotal = overdue.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0);
     const overdueCount = overdue.length;
 
     return {
@@ -223,10 +223,10 @@ export default function Dashboard() {
     const months = getLastMonths(6);
     return months.map(({ key, label }) => {
       const mi = invoices.filter(inv => inv.reference_month === key);
-      const faturado = mi.reduce((s, inv) => s + inv.final_amount_cents, 0) / 100;
+      const faturado = mi.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0) / 100;
       const recebido = mi
         .filter(inv => inv.status === 'paga')
-        .reduce((s, inv) => s + (inv.paid_amount_cents || inv.final_amount_cents), 0) / 100;
+        .reduce((s, inv) => s + Number(inv.paid_amount_cents || inv.final_amount_cents || 0), 0) / 100;
       const matriculas = enrollments.filter(e => {
         const d = e.created_at || e.start_date;
         return d && d.substring(0, 7) === key;
@@ -826,7 +826,7 @@ export default function Dashboard() {
                   <div className="overdue-avatar">{inv.student_name?.charAt(0).toUpperCase()}</div>
                   <div className="overdue-info">
                     <span className="overdue-name">{inv.student_name}</span>
-                    <span className="overdue-amount">{formatCurrency(inv.final_amount_cents)}</span>
+                    <span className="overdue-amount">{formatCurrency(Number(inv.final_amount_cents || 0))}</span>
                     <span className="overdue-due">Venceu em {formatDate(inv.due_date)}</span>
                   </div>
                 </div>
