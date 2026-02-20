@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
@@ -33,18 +33,14 @@ export default function Login() {
       const isSuccess = response.status === 'success' || (response as any).success === true;
 
       if (isSuccess) {
-        console.log('Login bem-sucedido, salvando auth...');
-        console.log('User:', response.data.user);
-        console.log('Token:', response.data.token);
-
-        setAuth(response.data.user, response.data.token);
-
-        // Salvar preferência de "mantenha-me logado"
+        // Salvar preferência ANTES de setAuth (authStore usa isso para escolher o storage)
         if (keepLoggedIn) {
           localStorage.setItem('keepLoggedIn', 'true');
         } else {
           localStorage.removeItem('keepLoggedIn');
         }
+
+        setAuth(response.data.user, response.data.token);
 
         toast.success('Login realizado com sucesso!');
 
@@ -113,6 +109,10 @@ export default function Login() {
               required
               disabled={isLoading}
             />
+          </div>
+
+          <div className="forgot-password-link">
+            <Link to="/esqueci-senha">Esqueci minha senha</Link>
           </div>
 
           <div className="form-group-checkbox">

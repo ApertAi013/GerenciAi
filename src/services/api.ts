@@ -12,7 +12,7 @@ export const api = axios.create({
 // Interceptor para adicionar token automaticamente em todas as requisições
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,15 +27,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Só redireciona para login se não estiver na rota de login
-    // e se for um erro de autenticação com token presente
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (
       error.response?.status === 401 &&
-      localStorage.getItem('token') &&
+      token &&
       !window.location.pathname.includes('/login')
     ) {
-      // Token inválido ou expirado
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);

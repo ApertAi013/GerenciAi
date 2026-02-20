@@ -30,6 +30,8 @@ import Instructors from './pages/Instructors'
 import TrialStudents from './pages/TrialStudents'
 import Preferences from './pages/Preferences'
 import Announcements from './pages/Announcements'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -77,6 +79,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/esqueci-senha" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
