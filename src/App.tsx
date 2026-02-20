@@ -32,6 +32,7 @@ import Preferences from './pages/Preferences'
 import Announcements from './pages/Announcements'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import SystemGuide from './pages/SystemGuide'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -81,6 +82,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/esqueci-senha" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/guia-do-sistema" element={<SystemGuide />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
