@@ -1,614 +1,844 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUsers,
+  faUserPlus,
+  faUserMinus,
   faMoneyBillWave,
-  faCalendarCheck,
-  faChartLine,
-  faExclamationTriangle,
-  faArrowRight,
-  faClockRotateLeft,
-  faDumbbell,
-  faMapMarkerAlt,
-  faClock,
-  faUserGraduate,
   faReceipt,
-  faLayerGroup,
-  faCog,
-  faGripVertical,
-  faPuzzlePiece,
+  faCalendarCheck,
+  faClock,
+  faExclamationTriangle,
+  faDollarSign,
+  faChartLine,
+  faArrowRight,
+  faDumbbell,
+  faUserGraduate,
+  faCalendarDay,
+  faMapMarkerAlt,
+  faChevronDown,
+  faChevronUp,
+  faBullhorn,
+  faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 import { useAuthStore } from '../store/authStore';
-import { useWidgets } from '../hooks/useWidgets';
-import WidgetRenderer from '../components/widgets/WidgetRenderer';
-import CustomizationModal from '../components/widgets/CustomizationModal';
-import type { Widget } from '../types/widgetTypes';
 import { financialService } from '../services/financialService';
 import { classService } from '../services/classService';
-import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
+import { studentService } from '../services/studentService';
+import { levelService } from '../services/levelService';
+import { rentalService } from '../services/rentalService';
+import { announcementService } from '../services/announcementService';
+import type { Announcement } from '../services/announcementService';
 import type { Invoice } from '../types/financialTypes';
 import type { Class, Modality } from '../types/classTypes';
+import type { Enrollment } from '../types/enrollmentTypes';
+import type { Level } from '../types/levelTypes';
+import type { CourtRental } from '../types/rentalTypes';
 import '../styles/Dashboard.css';
 
-// Sortable Widget Component
-interface SortableWidgetProps {
-  widget: Widget;
-}
+const formatCurrency = (cents: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
 
-function SortableWidget({ widget }: SortableWidgetProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: widget.id });
+const formatReais = (value: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+const formatDate = (dateStr: string) =>
+  new Date(dateStr).toLocaleDateString('pt-BR');
 
-  const getWidgetHeight = () => {
-    switch (widget.size) {
-      case 'small': return '250px';
-      case 'medium': return '350px';
-      case 'large': return '450px';
-      default: return '350px';
-    }
-  };
+const getCurrentMonth = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+};
 
-  return (
-    <div ref={setNodeRef} style={style} className="widget-container">
-      <div className="widget-wrapper" style={{ height: getWidgetHeight() }}>
-        <div
-          {...attributes}
-          {...listeners}
-          className="widget-drag-handle"
-          title="Arrastar para reordenar"
-        >
-          <FontAwesomeIcon icon={faGripVertical} />
-        </div>
-        <div className="widget-content">
-          <WidgetRenderer type={widget.type} />
-        </div>
-      </div>
-    </div>
-  );
-}
+const getLastMonths = (n: number) => {
+  const months = [];
+  const now = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+    });
+  }
+  return months;
+};
 
-interface DashboardStats {
-  totalStudents: number;
-  newStudentsLast7Days: number;
-  totalRevenueLast7Days: number;
-  overdueInvoices: number;
-  paidInvoicesLast7Days: number;
-  classesToday: number;
-}
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+};
 
-interface ModalitySummary {
+const getProgressColor = (pct: number) => {
+  if (pct >= 90) return '#EF4444';
+  if (pct >= 70) return '#F59E0B';
+  return '#10B981';
+};
+
+const getTodayKey = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+const getTodayWeekday = () => {
+  const days = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+  return days[new Date().getDay()];
+};
+
+interface StudentData {
   id: number;
-  name: string;
-  studentCount: number;
-  classCount: number;
-  revenue: number;
+  level_name?: string;
+  level_id?: number;
+  level?: string;
+  status: string;
 }
 
 export default function Dashboard() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const { activeWidgets, isLoading: widgetsLoading, addWidget, removeWidget, reorderWidgets, widgets } = useWidgets();
-  const [isCustomizing, setIsCustomizing] = useState(false);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      const oldIndex = activeWidgets.findIndex((w) => w.id === active.id);
-      const newIndex = activeWidgets.findIndex((w) => w.id === over.id);
-      reorderWidgets(oldIndex, newIndex);
-    }
-  };
-
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats>({
-    totalStudents: 0,
-    newStudentsLast7Days: 0,
-    totalRevenueLast7Days: 0,
-    overdueInvoices: 0,
-    paidInvoicesLast7Days: 0,
-    classesToday: 0,
-  });
-  const [classesToday, setClassesToday] = useState<Class[]>([]);
-  const [overdueStudents, setOverdueStudents] = useState<Invoice[]>([]);
-  const [modalitySummary, setModalitySummary] = useState<ModalitySummary[]>([]);
-  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
 
-  const weekdayMap: Record<string, string> = {
-    'dom': 'Domingo',
-    'seg': 'Segunda',
-    'ter': 'Terça',
-    'qua': 'Quarta',
-    'qui': 'Quinta',
-    'sex': 'Sexta',
-    'sab': 'Sábado',
-  };
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [modalities, setModalities] = useState<Modality[]>([]);
+  const [students, setStudents] = useState<StudentData[]>([]);
+  const [levels, setLevels] = useState<Level[]>([]);
+  const [rentals, setRentals] = useState<CourtRental[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
-  const getTodayWeekday = (): string => {
-    const days = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
-    return days[new Date().getDay()];
-  };
+  // Expand/collapse states
+  const [vagasExpanded, setVagasExpanded] = useState(false);
+  const [levelsExpanded, setLevelsExpanded] = useState(false);
+  const [agendaExpanded, setAgendaExpanded] = useState(false);
+
+  // Quick announcement form
+  const [quickTitle, setQuickTitle] = useState('');
+  const [quickContent, setQuickContent] = useState('');
+  const [quickType, setQuickType] = useState<'info' | 'warning' | 'urgent' | 'event'>('info');
+  const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
+  const [announceSent, setAnnounceSent] = useState(false);
+  const [announceError, setAnnounceError] = useState('');
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [
-        studentsRes,
-        invoicesRes,
-        classesRes,
-        modalitiesRes,
-        enrollmentsRes,
-      ] = await Promise.all([
-        studentService.getStudents({ limit: 1000 }),
-        financialService.getInvoices(),
-        classService.getClasses(),
-        classService.getModalities(),
-        enrollmentService.getEnrollments({}), // Get ALL enrollments to map invoices to modalities
-      ]);
+      const today = getTodayKey();
+      const [invoicesRes, classesRes, enrollmentsRes, modalitiesRes, studentsRes, levelsRes, rentalsRes] =
+        await Promise.all([
+          financialService.getInvoices(),
+          classService.getClasses({ limit: 1000 }),
+          enrollmentService.getEnrollments({}),
+          classService.getModalities(),
+          studentService.getStudents({ limit: 1000 }),
+          levelService.getLevels(),
+          rentalService.getRentals({ start_date: today, end_date: today }),
+        ]);
 
-      const students = studentsRes.data || [];
-      // Handle invoice response structure (same as Financial page)
-      const invoices: Invoice[] = invoicesRes.data?.invoices || invoicesRes.data || [];
-      const classes = classesRes.data || [];
-      const modalities = modalitiesRes.data || [];
-      const enrollments = enrollmentsRes.data || [];
+      setInvoices(invoicesRes.data?.invoices || invoicesRes.data || []);
+      setClasses(classesRes.data || []);
+      setEnrollments(enrollmentsRes.data || []);
+      setModalities(modalitiesRes.data || []);
+      setStudents(studentsRes.data || []);
+      setLevels(levelsRes.data || []);
+      setRentals(rentalsRes.data || []);
 
-      setAllInvoices(invoices);
-
-      // Calculate stats
-      const now = new Date();
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-      // New students in last 7 days
-      const newStudents = students.filter((s: any) => {
-        const createdAt = new Date(s.created_at);
-        return createdAt >= sevenDaysAgo;
-      });
-
-      // Paid invoices in last 7 days
-      const paidLast7Days = invoices.filter((inv: Invoice) => {
-        if (inv.status !== 'paga' || !inv.paid_at) return false;
-        const paidAt = new Date(inv.paid_at);
-        return paidAt >= sevenDaysAgo;
-      });
-
-      const revenueLast7Days = paidLast7Days.reduce(
-        (sum: number, inv: Invoice) => sum + (inv.paid_amount_cents || inv.final_amount_cents),
-        0
-      );
-
-      // Overdue invoices
-      const overdue = invoices.filter((inv: Invoice) => inv.status === 'vencida');
-      setOverdueStudents(overdue.slice(0, 5)); // Top 5 for display
-
-      // Classes today
-      const todayWeekday = getTodayWeekday();
-      const todayClasses = classes
-        .filter((cls: Class) => cls.weekday === todayWeekday && cls.status === 'ativa')
-        .sort((a: Class, b: Class) => a.start_time.localeCompare(b.start_time));
-      setClassesToday(todayClasses);
-
-      // Modality summary - use enrolled_count from classes
-      const modalitySummaryData: ModalitySummary[] = modalities.map((mod: Modality) => {
-        const modalityClasses = classes.filter((cls: Class) => cls.modality_id === mod.id);
-
-        if (modalityClasses.length === 0) {
-          return null;
-        }
-
-        // Sum enrolled_count from all classes in this modality
-        // Note: A student may be in multiple classes, so this might count some students multiple times
-        // But it's a quick approximation. For exact count, we'd need to track unique student_ids
-        const totalEnrolled = modalityClasses.reduce(
-          (sum: number, cls: Class) => sum + (cls.enrolled_count || 0),
-          0
-        );
-
-        return {
-          id: mod.id,
-          name: mod.name,
-          studentCount: totalEnrolled,
-          classCount: modalityClasses.length,
-          revenue: 0, // Not used anymore - user clicks to see financial
-        };
-      }).filter((mod): mod is ModalitySummary => mod !== null);
-
-      setModalitySummary(modalitySummaryData);
-
-      setStats({
-        totalStudents: students.filter((s: any) => s.status === 'ativo').length,
-        newStudentsLast7Days: newStudents.length,
-        totalRevenueLast7Days: revenueLast7Days,
-        overdueInvoices: overdue.length,
-        paidInvoicesLast7Days: paidLast7Days.length,
-        classesToday: todayClasses.length,
-      });
+      // Fetch de avisos separado para não quebrar o resto se falhar
+      try {
+        const announcementsRes = await announcementService.getAnnouncements(1, 5, true);
+        setAnnouncements(announcementsRes.data?.announcements || []);
+      } catch (e) {
+        console.warn('Erro ao buscar avisos:', e);
+      }
     } catch (error) {
-      console.error('Erro ao carregar dados do dashboard:', error);
+      console.error('Erro ao carregar dados:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  };
+  // ── Enrollment Stats ──
+  const enrollmentStats = useMemo(() => {
+    const currentMonth = getCurrentMonth();
+    const ativas = enrollments.filter(e => e.status === 'ativa').length;
+    const canceladas = enrollments.filter(e => e.status === 'cancelada').length;
+    const novas = enrollments.filter(e => {
+      const date = e.created_at || e.start_date;
+      return date && date.substring(0, 7) === currentMonth;
+    }).length;
+    return { ativas, canceladas, novas };
+  }, [enrollments]);
 
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(cents / 100);
-  };
+  // ── Financial Stats (current month) ──
+  const financialStats = useMemo(() => {
+    const currentMonth = getCurrentMonth();
+    const monthInvoices = invoices.filter(inv => inv.reference_month === currentMonth);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('pt-BR');
-  };
+    const total = monthInvoices.reduce((s, inv) => s + inv.final_amount_cents, 0);
+    const totalCount = monthInvoices.length;
 
-  const handleWhatsAppClick = (phone: string | undefined, studentName: string) => {
+    const paid = monthInvoices.filter(inv => inv.status === 'paga');
+    const paidTotal = paid.reduce((s, inv) => s + (inv.paid_amount_cents || inv.final_amount_cents), 0);
+    const paidCount = paid.length;
+
+    const pending = monthInvoices.filter(inv => inv.status === 'aberta');
+    const pendingTotal = pending.reduce((s, inv) => s + inv.final_amount_cents, 0);
+    const pendingCount = pending.length;
+
+    const overdue = monthInvoices.filter(inv => inv.status === 'vencida');
+    const overdueTotal = overdue.reduce((s, inv) => s + inv.final_amount_cents, 0);
+    const overdueCount = overdue.length;
+
+    return {
+      total, totalCount,
+      paidTotal, paidCount,
+      pendingTotal, pendingCount,
+      overdueTotal, overdueCount,
+      toReceive: pendingTotal + overdueTotal,
+      toReceiveCount: pendingCount + overdueCount,
+    };
+  }, [invoices]);
+
+  // ── Chart Data (last 6 months) ──
+  const chartData = useMemo(() => {
+    const months = getLastMonths(6);
+    return months.map(({ key, label }) => {
+      const mi = invoices.filter(inv => inv.reference_month === key);
+      const faturado = mi.reduce((s, inv) => s + inv.final_amount_cents, 0) / 100;
+      const recebido = mi
+        .filter(inv => inv.status === 'paga')
+        .reduce((s, inv) => s + (inv.paid_amount_cents || inv.final_amount_cents), 0) / 100;
+      const matriculas = enrollments.filter(e => {
+        const d = e.created_at || e.start_date;
+        return d && d.substring(0, 7) === key;
+      }).length;
+      return {
+        month: label.charAt(0).toUpperCase() + label.slice(1),
+        faturado,
+        recebido,
+        matriculas,
+      };
+    });
+  }, [invoices, enrollments]);
+
+  // ── Vagas Data (per turma) ──
+  const vagasData = useMemo(() => {
+    const activeClasses = classes
+      .filter(c => c.status === 'ativa' && (c.capacity || 0) > 0)
+      .map(c => ({
+        id: c.id,
+        name: c.name || c.modality_name || 'Turma',
+        capacity: c.capacity || 0,
+        enrolled: c.enrolled_count || 0,
+        pct: (c.capacity || 0) > 0
+          ? Math.round(((c.enrolled_count || 0) / (c.capacity || 0)) * 100)
+          : 0,
+      }))
+      .sort((a, b) => b.pct - a.pct);
+
+    const totalCap = activeClasses.reduce((s, c) => s + c.capacity, 0);
+    const totalEnr = activeClasses.reduce((s, c) => s + c.enrolled, 0);
+    const totalPct = totalCap > 0 ? Math.round((totalEnr / totalCap) * 100) : 0;
+
+    return { turmas: activeClasses, totalCap, totalEnr, totalPct };
+  }, [classes]);
+
+  // ── Alunos por Nível ──
+  const levelsData = useMemo(() => {
+    const activeStudents = students.filter((s: any) => s.status === 'ativo');
+    const countByLevel = new Map<string, { count: number; color?: string }>();
+
+    levels.forEach(lvl => {
+      countByLevel.set(lvl.name, { count: 0, color: lvl.color || undefined });
+    });
+
+    activeStudents.forEach((s: any) => {
+      const levelName = s.level_name || s.level || 'Sem nível';
+      const existing = countByLevel.get(levelName);
+      if (existing) {
+        existing.count++;
+      } else {
+        countByLevel.set(levelName, { count: 1 });
+      }
+    });
+
+    return Array.from(countByLevel.entries())
+      .map(([name, { count, color }]) => {
+        const lvl = levels.find(l => l.name === name);
+        return {
+          name,
+          count,
+          color: color || lvl?.color || '#6B7280',
+          order: lvl?.order_index ?? 999,
+        };
+      })
+      .sort((a, b) => a.order - b.order);
+  }, [students, levels]);
+
+  // ── Mini Agenda (today) ──
+  const todaySchedule = useMemo(() => {
+    const weekday = getTodayWeekday();
+
+    const todayClasses = classes
+      .filter(c => c.weekday === weekday && c.status === 'ativa')
+      .map(c => ({
+        id: `class-${c.id}`,
+        time: c.start_time.substring(0, 5),
+        endTime: c.end_time?.substring(0, 5),
+        title: c.name || c.modality_name || 'Turma',
+        subtitle: c.location || '',
+        type: 'turma' as const,
+        capacity: `${c.enrolled_count || 0}/${c.capacity || 0}`,
+      }))
+      .sort((a, b) => a.time.localeCompare(b.time));
+
+    const todayRentals = rentals
+      .filter(r => r.rental_date === getTodayKey())
+      .map(r => ({
+        id: `rental-${r.id}`,
+        time: r.start_time.substring(0, 5),
+        endTime: r.end_time.substring(0, 5),
+        title: r.court_name,
+        subtitle: r.renter_name,
+        type: 'locacao' as const,
+        capacity: '',
+      }))
+      .sort((a, b) => a.time.localeCompare(b.time));
+
+    return [...todayClasses, ...todayRentals].sort((a, b) => a.time.localeCompare(b.time));
+  }, [classes, rentals]);
+
+  // ── Overdue Invoices ──
+  const overdueInvoices = useMemo(() =>
+    invoices.filter(inv => inv.status === 'vencida'), [invoices]);
+
+  const overdueDisplay = useMemo(() =>
+    overdueInvoices
+      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+      .slice(0, 5),
+    [overdueInvoices]);
+
+  const handleWhatsApp = (phone: string | undefined, name: string) => {
     if (!phone) return;
-    const cleanPhone = phone.replace(/\D/g, '');
-    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    const clean = phone.replace(/\D/g, '');
+    const formatted = clean.startsWith('55') ? clean : `55${clean}`;
+    const tpl = localStorage.getItem('gerenciai_whatsapp_template')
+      || 'Olá [Nome], tudo bem? Identificamos uma pendência financeira em seu cadastro. Por favor, entre em contato conosco para regularizar.';
+    const first = name.split(' ')[0];
+    const msg = tpl.replace(/\[Nome\]/g, first).replace(/\[NomeCompleto\]/g, name);
+    window.open(`https://wa.me/${formatted}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
 
-    const savedTemplate = localStorage.getItem('gerenciai_whatsapp_template');
-    let message = savedTemplate || 'Olá [Nome], tudo bem? Identificamos uma pendência financeira em seu cadastro. Por favor, entre em contato conosco para regularizar.';
+  const handleQuickAnnouncement = async () => {
+    if (!quickTitle.trim() || !quickContent.trim()) return;
+    setSendingAnnouncement(true);
+    setAnnounceError('');
+    setAnnounceSent(false);
+    try {
+      await announcementService.createAnnouncement({
+        title: quickTitle.trim(),
+        content: quickContent.trim(),
+        type: quickType,
+        target_type: 'all',
+        starts_at: new Date().toISOString().slice(0, 16),
+      });
+      setQuickTitle('');
+      setQuickContent('');
+      setQuickType('info');
+      setAnnounceSent(true);
+      setTimeout(() => setAnnounceSent(false), 3000);
+      // Recarregar avisos
+      const res = await announcementService.getAnnouncements(1, 5, true);
+      setAnnouncements(res.data?.announcements || []);
+    } catch (error: any) {
+      console.error('Erro ao enviar aviso:', error);
+      setAnnounceError(error.response?.data?.message || 'Erro ao enviar aviso. Tente novamente.');
+      setTimeout(() => setAnnounceError(''), 5000);
+    } finally {
+      setSendingAnnouncement(false);
+    }
+  };
 
-    const firstName = studentName.split(' ')[0];
-    message = message
-      .replace(/\[Nome\]/g, firstName)
-      .replace(/\[NomeCompleto\]/g, studentName);
-
-    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ChartTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="dash-chart-tooltip">
+        <p className="dash-chart-tooltip-title">{label}</p>
+        {payload.map((entry: any, i: number) => (
+          <p key={i} className="dash-chart-tooltip-row" style={{ color: entry.color }}>
+            <span className="dash-chart-tooltip-dot" style={{ background: entry.color }} />
+            {entry.name}:{' '}
+            <strong>
+              {entry.name === 'Matrículas' ? entry.value : formatReais(entry.value)}
+            </strong>
+          </p>
+        ))}
+      </div>
+    );
   };
 
   if (isLoading) {
     return (
       <div className="dashboard-loading">
-        <div className="loading-spinner"></div>
+        <div className="loading-spinner" />
         <p>Carregando seu painel...</p>
       </div>
     );
   }
 
+  const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+  const weekdayLabel: Record<string, string> = {
+    dom: 'Domingo', seg: 'Segunda-feira', ter: 'Terça-feira',
+    qua: 'Quarta-feira', qui: 'Quinta-feira', sex: 'Sexta-feira', sab: 'Sábado',
+  };
+
+  const VAGAS_COLLAPSED_COUNT = 5;
+  const LEVELS_COLLAPSED_COUNT = 5;
+  const AGENDA_COLLAPSED_COUNT = 4;
+
   return (
-    <div className="dashboard-modern">
-      {/* Header Section */}
-      <header className="dashboard-header-modern">
-        <div className="header-content">
-          <div className="greeting-section">
-            <h1 className="greeting-text">
-              {getGreeting()}, <span className="user-name">{user?.full_name?.split(' ')[0]}</span>!
+    <div className="dash">
+      {/* ── Header ── */}
+      <header className="dash-header">
+        <div className="dash-header-inner">
+          <div>
+            <h1 className="dash-greeting">
+              {getGreeting()},{' '}
+              <span className="dash-name">{user?.full_name?.split(' ')[0]}</span>
             </h1>
-            <p className="greeting-subtitle">
-              Aqui está o resumo do seu sistema para hoje, {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}.
+            <p className="dash-subtitle">
+              Resumo geral do sistema &bull;{' '}
+              {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
-          <div className="header-date">
-            <div className="date-badge">
-              <span className="date-day">{new Date().getDate()}</span>
-              <span className="date-month">{new Date().toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
-            </div>
+          <div className="dash-date">
+            <span className="dash-date-num">{new Date().getDate()}</span>
+            <span className="dash-date-month">
+              {new Date().toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+            </span>
           </div>
         </div>
       </header>
 
-      {/* Quick Stats Section */}
-      <section className="stats-section">
-        <h2 className="section-title">
-          <FontAwesomeIcon icon={faClockRotateLeft} />
-          Resumo dos últimos 7 dias
+      {/* ── Matrículas ── */}
+      <section className="dash-section">
+        <h2 className="dash-title">
+          <FontAwesomeIcon icon={faUsers} /> Matrículas
         </h2>
-        <div className="stats-grid-modern">
-          <div className="stat-card-modern stat-students" onClick={() => navigate('/alunos')}>
-            <div className="stat-icon-wrapper">
-              <FontAwesomeIcon icon={faUsers} />
+        <div className="dash-row-3">
+          <div className="kpi-card" onClick={() => navigate('/matriculas')}>
+            <div className="kpi-icon blue"><FontAwesomeIcon icon={faUsers} /></div>
+            <div className="kpi-body">
+              <span className="kpi-label">Ativas</span>
+              <span className="kpi-value">{enrollmentStats.ativas}</span>
             </div>
-            <div className="stat-content">
-              <span className="stat-label">Alunos Ativos</span>
-              <span className="stat-value">{stats.totalStudents}</span>
-              <span className="stat-detail">+{stats.newStudentsLast7Days} novos esta semana</span>
-            </div>
+            <div className="kpi-accent blue" />
           </div>
-
-          <div className="stat-card-modern stat-revenue">
-            <div className="stat-icon-wrapper">
-              <FontAwesomeIcon icon={faMoneyBillWave} />
+          <div className="kpi-card" onClick={() => navigate('/matriculas')}>
+            <div className="kpi-icon green"><FontAwesomeIcon icon={faUserPlus} /></div>
+            <div className="kpi-body">
+              <span className="kpi-label">Novas no mês</span>
+              <span className="kpi-value">{enrollmentStats.novas}</span>
             </div>
-            <div className="stat-content">
-              <span className="stat-label">Faturamento (7 dias)</span>
-              <span className="stat-value">{formatCurrency(stats.totalRevenueLast7Days)}</span>
-              <span className="stat-detail">{stats.paidInvoicesLast7Days} pagamentos recebidos</span>
-            </div>
+            <div className="kpi-accent green" />
           </div>
-
-          <div className="stat-card-modern stat-classes" onClick={() => navigate('/agenda')}>
-            <div className="stat-icon-wrapper">
-              <FontAwesomeIcon icon={faCalendarCheck} />
+          <div className="kpi-card" onClick={() => navigate('/matriculas')}>
+            <div className="kpi-icon red"><FontAwesomeIcon icon={faUserMinus} /></div>
+            <div className="kpi-body">
+              <span className="kpi-label">Canceladas</span>
+              <span className="kpi-value">{enrollmentStats.canceladas}</span>
             </div>
-            <div className="stat-content">
-              <span className="stat-label">Turmas Hoje</span>
-              <span className="stat-value">{stats.classesToday}</span>
-              <span className="stat-detail">{weekdayMap[getTodayWeekday()]}</span>
-            </div>
-          </div>
-
-          <div className="stat-card-modern stat-overdue" onClick={() => navigate('/financeiro')}>
-            <div className="stat-icon-wrapper">
-              <FontAwesomeIcon icon={faExclamationTriangle} />
-            </div>
-            <div className="stat-content">
-              <span className="stat-label">Faturas Vencidas</span>
-              <span className="stat-value">{stats.overdueInvoices}</span>
-              <span className="stat-detail">Atenção necessária</span>
-            </div>
+            <div className="kpi-accent red" />
           </div>
         </div>
       </section>
 
-      {/* Two Column Layout: Agenda + Modalidades */}
-      <div className="dashboard-grid-two-cols">
-        {/* Today's Classes - Mini Agenda */}
-        <section className="dashboard-card classes-today-card">
-          <div className="card-header">
-            <h3>
-              <FontAwesomeIcon icon={faDumbbell} />
-              Agenda de Hoje
+      {/* ── Financeiro ── */}
+      <section className="dash-section">
+        <div className="dash-title-row">
+          <h2 className="dash-title"><FontAwesomeIcon icon={faMoneyBillWave} /> Financeiro</h2>
+          <span className="dash-badge">{monthLabel}</span>
+        </div>
+        <div className="dash-row-5">
+          <div className="kpi-card compact" onClick={() => navigate('/financeiro')}>
+            <div className="kpi-icon-sm purple"><FontAwesomeIcon icon={faReceipt} /></div>
+            <span className="kpi-label">Total Faturado</span>
+            <span className="kpi-value-sm">{formatCurrency(financialStats.total)}</span>
+            <span className="kpi-detail">{financialStats.totalCount} faturas</span>
+            <div className="kpi-accent purple" />
+          </div>
+          <div className="kpi-card compact" onClick={() => navigate('/financeiro')}>
+            <div className="kpi-icon-sm green"><FontAwesomeIcon icon={faCalendarCheck} /></div>
+            <span className="kpi-label">Recebido</span>
+            <span className="kpi-value-sm green-text">{formatCurrency(financialStats.paidTotal)}</span>
+            <span className="kpi-detail">{financialStats.paidCount} faturas</span>
+            <div className="kpi-accent green" />
+          </div>
+          <div className="kpi-card compact" onClick={() => navigate('/financeiro')}>
+            <div className="kpi-icon-sm amber"><FontAwesomeIcon icon={faClock} /></div>
+            <span className="kpi-label">A Vencer</span>
+            <span className="kpi-value-sm amber-text">{formatCurrency(financialStats.pendingTotal)}</span>
+            <span className="kpi-detail">{financialStats.pendingCount} faturas</span>
+            <div className="kpi-accent amber" />
+          </div>
+          <div className="kpi-card compact" onClick={() => navigate('/financeiro')}>
+            <div className="kpi-icon-sm red"><FontAwesomeIcon icon={faExclamationTriangle} /></div>
+            <span className="kpi-label">Em Atraso</span>
+            <span className="kpi-value-sm red-text">{formatCurrency(financialStats.overdueTotal)}</span>
+            <span className="kpi-detail">{financialStats.overdueCount} faturas</span>
+            <div className="kpi-accent red" />
+          </div>
+          <div className="kpi-card compact highlight" onClick={() => navigate('/financeiro')}>
+            <div className="kpi-icon-sm orange"><FontAwesomeIcon icon={faDollarSign} /></div>
+            <span className="kpi-label">Total a Receber</span>
+            <span className="kpi-value-sm">{formatCurrency(financialStats.toReceive)}</span>
+            <span className="kpi-detail">{financialStats.toReceiveCount} faturas</span>
+            <div className="kpi-accent orange" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Gráfico (full width, ACIMA de vagas/níveis) ── */}
+      <section className="dash-panel chart-panel">
+        <div className="dash-panel-top">
+          <h3 className="dash-panel-title">
+            <FontAwesomeIcon icon={faChartLine} /> Faturamento Mensal
+          </h3>
+          <button className="dash-link" onClick={() => navigate('/relatorios')}>
+            Relatórios <FontAwesomeIcon icon={faArrowRight} />
+          </button>
+        </div>
+        <div className="dash-chart-wrap">
+          <ResponsiveContainer width="100%" height={280}>
+            <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: '#E5E7EB' }} tickLine={false} />
+              <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
+                tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip content={<ChartTooltip />} />
+              <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
+              <Bar yAxisId="left" dataKey="faturado" name="Faturado" fill="#C7D2FE" radius={[6, 6, 0, 0]} barSize={24} />
+              <Bar yAxisId="left" dataKey="recebido" name="Recebido" fill="#34D399" radius={[6, 6, 0, 0]} barSize={24} />
+              <Line yAxisId="right" type="monotone" dataKey="matriculas" name="Matrículas" stroke="#F58A25" strokeWidth={3}
+                dot={{ fill: '#F58A25', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+
+      {/* ── Vagas + Níveis + Mini Agenda (3 colunas) ── */}
+      <div className="dash-triple">
+        {/* Vagas por Turma */}
+        <section className="dash-panel collapsible-panel">
+          <div className="dash-panel-top">
+            <h3 className="dash-panel-title">
+              <FontAwesomeIcon icon={faDumbbell} /> Vagas
             </h3>
-            <button className="btn-link" onClick={() => navigate('/agenda')}>
-              Ver completa <FontAwesomeIcon icon={faArrowRight} />
+            <button className="dash-link" onClick={() => navigate('/turmas')}>
+              Ver turmas <FontAwesomeIcon icon={faArrowRight} />
             </button>
           </div>
-          <div className="card-content">
-            {classesToday.length === 0 ? (
-              <div className="empty-state-mini">
-                <FontAwesomeIcon icon={faCalendarCheck} />
-                <p>Nenhuma turma agendada para hoje</p>
+          <div className="collapsible-content">
+            {/* Total */}
+            <div className="vagas-total">
+              <div className="vagas-total-row">
+                <span className="vagas-total-label">Total</span>
+                <span className="vagas-total-nums">
+                  <strong>{vagasData.totalEnr}</strong>/{vagasData.totalCap}
+                </span>
               </div>
-            ) : (
-              <div className="classes-timeline">
-                {classesToday.slice(0, 6).map((cls, index) => (
-                  <div
-                    key={cls.id}
-                    className="timeline-item"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div className="timeline-time">
-                      <FontAwesomeIcon icon={faClock} />
-                      {cls.start_time.substring(0, 5)}
-                    </div>
-                    <div className="timeline-content">
-                      <span className="class-name">{cls.modality_name}</span>
-                      {cls.name && <span className="class-subtitle">{cls.name}</span>}
-                      {cls.location && (
-                        <span className="class-location">
-                          <FontAwesomeIcon icon={faMapMarkerAlt} />
-                          {cls.location}
-                        </span>
-                      )}
-                    </div>
-                    <div className="timeline-capacity">
-                      <span className={`capacity-badge ${(cls.enrolled_count || 0) >= (cls.capacity || 0) ? 'full' : ''}`}>
-                        {cls.enrolled_count || 0}/{cls.capacity || 0}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {classesToday.length > 6 && (
-                  <div className="more-classes">
-                    +{classesToday.length - 6} mais turmas
-                  </div>
-                )}
+              <div className="progress-track large">
+                <div className="progress-fill" style={{
+                  width: `${Math.min(vagasData.totalPct, 100)}%`,
+                  background: getProgressColor(vagasData.totalPct),
+                }} />
               </div>
+              <span className="vagas-pct">{vagasData.totalPct}% ocupado</span>
+            </div>
+
+            <div className="vagas-divider" />
+            <span className="vagas-section-label">Por Turma</span>
+
+            <div className="vagas-list">
+              {(vagasExpanded ? vagasData.turmas : vagasData.turmas.slice(0, VAGAS_COLLAPSED_COUNT)).map(turma => (
+                <div key={turma.id} className="vagas-item">
+                  <div className="vagas-item-row">
+                    <span className="vagas-mod-name">{turma.name}</span>
+                    <span className="vagas-mod-nums">{turma.enrolled}/{turma.capacity}</span>
+                  </div>
+                  <div className="progress-track">
+                    <div className="progress-fill" style={{
+                      width: `${Math.min(turma.pct, 100)}%`,
+                      background: getProgressColor(turma.pct),
+                    }} />
+                  </div>
+                </div>
+              ))}
+              {vagasData.turmas.length === 0 && <p className="vagas-empty">Nenhuma turma cadastrada</p>}
+            </div>
+
+            {vagasData.turmas.length > VAGAS_COLLAPSED_COUNT && (
+              <button className="expand-btn" onClick={() => setVagasExpanded(!vagasExpanded)}>
+                <FontAwesomeIcon icon={vagasExpanded ? faChevronUp : faChevronDown} />
+                {vagasExpanded ? 'Ver menos' : `Ver todas (${vagasData.turmas.length})`}
+              </button>
             )}
           </div>
         </section>
 
-        {/* Modality Summary */}
-        <section className="dashboard-card modality-summary-card">
-          <div className="card-header">
-            <h3>
-              <FontAwesomeIcon icon={faChartLine} />
-              Resumo por Modalidade
+        {/* Alunos por Nível */}
+        <section className="dash-panel collapsible-panel">
+          <div className="dash-panel-top">
+            <h3 className="dash-panel-title">
+              <FontAwesomeIcon icon={faUserGraduate} /> Alunos por Nível
             </h3>
+            <button className="dash-link" onClick={() => navigate('/niveis')}>
+              Ver níveis <FontAwesomeIcon icon={faArrowRight} />
+            </button>
           </div>
-          <div className="card-content">
-            {modalitySummary.length === 0 ? (
-              <div className="empty-state-mini">
-                <FontAwesomeIcon icon={faLayerGroup} />
-                <p>Nenhuma modalidade cadastrada</p>
-              </div>
+          <div className="collapsible-content">
+            {levelsData.length === 0 ? (
+              <p className="vagas-empty">Nenhum nível cadastrado</p>
             ) : (
-              <div className="modality-table">
-                <div className="modality-table-header">
-                  <span>Modalidade</span>
-                  <span>Alunos</span>
-                  <span>Turmas</span>
-                  <span>Ações</span>
-                </div>
-                {modalitySummary.map((mod, index) => (
-                  <div
-                    key={mod.id}
-                    className="modality-table-row"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <span className="modality-name-cell">
-                      <span className="modality-dot"></span>
-                      {mod.name}
-                    </span>
-                    <span className="modality-value">
-                      <FontAwesomeIcon icon={faUserGraduate} />
-                      {mod.studentCount}
-                    </span>
-                    <span className="modality-value">
-                      <FontAwesomeIcon icon={faCalendarCheck} />
-                      {mod.classCount}
-                    </span>
-                    <span className="modality-action">
-                      <button
-                        className="btn-view-financial"
-                        onClick={() => navigate(`/financeiro?modality=${mod.id}`)}
-                        title={`Ver faturamento de ${mod.name}`}
-                      >
-                        <FontAwesomeIcon icon={faMoneyBillWave} />
-                        Ver Faturamento
-                      </button>
-                    </span>
+              <div className="levels-list">
+                {(levelsExpanded ? levelsData : levelsData.slice(0, LEVELS_COLLAPSED_COUNT)).map(lvl => (
+                  <div key={lvl.name} className="level-item">
+                    <div className="level-color-dot" style={{ background: lvl.color }} />
+                    <span className="level-name">{lvl.name}</span>
+                    <span className="level-count">{lvl.count}</span>
                   </div>
                 ))}
               </div>
+            )}
+
+            <div className="levels-total">
+              <span>Total de alunos ativos</span>
+              <strong>{students.filter((s: any) => s.status === 'ativo').length}</strong>
+            </div>
+
+            {levelsData.length > LEVELS_COLLAPSED_COUNT && (
+              <button className="expand-btn" onClick={() => setLevelsExpanded(!levelsExpanded)}>
+                <FontAwesomeIcon icon={levelsExpanded ? faChevronUp : faChevronDown} />
+                {levelsExpanded ? 'Ver menos' : `Ver todos (${levelsData.length})`}
+              </button>
+            )}
+          </div>
+        </section>
+
+        {/* Mini Agenda */}
+        <section className="dash-panel collapsible-panel mini-agenda-panel">
+          <div className="dash-panel-top">
+            <h3 className="dash-panel-title">
+              <FontAwesomeIcon icon={faCalendarDay} /> Agenda de Hoje
+            </h3>
+            <button className="dash-link" onClick={() => navigate('/agenda')}>
+              Ver agenda <FontAwesomeIcon icon={faArrowRight} />
+            </button>
+          </div>
+          <div className="collapsible-content">
+            <div className="mini-agenda-day-label">
+              {weekdayLabel[getTodayWeekday()]}
+              <span className="mini-agenda-count">{todaySchedule.length} atividades</span>
+            </div>
+
+            <div className="mini-agenda-legend">
+              <span className="mini-agenda-legend-item turma">
+                <span className="mini-agenda-legend-dot" />
+                Turmas
+              </span>
+              <span className="mini-agenda-legend-item locacao">
+                <span className="mini-agenda-legend-dot" />
+                Locações
+              </span>
+            </div>
+
+            {todaySchedule.length === 0 ? (
+              <div className="mini-agenda-empty">
+                <FontAwesomeIcon icon={faCalendarCheck} />
+                <p>Nenhuma atividade hoje</p>
+              </div>
+            ) : (
+              <>
+                <div className="mini-agenda-list">
+                  {(agendaExpanded ? todaySchedule : todaySchedule.slice(0, AGENDA_COLLAPSED_COUNT)).map(item => (
+                    <div key={item.id} className={`mini-agenda-item ${item.type}`}>
+                      <div className="mini-agenda-time">
+                        {item.time}
+                        {item.endTime && <span className="mini-agenda-end">- {item.endTime}</span>}
+                      </div>
+                      <div className="mini-agenda-info">
+                        <span className="mini-agenda-title">{item.title}</span>
+                        {item.subtitle && (
+                          <span className="mini-agenda-subtitle">
+                            <FontAwesomeIcon icon={item.type === 'turma' ? faMapMarkerAlt : faUsers} />
+                            {item.subtitle}
+                          </span>
+                        )}
+                      </div>
+                      {item.type === 'turma' && (
+                        <span className="mini-agenda-tag turma">
+                          Turma {item.capacity && `· ${item.capacity}`}
+                        </span>
+                      )}
+                      {item.type === 'locacao' && (
+                        <span className="mini-agenda-tag locacao">Locação</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {todaySchedule.length > AGENDA_COLLAPSED_COUNT && (
+                  <button className="expand-btn" onClick={() => setAgendaExpanded(!agendaExpanded)}>
+                    <FontAwesomeIcon icon={agendaExpanded ? faChevronUp : faChevronDown} />
+                    {agendaExpanded ? 'Ver menos' : `Ver todos (${todaySchedule.length})`}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </section>
       </div>
 
-      {/* Overdue Students - Full Width */}
-      <section className="dashboard-card overdue-card-full">
-        <div className="card-header">
-          <h3>
-            <FontAwesomeIcon icon={faExclamationTriangle} />
-            Alunos Inadimplentes
-            {stats.overdueInvoices > 0 && (
-              <span className="badge-count">{stats.overdueInvoices}</span>
-            )}
+      {/* ── Avisos Rápidos ── */}
+      <section className="dash-panel announcements-panel">
+        <div className="dash-panel-top">
+          <h3 className="dash-panel-title">
+            <FontAwesomeIcon icon={faBullhorn} /> Avisos
           </h3>
-          <button className="btn-link" onClick={() => navigate('/financeiro')}>
+          <button className="dash-link" onClick={() => navigate('/avisos')}>
             Ver todos <FontAwesomeIcon icon={faArrowRight} />
           </button>
         </div>
-        <div className="card-content">
-          {overdueStudents.length === 0 ? (
-            <div className="empty-state-mini success">
-              <FontAwesomeIcon icon={faCalendarCheck} />
-              <p>Nenhum aluno inadimplente!</p>
-              <span>Todas as faturas estão em dia</span>
+        <div className="announcements-content">
+          <div className="quick-announce-form">
+            <div className="quick-announce-row">
+              <input
+                type="text"
+                className="quick-announce-input flex"
+                placeholder="Título do aviso"
+                value={quickTitle}
+                onChange={e => setQuickTitle(e.target.value)}
+              />
+              <select
+                className="quick-announce-select"
+                value={quickType}
+                onChange={e => setQuickType(e.target.value as any)}
+              >
+                <option value="info">Informativo</option>
+                <option value="warning">Atenção</option>
+                <option value="urgent">Urgente</option>
+                <option value="event">Evento</option>
+              </select>
             </div>
-          ) : (
-            <div className="overdue-grid">
-              {overdueStudents.map((invoice, index) => (
-                <div
-                  key={invoice.id}
-                  className="overdue-card-item"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <div className="overdue-card-content">
-                    <div className="overdue-avatar">
-                      {invoice.student_name?.charAt(0).toUpperCase()}
+            <div className="quick-announce-row">
+              <input
+                type="text"
+                className="quick-announce-input flex"
+                placeholder="Mensagem do aviso..."
+                value={quickContent}
+                onChange={e => setQuickContent(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleQuickAnnouncement()}
+              />
+              <button
+                className="quick-announce-btn"
+                onClick={handleQuickAnnouncement}
+                disabled={sendingAnnouncement || !quickTitle.trim() || !quickContent.trim()}
+              >
+                <FontAwesomeIcon icon={faPaperPlane} />
+              </button>
+            </div>
+            {announceSent && (
+              <div className="quick-announce-feedback success">Aviso enviado com sucesso!</div>
+            )}
+            {announceError && (
+              <div className="quick-announce-feedback error">{announceError}</div>
+            )}
+          </div>
+
+          {announcements.length > 0 && (
+            <div className="announcements-list">
+              {announcements.map(a => {
+                const typeClass = a.type === 'urgent' ? 'urgent' : a.type === 'warning' ? 'warning' : a.type === 'event' ? 'event' : 'info';
+                return (
+                  <div key={a.id} className={`announcement-item ${typeClass}`}>
+                    <div className="announcement-header">
+                      <span className="announcement-title">{a.title}</span>
+                      <span className="announcement-date">
+                        {new Date(a.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                      </span>
                     </div>
-                    <div className="overdue-info">
-                      <span className="student-name">{invoice.student_name}</span>
-                      <span className="overdue-amount">{formatCurrency(invoice.final_amount_cents)}</span>
-                      <span className="overdue-date">Venceu em {formatDate(invoice.due_date)}</span>
-                    </div>
+                    <p className="announcement-body">{a.content}</p>
+                    {a.target_count != null && a.read_count != null && (
+                      <span className="announcement-stats">
+                        {a.read_count}/{a.target_count} leram
+                      </span>
+                    )}
                   </div>
-                  <button
-                    className="btn-whatsapp-small"
-                    onClick={() => handleWhatsAppClick(invoice.student_phone, invoice.student_name || '')}
-                    disabled={!invoice.student_phone}
-                    title={invoice.student_phone ? 'Enviar mensagem' : 'Telefone não cadastrado'}
-                  >
-                    <FontAwesomeIcon icon={faWhatsapp} />
-                    Cobrar
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
+          )}
+
+          {announcements.length === 0 && (
+            <p className="announcements-empty">Nenhum aviso ativo no momento</p>
           )}
         </div>
       </section>
 
-      {/* Widgets Personalizáveis Section */}
-      <section className="widgets-section">
-        <div className="widgets-header">
-          <h2>
-            <FontAwesomeIcon icon={faPuzzlePiece} />
-            Widgets Personalizados
-          </h2>
-          <button
-            type="button"
-            className="btn-customize"
-            onClick={() => setIsCustomizing(true)}
-          >
-            <FontAwesomeIcon icon={faCog} />
-            Personalizar
-          </button>
-        </div>
-
-        {activeWidgets.length === 0 ? (
-          <div className="widgets-empty">
-            <div className="widgets-empty-icon">
-              <FontAwesomeIcon icon={faPuzzlePiece} />
-            </div>
-            <h3>Nenhum widget adicionado</h3>
-            <p>Clique em "Personalizar" para adicionar widgets ao seu dashboard</p>
-            <button
-              type="button"
-              className="btn-customize"
-              onClick={() => setIsCustomizing(true)}
-            >
-              <FontAwesomeIcon icon={faCog} />
-              Adicionar Widgets
+      {/* ── Inadimplentes ── */}
+      {overdueInvoices.length > 0 && (
+        <section className="dash-panel overdue-panel">
+          <div className="dash-panel-top overdue-top">
+            <h3 className="dash-panel-title">
+              <FontAwesomeIcon icon={faExclamationTriangle} />
+              Inadimplentes
+              <span className="overdue-badge">{overdueInvoices.length}</span>
+            </h3>
+            <button className="dash-link" onClick={() => navigate('/financeiro')}>
+              Ver todos <FontAwesomeIcon icon={faArrowRight} />
             </button>
           </div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={activeWidgets.map((w) => w.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="widgets-grid">
-                {activeWidgets.map((widget) => (
-                  <SortableWidget key={widget.id} widget={widget} />
-                ))}
+          <div className="overdue-grid">
+            {overdueDisplay.map(inv => (
+              <div key={inv.id} className="overdue-card">
+                <div className="overdue-card-top">
+                  <div className="overdue-avatar">{inv.student_name?.charAt(0).toUpperCase()}</div>
+                  <div className="overdue-info">
+                    <span className="overdue-name">{inv.student_name}</span>
+                    <span className="overdue-amount">{formatCurrency(inv.final_amount_cents)}</span>
+                    <span className="overdue-due">Venceu em {formatDate(inv.due_date)}</span>
+                  </div>
+                </div>
+                <button className="btn-wpp" onClick={() => handleWhatsApp(inv.student_phone, inv.student_name || '')}
+                  disabled={!inv.student_phone} title={inv.student_phone ? 'Enviar mensagem' : 'Telefone não cadastrado'}>
+                  <FontAwesomeIcon icon={faWhatsapp} /> Cobrar
+                </button>
               </div>
-            </SortableContext>
-          </DndContext>
-        )}
-      </section>
-
-      {/* Modal de personalização de widgets */}
-      <CustomizationModal
-        isOpen={isCustomizing}
-        onClose={() => setIsCustomizing(false)}
-        widgets={widgets}
-        onAddWidget={addWidget}
-        onRemoveWidget={removeWidget}
-      />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

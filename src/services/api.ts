@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://gerenciai-backend-798546007335.us-east1.run.app';
+const API_BASE_URL = import.meta.env.DEV
+  ? ''
+  : 'https://gerenciai-backend-798546007335.us-east1.run.app';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

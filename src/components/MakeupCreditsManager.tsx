@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { courtReservationService, CreditHistoryItem } from '../services/courtReservationService';
+import { courtReservationService } from '../services/courtReservationService';
+import type { CreditHistoryItem } from '../services/courtReservationService';
 import '../styles/MakeupCreditsManager.css';
 
 interface MakeupCreditsManagerProps {

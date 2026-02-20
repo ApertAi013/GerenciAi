@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { announcementService, Announcement, CreateAnnouncementRequest } from '../services/announcementService';
+import { announcementService } from '../services/announcementService';
+import type { Announcement, CreateAnnouncementRequest } from '../services/announcementService';
 import { modalityService } from '../services/modalityService';
 import { levelService } from '../services/levelService';
 import { studentService } from '../services/studentService';
