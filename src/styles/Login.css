@@ -147,6 +147,44 @@
   color: #EF4444;
 }
 
+/* Instant login indicator */
+.saved-account-item.has-token {
+  border-color: #D1FAE5;
+  background: #F0FDF4;
+}
+
+.saved-account-item.has-token:hover {
+  border-color: #10B981;
+  background: #ECFDF5;
+}
+
+.saved-account-item.has-token .saved-account-email {
+  color: #059669;
+  font-weight: 500;
+}
+
+/* Auto-login loading state */
+.saved-account-item.logging-in {
+  border-color: #FF9900;
+  background: #FFFBF5;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+@keyframes saved-spin {
+  to { transform: rotate(360deg); }
+}
+
+.saved-account-spinner {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: saved-spin 0.6s linear infinite;
+}
+
 .error-alert {
   background: #FEE;
   border: 1px solid #FCC;

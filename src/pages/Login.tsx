@@ -8,6 +8,8 @@ import '../styles/Login.css';
 interface SavedAccount {
   email: string;
   name: string;
+  token?: string;
+  user?: any;
 }
 
 function getSavedAccounts(): SavedAccount[] {
@@ -18,10 +20,17 @@ function getSavedAccounts(): SavedAccount[] {
   }
 }
 
-function saveAccount(email: string, name: string) {
+function saveAccount(email: string, name: string, token: string, user: any) {
   const accounts = getSavedAccounts().filter((a) => a.email !== email);
-  accounts.unshift({ email, name });
+  accounts.unshift({ email, name, token, user });
   localStorage.setItem('savedAccounts', JSON.stringify(accounts.slice(0, 5)));
+}
+
+function updateAccountToken(email: string) {
+  const accounts = getSavedAccounts().map((a) =>
+    a.email === email ? { email: a.email, name: a.name } : a
+  );
+  localStorage.setItem('savedAccounts', JSON.stringify(accounts));
 }
 
 function removeAccount(email: string) {
@@ -40,15 +49,53 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
+  const [autoLoginEmail, setAutoLoginEmail] = useState<string | null>(null);
 
   useEffect(() => {
     setSavedAccounts(getSavedAccounts());
   }, []);
 
-  const selectAccount = (account: SavedAccount) => {
+  const selectAccount = async (account: SavedAccount) => {
+    setError('');
+
+    // Se tem token salvo, tenta login instantâneo
+    if (account.token && account.user) {
+      setAutoLoginEmail(account.email);
+      try {
+        // Temporariamente seta o token para o axios interceptor usar
+        localStorage.setItem('token', account.token);
+
+        // Verifica se o token ainda é válido
+        const meRes = await authService.getMe();
+
+        if (meRes.status === 'success' && meRes.data) {
+          // Token válido — login instantâneo
+          localStorage.setItem('keepLoggedIn', 'true');
+          setAuth(meRes.data, account.token);
+
+          // Atualiza conta salva com dados frescos
+          saveAccount(account.email, meRes.data.full_name || meRes.data.name || account.name, account.token, meRes.data);
+          setSavedAccounts(getSavedAccounts());
+
+          toast.success(`Bem-vindo, ${(meRes.data.full_name || account.name).split(' ')[0]}!`);
+          navigate('/dashboard');
+          return;
+        }
+      } catch {
+        // Token expirado/inválido — limpa e pede senha
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        updateAccountToken(account.email);
+        setSavedAccounts(getSavedAccounts());
+        toast.error('Sessão expirada. Digite sua senha.');
+      } finally {
+        setAutoLoginEmail(null);
+      }
+    }
+
+    // Fallback: preenche email e foca na senha
     setEmail(account.email);
     setPassword('');
-    setError('');
     setTimeout(() => passwordRef.current?.focus(), 50);
   };
 
@@ -66,23 +113,23 @@ export default function Login() {
     try {
       const response = await authService.login({ email, password });
 
-      // Suporta ambos os formatos: { success: true } e { status: 'success' }
       const isSuccess = response.status === 'success' || (response as any).success === true;
 
       if (isSuccess) {
-        // Salvar preferência ANTES de setAuth (authStore usa isso para escolher o storage)
         if (keepLoggedIn) {
           localStorage.setItem('keepLoggedIn', 'true');
         } else {
           localStorage.removeItem('keepLoggedIn');
         }
 
-        // Salvar conta para acesso rápido
         const user = response.data.user;
-        saveAccount(email, user.name || user.email);
+        const token = response.data.token;
+
+        // Salva conta com token para login instantâneo futuro
+        saveAccount(email, user.full_name || user.name || user.email, token, user);
         setSavedAccounts(getSavedAccounts());
 
-        setAuth(user, response.data.token);
+        setAuth(user, token);
 
         toast.success('Login realizado com sucesso!');
 
@@ -128,23 +175,35 @@ export default function Login() {
               {savedAccounts.map((account) => (
                 <div
                   key={account.email}
-                  className={`saved-account-item${email === account.email ? ' active' : ''}`}
-                  onClick={() => selectAccount(account)}
+                  className={`saved-account-item${email === account.email ? ' active' : ''}${autoLoginEmail === account.email ? ' logging-in' : ''}${account.token ? ' has-token' : ''}`}
+                  onClick={() => !autoLoginEmail && selectAccount(account)}
                 >
                   <div className="saved-account-avatar">
-                    {getInitials(account.name)}
+                    {autoLoginEmail === account.email ? (
+                      <span className="saved-account-spinner" />
+                    ) : (
+                      getInitials(account.name)
+                    )}
                   </div>
                   <div className="saved-account-info">
                     <span className="saved-account-name">{account.name}</span>
-                    <span className="saved-account-email">{account.email}</span>
+                    <span className="saved-account-email">
+                      {autoLoginEmail === account.email
+                        ? 'Entrando...'
+                        : account.token
+                          ? 'Clique para entrar'
+                          : account.email}
+                    </span>
                   </div>
-                  <button
-                    className="saved-account-remove"
-                    onClick={(e) => handleRemoveAccount(e, account.email)}
-                    title="Remover conta salva"
-                  >
-                    &times;
-                  </button>
+                  {!autoLoginEmail && (
+                    <button
+                      className="saved-account-remove"
+                      onClick={(e) => handleRemoveAccount(e, account.email)}
+                      title="Remover conta salva"
+                    >
+                      &times;
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -167,7 +226,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
               required
-              disabled={isLoading}
+              disabled={isLoading || !!autoLoginEmail}
             />
           </div>
 
@@ -181,7 +240,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              disabled={isLoading}
+              disabled={isLoading || !!autoLoginEmail}
             />
           </div>
 
@@ -196,13 +255,13 @@ export default function Login() {
                 type="checkbox"
                 checked={keepLoggedIn}
                 onChange={(e) => setKeepLoggedIn(e.target.checked)}
-                disabled={isLoading}
+                disabled={isLoading || !!autoLoginEmail}
               />
               <span>Mantenha-me logado (ir direto ao portal)</span>
             </label>
           </div>
 
-          <button type="submit" className="login-button" disabled={isLoading}>
+          <button type="submit" className="login-button" disabled={isLoading || !!autoLoginEmail}>
             {isLoading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
