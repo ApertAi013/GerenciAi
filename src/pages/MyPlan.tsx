@@ -18,6 +18,9 @@ import {
   faStar,
   faInfinity,
   faHandshake,
+  faMobileAlt,
+  faGift,
+  faPercent,
 } from '@fortawesome/free-solid-svg-icons';
 
 // --------------- Types ---------------
@@ -56,6 +59,7 @@ interface Plan {
   max_classes: number;
   price_cents: number;
   description: string;
+  has_app_access: boolean;
 }
 
 interface AvailableAddon {
@@ -448,13 +452,23 @@ export default function MyPlan() {
                       )}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                     <FontAwesomeIcon icon={faChalkboardTeacher} style={{ color: '#3B82F6', width: 14 }} />
                     <span>
                       {isUnlimited(plan.max_classes) ? (
                         <><FontAwesomeIcon icon={faInfinity} style={{ marginRight: 4 }} />Turmas ilimitadas</>
                       ) : (
                         <>Ate <strong>{plan.max_classes}</strong> turmas</>
+                      )}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <FontAwesomeIcon icon={faMobileAlt} style={{ color: plan.has_app_access ? '#10B981' : '#D1D5DB', width: 14 }} />
+                    <span style={{ color: plan.has_app_access ? '#374151' : '#9CA3AF' }}>
+                      {plan.has_app_access ? (
+                        <><strong>App</strong> do aluno e gestor</>
+                      ) : (
+                        <s>Sem acesso ao app</s>
                       )}
                     </span>
                   </div>
@@ -551,6 +565,125 @@ export default function MyPlan() {
             </div>
           </>
         )}
+      </div>
+
+      {/* ===== ApertAi + ArenAi Promo Banner ===== */}
+      <div style={{
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #f5a623 0%, #e8920d 50%, #d4820a 100%)',
+        borderRadius: 16,
+        padding: '32px 36px',
+        marginBottom: 24,
+        color: '#fff',
+        boxShadow: '0 8px 32px rgba(245, 166, 35, 0.3)',
+      }}>
+        {/* Decorative circles */}
+        <div style={{
+          position: 'absolute', top: -40, right: -40,
+          width: 160, height: 160, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.1)',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: -60, left: -30,
+          width: 200, height: 200, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.06)',
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
+          {/* Left: Logos */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <img
+                src="/arenai-logo.svg"
+                alt="ArenAi"
+                style={{ height: 36, filter: 'brightness(0) invert(1)', opacity: 0.95 }}
+              />
+              <span style={{ fontSize: 22, fontWeight: 300, opacity: 0.7 }}>+</span>
+              <img
+                src="/apertai-logo.svg"
+                alt="ApertAi"
+                style={{ height: 36, filter: 'brightness(0) invert(1)', opacity: 0.95 }}
+              />
+            </div>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'rgba(0,0,0,0.25)', borderRadius: 20,
+              padding: '4px 14px', fontSize: 12, fontWeight: 700,
+              letterSpacing: '0.05em', textTransform: 'uppercase',
+            }}>
+              <FontAwesomeIcon icon={faGift} /> Oferta Exclusiva
+            </div>
+          </div>
+
+          {/* Center: Text */}
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, lineHeight: 1.3 }}>
+              Duas plataformas. Um ecossistema completo.
+            </h3>
+            <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.5, opacity: 0.92 }}>
+              <strong>ArenAi</strong> cuida da gestao da sua quadra. <strong>ApertAi</strong> eterniza os melhores
+              momentos com replays esportivos em alta qualidade. Contratando as duas, ganhe desconto especial.
+            </p>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)',
+                borderRadius: 10, padding: '10px 16px',
+              }}>
+                <FontAwesomeIcon icon={faPercent} style={{ fontSize: 18 }} />
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 800 }}>20% OFF</div>
+                  <div style={{ fontSize: 11, opacity: 0.85 }}>Em todos os planos ArenAi</div>
+                </div>
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)',
+                borderRadius: 10, padding: '10px 16px',
+              }}>
+                <FontAwesomeIcon icon={faGift} style={{ fontSize: 18 }} />
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 800 }}>1 Mes Gratis</div>
+                  <div style={{ fontSize: 11, opacity: 0.85 }}>De teste na outra plataforma</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: CTA */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+            <a
+              href="https://apertai.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '12px 24px', borderRadius: 10,
+                background: '#1a1a1a', color: '#fff',
+                fontWeight: 700, fontSize: 14, textDecoration: 'none',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+              }}
+            >
+              Quero aproveitar
+            </a>
+            <a
+              href="https://apertai.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '10px 20px', borderRadius: 10,
+                background: 'transparent', color: '#fff',
+                fontWeight: 600, fontSize: 13, textDecoration: 'none',
+                border: '2px solid rgba(255,255,255,0.5)',
+              }}
+            >
+              Conhecer o ApertAi
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* ===== Section 4: Invoices ===== */}
