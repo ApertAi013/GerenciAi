@@ -180,7 +180,11 @@ export default function Dashboard() {
   const enrollmentStats = useMemo(() => {
     const currentMonth = getCurrentMonth();
     const ativas = enrollments.filter(e => e.status === 'ativa').length;
-    const canceladas = enrollments.filter(e => e.status === 'cancelada').length;
+    const canceladas = enrollments.filter(e => {
+      if (e.status !== 'cancelada') return false;
+      const date = (e as any).updated_at || e.created_at || e.start_date;
+      return date && date.substring(0, 7) === currentMonth;
+    }).length;
     const novas = enrollments.filter(e => {
       const date = e.created_at || e.start_date;
       return date && date.substring(0, 7) === currentMonth;
