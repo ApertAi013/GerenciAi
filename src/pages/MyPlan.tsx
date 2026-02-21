@@ -597,13 +597,13 @@ export default function MyPlan() {
               <img
                 src="/arenai-logo.svg"
                 alt="ArenAi"
-                style={{ height: 36, filter: 'brightness(0) invert(1)', opacity: 0.95 }}
+                style={{ height: 36 }}
               />
               <span style={{ fontSize: 22, fontWeight: 300, opacity: 0.7 }}>+</span>
               <img
                 src="/apertai-logo.svg"
                 alt="ApertAi"
-                style={{ height: 36, filter: 'brightness(0) invert(1)', opacity: 0.95 }}
+                style={{ height: 36 }}
               />
             </div>
             <div style={{
