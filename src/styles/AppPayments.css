@@ -764,3 +764,109 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Credit Card Configuration */
+.credit-card-config {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.credit-card-config h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.credit-card-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+}
+
+.toggle-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.toggle-info svg {
+  font-size: 1.2rem;
+  color: #3b82f6;
+}
+
+.toggle-label {
+  display: block;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.toggle-description {
+  display: block;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.fee-mode-selector {
+  margin-top: 1.5rem;
+}
+
+.fee-mode-selector > label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.fee-mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fee-mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fee-mode-option:hover {
+  border-color: #3b82f6;
+  background: #f0f7ff;
+}
+
+.fee-mode-option.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.fee-mode-option input[type="radio"] {
+  margin-top: 4px;
+}
+
+.fee-mode-option strong {
+  display: block;
+  color: #1f2937;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.fee-mode-option span {
+  display: block;
+  color: #6b7280;
+  font-size: 0.85rem;
+}

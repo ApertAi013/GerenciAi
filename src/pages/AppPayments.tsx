@@ -16,6 +16,7 @@ import {
   faArrowRight,
   faCopy,
   faMobileAlt,
+  faCreditCard,
 } from '@fortawesome/free-solid-svg-icons';
 import { appPaymentService } from '../services/appPaymentService';
 import { classService } from '../services/classService';
@@ -230,6 +231,26 @@ export default function AppPayments() {
     }
   };
 
+  const handleToggleCreditCard = async () => {
+    try {
+      await appPaymentService.updateConfig({ credit_card_enabled: !config?.credit_card_enabled });
+      toast.success(config?.credit_card_enabled ? 'Cartao de credito desabilitado' : 'Cartao de credito habilitado!');
+      await loadConfig();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao atualizar configuração');
+    }
+  };
+
+  const handleUpdateFeeMode = async (mode: 'absorb' | 'pass_to_student') => {
+    try {
+      await appPaymentService.updateConfig({ credit_card_fee_mode: mode });
+      toast.success('Modo de taxa atualizado!');
+      await loadConfig();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao atualizar modo de taxa');
+    }
+  };
+
   const handleSaveScope = async () => {
     if (scopeType !== 'all' && selectedEntityIds.length === 0) {
       toast.error(`Selecione pelo menos uma ${scopeType === 'classes' ? 'turma' : 'aluno'}`);
@@ -425,6 +446,70 @@ export default function AppPayments() {
                   <div className="summary-row">
                     <span>Titular:</span>
                     <strong>{config.pix_key_holder_name}</strong>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Credit Card Configuration */}
+            {config?.configured && (
+              <div className="credit-card-config">
+                <h2>Cartao de Credito</h2>
+                <p className="tab-description">
+                  Habilite pagamento via cartao de credito no app dos alunos. Os alunos poderao pagar mensalidades e ativar cobranca recorrente automatica.
+                </p>
+
+                <div className="credit-card-toggle">
+                  <div className="toggle-info">
+                    <FontAwesomeIcon icon={faCreditCard} />
+                    <div>
+                      <span className="toggle-label">Pagamento via Cartao de Credito</span>
+                      <span className="toggle-description">
+                        {config.credit_card_enabled
+                          ? 'Alunos podem pagar com cartao no app'
+                          : 'Desabilitado - apenas PIX disponivel'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    className={`btn-toggle ${config.credit_card_enabled ? 'active' : ''}`}
+                    onClick={handleToggleCreditCard}
+                  >
+                    {config.credit_card_enabled ? 'Desabilitar' : 'Habilitar'}
+                  </button>
+                </div>
+
+                {config.credit_card_enabled && (
+                  <div className="fee-mode-selector">
+                    <label>Modo de Taxa do Cartao</label>
+                    <div className="fee-mode-options">
+                      <label className={`fee-mode-option ${config.credit_card_fee_mode === 'absorb' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="fee_mode"
+                          value="absorb"
+                          checked={config.credit_card_fee_mode === 'absorb'}
+                          onChange={() => handleUpdateFeeMode('absorb')}
+                        />
+                        <div>
+                          <strong>Absorver taxas</strong>
+                          <span>Voce arca com as taxas do cartao. O aluno paga o valor cheio da mensalidade.</span>
+                        </div>
+                      </label>
+                      <label className={`fee-mode-option ${config.credit_card_fee_mode === 'pass_to_student' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="fee_mode"
+                          value="pass_to_student"
+                          checked={config.credit_card_fee_mode === 'pass_to_student'}
+                          onChange={() => handleUpdateFeeMode('pass_to_student')}
+                        />
+                        <div>
+                          <strong>Repassar ao aluno</strong>
+                          <span>As taxas do cartao sao adicionadas ao valor da mensalidade do aluno.</span>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 )}
               </div>

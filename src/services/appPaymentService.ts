@@ -29,6 +29,8 @@ export const appPaymentService = {
     pix_key?: string;
     pix_key_type?: PixKeyType;
     pix_key_holder_name?: string;
+    credit_card_enabled?: boolean;
+    credit_card_fee_mode?: 'absorb' | 'pass_to_student';
   }): Promise<{ status: string; message: string }> {
     const response = await api.put('/api/app-payments/config', data);
     return response.data;
