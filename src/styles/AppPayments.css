@@ -870,3 +870,47 @@
   color: #6b7280;
   font-size: 0.85rem;
 }
+
+.card-fees-summary {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.card-fees-summary h3 {
+  font-size: 0.95rem;
+  color: #1f2937;
+  margin: 0 0 0.75rem;
+}
+
+.card-fees-summary .fee-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.card-fees-summary .fee-row.total {
+  border-top: 1px solid #d1d5db;
+  margin-top: 0.3rem;
+  padding-top: 0.5rem;
+  font-weight: 600;
+}
+
+.card-fees-summary .fee-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.fees-card.card-fees {
+  margin-top: 1.5rem;
+  border-left: 3px solid #8b5cf6;
+}
+
+.fees-card.card-fees h3 {
+  color: #7c3aed;
+}

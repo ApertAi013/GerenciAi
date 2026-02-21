@@ -480,37 +480,60 @@ export default function AppPayments() {
                 </div>
 
                 {config.credit_card_enabled && (
-                  <div className="fee-mode-selector">
-                    <label>Modo de Taxa do Cartao</label>
-                    <div className="fee-mode-options">
-                      <label className={`fee-mode-option ${config.credit_card_fee_mode === 'absorb' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="fee_mode"
-                          value="absorb"
-                          checked={config.credit_card_fee_mode === 'absorb'}
-                          onChange={() => handleUpdateFeeMode('absorb')}
-                        />
-                        <div>
-                          <strong>Absorver taxas</strong>
-                          <span>Voce arca com as taxas do cartao. O aluno paga o valor cheio da mensalidade.</span>
-                        </div>
-                      </label>
-                      <label className={`fee-mode-option ${config.credit_card_fee_mode === 'pass_to_student' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="fee_mode"
-                          value="pass_to_student"
-                          checked={config.credit_card_fee_mode === 'pass_to_student'}
-                          onChange={() => handleUpdateFeeMode('pass_to_student')}
-                        />
-                        <div>
-                          <strong>Repassar ao aluno</strong>
-                          <span>As taxas do cartao sao adicionadas ao valor da mensalidade do aluno.</span>
-                        </div>
-                      </label>
+                  <>
+                    <div className="fee-mode-selector">
+                      <label>Modo de Taxa do Cartao</label>
+                      <div className="fee-mode-options">
+                        <label className={`fee-mode-option ${config.credit_card_fee_mode === 'absorb' ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="fee_mode"
+                            value="absorb"
+                            checked={config.credit_card_fee_mode === 'absorb'}
+                            onChange={() => handleUpdateFeeMode('absorb')}
+                          />
+                          <div>
+                            <strong>Absorver taxas</strong>
+                            <span>Voce arca com as taxas do cartao. O aluno paga o valor cheio da mensalidade.</span>
+                          </div>
+                        </label>
+                        <label className={`fee-mode-option ${config.credit_card_fee_mode === 'pass_to_student' ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="fee_mode"
+                            value="pass_to_student"
+                            checked={config.credit_card_fee_mode === 'pass_to_student'}
+                            onChange={() => handleUpdateFeeMode('pass_to_student')}
+                          />
+                          <div>
+                            <strong>Repassar ao aluno</strong>
+                            <span>As taxas do cartao sao adicionadas ao valor da mensalidade do aluno.</span>
+                          </div>
+                        </label>
+                      </div>
                     </div>
-                  </div>
+
+                    {fees?.credit_card && (
+                      <div className="card-fees-summary">
+                        <h3>Taxas do Cartao de Credito</h3>
+                        <div className="fee-row">
+                          <span>Taxa Gateway (ASAAS)</span>
+                          <strong>{fees.credit_card.asaas_fee_percent.toFixed(2)}%</strong>
+                        </div>
+                        <div className="fee-row">
+                          <span>Taxa Plataforma (GerenciAi)</span>
+                          <strong>{fees.credit_card.platform_fee_percent.toFixed(2)}%</strong>
+                        </div>
+                        <div className="fee-row total">
+                          <span>Total</span>
+                          <strong>{fees.credit_card.total_fee_percent.toFixed(2)}%</strong>
+                        </div>
+                        <p className="fee-note">
+                          Para cada R$ {fees.credit_card.example.gross.toFixed(2)} cobrado, voce recebe R$ {fees.credit_card.example.net.toFixed(2)}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -528,7 +551,7 @@ export default function AppPayments() {
             {fees && (
               <>
                 <div className="fees-card">
-                  <h3>Composição das Taxas</h3>
+                  <h3><FontAwesomeIcon icon={faQrcode} /> Taxas PIX</h3>
                   <div className="fee-row">
                     <span>Taxa Gateway (ASAAS)</span>
                     <strong>{fees.asaas_fee_percent.toFixed(2)}%</strong>
@@ -544,7 +567,7 @@ export default function AppPayments() {
                 </div>
 
                 <div className="fees-example">
-                  <h3>Exemplo: Mensalidade de R$ {fees.example.gross.toFixed(2)}</h3>
+                  <h3>Exemplo PIX: Mensalidade de R$ {fees.example.gross.toFixed(2)}</h3>
                   <div className="example-flow">
                     <div className="flow-item">
                       <span className="flow-label">Aluno paga</span>
@@ -567,6 +590,51 @@ export default function AppPayments() {
                     </div>
                   </div>
                 </div>
+
+                {fees.credit_card && (
+                  <>
+                    <div className="fees-card card-fees">
+                      <h3><FontAwesomeIcon icon={faCreditCard} /> Taxas Cartao de Credito</h3>
+                      <div className="fee-row">
+                        <span>Taxa Gateway (ASAAS)</span>
+                        <strong>{fees.credit_card.asaas_fee_percent.toFixed(2)}%</strong>
+                      </div>
+                      <div className="fee-row">
+                        <span>Taxa Plataforma (GerenciAi)</span>
+                        <strong>{fees.credit_card.platform_fee_percent.toFixed(2)}%</strong>
+                      </div>
+                      <div className="fee-row total">
+                        <span>Total de Taxas</span>
+                        <strong>{fees.credit_card.total_fee_percent.toFixed(2)}%</strong>
+                      </div>
+                    </div>
+
+                    <div className="fees-example">
+                      <h3>Exemplo Cartao: Mensalidade de R$ {fees.credit_card.example.gross.toFixed(2)}</h3>
+                      <div className="example-flow">
+                        <div className="flow-item">
+                          <span className="flow-label">Aluno paga</span>
+                          <span className="flow-value gross">R$ {fees.credit_card.example.gross.toFixed(2)}</span>
+                        </div>
+                        <FontAwesomeIcon icon={faArrowRight} className="flow-arrow" />
+                        <div className="flow-item">
+                          <span className="flow-label">Taxa ASAAS</span>
+                          <span className="flow-value fee">- R$ {fees.credit_card.example.asaas_fee.toFixed(2)}</span>
+                        </div>
+                        <FontAwesomeIcon icon={faArrowRight} className="flow-arrow" />
+                        <div className="flow-item">
+                          <span className="flow-label">Taxa GerenciAi</span>
+                          <span className="flow-value fee">- R$ {fees.credit_card.example.platform_fee.toFixed(2)}</span>
+                        </div>
+                        <FontAwesomeIcon icon={faArrowRight} className="flow-arrow" />
+                        <div className="flow-item">
+                          <span className="flow-label">Você recebe</span>
+                          <span className="flow-value net">R$ {fees.credit_card.example.net.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="terms-section">
                   <h3>Aceitar Termos</h3>

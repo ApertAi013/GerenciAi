@@ -25,6 +25,8 @@ export interface AppPaymentConfig {
   accepted_terms_at: string | null;
   credit_card_enabled?: boolean;
   credit_card_fee_mode?: 'absorb' | 'pass_to_student';
+  credit_card_asaas_fee_percent?: number;
+  credit_card_platform_fee_percent?: number;
   scope_entries: ScopeEntry[];
   created_at: string;
   updated_at: string;
@@ -39,6 +41,17 @@ export interface FeeBreakdown {
     asaas_fee: number;
     platform_fee: number;
     net: number;
+  };
+  credit_card?: {
+    asaas_fee_percent: number;
+    platform_fee_percent: number;
+    total_fee_percent: number;
+    example: {
+      gross: number;
+      asaas_fee: number;
+      platform_fee: number;
+      net: number;
+    };
   };
 }
 
