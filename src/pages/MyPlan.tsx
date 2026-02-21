@@ -91,6 +91,12 @@ export default function MyPlan() {
   const [upgradingPlanId, setUpgradingPlanId] = useState<number | null>(null);
   const [promiseLoading, setPromiseLoading] = useState(false);
 
+  // Upgrade modal
+  const [upgradeModalPlan, setUpgradeModalPlan] = useState<Plan | null>(null);
+  const [upgradeReason, setUpgradeReason] = useState('');
+  const [upgradeSubmitting, setUpgradeSubmitting] = useState(false);
+  const [upgradeSuccess, setUpgradeSuccess] = useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -120,18 +126,33 @@ export default function MyPlan() {
 
   // ---------- Upgrade ----------
 
-  const handleUpgrade = async (plan: Plan) => {
-    if (!confirm(`Deseja solicitar upgrade para o plano "${plan.name}"?\n\nUm administrador analisará seu pedido.`)) return;
+  const openUpgradeModal = (plan: Plan) => {
+    setUpgradeModalPlan(plan);
+    setUpgradeReason('');
+    setUpgradeSuccess(false);
+    setUpgradeSubmitting(false);
+  };
 
+  const closeUpgradeModal = () => {
+    setUpgradeModalPlan(null);
+    setUpgradeReason('');
+    setUpgradeSuccess(false);
+  };
+
+  const submitUpgradeRequest = async () => {
+    if (!upgradeModalPlan) return;
     try {
-      setUpgradingPlanId(plan.id);
-      await platformBillingService.createUpgradeRequest({ requested_plan_id: plan.id });
-      toast.success('Solicitação de upgrade enviada com sucesso!');
+      setUpgradeSubmitting(true);
+      await platformBillingService.createUpgradeRequest({
+        requested_plan_id: upgradeModalPlan.id,
+        reason: upgradeReason || undefined,
+      });
+      setUpgradeSuccess(true);
     } catch (err: any) {
       console.error('Erro ao solicitar upgrade:', err);
       toast.error(err.response?.data?.message || 'Erro ao solicitar upgrade');
     } finally {
-      setUpgradingPlanId(null);
+      setUpgradeSubmitting(false);
     }
   };
 
@@ -484,22 +505,16 @@ export default function MyPlan() {
                   </button>
                 ) : isHigherPlan ? (
                   <button
-                    onClick={() => handleUpgrade(plan)}
-                    disabled={upgradingPlanId === plan.id}
+                    onClick={() => openUpgradeModal(plan)}
                     style={{
                       width: '100%', padding: '10px 0', borderRadius: 8,
                       border: 'none', backgroundColor: isRecommended ? '#10B981' : '#3B82F6',
                       color: '#fff', fontWeight: 600, fontSize: 13,
-                      cursor: upgradingPlanId === plan.id ? 'not-allowed' : 'pointer',
-                      opacity: upgradingPlanId === plan.id ? 0.7 : 1,
+                      cursor: 'pointer',
                       transition: 'opacity 0.2s',
                     }}
                   >
-                    {upgradingPlanId === plan.id ? (
-                      <><FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: 6 }} />Solicitando...</>
-                    ) : (
-                      <><FontAwesomeIcon icon={faArrowUp} style={{ marginRight: 6 }} />Solicitar Upgrade</>
-                    )}
+                    <FontAwesomeIcon icon={faArrowUp} style={{ marginRight: 6 }} />Solicitar Upgrade
                   </button>
                 ) : (
                   <button disabled style={{
@@ -735,6 +750,214 @@ export default function MyPlan() {
           </div>
         )}
       </div>
+
+      {/* ===== Upgrade Request Modal ===== */}
+      {upgradeModalPlan && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+          }}
+          onClick={closeUpgradeModal}
+        >
+          <div
+            style={{
+              background: '#fff', borderRadius: 20, width: '95%', maxWidth: 520,
+              overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+              animation: 'fadeInUp 0.25s ease-out',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {upgradeSuccess ? (
+              /* ── Success state ── */
+              <div style={{ padding: '48px 36px', textAlign: 'center' }}>
+                <div style={{
+                  width: 72, height: 72, borderRadius: '50%', margin: '0 auto 20px',
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <FontAwesomeIcon icon={faCheckCircle} style={{ color: '#fff', fontSize: 32 }} />
+                </div>
+                <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: '#111827' }}>
+                  Solicitacao Enviada!
+                </h2>
+                <p style={{ margin: '0 0 8px', fontSize: 15, color: '#6B7280', lineHeight: 1.6 }}>
+                  Seu pedido de upgrade para o plano <strong style={{ color: '#111827' }}>{upgradeModalPlan.name}</strong> foi enviado com sucesso.
+                </p>
+                <p style={{ margin: '0 0 28px', fontSize: 14, color: '#9CA3AF' }}>
+                  Nossa equipe analisara e voce sera notificado assim que aprovado.
+                </p>
+                <button
+                  onClick={closeUpgradeModal}
+                  style={{
+                    padding: '12px 36px', borderRadius: 10, border: 'none',
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer',
+                  }}
+                >
+                  Entendido
+                </button>
+              </div>
+            ) : (
+              /* ── Form state ── */
+              <>
+                {/* Header with gradient */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #1E293B 0%, #334155 100%)',
+                  padding: '28px 32px', color: '#fff',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <p style={{ margin: '0 0 4px', fontSize: 13, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>
+                        Solicitar upgrade para
+                      </p>
+                      <h2 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 800 }}>
+                        {upgradeModalPlan.name}
+                      </h2>
+                      <span style={{ fontSize: 20, fontWeight: 700, color: '#FBBF24' }}>
+                        {formatBRL(upgradeModalPlan.price_cents)}
+                        <span style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8' }}>/mes</span>
+                      </span>
+                    </div>
+                    <button
+                      onClick={closeUpgradeModal}
+                      style={{
+                        background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
+                        width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', color: '#94A3B8', fontSize: 16,
+                        transition: 'background 0.2s',
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faTimesCircle} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div style={{ padding: '28px 32px' }}>
+                  {/* Comparison */}
+                  <div style={{
+                    display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16,
+                    alignItems: 'center', marginBottom: 24,
+                  }}>
+                    {/* Current */}
+                    <div style={{
+                      background: '#F9FAFB', borderRadius: 12, padding: '16px 18px',
+                      border: '1px solid #E5E7EB', textAlign: 'center',
+                    }}>
+                      <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', fontWeight: 600 }}>Atual</p>
+                      <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#374151' }}>{subscription?.plan_name}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#6B7280' }}>
+                        {isUnlimited(subscription?.max_students ?? 0) ? 'Ilimitado' : `${subscription?.max_students} alunos`}
+                      </p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#6B7280' }}>
+                        {isUnlimited(subscription?.max_classes ?? 0) ? 'Ilimitado' : `${subscription?.max_classes} turmas`}
+                      </p>
+                    </div>
+
+                    {/* Arrow */}
+                    <div style={{
+                      width: 40, height: 40, borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <FontAwesomeIcon icon={faArrowUp} style={{ color: '#fff', fontSize: 16, transform: 'rotate(90deg)' }} />
+                    </div>
+
+                    {/* New */}
+                    <div style={{
+                      background: '#EFF6FF', borderRadius: 12, padding: '16px 18px',
+                      border: '2px solid #3B82F6', textAlign: 'center',
+                    }}>
+                      <p style={{ margin: '0 0 2px', fontSize: 11, color: '#3B82F6', textTransform: 'uppercase', fontWeight: 600 }}>Novo</p>
+                      <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#1E40AF' }}>{upgradeModalPlan.name}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#3B82F6' }}>
+                        {isUnlimited(upgradeModalPlan.max_students) ? 'Ilimitado' : `${upgradeModalPlan.max_students} alunos`}
+                      </p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#3B82F6' }}>
+                        {isUnlimited(upgradeModalPlan.max_classes) ? 'Ilimitado' : `${upgradeModalPlan.max_classes} turmas`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Benefits highlight */}
+                  {upgradeModalPlan.has_app_access && !(subscription as any)?.has_app_access && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 10,
+                      padding: '12px 16px', marginBottom: 20,
+                    }}>
+                      <FontAwesomeIcon icon={faMobileAlt} style={{ color: '#059669', fontSize: 18 }} />
+                      <span style={{ fontSize: 14, color: '#065F46', fontWeight: 600 }}>
+                        Inclui acesso ao aplicativo do aluno e do gestor
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Reason textarea */}
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 600, color: '#374151' }}>
+                      Motivo ou observacao <span style={{ fontWeight: 400, color: '#9CA3AF' }}>(opcional)</span>
+                    </label>
+                    <textarea
+                      value={upgradeReason}
+                      onChange={e => setUpgradeReason(e.target.value)}
+                      placeholder="Ex: Preciso de mais vagas para alunos novos..."
+                      rows={3}
+                      style={{
+                        width: '100%', padding: '12px 14px', borderRadius: 10,
+                        border: '1px solid #D1D5DB', fontSize: 14, resize: 'vertical',
+                        outline: 'none', fontFamily: 'inherit', color: '#374151',
+                        transition: 'border-color 0.2s',
+                        boxSizing: 'border-box',
+                      }}
+                      onFocus={e => e.currentTarget.style.borderColor = '#3B82F6'}
+                      onBlur={e => e.currentTarget.style.borderColor = '#D1D5DB'}
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button
+                      onClick={closeUpgradeModal}
+                      style={{
+                        flex: 1, padding: '13px 16px', borderRadius: 10,
+                        border: '1px solid #D1D5DB', background: '#fff',
+                        color: '#374151', fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={submitUpgradeRequest}
+                      disabled={upgradeSubmitting}
+                      style={{
+                        flex: 2, padding: '13px 16px', borderRadius: 10,
+                        border: 'none',
+                        background: upgradeSubmitting
+                          ? '#93C5FD'
+                          : 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                        color: '#fff', fontWeight: 700, fontSize: 15,
+                        cursor: upgradeSubmitting ? 'not-allowed' : 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        boxShadow: upgradeSubmitting ? 'none' : '0 4px 14px rgba(59,130,246,0.35)',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {upgradeSubmitting ? (
+                        <><FontAwesomeIcon icon={faSpinner} spin /> Enviando...</>
+                      ) : (
+                        <><FontAwesomeIcon icon={faArrowUp} /> Solicitar Upgrade</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
