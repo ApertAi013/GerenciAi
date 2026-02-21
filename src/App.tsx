@@ -34,6 +34,7 @@ import AppPayments from './pages/AppPayments'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import SystemGuide from './pages/SystemGuide'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -84,6 +85,7 @@ export default function App() {
         <Route path="/esqueci-senha" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/guia-do-sistema" element={<SystemGuide />} />
+        <Route path="/privacidade" element={<PrivacyPolicy />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
