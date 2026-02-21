@@ -88,11 +88,11 @@ export default function AdminMonitoring() {
 
   useEffect(() => {
     if (user?.role === 'admin') {
-      loadData();
+      loadData(true);
 
-      // Auto-refresh a cada 30 segundos
+      // Auto-refresh a cada 30 segundos (silencioso, sem loading state)
       const interval = setInterval(() => {
-        loadData();
+        loadData(false);
       }, 30000);
 
       return () => clearInterval(interval);
@@ -102,9 +102,9 @@ export default function AdminMonitoring() {
     }
   }, [user?.role]);
 
-  const loadData = async () => {
+  const loadData = async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
       setError(null);
       await Promise.all([
         loadDashboard().catch(e => console.error('Dashboard error:', e)),
@@ -115,7 +115,7 @@ export default function AdminMonitoring() {
       console.error('Error loading monitoring data:', error);
       setError(error?.message || 'Erro ao carregar dados de monitoramento');
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
