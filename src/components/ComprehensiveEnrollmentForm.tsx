@@ -189,11 +189,15 @@ export default function ComprehensiveEnrollmentForm({
 
     try {
       // Create student
-      const cleanedData = {
+      const cleanedData: any = {
         ...studentData,
         cpf: studentData.cpf.replace(/\D/g, ''),
         phone: studentData.phone?.replace(/\D/g, ''),
       };
+
+      // Enviar senha padrão se configurada nas preferências
+      const savedDefaultPassword = localStorage.getItem('default_student_password');
+      if (savedDefaultPassword) cleanedData.default_password = savedDefaultPassword;
 
       const response = await studentService.createStudent(cleanedData);
 

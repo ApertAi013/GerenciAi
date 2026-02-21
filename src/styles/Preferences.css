@@ -208,6 +208,83 @@
   background-color: #e5e7eb;
 }
 
+/* Default Password Section */
+.default-password-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.password-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 400px;
+}
+
+.password-input-wrapper label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.password-field {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.password-field input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.password-field input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.toggle-password-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.toggle-password-btn:hover {
+  background: #e5e7eb;
+}
+
+.password-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.password-hint.error {
+  color: #ef4444;
+}
+
+.password-hint.success {
+  color: #22c55e;
+}
+
+/* Global save button */
+.preferences-global-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .preferences-page {

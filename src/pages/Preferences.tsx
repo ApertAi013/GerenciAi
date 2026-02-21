@@ -4,6 +4,8 @@ import '../styles/Preferences.css';
 
 export default function Preferences() {
   const [whatsappTemplate, setWhatsappTemplate] = useState<string>('');
+  const [defaultPassword, setDefaultPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Template padrão
@@ -25,12 +27,31 @@ Obrigado!`;
     } else {
       setWhatsappTemplate(defaultTemplate);
     }
+
+    // Carregar senha padrão salva
+    const savedPassword = localStorage.getItem('default_student_password');
+    if (savedPassword) {
+      setDefaultPassword(savedPassword);
+    }
   }, []);
 
   const handleSave = () => {
+    // Validar senha se preenchida
+    if (defaultPassword && defaultPassword.length < 6) {
+      toast.error('A senha padrão deve ter no mínimo 6 caracteres');
+      return;
+    }
+
     setIsSaving(true);
     try {
       localStorage.setItem('whatsapp_payment_template', whatsappTemplate);
+
+      if (defaultPassword) {
+        localStorage.setItem('default_student_password', defaultPassword);
+      } else {
+        localStorage.removeItem('default_student_password');
+      }
+
       toast.success('Preferências salvas com sucesso!');
     } catch {
       toast.error('Erro ao salvar preferências');
@@ -47,6 +68,12 @@ Obrigado!`;
     }
   };
 
+  const handleClearPassword = () => {
+    setDefaultPassword('');
+    localStorage.removeItem('default_student_password');
+    toast.success('Senha padrão removida');
+  };
+
   // Preview da mensagem com variáveis substituídas
   const getPreview = () => {
     return whatsappTemplate
@@ -60,13 +87,13 @@ Obrigado!`;
   return (
     <div className="preferences-page">
       <div className="page-header">
-        <h1>⚙️ Preferências</h1>
+        <h1>Preferências</h1>
       </div>
 
       <div className="preferences-content">
         <section className="preference-section">
           <div className="section-header">
-            <h2>📱 Mensagem de Cobrança via WhatsApp</h2>
+            <h2>Mensagem de Cobrança via WhatsApp</h2>
             <p className="section-description">
               Configure a mensagem que será enviada ao clicar no botão de WhatsApp na tela de Financeiro.
             </p>
@@ -125,16 +152,74 @@ Obrigado!`;
             >
               Restaurar Padrão
             </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={handleSave}
-              disabled={isSaving}
-            >
-              {isSaving ? 'Salvando...' : 'Salvar Preferências'}
-            </button>
           </div>
         </section>
+
+        <section className="preference-section">
+          <div className="section-header">
+            <h2>Senha Padrão para Alunos</h2>
+            <p className="section-description">
+              Defina uma senha padrão que será aplicada automaticamente ao cadastrar novos alunos.
+              Os alunos poderão usar esta senha para acessar o aplicativo.
+            </p>
+          </div>
+
+          <div className="default-password-container">
+            <div className="password-input-wrapper">
+              <label htmlFor="default-password">Senha padrão:</label>
+              <div className="password-field">
+                <input
+                  id="default-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={defaultPassword}
+                  onChange={(e) => setDefaultPassword(e.target.value)}
+                  placeholder="Ex: 123456"
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  className="toggle-password-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? 'Esconder senha' : 'Mostrar senha'}
+                >
+                  {showPassword ? 'Esconder' : 'Mostrar'}
+                </button>
+              </div>
+              {defaultPassword && defaultPassword.length > 0 && defaultPassword.length < 6 && (
+                <span className="password-hint error">Mínimo de 6 caracteres</span>
+              )}
+              {defaultPassword && defaultPassword.length >= 6 && (
+                <span className="password-hint success">Senha válida</span>
+              )}
+              {!defaultPassword && (
+                <span className="password-hint">Sem senha padrão definida. Alunos serão criados sem senha.</span>
+              )}
+            </div>
+
+            <div className="section-actions">
+              {defaultPassword && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={handleClearPassword}
+                >
+                  Limpar Senha
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <div className="preferences-global-actions">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleSave}
+            disabled={isSaving || (defaultPassword.length > 0 && defaultPassword.length < 6)}
+          >
+            {isSaving ? 'Salvando...' : 'Salvar Preferências'}
+          </button>
+        </div>
       </div>
     </div>
   );

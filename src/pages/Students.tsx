@@ -554,6 +554,10 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
       if (formData.sex) payload.sex = formData.sex;
       if (formData.level) payload.level = formData.level;
 
+      // Enviar senha padrão se configurada nas preferências
+      const savedDefaultPassword = localStorage.getItem('default_student_password');
+      if (savedDefaultPassword) payload.default_password = savedDefaultPassword;
+
       await studentService.createStudent(payload);
       onSuccess();
     } catch (err: any) {

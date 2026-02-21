@@ -24,6 +24,7 @@ export interface CreateStudentRequest {
   birth_date?: string;
   sex?: 'Masculino' | 'Feminino' | 'Outro' | 'N/I';
   level?: string;
+  default_password?: string;
 }
 
 export interface UpdateStudentRequest {
