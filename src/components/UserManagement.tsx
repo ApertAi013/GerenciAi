@@ -31,12 +31,10 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('gestor');
   const [statusFilter, setStatusFilter] = useState<string>('active');
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 20,
-    total: 0,
-    totalPages: 0,
-  });
+  const [page, setPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const limit = 20;
   const [updatingFeature, setUpdatingFeature] = useState<{ userId: number; featureCode: string } | null>(null);
 
   // Modal states
@@ -65,13 +63,17 @@ export default function UserManagement() {
 
   useEffect(() => {
     loadFeatures();
+  }, []);
+
+  useEffect(() => {
     loadUsers();
-  }, [pagination.page, roleFilter, statusFilter]);
+  }, [page, roleFilter, statusFilter]);
 
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchTerm !== '') {
+        setPage(1);
         loadUsers();
       }
     }, 500);
@@ -94,8 +96,8 @@ export default function UserManagement() {
     try {
       setLoading(true);
       const params: UsersListParams = {
-        page: pagination.page,
-        limit: pagination.limit,
+        page,
+        limit,
         role: roleFilter,
         status: statusFilter,
       };
@@ -107,7 +109,8 @@ export default function UserManagement() {
       const response = await monitoringService.listUsers(params);
       if ((response as any).status === 'success' || (response as any).success === true) {
         setUsers(response.data.users);
-        setPagination(response.data.pagination);
+        setTotalUsers(response.data.pagination.total);
+        setTotalPages(response.data.pagination.totalPages);
       }
     } catch (error: any) {
       console.error('Erro ao carregar usuários:', error);
@@ -181,17 +184,17 @@ export default function UserManagement() {
   };
 
   const handlePageChange = (newPage: number) => {
-    setPagination({ ...pagination, page: newPage });
+    setPage(newPage);
   };
 
   const handleSearch = () => {
-    setPagination({ ...pagination, page: 1 });
+    setPage(1);
     loadUsers();
   };
 
   const clearSearch = () => {
     setSearchTerm('');
-    setPagination({ ...pagination, page: 1 });
+    setPage(1);
     loadUsers();
   };
 
@@ -445,20 +448,20 @@ export default function UserManagement() {
       </div>
 
       {/* Pagination */}
-      {pagination.totalPages > 1 && (
+      {totalPages > 1 && (
         <div className="pagination">
           <button
-            onClick={() => handlePageChange(pagination.page - 1)}
-            disabled={pagination.page === 1}
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1}
           >
             ← Anterior
           </button>
           <span>
-            Página {pagination.page} de {pagination.totalPages}
+            Página {page} de {totalPages}
           </span>
           <button
-            onClick={() => handlePageChange(pagination.page + 1)}
-            disabled={pagination.page >= pagination.totalPages}
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page >= totalPages}
           >
             Próxima →
           </button>
@@ -468,7 +471,7 @@ export default function UserManagement() {
       {/* Summary */}
       <div className="summary-footer">
         <p>
-          Mostrando {users.length} de {pagination.total} usuários
+          Mostrando {users.length} de {totalUsers} usuários
         </p>
       </div>
 
