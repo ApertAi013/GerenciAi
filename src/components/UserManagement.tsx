@@ -6,14 +6,13 @@ import {
   faFilter,
   faSpinner,
   faCheckCircle,
-  faTimesCircle,
   faPlus,
   faEdit,
   faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import toast from 'react-hot-toast';
 import { monitoringService } from '../services/monitoringService';
-import type { User, Feature } from '../types/monitoringTypes';
+import type { User } from '../types/monitoringTypes';
 import '../styles/UserManagement.css';
 
 interface UsersListParams {
@@ -26,7 +25,6 @@ interface UsersListParams {
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
-  const [features, setFeatures] = useState<Feature[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('gestor');
@@ -35,7 +33,6 @@ export default function UserManagement() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const limit = 20;
-  const [updatingFeature, setUpdatingFeature] = useState<{ userId: number; featureCode: string } | null>(null);
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -62,10 +59,6 @@ export default function UserManagement() {
   });
 
   useEffect(() => {
-    loadFeatures();
-  }, []);
-
-  useEffect(() => {
     loadUsers();
   }, [page, roleFilter, statusFilter]);
 
@@ -79,18 +72,6 @@ export default function UserManagement() {
     }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  const loadFeatures = async () => {
-    try {
-      const response = await monitoringService.listFeatures();
-      if ((response as any).status === 'success' || (response as any).success === true) {
-        setFeatures(response.data);
-      }
-    } catch (error: any) {
-      console.error('Erro ao carregar features:', error);
-      toast.error('Erro ao carregar features disponíveis');
-    }
-  };
 
   const loadUsers = async () => {
     try {
@@ -117,69 +98,6 @@ export default function UserManagement() {
       toast.error('Erro ao carregar lista de usuários');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const toggleUserFeature = async (userId: number, featureCode: string, currentlyEnabled: boolean) => {
-    setUpdatingFeature({ userId, featureCode });
-
-    try {
-      // Get current user features
-      const user = users.find(u => u.id === userId);
-      if (!user) {
-        console.error('User not found:', userId);
-        return;
-      }
-
-      const currentFeatures = user.premium_features || [];
-      let updatedFeatures: string[];
-
-      if (currentlyEnabled) {
-        // Remove feature and all its variations (base + :unlimited)
-        updatedFeatures = currentFeatures.filter(f => !f.startsWith(featureCode));
-      } else {
-        // Add feature with unlimited access
-        updatedFeatures = [...currentFeatures, `${featureCode}:unlimited`];
-      }
-
-      console.log('Toggle Feature:', {
-        userId,
-        userEmail: user.email,
-        featureCode,
-        currentlyEnabled,
-        currentFeatures,
-        updatedFeatures
-      });
-
-      const response = await monitoringService.updateUserFeatures(userId, {
-        features: updatedFeatures,
-      });
-
-      console.log('Update response:', response);
-
-      if ((response as any).status === 'success' || (response as any).success === true) {
-        // Update local state
-        setUsers(users.map(u =>
-          u.id === userId
-            ? { ...u, premium_features: updatedFeatures, hasPremium: updatedFeatures.length > 0 }
-            : u
-        ));
-
-        toast.success(
-          currentlyEnabled
-            ? `Feature "${featureCode}" desabilitada para ${user.full_name}`
-            : `Feature "${featureCode}" habilitada para ${user.full_name}`
-        );
-      } else {
-        console.error('Update failed:', response);
-        toast.error('Falha ao atualizar features');
-      }
-    } catch (error: any) {
-      console.error('Erro ao atualizar features:', error);
-      console.error('Error details:', error.response?.data);
-      toast.error('Erro ao atualizar features do usuário');
-    } finally {
-      setUpdatingFeature(null);
     }
   };
 
@@ -311,9 +229,9 @@ export default function UserManagement() {
       <div className="user-management-header">
         <div>
           <h2>
-            <FontAwesomeIcon icon={faUsers} /> Gerenciar Features Premium
+            <FontAwesomeIcon icon={faUsers} /> Gerenciar Usuários
           </h2>
-          <p>Habilite ou desabilite features premium para seus usuários</p>
+          <p>Criar, editar e gerenciar usuários do sistema</p>
         </div>
 
         <button
@@ -406,42 +324,18 @@ export default function UserManagement() {
                 </p>
               </div>
 
-              <div className="features-section">
-                <h4>Features Premium</h4>
-                <div className="features-grid">
-                  {features.map(feature => {
-                    // Check if user has this feature (base or :unlimited version)
-                    const isEnabled = user.premium_features?.some(f => f.startsWith(feature.feature_code)) || false;
-                    const isUpdating = updatingFeature?.userId === user.id &&
-                                      updatingFeature?.featureCode === feature.feature_code;
-
-                    return (
-                      <div key={feature.feature_code} className="feature-checkbox-item">
-                        <label className="feature-checkbox-label">
-                          <input
-                            type="checkbox"
-                            className="feature-checkbox"
-                            checked={isEnabled}
-                            onChange={() => toggleUserFeature(user.id, feature.feature_code, isEnabled)}
-                            disabled={isUpdating}
-                          />
-                          <div className="checkbox-custom">
-                            {isUpdating ? (
-                              <FontAwesomeIcon icon={faSpinner} spin />
-                            ) : (
-                              isEnabled && <FontAwesomeIcon icon={faCheckCircle} />
-                            )}
-                          </div>
-                          <div className="feature-info">
-                            <span className="feature-name">{feature.feature_name}</span>
-                            <span className="feature-desc">{feature.description}</span>
-                          </div>
-                        </label>
-                      </div>
-                    );
-                  })}
+              {user.hasPremium && user.premium_features && user.premium_features.length > 0 && (
+                <div className="features-section">
+                  <h4>Features Ativas</h4>
+                  <div className="features-grid">
+                    {user.premium_features.map((f: string) => (
+                      <span key={f} className="user-has-premium-badge" style={{ marginRight: '0.35rem' }}>
+                        <FontAwesomeIcon icon={faCheckCircle} /> {f.replace(':unlimited', '')}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ))
         )}

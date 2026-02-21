@@ -260,7 +260,7 @@ export default function AdminMonitoring() {
           className={`tab ${mainTab === 'features' ? 'active' : ''}`}
           onClick={() => setMainTab('features')}
         >
-          <FontAwesomeIcon icon={faCog} /> Features Premium
+          <FontAwesomeIcon icon={faCog} /> Usuários
         </button>
       </div>
 

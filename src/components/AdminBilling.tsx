@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { platformBillingService } from '../services/platformBillingService';
+import { monitoringService } from '../services/monitoringService';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -18,7 +19,9 @@ import {
   faToggleOn,
   faToggleOff,
   faPlus,
+  faCheckCircle,
 } from '@fortawesome/free-solid-svg-icons';
+import type { Feature } from '../types/monitoringTypes';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -361,6 +364,10 @@ export default function AdminBilling() {
   const [upgradeStatusFilter, setUpgradeStatusFilter] = useState('all');
   const [actionNotes, setActionNotes] = useState<Record<number, string>>({});
 
+  // Premium Features (individual toggles per gestor)
+  const [features, setFeatures] = useState<Feature[]>([]);
+  const [updatingFeature, setUpdatingFeature] = useState<string | null>(null);
+
   // ── Data loading ───────────────────────────────────────────────────────────
 
   const loadDashboard = useCallback(async () => {
@@ -444,6 +451,42 @@ export default function AdminBilling() {
     }
   }, [upgradeStatusFilter]);
 
+  const loadFeatures = useCallback(async () => {
+    try {
+      const response = await monitoringService.listFeatures();
+      if ((response as any).status === 'success' || (response as any).success === true) {
+        setFeatures(response.data);
+      }
+    } catch {
+      // Silent - features are secondary
+    }
+  }, []);
+
+  const toggleGestorFeature = async (featureCode: string, currentlyEnabled: boolean) => {
+    if (!selectedGestorId || !gestorDetail) return;
+    setUpdatingFeature(featureCode);
+    try {
+      const currentFeatures: string[] = gestorDetail.user?.premium_features || [];
+      let updatedFeatures: string[];
+      if (currentlyEnabled) {
+        updatedFeatures = currentFeatures.filter((f: string) => !f.startsWith(featureCode));
+      } else {
+        updatedFeatures = [...currentFeatures, `${featureCode}:unlimited`];
+      }
+      const response = await monitoringService.updateUserFeatures(selectedGestorId, { features: updatedFeatures });
+      if ((response as any).status === 'success' || (response as any).success === true) {
+        toast.success(currentlyEnabled ? `Feature "${featureCode}" desabilitada` : `Feature "${featureCode}" habilitada`);
+        await loadGestorDetail(selectedGestorId);
+      } else {
+        toast.error('Falha ao atualizar feature');
+      }
+    } catch {
+      toast.error('Erro ao atualizar feature');
+    } finally {
+      setUpdatingFeature(null);
+    }
+  };
+
   // ── Effects ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -451,6 +494,7 @@ export default function AdminBilling() {
     if (activeTab === 'gestores') {
       loadGestores();
       loadPlansAndAddons();
+      loadFeatures();
     }
     if (activeTab === 'faturas') loadInvoices();
     if (activeTab === 'upgrades') loadUpgradeRequests();
@@ -814,6 +858,63 @@ export default function AdminBilling() {
                     );
                   })}
                 </div>
+              )}
+
+              {/* Premium Features (individual) */}
+              {features.length > 0 && (
+                <>
+                  <h3 style={styles.sectionTitle}>Features Premium</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    {features.map((feature) => {
+                      const userFeatures: string[] = gestorDetail?.user?.premium_features || [];
+                      const isEnabled = userFeatures.some((f: string) => f.startsWith(feature.feature_code));
+                      const isUpdating = updatingFeature === feature.feature_code;
+                      return (
+                        <div
+                          key={feature.feature_code}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.6rem 0.75rem',
+                            background: isEnabled ? '#EFF6FF' : '#F9FAFB',
+                            borderRadius: '8px',
+                            border: `1px solid ${isEnabled ? '#BFDBFE' : '#E5E7EB'}`,
+                            opacity: isUpdating ? 0.6 : 1,
+                          }}
+                        >
+                          <div>
+                            <span style={{ fontWeight: 600, color: '#1F2937', fontSize: '0.9rem' }}>
+                              {feature.feature_name}
+                            </span>
+                            <span style={{ marginLeft: '0.5rem', color: '#6B7280', fontSize: '0.8rem' }}>
+                              {feature.description}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => toggleGestorFeature(feature.feature_code, isEnabled)}
+                            disabled={isUpdating}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: isUpdating ? 'wait' : 'pointer',
+                              fontSize: '1.4rem',
+                              color: isEnabled ? '#3B82F6' : '#D1D5DB',
+                              transition: 'color 0.2s',
+                            }}
+                            title={isEnabled ? 'Desabilitar' : 'Habilitar'}
+                          >
+                            {isUpdating ? (
+                              <FontAwesomeIcon icon={faSpinner} spin />
+                            ) : (
+                              <FontAwesomeIcon icon={isEnabled ? faToggleOn : faToggleOff} />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               )}
 
               {/* Recent invoices */}
