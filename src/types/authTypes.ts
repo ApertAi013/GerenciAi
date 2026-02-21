@@ -10,6 +10,10 @@ export interface User {
   role: 'admin' | 'gestor' | 'instrutor' | 'financeiro';
   status: string;
   premium_features?: string[];
+  billing_status?: 'trial' | 'active' | 'past_due' | 'blocked';
+  billing_plan_slug?: string;
+  max_students?: number;
+  max_classes?: number;
 }
 
 export interface AuthResponse {

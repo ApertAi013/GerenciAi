@@ -1,0 +1,607 @@
+import { useEffect, useState } from 'react';
+import { platformBillingService } from '../services/platformBillingService';
+import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faCrown,
+  faUsers,
+  faChalkboardTeacher,
+  faFileInvoiceDollar,
+  faArrowUp,
+  faPuzzlePiece,
+  faExclamationTriangle,
+  faCheckCircle,
+  faClock,
+  faTimesCircle,
+  faBan,
+  faSpinner,
+  faStar,
+  faInfinity,
+  faHandshake,
+} from '@fortawesome/free-solid-svg-icons';
+
+// --------------- Types ---------------
+
+interface Addon {
+  addon_name: string;
+  addon_price_cents: number;
+  addon_slug: string;
+}
+
+interface Subscription {
+  plan_name: string;
+  plan_slug: string;
+  max_students: number;
+  max_classes: number;
+  plan_price_cents: number;
+  status: string;
+  trial_ends_at: string | null;
+  addons: Addon[];
+}
+
+interface Invoice {
+  id: number;
+  reference_month: string;
+  due_date: string;
+  final_amount_cents: number;
+  status: string;
+  paid_at: string | null;
+}
+
+interface Plan {
+  id: number;
+  name: string;
+  slug: string;
+  max_students: number;
+  max_classes: number;
+  price_cents: number;
+  description: string;
+}
+
+interface AvailableAddon {
+  id: number;
+  name: string;
+  slug: string;
+  price_cents: number;
+  description: string;
+  is_bundle: boolean;
+}
+
+// --------------- Helpers ---------------
+
+const formatBRL = (cents: number) =>
+  (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const isUnlimited = (value: number) => value >= 999999;
+
+// --------------- Component ---------------
+
+export default function MyPlan() {
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [studentCount, setStudentCount] = useState(0);
+  const [classCount, setClassCount] = useState(0);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [addons, setAddons] = useState<AvailableAddon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [upgradingPlanId, setUpgradingPlanId] = useState<number | null>(null);
+  const [promiseLoading, setPromiseLoading] = useState(false);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [subRes, invRes, plansRes, addonsRes] = await Promise.all([
+        platformBillingService.getMySubscription(),
+        platformBillingService.getMyInvoices(),
+        platformBillingService.getPlans(),
+        platformBillingService.getAddons(),
+      ]);
+      setSubscription(subRes.data.subscription);
+      setStudentCount(subRes.data.student_count);
+      setClassCount(subRes.data.class_count);
+      setInvoices(invRes.data ?? []);
+      setPlans(plansRes.data ?? []);
+      setAddons(addonsRes.data ?? []);
+    } catch (err: any) {
+      console.error('Erro ao carregar dados do plano:', err);
+      toast.error(err.response?.data?.message || 'Erro ao carregar dados do plano');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ---------- Upgrade ----------
+
+  const handleUpgrade = async (plan: Plan) => {
+    if (!confirm(`Deseja solicitar upgrade para o plano "${plan.name}"?\n\nUm administrador analisará seu pedido.`)) return;
+
+    try {
+      setUpgradingPlanId(plan.id);
+      await platformBillingService.createUpgradeRequest({ requested_plan_id: plan.id });
+      toast.success('Solicitação de upgrade enviada com sucesso!');
+    } catch (err: any) {
+      console.error('Erro ao solicitar upgrade:', err);
+      toast.error(err.response?.data?.message || 'Erro ao solicitar upgrade');
+    } finally {
+      setUpgradingPlanId(null);
+    }
+  };
+
+  // ---------- Promise Payment ----------
+
+  const handlePromisePayment = async () => {
+    if (!confirm('Ao prometer pagamento, seu acesso será mantido por mais 3 dias. Deseja continuar?')) return;
+
+    try {
+      setPromiseLoading(true);
+      const res = await platformBillingService.promisePayment();
+      const promiseUntil = res.data?.promise_until;
+      toast.success(`Pagamento prometido! Acesso garantido até ${promiseUntil ? new Date(promiseUntil).toLocaleDateString('pt-BR') : '+3 dias'}.`);
+      await loadData();
+    } catch (err: any) {
+      console.error('Erro ao prometer pagamento:', err);
+      toast.error(err.response?.data?.message || 'Erro ao prometer pagamento');
+    } finally {
+      setPromiseLoading(false);
+    }
+  };
+
+  // ---------- Status helpers ----------
+
+  const getStatusBadge = (status: string) => {
+    const map: Record<string, { label: string; bg: string; color: string; icon: any }> = {
+      trial: { label: 'Trial', bg: '#EEF2FF', color: '#4F46E5', icon: faClock },
+      active: { label: 'Ativo', bg: '#ECFDF5', color: '#059669', icon: faCheckCircle },
+      past_due: { label: 'Pagamento Pendente', bg: '#FEF3C7', color: '#D97706', icon: faExclamationTriangle },
+      blocked: { label: 'Bloqueado', bg: '#FEE2E2', color: '#DC2626', icon: faBan },
+    };
+    const s = map[status] || { label: status, bg: '#F3F4F6', color: '#6B7280', icon: faClock };
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '4px 12px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+        backgroundColor: s.bg, color: s.color,
+      }}>
+        <FontAwesomeIcon icon={s.icon} /> {s.label}
+      </span>
+    );
+  };
+
+  const getInvoiceStatusBadge = (status: string) => {
+    const map: Record<string, { label: string; bg: string; color: string }> = {
+      pending: { label: 'Pendente', bg: '#FEF3C7', color: '#D97706' },
+      paid: { label: 'Pago', bg: '#ECFDF5', color: '#059669' },
+      overdue: { label: 'Vencida', bg: '#FEE2E2', color: '#DC2626' },
+      cancelled: { label: 'Cancelada', bg: '#F3F4F6', color: '#6B7280' },
+    };
+    const s = map[status] || { label: status, bg: '#F3F4F6', color: '#6B7280' };
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center',
+        padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600,
+        backgroundColor: s.bg, color: s.color,
+      }}>
+        {s.label}
+      </span>
+    );
+  };
+
+  // ---------- Recommended plan logic ----------
+
+  const getRecommendedPlanId = (): number | null => {
+    if (plans.length === 0) return null;
+    const sorted = [...plans].sort((a, b) => a.price_cents - b.price_cents);
+    const recommended = sorted.find(
+      (p) => (isUnlimited(p.max_students) || p.max_students >= studentCount) &&
+             (isUnlimited(p.max_classes) || p.max_classes >= classCount)
+    );
+    return recommended?.id ?? null;
+  };
+
+  // ---------- Progress bar ----------
+
+  const ProgressBar = ({ current, max, label }: { current: number; max: number; label: string }) => {
+    const unlimited = isUnlimited(max);
+    const pct = unlimited ? Math.min((current / 100) * 100, 100) : Math.min((current / max) * 100, 100);
+    const isNearLimit = !unlimited && pct >= 80;
+    const isOverLimit = !unlimited && current > max;
+    const barColor = isOverLimit ? '#DC2626' : isNearLimit ? '#F59E0B' : '#3B82F6';
+
+    return (
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13, color: '#6B7280' }}>
+          <span>{label}</span>
+          <span style={{ fontWeight: 600, color: isOverLimit ? '#DC2626' : '#111827' }}>
+            {current} de {unlimited ? 'Ilimitado' : max}
+          </span>
+        </div>
+        <div style={{
+          width: '100%', height: 8, backgroundColor: '#E5E7EB', borderRadius: 4, overflow: 'hidden',
+        }}>
+          <div style={{
+            width: `${unlimited ? Math.min(pct, 100) : Math.min(pct, 100)}%`,
+            height: '100%', backgroundColor: barColor, borderRadius: 4,
+            transition: 'width 0.4s ease',
+          }} />
+        </div>
+      </div>
+    );
+  };
+
+  // ---------- Loading ----------
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
+        minHeight: '60vh', color: '#6B7280',
+      }}>
+        <FontAwesomeIcon icon={faSpinner} spin style={{ fontSize: 28, marginRight: 12 }} />
+        <span style={{ fontSize: 16 }}>Carregando dados do plano...</span>
+      </div>
+    );
+  }
+
+  if (!subscription) {
+    return (
+      <div style={{
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
+        minHeight: '60vh', color: '#6B7280', fontSize: 16,
+      }}>
+        Nenhuma assinatura encontrada.
+      </div>
+    );
+  }
+
+  const recommendedPlanId = getRecommendedPlanId();
+  const isPastDueOrBlocked = subscription.status === 'past_due' || subscription.status === 'blocked';
+  const recentInvoices = invoices.slice(0, 10);
+
+  // ===================== RENDER =====================
+
+  return (
+    <div style={{ padding: '24px 32px', maxWidth: 1100, margin: '0 auto' }}>
+
+      {/* ===== Section 1: Current Plan Header ===== */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1E293B 0%, #334155 100%)',
+        borderRadius: 16, padding: '28px 32px', marginBottom: 24, color: '#fff',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <FontAwesomeIcon icon={faCrown} style={{ fontSize: 22, color: '#FBBF24' }} />
+              <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700 }}>{subscription.plan_name}</h1>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              {getStatusBadge(subscription.status)}
+              <span style={{ fontSize: 22, fontWeight: 700, color: '#FBBF24' }}>
+                {formatBRL(subscription.plan_price_cents)}<span style={{ fontSize: 13, fontWeight: 400, color: '#94A3B8' }}>/mes</span>
+              </span>
+            </div>
+            {subscription.status === 'trial' && subscription.trial_ends_at && (
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: '#94A3B8' }}>
+                <FontAwesomeIcon icon={faClock} style={{ marginRight: 6 }} />
+                Trial termina em {new Date(subscription.trial_ends_at).toLocaleDateString('pt-BR')}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Usage bars */}
+        <div style={{ display: 'flex', gap: 24, marginTop: 24, flexWrap: 'wrap' }}>
+          <ProgressBar current={studentCount} max={subscription.max_students} label="Alunos" />
+          <ProgressBar current={classCount} max={subscription.max_classes} label="Turmas" />
+        </div>
+      </div>
+
+      {/* ===== Section 5: Payment Promise (only if past_due or blocked) ===== */}
+      {isPastDueOrBlocked && (
+        <div style={{
+          backgroundColor: subscription.status === 'blocked' ? '#FEE2E2' : '#FEF3C7',
+          border: `1px solid ${subscription.status === 'blocked' ? '#FECACA' : '#FDE68A'}`,
+          borderRadius: 12, padding: '20px 24px', marginBottom: 24,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 16,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <FontAwesomeIcon
+              icon={faExclamationTriangle}
+              style={{ fontSize: 24, color: subscription.status === 'blocked' ? '#DC2626' : '#D97706' }}
+            />
+            <div>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: subscription.status === 'blocked' ? '#991B1B' : '#92400E' }}>
+                {subscription.status === 'blocked'
+                  ? 'Sua conta esta bloqueada por falta de pagamento.'
+                  : 'Voce possui faturas pendentes. Regularize para evitar bloqueio.'}
+              </p>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6B7280' }}>
+                Prometendo pagamento, seu acesso sera mantido por mais 3 dias.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handlePromisePayment}
+            disabled={promiseLoading}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '10px 20px', borderRadius: 8, border: 'none',
+              backgroundColor: '#D97706', color: '#fff', fontWeight: 600, fontSize: 14,
+              cursor: promiseLoading ? 'not-allowed' : 'pointer', opacity: promiseLoading ? 0.7 : 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {promiseLoading ? (
+              <><FontAwesomeIcon icon={faSpinner} spin /> Processando...</>
+            ) : (
+              <><FontAwesomeIcon icon={faHandshake} /> Prometer Pagamento (+3 dias)</>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* ===== Section 2: Active Add-ons ===== */}
+      {subscription.addons && subscription.addons.length > 0 && (
+        <div style={{
+          backgroundColor: '#fff', borderRadius: 12, padding: '20px 24px',
+          marginBottom: 24, border: '1px solid #E5E7EB',
+        }}>
+          <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FontAwesomeIcon icon={faPuzzlePiece} style={{ color: '#8B5CF6' }} />
+            Add-ons Ativos
+          </h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            {subscription.addons.map((addon) => (
+              <div key={addon.addon_slug} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                backgroundColor: '#F5F3FF', border: '1px solid #DDD6FE',
+                borderRadius: 8, padding: '10px 16px',
+              }}>
+                <FontAwesomeIcon icon={faPuzzlePiece} style={{ color: '#7C3AED', fontSize: 14 }} />
+                <span style={{ fontWeight: 600, fontSize: 14, color: '#4C1D95' }}>{addon.addon_name}</span>
+                <span style={{ fontSize: 13, color: '#6D28D9', fontWeight: 500 }}>{formatBRL(addon.addon_price_cents)}/mes</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ===== Section 3: Plan Options ===== */}
+      <div style={{
+        backgroundColor: '#fff', borderRadius: 12, padding: '24px 28px',
+        marginBottom: 24, border: '1px solid #E5E7EB',
+      }}>
+        <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <FontAwesomeIcon icon={faArrowUp} style={{ color: '#3B82F6' }} />
+          Planos Disponiveis
+        </h2>
+        <p style={{ margin: '0 0 20px', fontSize: 14, color: '#6B7280' }}>
+          Voce tem <strong style={{ color: '#111827' }}>{studentCount} alunos</strong> e{' '}
+          <strong style={{ color: '#111827' }}>{classCount} turmas</strong>.
+        </p>
+
+        {/* Plans grid */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+          gap: 16, marginBottom: 24,
+        }}>
+          {plans.map((plan) => {
+            const isCurrent = plan.slug === subscription.plan_slug;
+            const isRecommended = plan.id === recommendedPlanId && !isCurrent;
+            const isHigherPlan = plan.price_cents > subscription.plan_price_cents;
+
+            return (
+              <div key={plan.id} style={{
+                position: 'relative',
+                border: isCurrent ? '2px solid #3B82F6' : isRecommended ? '2px solid #10B981' : '1px solid #E5E7EB',
+                borderRadius: 12, padding: '20px 18px',
+                backgroundColor: isCurrent ? '#EFF6FF' : isRecommended ? '#ECFDF5' : '#fff',
+                transition: 'box-shadow 0.2s',
+                display: 'flex', flexDirection: 'column',
+              }}>
+                {/* Badge */}
+                {isCurrent && (
+                  <span style={{
+                    position: 'absolute', top: -10, left: 16,
+                    backgroundColor: '#3B82F6', color: '#fff',
+                    fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 10,
+                    textTransform: 'uppercase',
+                  }}>Plano Atual</span>
+                )}
+                {isRecommended && (
+                  <span style={{
+                    position: 'absolute', top: -10, left: 16,
+                    backgroundColor: '#10B981', color: '#fff',
+                    fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 10,
+                    textTransform: 'uppercase',
+                  }}>
+                    <FontAwesomeIcon icon={faStar} style={{ marginRight: 4 }} />Recomendado
+                  </span>
+                )}
+
+                <h3 style={{ margin: '8px 0 4px', fontSize: 17, fontWeight: 700, color: '#111827' }}>
+                  {plan.name}
+                </h3>
+                <p style={{ margin: '0 0 12px', fontSize: 22, fontWeight: 800, color: '#1E293B' }}>
+                  {formatBRL(plan.price_cents)}
+                  <span style={{ fontSize: 13, fontWeight: 400, color: '#6B7280' }}>/mes</span>
+                </p>
+
+                {plan.description && (
+                  <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6B7280', lineHeight: 1.4 }}>
+                    {plan.description}
+                  </p>
+                )}
+
+                <div style={{ fontSize: 13, color: '#374151', marginBottom: 16, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <FontAwesomeIcon icon={faUsers} style={{ color: '#3B82F6', width: 14 }} />
+                    <span>
+                      {isUnlimited(plan.max_students) ? (
+                        <><FontAwesomeIcon icon={faInfinity} style={{ marginRight: 4 }} />Alunos ilimitados</>
+                      ) : (
+                        <>Ate <strong>{plan.max_students}</strong> alunos</>
+                      )}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <FontAwesomeIcon icon={faChalkboardTeacher} style={{ color: '#3B82F6', width: 14 }} />
+                    <span>
+                      {isUnlimited(plan.max_classes) ? (
+                        <><FontAwesomeIcon icon={faInfinity} style={{ marginRight: 4 }} />Turmas ilimitadas</>
+                      ) : (
+                        <>Ate <strong>{plan.max_classes}</strong> turmas</>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {isCurrent ? (
+                  <button disabled style={{
+                    width: '100%', padding: '10px 0', borderRadius: 8,
+                    border: '1px solid #93C5FD', backgroundColor: '#DBEAFE',
+                    color: '#2563EB', fontWeight: 600, fontSize: 13, cursor: 'default',
+                  }}>
+                    <FontAwesomeIcon icon={faCheckCircle} style={{ marginRight: 6 }} />Seu Plano
+                  </button>
+                ) : isHigherPlan ? (
+                  <button
+                    onClick={() => handleUpgrade(plan)}
+                    disabled={upgradingPlanId === plan.id}
+                    style={{
+                      width: '100%', padding: '10px 0', borderRadius: 8,
+                      border: 'none', backgroundColor: isRecommended ? '#10B981' : '#3B82F6',
+                      color: '#fff', fontWeight: 600, fontSize: 13,
+                      cursor: upgradingPlanId === plan.id ? 'not-allowed' : 'pointer',
+                      opacity: upgradingPlanId === plan.id ? 0.7 : 1,
+                      transition: 'opacity 0.2s',
+                    }}
+                  >
+                    {upgradingPlanId === plan.id ? (
+                      <><FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: 6 }} />Solicitando...</>
+                    ) : (
+                      <><FontAwesomeIcon icon={faArrowUp} style={{ marginRight: 6 }} />Solicitar Upgrade</>
+                    )}
+                  </button>
+                ) : (
+                  <button disabled style={{
+                    width: '100%', padding: '10px 0', borderRadius: 8,
+                    border: '1px solid #E5E7EB', backgroundColor: '#F9FAFB',
+                    color: '#9CA3AF', fontWeight: 600, fontSize: 13, cursor: 'default',
+                  }}>
+                    Plano inferior
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Available Add-ons */}
+        {addons.length > 0 && (
+          <>
+            <h3 style={{ margin: '0 0 12px', fontSize: 16, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <FontAwesomeIcon icon={faPuzzlePiece} style={{ color: '#8B5CF6' }} />
+              Add-ons Disponiveis
+            </h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+              {addons.map((addon) => {
+                const isActive = subscription.addons?.some((a) => a.addon_slug === addon.slug);
+                return (
+                  <div key={addon.id} style={{
+                    border: isActive ? '2px solid #8B5CF6' : '1px solid #E5E7EB',
+                    borderRadius: 10, padding: '14px 18px',
+                    backgroundColor: isActive ? '#F5F3FF' : '#fff',
+                    minWidth: 200, flex: '1 1 200px', maxWidth: 320,
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                      <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>
+                        {addon.name}
+                        {addon.is_bundle && (
+                          <span style={{
+                            marginLeft: 6, fontSize: 10, backgroundColor: '#FBBF24', color: '#78350F',
+                            padding: '1px 6px', borderRadius: 6, fontWeight: 700,
+                          }}>BUNDLE</span>
+                        )}
+                      </h4>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#7C3AED', whiteSpace: 'nowrap' }}>
+                        {formatBRL(addon.price_cents)}<span style={{ fontSize: 11, fontWeight: 400 }}>/mes</span>
+                      </span>
+                    </div>
+                    {addon.description && (
+                      <p style={{ margin: '6px 0 0', fontSize: 12, color: '#6B7280', lineHeight: 1.4 }}>
+                        {addon.description}
+                      </p>
+                    )}
+                    {isActive && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        marginTop: 8, fontSize: 11, fontWeight: 600, color: '#059669',
+                      }}>
+                        <FontAwesomeIcon icon={faCheckCircle} /> Ativo
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ===== Section 4: Invoices ===== */}
+      <div style={{
+        backgroundColor: '#fff', borderRadius: 12, padding: '24px 28px',
+        marginBottom: 24, border: '1px solid #E5E7EB',
+      }}>
+        <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <FontAwesomeIcon icon={faFileInvoiceDollar} style={{ color: '#F59E0B' }} />
+          Faturas Recentes
+        </h2>
+
+        {recentInvoices.length === 0 ? (
+          <p style={{ color: '#9CA3AF', fontSize: 14 }}>Nenhuma fatura encontrada.</p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #E5E7EB' }}>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Mes</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Vencimento</th>
+                  <th style={{ textAlign: 'right', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Valor</th>
+                  <th style={{ textAlign: 'center', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Status</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Pago em</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentInvoices.map((inv) => (
+                  <tr key={inv.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                    <td style={{ padding: '12px', color: '#111827', fontWeight: 500 }}>
+                      {inv.reference_month}
+                    </td>
+                    <td style={{ padding: '12px', color: '#6B7280' }}>
+                      {new Date(inv.due_date).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>
+                      {formatBRL(inv.final_amount_cents)}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      {getInvoiceStatusBadge(inv.status)}
+                    </td>
+                    <td style={{ padding: '12px', color: '#6B7280' }}>
+                      {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('pt-BR') : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

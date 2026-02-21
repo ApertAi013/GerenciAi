@@ -23,6 +23,7 @@ export interface AppPaymentConfig {
   asaas_fee_percent: number;
   platform_fee_percent: number;
   accepted_terms_at: string | null;
+  credit_card_feature_available?: boolean;
   credit_card_enabled?: boolean;
   credit_card_fee_mode?: 'absorb' | 'pass_to_student';
   credit_card_asaas_fee_percent?: number;

@@ -135,6 +135,13 @@ export default function Dashboard() {
   const [announceSent, setAnnounceSent] = useState(false);
   const [announceError, setAnnounceError] = useState('');
 
+  // Redirect admin to admin panel
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      navigate('/admin/monitoring', { replace: true });
+    }
+  }, [user?.role, navigate]);
+
   useEffect(() => {
     fetchData();
   }, []);

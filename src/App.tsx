@@ -31,6 +31,7 @@ import TrialStudents from './pages/TrialStudents'
 import Preferences from './pages/Preferences'
 import Announcements from './pages/Announcements'
 import AppPayments from './pages/AppPayments'
+import MyPlan from './pages/MyPlan'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import SystemGuide from './pages/SystemGuide'
@@ -104,6 +105,7 @@ export default function App() {
             <Route path="/locacoes/agenda" element={<RentalsSchedule />} />
             <Route path="/avisos" element={<Announcements />} />
             <Route path="/pagamentos-app" element={<AppPayments />} />
+            <Route path="/meu-plano" element={<MyPlan />} />
             <Route path="/ia" element={<AI />} />
             <Route path="/ia/configuracoes" element={<AISettings />} />
             <Route path="/ia/sugestoes" element={<AISuggestions />} />

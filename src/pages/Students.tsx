@@ -561,7 +561,11 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
       await studentService.createStudent(payload);
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao criar aluno');
+      if (err.response?.data?.code === 'PLAN_LIMIT_EXCEEDED') {
+        setError(`Limite de alunos atingido (${err.response.data.current}/${err.response.data.max}). Acesse "Meu Plano" para fazer upgrade.`);
+      } else {
+        setError(err.response?.data?.message || 'Erro ao criar aluno');
+      }
     } finally {
       setIsSubmitting(false);
     }

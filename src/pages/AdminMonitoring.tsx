@@ -32,6 +32,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { monitoringService } from '../services/monitoringService';
 import UserManagement from '../components/UserManagement';
+import AdminBilling from '../components/AdminBilling';
 import type {
   DashboardMetrics,
   GCPMetrics,
@@ -50,7 +51,7 @@ const COLORS = {
 
 export default function AdminMonitoring() {
   const { user } = useAuthStore();
-  const [mainTab, setMainTab] = useState<'metricas' | 'features'>('metricas');
+  const [mainTab, setMainTab] = useState<'billing' | 'metricas' | 'features'>('billing');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'gcp' | 'health'>('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -244,22 +245,33 @@ export default function AdminMonitoring() {
       {/* Main Tabs */}
       <div className="monitoring-tabs main-tabs">
         <button
+          className={`tab ${mainTab === 'billing' ? 'active' : ''}`}
+          onClick={() => setMainTab('billing')}
+        >
+          <FontAwesomeIcon icon={faChartLine} /> Billing
+        </button>
+        <button
           className={`tab ${mainTab === 'metricas' ? 'active' : ''}`}
           onClick={() => setMainTab('metricas')}
         >
-          <FontAwesomeIcon icon={faGauge} /> Métricas
+          <FontAwesomeIcon icon={faGauge} /> Metricas
         </button>
         <button
           className={`tab ${mainTab === 'features' ? 'active' : ''}`}
           onClick={() => setMainTab('features')}
         >
-          <FontAwesomeIcon icon={faCog} /> Gerenciar Features Premium
+          <FontAwesomeIcon icon={faCog} /> Features Premium
         </button>
       </div>
 
       {/* Content */}
       <div className="monitoring-content">
-        {/* Métricas Tab */}
+        {/* Billing Tab */}
+        {mainTab === 'billing' && (
+          <AdminBilling />
+        )}
+
+        {/* Metricas Tab */}
         {mainTab === 'metricas' && (
           <>
             {/* Sub-Tabs for Metrics */}

@@ -451,8 +451,8 @@ export default function AppPayments() {
               </div>
             )}
 
-            {/* Credit Card Configuration */}
-            {config?.configured && (
+            {/* Credit Card Configuration - only show when feature is available */}
+            {config?.configured && config?.credit_card_feature_available && (
               <div className="credit-card-config">
                 <h2>Cartao de Credito</h2>
                 <p className="tab-description">
@@ -591,7 +591,7 @@ export default function AppPayments() {
                   </div>
                 </div>
 
-                {fees.credit_card && (
+                {fees.credit_card && config?.credit_card_feature_available && (
                   <>
                     <div className="fees-card card-fees">
                       <h3><FontAwesomeIcon icon={faCreditCard} /> Taxas Cartao de Credito</h3>

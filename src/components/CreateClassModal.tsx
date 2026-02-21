@@ -233,7 +233,11 @@ export default function CreateClassModal({
 
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.message || `Erro ao ${isEditMode ? 'atualizar' : 'criar'} turma`);
+      if (err.response?.data?.code === 'PLAN_LIMIT_EXCEEDED') {
+        setError(`Limite de turmas atingido (${err.response.data.current}/${err.response.data.max}). Acesse "Meu Plano" para fazer upgrade.`);
+      } else {
+        setError(err.response?.data?.message || `Erro ao ${isEditMode ? 'atualizar' : 'criar'} turma`);
+      }
     } finally {
       setIsSubmitting(false);
     }
