@@ -137,4 +137,43 @@ export const trialStudentService = {
     const response = await api.delete(`/api/trial-students/${id}`);
     return response.data;
   },
+
+  // ============================================================
+  // Trial Class Config (public booking system)
+  // ============================================================
+
+  async getTrialClassConfig(): Promise<{ status: string; data: any[] }> {
+    const response = await api.get('/api/trial-students/class-config');
+    return response.data;
+  },
+
+  async upsertTrialClassConfig(data: {
+    class_id: number;
+    is_enabled: boolean;
+    allow_overbooking: boolean;
+    max_trial_per_day: number;
+  }): Promise<{ status: string; message: string }> {
+    const response = await api.post('/api/trial-students/class-config', data);
+    return response.data;
+  },
+
+  async deleteTrialClassConfig(classId: number): Promise<{ status: string; message: string }> {
+    const response = await api.delete(`/api/trial-students/class-config/${classId}`);
+    return response.data;
+  },
+
+  async getUpcomingTrialBookings(): Promise<{ status: string; data: any[] }> {
+    const response = await api.get('/api/trial-students/upcoming-bookings');
+    return response.data;
+  },
+
+  async getBookingToken(): Promise<{ status: string; data: { booking_token: string | null } }> {
+    const response = await api.get('/api/trial-students/booking-token/get');
+    return response.data;
+  },
+
+  async generateBookingToken(): Promise<{ status: string; data: { booking_token: string } }> {
+    const response = await api.post('/api/trial-students/booking-token/generate');
+    return response.data;
+  },
 };

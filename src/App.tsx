@@ -36,6 +36,9 @@ import MonthlyRenters from './pages/MonthlyRenters'
 import PublicBooking from './pages/PublicBooking'
 import PublicRentalStatus from './pages/PublicRentalStatus'
 import PublicRenterDashboard from './pages/PublicRenterDashboard'
+import PublicTrialBooking from './pages/PublicTrialBooking'
+import PublicTrialBookingStatus from './pages/PublicTrialBookingStatus'
+import PublicTrialStudentDashboard from './pages/PublicTrialStudentDashboard'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import SystemGuide from './pages/SystemGuide'
@@ -94,6 +97,9 @@ export default function App() {
         <Route path="/reservar/:bookingToken" element={<PublicBooking />} />
         <Route path="/reserva/:rentalToken" element={<PublicRentalStatus />} />
         <Route path="/minhas-reservas/:accessToken" element={<PublicRenterDashboard />} />
+        <Route path="/aula-experimental/:bookingToken" element={<PublicTrialBooking />} />
+        <Route path="/aula-experimental/status/:bookingToken" element={<PublicTrialBookingStatus />} />
+        <Route path="/aula-experimental/meus-agendamentos/:accessToken" element={<PublicTrialStudentDashboard />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>

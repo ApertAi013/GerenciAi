@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   UserPlus,
@@ -16,13 +16,29 @@ import {
   Settings,
   BarChart3,
   X,
+  Share2,
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { trialStudentService } from '../services/trialStudentService';
+import { classService } from '../services/classService';
 import CreateTrialStudentModal from '../components/CreateTrialStudentModal';
 import ConvertTrialStudentModal from '../components/ConvertTrialStudentModal';
 import type { TrialStudent, TrialMetrics } from '../types/trialStudentTypes';
 import '../styles/TrialStudents.css';
+
+const WEEKDAY_LABELS: Record<string, string> = {
+  seg: 'Segunda', ter: 'Terça', qua: 'Quarta', qui: 'Quinta',
+  sex: 'Sexta', sab: 'Sábado', dom: 'Domingo',
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  manual: 'Manual', public: 'Público', app: 'App',
+};
 
 export default function TrialStudents() {
   const [students, setStudents] = useState<TrialStudent[]>([]);
@@ -36,6 +52,16 @@ export default function TrialStudents() {
   const [studentToView, setStudentToView] = useState<TrialStudent | null>(null);
   const [showEmailConfig, setShowEmailConfig] = useState(false);
 
+  // Trial class config state
+  const [showConfigSection, setShowConfigSection] = useState(true);
+  const [trialClassConfigs, setTrialClassConfigs] = useState<any[]>([]);
+  const [allClasses, setAllClasses] = useState<any[]>([]);
+  const [loadingConfig, setLoadingConfig] = useState(false);
+  const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [bookingToken, setBookingToken] = useState<string | null>(null);
+  const [generatingToken, setGeneratingToken] = useState(false);
+
   // Helper function to safely convert to number
   const safeNumber = (value: any, defaultValue: number = 0): number => {
     const num = Number(value);
@@ -45,6 +71,9 @@ export default function TrialStudents() {
   useEffect(() => {
     fetchStudents();
     fetchMetrics();
+    fetchTrialClassConfig();
+    fetchUpcomingBookings();
+    fetchAllClasses();
   }, [statusFilter, expiredFilter]);
 
   const fetchStudents = async () => {
@@ -131,6 +160,128 @@ export default function TrialStudents() {
       );
     }
   };
+
+  const fetchTrialClassConfig = async () => {
+    try {
+      const response = await trialStudentService.getTrialClassConfig();
+      if (response.status === 'success') {
+        setTrialClassConfigs(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching trial class config:', error);
+    }
+  };
+
+  const fetchAllClasses = async () => {
+    try {
+      const response = await classService.getClasses({ status: 'ativa', limit: 500 });
+      if (response.success || response.data) {
+        setAllClasses(Array.isArray(response.data) ? response.data : []);
+      }
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    }
+  };
+
+  const fetchUpcomingBookings = async () => {
+    try {
+      const response = await trialStudentService.getUpcomingTrialBookings();
+      if (response.status === 'success') {
+        setUpcomingBookings(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching upcoming bookings:', error);
+    }
+  };
+
+  const handleToggleClass = async (classId: number, currentConfig: any) => {
+    try {
+      if (currentConfig) {
+        await trialStudentService.upsertTrialClassConfig({
+          class_id: classId,
+          is_enabled: !currentConfig.is_enabled,
+          allow_overbooking: currentConfig.allow_overbooking || false,
+          max_trial_per_day: currentConfig.max_trial_per_day || 2,
+        });
+      } else {
+        await trialStudentService.upsertTrialClassConfig({
+          class_id: classId,
+          is_enabled: true,
+          allow_overbooking: false,
+          max_trial_per_day: 2,
+        });
+      }
+      fetchTrialClassConfig();
+    } catch (error) {
+      console.error('Error toggling class:', error);
+      toast.error('Erro ao atualizar configuração');
+    }
+  };
+
+  const handleToggleOverbooking = async (config: any) => {
+    try {
+      await trialStudentService.upsertTrialClassConfig({
+        class_id: config.class_id,
+        is_enabled: config.is_enabled,
+        allow_overbooking: !config.allow_overbooking,
+        max_trial_per_day: config.max_trial_per_day,
+      });
+      fetchTrialClassConfig();
+    } catch (error) {
+      toast.error('Erro ao atualizar configuração');
+    }
+  };
+
+  const handleChangeMaxTrial = async (config: any, value: number) => {
+    try {
+      await trialStudentService.upsertTrialClassConfig({
+        class_id: config.class_id,
+        is_enabled: config.is_enabled,
+        allow_overbooking: config.allow_overbooking,
+        max_trial_per_day: value,
+      });
+      fetchTrialClassConfig();
+    } catch (error) {
+      toast.error('Erro ao atualizar configuração');
+    }
+  };
+
+  const handleShareLink = async () => {
+    setGeneratingToken(true);
+    try {
+      // Try to get existing token first
+      const getResponse = await trialStudentService.getBookingToken();
+      if (getResponse.data?.booking_token) {
+        setBookingToken(getResponse.data.booking_token);
+        setShowShareModal(true);
+      } else {
+        // Generate new token
+        const genResponse = await trialStudentService.generateBookingToken();
+        if (genResponse.data?.booking_token) {
+          setBookingToken(genResponse.data.booking_token);
+          setShowShareModal(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error generating booking token:', error);
+      toast.error('Erro ao gerar link de compartilhamento');
+    } finally {
+      setGeneratingToken(false);
+    }
+  };
+
+  const copyBookingLink = () => {
+    if (!bookingToken) return;
+    const link = `${window.location.origin}/aula-experimental/${bookingToken}`;
+    navigator.clipboard.writeText(link);
+    toast.success('Link copiado!');
+  };
+
+  // Get config map for quick lookup
+  const configMap = new Map(trialClassConfigs.map((c: any) => [c.class_id, c]));
+
+  // Classes not yet configured
+  const unconfiguredClasses = allClasses.filter((c: any) => !configMap.has(c.id));
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
@@ -281,6 +432,15 @@ export default function TrialStudents() {
         <div className="trial-students-actions">
           <button
             className="btn-secondary"
+            onClick={handleShareLink}
+            disabled={generatingToken}
+            title="Compartilhar Link de Aula Experimental"
+          >
+            <Share2 size={18} style={{ marginRight: '0.5rem' }} />
+            {generatingToken ? 'Gerando...' : 'Compartilhar Link'}
+          </button>
+          <button
+            className="btn-secondary"
             onClick={() => setShowEmailConfig(true)}
             title="Configurar Emails Automáticos"
           >
@@ -293,6 +453,159 @@ export default function TrialStudents() {
           </button>
         </div>
       </div>
+
+      {/* Trial Class Config Section */}
+      <div className="trial-config-section">
+        <div
+          className="trial-config-header"
+          onClick={() => setShowConfigSection(!showConfigSection)}
+          style={{ cursor: 'pointer' }}
+        >
+          <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Settings size={20} />
+            Turmas Habilitadas para Aula Experimental
+            <span style={{ fontSize: '0.8rem', color: '#666', fontWeight: 400 }}>
+              ({trialClassConfigs.filter((c: any) => c.is_enabled).length} ativas)
+            </span>
+          </h2>
+          {showConfigSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
+
+        {showConfigSection && (
+          <div className="trial-config-body">
+            {/* Configured classes */}
+            {trialClassConfigs.length > 0 && (
+              <div className="trial-config-table-wrap">
+                <table className="trial-config-table">
+                  <thead>
+                    <tr>
+                      <th>Turma</th>
+                      <th>Modalidade</th>
+                      <th>Dia/Horário</th>
+                      <th>Vagas</th>
+                      <th>Habilitada</th>
+                      <th>Overbooking</th>
+                      <th>Max Trial/Dia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trialClassConfigs.map((config: any) => (
+                      <tr key={config.class_id} style={{ opacity: config.is_enabled ? 1 : 0.5 }}>
+                        <td style={{ fontWeight: 600 }}>
+                          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: config.color || '#3B82F6', marginRight: 6 }} />
+                          {config.class_name || '-'}
+                        </td>
+                        <td>{config.modality_name}</td>
+                        <td>{WEEKDAY_LABELS[config.weekday] || config.weekday} {config.start_time?.slice(0,5)}-{config.end_time?.slice(0,5)}</td>
+                        <td>
+                          <span style={{ color: (config.enrolled_count || 0) >= (config.capacity || 20) ? '#ef4444' : '#22c55e' }}>
+                            {config.enrolled_count || 0}/{config.capacity || 20}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            className="trial-toggle-btn"
+                            onClick={() => handleToggleClass(config.class_id, config)}
+                            style={{ color: config.is_enabled ? '#22c55e' : '#ccc' }}
+                          >
+                            {config.is_enabled ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            className="trial-toggle-btn"
+                            onClick={() => handleToggleOverbooking(config)}
+                            style={{ color: config.allow_overbooking ? '#22c55e' : '#ccc' }}
+                            disabled={!config.is_enabled}
+                          >
+                            {config.allow_overbooking ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                          </button>
+                        </td>
+                        <td>
+                          <select
+                            value={config.max_trial_per_day}
+                            onChange={(e) => handleChangeMaxTrial(config, parseInt(e.target.value))}
+                            disabled={!config.is_enabled}
+                            style={{ width: 60, padding: '0.25rem', borderRadius: 6, border: '1px solid #ddd' }}
+                          >
+                            {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Unconfigured classes */}
+            {unconfiguredClasses.length > 0 && (
+              <div style={{ marginTop: '1rem' }}>
+                <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
+                  Turmas não configuradas — clique para habilitar:
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {unconfiguredClasses.map((cls: any) => (
+                    <button
+                      key={cls.id}
+                      onClick={() => handleToggleClass(cls.id, null)}
+                      style={{
+                        padding: '0.4rem 0.75rem', borderRadius: 8, border: '1px solid #ddd',
+                        background: '#f8f9fa', cursor: 'pointer', fontSize: '0.8rem',
+                        display: 'flex', alignItems: 'center', gap: 4,
+                      }}
+                    >
+                      <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: cls.color || '#3B82F6' }} />
+                      {cls.name || cls.modality_name} — {WEEKDAY_LABELS[cls.weekday] || cls.weekday} {cls.start_time?.slice(0,5)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Upcoming Trial Bookings Mini Agenda */}
+      {upcomingBookings.length > 0 && (
+        <div className="trial-upcoming-section">
+          <h2 style={{ margin: '0 0 1rem', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Calendar size={20} />
+            Próximos Agendamentos (7 dias)
+          </h2>
+          <div className="trial-upcoming-list">
+            {(() => {
+              // Group by date
+              const grouped: Record<string, any[]> = {};
+              upcomingBookings.forEach((b: any) => {
+                const dateKey = b.attendance_date?.split('T')[0] || b.attendance_date;
+                if (!grouped[dateKey]) grouped[dateKey] = [];
+                grouped[dateKey].push(b);
+              });
+              return Object.entries(grouped).map(([date, bookings]) => (
+                <div key={date} className="trial-upcoming-day">
+                  <div className="trial-upcoming-date">
+                    {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
+                    <span className="trial-upcoming-count">{bookings.length}</span>
+                  </div>
+                  <div className="trial-upcoming-bookings">
+                    {bookings.map((b: any) => (
+                      <div key={b.id} className="trial-upcoming-card">
+                        <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: b.color || '#3B82F6', marginRight: 6 }} />
+                        <span style={{ fontWeight: 600 }}>{b.student_name}</span>
+                        <span style={{ color: '#666', marginLeft: 8 }}>{b.class_name} · {b.start_time?.slice(0,5)}-{b.end_time?.slice(0,5)}</span>
+                        <span className={`trial-source-badge ${b.booking_source}`}>
+                          {SOURCE_LABELS[b.booking_source] || b.booking_source}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Metrics */}
       {renderMetrics()}
@@ -577,6 +890,49 @@ export default function TrialStudents() {
         <EmailAutomationConfigModal
           onClose={() => setShowEmailConfig(false)}
         />
+      )}
+
+      {/* Share Link Modal */}
+      {showShareModal && bookingToken && (
+        <div className="trial-modal-overlay" onClick={() => setShowShareModal(false)}>
+          <div className="trial-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="trial-modal-header">
+              <h2>
+                <Share2 size={24} style={{ marginRight: '0.5rem', display: 'inline' }} />
+                Link de Aula Experimental
+              </h2>
+              <button className="trial-modal-close" onClick={() => setShowShareModal(false)}>
+                <X size={24} />
+              </button>
+            </div>
+            <div className="trial-modal-body">
+              <p style={{ marginBottom: '1rem', color: '#666' }}>
+                Compartilhe este link para que pessoas possam agendar uma aula experimental:
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/aula-experimental/${bookingToken}`}
+                  style={{ flex: 1, padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', fontSize: '0.875rem' }}
+                />
+                <button
+                  className="btn-primary"
+                  onClick={copyBookingLink}
+                  style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                >
+                  <Copy size={16} /> Copiar
+                </button>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: '#999' }}>
+                Este link é o mesmo utilizado para locações de quadra. Certifique-se de habilitar as turmas desejadas na seção de configuração acima.
+              </p>
+            </div>
+            <div className="trial-modal-footer">
+              <button className="btn-secondary" onClick={() => setShowShareModal(false)}>Fechar</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
