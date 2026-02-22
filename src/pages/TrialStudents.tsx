@@ -277,11 +277,61 @@ export default function TrialStudents() {
     toast.success('Link copiado!');
   };
 
+  // Trial class config filter
+  const [configModalityFilter, setConfigModalityFilter] = useState<string>('all');
+
   // Get config map for quick lookup
   const configMap = new Map(trialClassConfigs.map((c: any) => [c.class_id, c]));
 
   // Classes not yet configured
   const unconfiguredClasses = allClasses.filter((c: any) => !configMap.has(c.id));
+
+  // All classes (configured + unconfigured) merged for display
+  const allClassesForConfig = [
+    ...trialClassConfigs.map((c: any) => ({ ...c, isConfigured: true })),
+    ...unconfiguredClasses.map((c: any) => ({
+      class_id: c.id,
+      class_name: c.name,
+      modality_name: c.modality_name || c.modality || 'Sem modalidade',
+      modality_id: c.modality_id,
+      weekday: c.weekday,
+      start_time: c.start_time,
+      end_time: c.end_time,
+      capacity: c.capacity || c.max_students,
+      enrolled_count: c.enrolled_count || 0,
+      color: c.color,
+      is_enabled: false,
+      allow_overbooking: false,
+      max_trial_per_day: 2,
+      isConfigured: false,
+    })),
+  ];
+
+  // Get unique modalities
+  const configModalities = [...new Set(allClassesForConfig.map((c: any) => c.modality_name || 'Sem modalidade'))].sort();
+
+  // Filter + group by modality
+  const filteredConfigClasses = configModalityFilter === 'all'
+    ? allClassesForConfig
+    : allClassesForConfig.filter((c: any) => (c.modality_name || 'Sem modalidade') === configModalityFilter);
+
+  const configGroupedByModality: Record<string, any[]> = {};
+  filteredConfigClasses.forEach((c: any) => {
+    const mod = c.modality_name || 'Sem modalidade';
+    if (!configGroupedByModality[mod]) configGroupedByModality[mod] = [];
+    configGroupedByModality[mod].push(c);
+  });
+
+  // Sort classes within each modality by weekday then time
+  const weekdayOrder = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
+  Object.values(configGroupedByModality).forEach(classes => {
+    classes.sort((a: any, b: any) => {
+      const wa = weekdayOrder.indexOf(a.weekday) ?? 99;
+      const wb = weekdayOrder.indexOf(b.weekday) ?? 99;
+      if (wa !== wb) return wa - wb;
+      return (a.start_time || '').localeCompare(b.start_time || '');
+    });
+  });
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
@@ -473,94 +523,116 @@ export default function TrialStudents() {
 
         {showConfigSection && (
           <div className="trial-config-body">
-            {/* Configured classes */}
-            {trialClassConfigs.length > 0 && (
-              <div className="trial-config-table-wrap">
-                <table className="trial-config-table">
-                  <thead>
-                    <tr>
-                      <th>Turma</th>
-                      <th>Modalidade</th>
-                      <th>Dia/Horário</th>
-                      <th>Vagas</th>
-                      <th>Habilitada</th>
-                      <th>Overbooking</th>
-                      <th>Max Trial/Dia</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trialClassConfigs.map((config: any) => (
-                      <tr key={config.class_id} style={{ opacity: config.is_enabled ? 1 : 0.5 }}>
-                        <td style={{ fontWeight: 600 }}>
-                          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: config.color || '#3B82F6', marginRight: 6 }} />
-                          {config.class_name || '-'}
-                        </td>
-                        <td>{config.modality_name}</td>
-                        <td>{WEEKDAY_LABELS[config.weekday] || config.weekday} {config.start_time?.slice(0,5)}-{config.end_time?.slice(0,5)}</td>
-                        <td>
-                          <span style={{ color: (config.enrolled_count || 0) >= (config.capacity || 20) ? '#ef4444' : '#22c55e' }}>
-                            {config.enrolled_count || 0}/{config.capacity || 20}
-                          </span>
-                        </td>
-                        <td>
-                          <button
-                            className="trial-toggle-btn"
-                            onClick={() => handleToggleClass(config.class_id, config)}
-                            style={{ color: config.is_enabled ? '#22c55e' : '#ccc' }}
-                          >
-                            {config.is_enabled ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
-                          </button>
-                        </td>
-                        <td>
-                          <button
-                            className="trial-toggle-btn"
-                            onClick={() => handleToggleOverbooking(config)}
-                            style={{ color: config.allow_overbooking ? '#22c55e' : '#ccc' }}
-                            disabled={!config.is_enabled}
-                          >
-                            {config.allow_overbooking ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-                          </button>
-                        </td>
-                        <td>
-                          <select
-                            value={config.max_trial_per_day}
-                            onChange={(e) => handleChangeMaxTrial(config, parseInt(e.target.value))}
-                            disabled={!config.is_enabled}
-                            style={{ width: 60, padding: '0.25rem', borderRadius: 6, border: '1px solid #ddd' }}
-                          >
-                            {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            {/* Modality filter */}
+            <div className="trial-config-filters">
+              <button
+                className={`trial-config-filter-btn ${configModalityFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setConfigModalityFilter('all')}
+              >
+                Todas ({allClassesForConfig.length})
+              </button>
+              {configModalities.map(mod => {
+                const count = allClassesForConfig.filter((c: any) => (c.modality_name || 'Sem modalidade') === mod).length;
+                const enabledCount = allClassesForConfig.filter((c: any) => (c.modality_name || 'Sem modalidade') === mod && c.is_enabled).length;
+                return (
+                  <button
+                    key={mod}
+                    className={`trial-config-filter-btn ${configModalityFilter === mod ? 'active' : ''}`}
+                    onClick={() => setConfigModalityFilter(mod)}
+                  >
+                    {mod}
+                    {enabledCount > 0 && (
+                      <span className="trial-config-filter-count">{enabledCount}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-            {/* Unconfigured classes */}
-            {unconfiguredClasses.length > 0 && (
-              <div style={{ marginTop: '1rem' }}>
-                <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-                  Turmas não configuradas — clique para habilitar:
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {unconfiguredClasses.map((cls: any) => (
-                    <button
-                      key={cls.id}
-                      onClick={() => handleToggleClass(cls.id, null)}
-                      style={{
-                        padding: '0.4rem 0.75rem', borderRadius: 8, border: '1px solid #ddd',
-                        background: '#f8f9fa', cursor: 'pointer', fontSize: '0.8rem',
-                        display: 'flex', alignItems: 'center', gap: 4,
-                      }}
-                    >
-                      <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: cls.color || '#3B82F6' }} />
-                      {cls.name || cls.modality_name} — {WEEKDAY_LABELS[cls.weekday] || cls.weekday} {cls.start_time?.slice(0,5)}
-                    </button>
-                  ))}
+            {/* Grouped by modality */}
+            {Object.entries(configGroupedByModality).map(([modality, classes]) => {
+              const enabledInGroup = classes.filter((c: any) => c.is_enabled).length;
+              return (
+                <div key={modality} className="trial-config-modality-group">
+                  <div className="trial-config-modality-header">
+                    <span className="trial-config-modality-name">{modality}</span>
+                    <span className="trial-config-modality-count">
+                      {enabledInGroup}/{classes.length} habilitadas
+                    </span>
+                  </div>
+                  <div className="trial-config-classes-grid">
+                    {classes.map((config: any) => {
+                      const classId = config.class_id;
+                      const existingConfig = configMap.get(classId);
+                      return (
+                        <div
+                          key={classId}
+                          className={`trial-config-class-card ${config.is_enabled ? 'enabled' : 'disabled'}`}
+                        >
+                          <div className="trial-config-class-top">
+                            <div className="trial-config-class-info">
+                              <span
+                                className="trial-config-class-dot"
+                                style={{ background: config.color || '#3B82F6' }}
+                              />
+                              <div>
+                                <div className="trial-config-class-name">{config.class_name || '-'}</div>
+                                <div className="trial-config-class-schedule">
+                                  {WEEKDAY_LABELS[config.weekday] || config.weekday} · {config.start_time?.slice(0,5)} - {config.end_time?.slice(0,5)}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              className="trial-toggle-btn"
+                              onClick={() => handleToggleClass(classId, existingConfig || null)}
+                              style={{ color: config.is_enabled ? '#22c55e' : '#ccc' }}
+                            >
+                              {config.is_enabled ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
+                            </button>
+                          </div>
+
+                          {config.is_enabled && (
+                            <div className="trial-config-class-options">
+                              <div className="trial-config-class-stat">
+                                <span className="trial-config-stat-label">Vagas</span>
+                                <span style={{ color: (config.enrolled_count || 0) >= (config.capacity || 20) ? '#ef4444' : '#22c55e', fontWeight: 600 }}>
+                                  {config.enrolled_count || 0}/{config.capacity || 20}
+                                </span>
+                              </div>
+                              <div className="trial-config-class-stat">
+                                <span className="trial-config-stat-label">Overbooking</span>
+                                <button
+                                  className="trial-toggle-btn"
+                                  onClick={() => handleToggleOverbooking(existingConfig || config)}
+                                  style={{ color: config.allow_overbooking ? '#22c55e' : '#ccc' }}
+                                >
+                                  {config.allow_overbooking ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
+                                </button>
+                              </div>
+                              <div className="trial-config-class-stat">
+                                <span className="trial-config-stat-label">Max/dia</span>
+                                <select
+                                  value={config.max_trial_per_day}
+                                  onChange={(e) => handleChangeMaxTrial(existingConfig || config, parseInt(e.target.value))}
+                                  className="trial-config-max-select"
+                                >
+                                  {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              );
+            })}
+
+            {allClassesForConfig.length === 0 && (
+              <p style={{ textAlign: 'center', color: '#999', padding: '2rem 0' }}>
+                Nenhuma turma ativa encontrada. Crie turmas na seção de Turmas primeiro.
+              </p>
             )}
           </div>
         )}
