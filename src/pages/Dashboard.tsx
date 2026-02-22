@@ -21,6 +21,7 @@ import {
   faChevronUp,
   faBullhorn,
   faPaperPlane,
+  faTableTennis,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import {
@@ -730,6 +731,120 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
+
+      {/* ── Mini Calendário de Locações ── */}
+      {rentals.length > 0 && (() => {
+        const todayRentals = rentals
+          .filter(r => r.status !== 'cancelada')
+          .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+
+        const courtNames = [...new Set(todayRentals.map(r => r.court_name))];
+        const COURT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
+        const courtColorMap: Record<string, string> = {};
+        courtNames.forEach((name, i) => { courtColorMap[name] = COURT_COLORS[i % COURT_COLORS.length]; });
+
+        const hours: number[] = [];
+        if (todayRentals.length > 0) {
+          const minH = Math.min(...todayRentals.map(r => parseInt((r.start_time || '08:00').split(':')[0])));
+          const maxH = Math.max(...todayRentals.map(r => parseInt((r.end_time || '22:00').split(':')[0])));
+          for (let h = Math.max(0, minH); h <= Math.min(23, maxH); h++) hours.push(h);
+        }
+
+        return (
+          <section className="dash-panel" style={{ marginBottom: '2rem' }}>
+            <div className="dash-panel-top">
+              <h3 className="dash-panel-title">
+                <FontAwesomeIcon icon={faTableTennis} /> Locações de Hoje
+              </h3>
+              <button className="dash-link" onClick={() => navigate('/locacoes')}>
+                Ver locações <FontAwesomeIcon icon={faArrowRight} />
+              </button>
+            </div>
+            <div className="collapsible-content">
+              {/* Court legend */}
+              <div className="mini-agenda-legend" style={{ marginBottom: '12px' }}>
+                {courtNames.map(name => (
+                  <span key={name} className="mini-agenda-legend-item" style={{ gap: '5px' }}>
+                    <span className="mini-agenda-legend-dot" style={{ background: courtColorMap[name] }} />
+                    {name}
+                  </span>
+                ))}
+              </div>
+
+              {/* Timeline */}
+              <div style={{ position: 'relative', display: 'flex', gap: '0' }}>
+                {/* Time labels */}
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: '42px', flexShrink: 0 }}>
+                  {hours.map(h => (
+                    <div key={h} style={{
+                      height: '40px', fontSize: '0.72rem', color: 'var(--text-muted)',
+                      display: 'flex', alignItems: 'flex-start', paddingTop: '1px',
+                      fontWeight: 600, fontVariantNumeric: 'tabular-nums',
+                    }}>
+                      {String(h).padStart(2, '0')}:00
+                    </div>
+                  ))}
+                </div>
+
+                {/* Grid + rental blocks */}
+                <div style={{ flex: 1, position: 'relative', borderLeft: '1px solid var(--border-light)' }}>
+                  {hours.map(h => (
+                    <div key={h} style={{ height: '40px', borderBottom: '1px solid var(--border-light)' }} />
+                  ))}
+
+                  {todayRentals.map((rental) => {
+                    const startParts = (rental.start_time || '08:00').split(':');
+                    const endParts = (rental.end_time || '09:00').split(':');
+                    const startMin = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+                    const endMin = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+                    const baseMin = hours[0] * 60;
+                    const topPx = ((startMin - baseMin) / 60) * 40;
+                    const heightPx = Math.max(18, ((endMin - startMin) / 60) * 40 - 2);
+                    const color = courtColorMap[rental.court_name] || '#3B82F6';
+
+                    return (
+                      <div
+                        key={rental.id}
+                        style={{
+                          position: 'absolute', top: `${topPx}px`, left: '4px', right: '4px',
+                          height: `${heightPx}px`, background: `${color}12`,
+                          borderLeft: `3px solid ${color}`, borderRadius: 'var(--radius-sm)',
+                          padding: '3px 8px', overflow: 'hidden', fontSize: '0.73rem',
+                          display: 'flex', alignItems: 'center', gap: '8px',
+                        }}
+                        title={`${rental.renter_name} — ${rental.court_name} (${rental.start_time?.substring(0, 5)}-${rental.end_time?.substring(0, 5)})`}
+                      >
+                        <span style={{ fontWeight: 700, color, whiteSpace: 'nowrap' }}>
+                          {rental.start_time?.substring(0, 5)}-{rental.end_time?.substring(0, 5)}
+                        </span>
+                        <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{rental.court_name}</span>
+                        {heightPx > 22 && (
+                          <span style={{ color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {rental.renter_name}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                marginTop: '12px', padding: '8px 12px',
+                background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)',
+                fontSize: '0.8rem', color: 'var(--text-secondary)',
+              }}>
+                <span><strong>{todayRentals.length}</strong> locaç{todayRentals.length === 1 ? 'ão' : 'ões'} hoje</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-green)' }}>
+                  {formatCurrency(todayRentals.reduce((sum, r) => sum + (r.price_cents || 0), 0))}
+                </span>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ── Avisos Rápidos ── */}
       <section className="dash-panel announcements-panel">
