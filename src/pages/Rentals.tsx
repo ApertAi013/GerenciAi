@@ -67,7 +67,7 @@ export default function Rentals() {
   const [hoursCourt, setHoursCourt] = useState<Court | null>(null);
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]);
   const [savingHours, setSavingHours] = useState(false);
-  const [showCourtsSection, setShowCourtsSection] = useState(false);
+  const [showCourtsSection, setShowCourtsSection] = useState(true);
 
   useEffect(() => {
     fetchRentals();
@@ -444,28 +444,40 @@ export default function Rentals() {
       </div>
 
       {/* Courts Quick Config */}
-      <div className="rentals-courts-section">
+      <div style={{
+        background: 'white', borderRadius: '12px', border: '1px solid #E5E7EB',
+        overflow: 'hidden',
+      }}>
         <div
-          className="rentals-courts-header"
           onClick={() => setShowCourtsSection(!showCourtsSection)}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '12px 16px', background: '#F9FAFB', borderRadius: '12px', marginBottom: showCourtsSection ? '12px' : '0' }}
+          style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            cursor: 'pointer', padding: '14px 20px',
+            borderBottom: showCourtsSection ? '1px solid #E5E7EB' : 'none',
+            background: '#F8FAFC',
+          }}
         >
-          <h3 style={{ margin: 0, fontSize: '1rem', color: '#374151' }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', color: '#1F2937', fontWeight: 600 }}>
             Quadras e Horários de Funcionamento
           </h3>
-          <span style={{ color: '#6B7280', fontSize: '1.2rem' }}>{showCourtsSection ? '▲' : '▼'}</span>
+          <span style={{
+            color: '#6B7280', fontSize: '0.75rem', fontWeight: 500,
+            display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            {showCourtsSection ? 'Recolher' : 'Expandir'} {showCourtsSection ? '▲' : '▼'}
+          </span>
         </div>
         {showCourtsSection && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+          <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
             {courts.length === 0 ? (
-              <p style={{ color: '#9CA3AF', padding: '12px' }}>Nenhuma quadra cadastrada. Acesse "Quadras" para criar.</p>
+              <p style={{ color: '#9CA3AF', fontSize: '0.9rem' }}>Nenhuma quadra cadastrada. Acesse "Quadras" para criar.</p>
             ) : (
               courts.map((court) => (
                 <div
                   key={court.id}
                   style={{
                     border: '1px solid #E5E7EB', borderRadius: '12px', padding: '16px',
-                    background: 'white',
+                    background: '#FAFAFA',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -487,9 +499,9 @@ export default function Rentals() {
                     type="button"
                     onClick={() => handleOpenHoursModal(court)}
                     style={{
-                      width: '100%', padding: '8px', background: '#EFF6FF', color: '#2563EB',
-                      border: '1px solid #BFDBFE', borderRadius: '8px', cursor: 'pointer',
-                      fontSize: '0.85rem', fontWeight: 500,
+                      width: '100%', padding: '8px 12px', background: '#22C55E', color: 'white',
+                      border: 'none', borderRadius: '8px', cursor: 'pointer',
+                      fontSize: '0.85rem', fontWeight: 600,
                     }}
                   >
                     Configurar Horários
