@@ -302,7 +302,7 @@ export default function ComprehensiveEnrollmentForm({
             let paymentValue = selectedPlan.price_cents;
 
             if (discountType === 'fixed') {
-              paymentValue -= discountValue * 100; // Convert to cents
+              paymentValue -= discountValue; // Already in cents
             } else if (discountType === 'percentage') {
               paymentValue -= (paymentValue * discountValue) / 100;
             }
@@ -602,12 +602,13 @@ export default function ComprehensiveEnrollmentForm({
                       id="discount_value"
                       type="text"
                       value={discountType === 'fixed'
-                        ? discountValue.toFixed(2).replace('.', ',')
+                        ? (discountValue / 100).toFixed(2).replace('.', ',')
                         : discountValue}
                       onChange={(e) => {
                         if (discountType === 'fixed') {
                           const val = e.target.value.replace(/[^0-9,]/g, '').replace(',', '.');
-                          setDiscountValue(parseFloat(val || '0'));
+                          const cents = Math.round(parseFloat(val || '0') * 100);
+                          setDiscountValue(cents);
                         } else {
                           const val = e.target.value.replace(/[^0-9]/g, '');
                           setDiscountValue(val ? Math.min(100, Number(val)) : 0);
@@ -860,7 +861,7 @@ export default function ComprehensiveEnrollmentForm({
                     <p style={{ marginTop: '0.5rem', fontWeight: 600, color: '#4caf50' }}>
                       Desconto: {discountType === 'percentage'
                         ? `${discountValue}%`
-                        : `R$ ${discountValue.toFixed(2).replace('.', ',')}`}
+                        : `R$ ${(discountValue / 100).toFixed(2).replace('.', ',')}`}
                       {discountUntil && ` (até ${new Date(discountUntil).toLocaleDateString('pt-BR')})`}
                     </p>
                   </>

@@ -73,11 +73,14 @@ export default function Enrollments() {
   // Handle discount value change
   const handleDiscountValueChange = (value: string) => {
     if (discountType === 'fixed') {
-      const cents = parseCurrency(value);
+      // Accept reais input with comma (e.g., "50,00" = R$50) and store as cents
+      const val = value.replace(/[^0-9,]/g, '').replace(',', '.');
+      const cents = Math.round(parseFloat(val || '0') * 100);
       setDiscountValue(cents);
-      setDiscountValueDisplay(formatCurrency(cents));
+      setDiscountValueDisplay(value.replace(/[^0-9,]/g, ''));
     } else {
-      setDiscountValue(Number(value));
+      const val = value.replace(/[^0-9]/g, '');
+      setDiscountValue(val ? Math.min(100, Number(val)) : 0);
     }
   };
 
