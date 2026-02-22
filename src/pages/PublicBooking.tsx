@@ -418,7 +418,47 @@ export default function PublicBooking() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+            {/* Tracking link - copiável */}
+            {rentalToken && (
+              <div style={{
+                marginTop: '20px', padding: '14px', background: '#F0FDF4',
+                borderRadius: '10px', border: '1px solid #BBF7D0',
+              }}>
+                <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', fontWeight: 600, color: '#166534' }}>
+                  Link para acompanhar sua reserva:
+                </p>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text" readOnly
+                    value={`${window.location.origin}/reserva/${rentalToken}`}
+                    style={{
+                      flex: 1, padding: '8px 12px', border: '1px solid #BBF7D0',
+                      borderRadius: '6px', fontSize: '0.8rem', background: 'white',
+                      color: '#1F2937', outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/reserva/${rentalToken}`);
+                      alert('Link copiado!');
+                    }}
+                    style={{
+                      padding: '8px 14px', background: '#22C55E', color: 'white',
+                      border: 'none', borderRadius: '6px', cursor: 'pointer',
+                      fontWeight: 500, fontSize: '0.85rem', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Copiar
+                  </button>
+                </div>
+                <p style={{ margin: '8px 0 0 0', fontSize: '0.75rem', color: '#6B7280' }}>
+                  Salve este link para ver status, cancelar ou reagendar.
+                </p>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '16px' }}>
               {rentalToken && (
                 <a
                   href={`/reserva/${rentalToken}`}

@@ -6,8 +6,10 @@ import { studentService } from '../services/studentService';
 import { courtService } from '../services/courtService';
 import type { CourtRental, CreateRentalData, RentalFilters, PaymentMethod } from '../types/rentalTypes';
 import type { Student } from '../types/studentTypes';
-import type { Court } from '../types/courtTypes';
+import type { Court, OperatingHour } from '../types/courtTypes';
 import '../styles/Rentals.css';
+
+const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export default function Rentals() {
   const navigate = useNavigate();
@@ -59,6 +61,13 @@ export default function Rentals() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [bookingLink, setBookingLink] = useState('');
   const [loadingLink, setLoadingLink] = useState(false);
+
+  // Operating hours modal
+  const [showHoursModal, setShowHoursModal] = useState(false);
+  const [hoursCourt, setHoursCourt] = useState<Court | null>(null);
+  const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]);
+  const [savingHours, setSavingHours] = useState(false);
+  const [showCourtsSection, setShowCourtsSection] = useState(false);
 
   useEffect(() => {
     fetchRentals();
@@ -320,6 +329,72 @@ export default function Rentals() {
     toast.success('Link copiado!');
   };
 
+  const handleOpenHoursModal = async (court: Court) => {
+    setHoursCourt(court);
+    try {
+      const response = await courtService.getOperatingHours(court.id);
+      if (response.data) {
+        setOperatingHours(response.data);
+      }
+    } catch {
+      const defaults: OperatingHour[] = [];
+      for (let i = 0; i < 7; i++) {
+        defaults.push({
+          court_id: court.id,
+          day_of_week: i,
+          open_time: '08:00',
+          close_time: '22:00',
+          slot_duration_minutes: 60,
+          price_cents: null,
+          is_active: i >= 1 && i <= 5,
+        });
+      }
+      setOperatingHours(defaults);
+    }
+    setShowHoursModal(true);
+  };
+
+  const handleSaveHours = async () => {
+    if (!hoursCourt) return;
+    setSavingHours(true);
+    try {
+      await courtService.setOperatingHours(hoursCourt.id, operatingHours);
+      toast.success('Horários salvos com sucesso!');
+      setShowHoursModal(false);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao salvar horários');
+    } finally {
+      setSavingHours(false);
+    }
+  };
+
+  const updateHour = (dayOfWeek: number, field: string, value: any) => {
+    setOperatingHours(prev =>
+      prev.map(h => h.day_of_week === dayOfWeek ? { ...h, [field]: value } : h)
+    );
+  };
+
+  const copyToAllDays = (sourceDayOfWeek: number) => {
+    const source = operatingHours.find(h => h.day_of_week === sourceDayOfWeek);
+    if (!source) return;
+    setOperatingHours(prev =>
+      prev.map(h => ({
+        ...h,
+        open_time: source.open_time,
+        close_time: source.close_time,
+        slot_duration_minutes: source.slot_duration_minutes,
+        price_cents: source.price_cents,
+        is_active: source.is_active,
+      }))
+    );
+    toast.success('Horário copiado para todos os dias');
+  };
+
+  const formatTimeHour = (time: string) => {
+    if (!time) return '';
+    return time.substring(0, 5);
+  };
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -366,6 +441,64 @@ export default function Rentals() {
           <h3>Receita Total</h3>
           <p className="value">{formatCurrency(stats.revenue)}</p>
         </div>
+      </div>
+
+      {/* Courts Quick Config */}
+      <div className="rentals-courts-section">
+        <div
+          className="rentals-courts-header"
+          onClick={() => setShowCourtsSection(!showCourtsSection)}
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '12px 16px', background: '#F9FAFB', borderRadius: '12px', marginBottom: showCourtsSection ? '12px' : '0' }}
+        >
+          <h3 style={{ margin: 0, fontSize: '1rem', color: '#374151' }}>
+            Quadras e Horários de Funcionamento
+          </h3>
+          <span style={{ color: '#6B7280', fontSize: '1.2rem' }}>{showCourtsSection ? '▲' : '▼'}</span>
+        </div>
+        {showCourtsSection && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+            {courts.length === 0 ? (
+              <p style={{ color: '#9CA3AF', padding: '12px' }}>Nenhuma quadra cadastrada. Acesse "Quadras" para criar.</p>
+            ) : (
+              courts.map((court) => (
+                <div
+                  key={court.id}
+                  style={{
+                    border: '1px solid #E5E7EB', borderRadius: '12px', padding: '16px',
+                    background: 'white',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#1F2937' }}>{court.name}</h4>
+                    <span style={{
+                      fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px',
+                      background: court.status === 'ativa' ? '#D1FAE5' : '#FEE2E2',
+                      color: court.status === 'ativa' ? '#065F46' : '#991B1B',
+                    }}>
+                      {court.status === 'ativa' ? 'Ativa' : court.status}
+                    </span>
+                  </div>
+                  {court.default_price_cents != null && court.default_price_cents > 0 && (
+                    <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '0 0 8px 0' }}>
+                      R$ {(court.default_price_cents / 100).toFixed(2)}/hora
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenHoursModal(court)}
+                    style={{
+                      width: '100%', padding: '8px', background: '#EFF6FF', color: '#2563EB',
+                      border: '1px solid #BFDBFE', borderRadius: '8px', cursor: 'pointer',
+                      fontSize: '0.85rem', fontWeight: 500,
+                    }}
+                  >
+                    Configurar Horários
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -882,6 +1015,85 @@ export default function Rentals() {
               </button>
               <button type="button" className="btn-success" onClick={handleRegisterPayment}>
                 Confirmar Pagamento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Operating Hours Modal */}
+      {showHoursModal && hoursCourt && (
+        <div className="modal-overlay" onClick={() => setShowHoursModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px' }}>
+            <div className="modal-header">
+              <h2>Horários — {hoursCourt.name}</h2>
+              <button type="button" className="modal-close" onClick={() => setShowHoursModal(false)}>✕</button>
+            </div>
+            <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '16px' }}>
+              Configure os dias e horários disponíveis para locação pública.
+            </p>
+            <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+              {operatingHours.map((h) => (
+                <div
+                  key={h.day_of_week}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '10px 0', borderBottom: '1px solid #F3F4F6',
+                    opacity: h.is_active ? 1 : 0.5, flexWrap: 'wrap',
+                  }}
+                >
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '90px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={h.is_active}
+                      onChange={(e) => updateHour(h.day_of_week, 'is_active', e.target.checked)}
+                      style={{ width: 'auto' }}
+                    />
+                    <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{DAY_NAMES[h.day_of_week]}</span>
+                  </label>
+                  {h.is_active && (
+                    <>
+                      <input
+                        type="time" value={formatTimeHour(h.open_time)}
+                        onChange={(e) => updateHour(h.day_of_week, 'open_time', e.target.value)}
+                        style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                      />
+                      <span style={{ color: '#9CA3AF' }}>às</span>
+                      <input
+                        type="time" value={formatTimeHour(h.close_time)}
+                        onChange={(e) => updateHour(h.day_of_week, 'close_time', e.target.value)}
+                        style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                      />
+                      <select
+                        value={h.slot_duration_minutes}
+                        onChange={(e) => updateHour(h.day_of_week, 'slot_duration_minutes', parseInt(e.target.value))}
+                        style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                      >
+                        <option value={30}>30min</option>
+                        <option value={60}>1h</option>
+                        <option value={90}>1h30</option>
+                        <option value={120}>2h</option>
+                      </select>
+                      <button
+                        type="button" onClick={() => copyToAllDays(h.day_of_week)}
+                        title="Copiar para todos"
+                        style={{
+                          background: 'none', border: '1px solid #D1D5DB', borderRadius: '6px',
+                          padding: '6px 8px', cursor: 'pointer', fontSize: '0.75rem',
+                          color: '#6B7280', whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Copiar
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer" style={{ marginTop: '16px' }}>
+              <button type="button" className="btn-secondary" onClick={() => setShowHoursModal(false)}>Cancelar</button>
+              <button type="button" className="btn-primary" onClick={handleSaveHours} disabled={savingHours}>
+                {savingHours ? 'Salvando...' : 'Salvar Horários'}
               </button>
             </div>
           </div>
