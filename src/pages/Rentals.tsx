@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import toast from 'react-hot-toast';
 import { rentalService } from '../services/rentalService';
 import { studentService } from '../services/studentService';
 import { courtService } from '../services/courtService';
@@ -53,6 +54,11 @@ export default function Rentals() {
 
   // Payment Form
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
+
+  // Share link
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [bookingLink, setBookingLink] = useState('');
+  const [loadingLink, setLoadingLink] = useState(false);
 
   useEffect(() => {
     fetchRentals();
@@ -290,6 +296,30 @@ export default function Rentals() {
     return timeString.substring(0, 5);
   };
 
+  const handleShareLink = async () => {
+    setLoadingLink(true);
+    try {
+      let response = await courtService.getBookingToken();
+      let token = response.data?.booking_token;
+      if (!token) {
+        response = await courtService.generateBookingToken();
+        token = response.data?.booking_token;
+      }
+      const baseUrl = window.location.origin;
+      setBookingLink(`${baseUrl}/reservar/${token}`);
+      setShowShareModal(true);
+    } catch {
+      toast.error('Erro ao gerar link de reserva');
+    } finally {
+      setLoadingLink(false);
+    }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(bookingLink);
+    toast.success('Link copiado!');
+  };
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -304,6 +334,15 @@ export default function Rentals() {
       <div className="rentals-header">
         <h1>Locações de Quadra</h1>
         <div className="rentals-header-actions">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={handleShareLink}
+            disabled={loadingLink}
+            style={{ backgroundColor: '#8B5CF6', color: 'white', border: 'none' }}
+          >
+            {loadingLink ? '...' : '🔗 Compartilhar Link'}
+          </button>
           <button type="button" className="btn-secondary" onClick={() => navigate('/locacoes/agenda')}>
             📅 Ver Agenda
           </button>
@@ -843,6 +882,58 @@ export default function Rentals() {
               </button>
               <button type="button" className="btn-success" onClick={handleRegisterPayment}>
                 Confirmar Pagamento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Link Modal */}
+      {showShareModal && (
+        <div className="modal-overlay" onClick={() => setShowShareModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <h2 style={{ marginBottom: '8px' }}>Link de Reserva Online</h2>
+            <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '20px' }}>
+              Compartilhe este link para que seus clientes possam reservar horários diretamente.
+            </p>
+            <div style={{
+              display: 'flex', gap: '8px', padding: '12px', background: '#F3F4F6',
+              borderRadius: '8px', alignItems: 'center',
+            }}>
+              <input
+                type="text"
+                readOnly
+                value={bookingLink}
+                style={{
+                  flex: 1, border: 'none', background: 'transparent',
+                  fontSize: '0.85rem', color: '#1F2937', outline: 'none',
+                }}
+              />
+              <button
+                type="button"
+                onClick={copyLink}
+                style={{
+                  padding: '8px 16px', background: '#22C55E', color: 'white',
+                  border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Copiar
+              </button>
+            </div>
+            <p style={{ color: '#9CA3AF', fontSize: '0.8rem', marginTop: '12px' }}>
+              Envie via WhatsApp, redes sociais ou onde preferir. Qualquer pessoa pode reservar sem precisar de cadastro.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button
+                type="button"
+                onClick={() => setShowShareModal(false)}
+                style={{
+                  padding: '8px 20px', background: '#E5E7EB', color: '#374151',
+                  border: 'none', borderRadius: '6px', cursor: 'pointer',
+                }}
+              >
+                Fechar
               </button>
             </div>
           </div>

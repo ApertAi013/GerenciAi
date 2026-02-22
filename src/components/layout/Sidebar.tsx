@@ -48,6 +48,7 @@ const menuItems: MenuItem[] = [
   { path: '/instrutores', label: 'Instrutores', icon: faChalkboardTeacher },
   { path: '/quadras', label: 'Quadras', icon: faSquare },
   { path: '/locacoes', label: 'Locações', icon: faBaseballBall },
+  { path: '/mensalistas', label: 'Mensalistas', icon: faCalendarDays },
   { path: '/avisos', label: 'Avisos', icon: faBullhorn },
   { path: '/financeiro', label: 'Financeiro', icon: faMoneyBillWave },
   { path: '/pagamentos-app', label: 'Pagamento App', icon: faMobileAlt },

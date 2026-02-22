@@ -123,6 +123,16 @@
   background-color: #D1D5DB;
 }
 
+.btn-hours {
+  flex: 1;
+  background-color: #8B5CF6;
+  color: white;
+}
+
+.btn-hours:hover {
+  background-color: #7C3AED;
+}
+
 .btn-edit {
   flex: 1;
   background-color: #3B82F6;

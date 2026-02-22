@@ -3,26 +3,26 @@ import { useNavigate } from 'react-router';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { rentalService } from '../services/rentalService';
+import { courtService } from '../services/courtService';
 import type { CourtRental } from '../types/rentalTypes';
 import '../styles/Schedule.css';
 
 const HOURS = [
   '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
   '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-  '18:00', '19:00', '20:00', '21:00'
+  '18:00', '19:00', '20:00', '21:00',
 ];
 
-const DAYS_OF_WEEK = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+const DAYS_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+const COURT_COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#EC4899', '#06B6D4', '#A78BFA'];
 
 const generateTimeSlots = () => {
   const slots: { time: string; isHourStart: boolean }[] = [];
   for (let hour = 6; hour <= 21; hour++) {
     for (let min = 0; min < 60; min += 10) {
       const time = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-      slots.push({
-        time,
-        isHourStart: min === 0
-      });
+      slots.push({ time, isHourStart: min === 0 });
     }
   }
   return slots;
@@ -38,8 +38,7 @@ const timeToMinutes = (time: string): number => {
 const calculateOffset = (startTime: string, hourStartTime: string): number => {
   const startMin = timeToMinutes(startTime);
   const hourMin = timeToMinutes(hourStartTime);
-  const offsetMin = startMin - hourMin;
-  return (offsetMin / 60) * 100;
+  return ((startMin - hourMin) / 60) * 100;
 };
 
 const calculateHeight = (startTime: string, endTime: string): number => {
@@ -52,12 +51,36 @@ export default function RentalsSchedule() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [rentals, setRentals] = useState<CourtRental[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [courtNames, setCourtNames] = useState<string[]>([]);
+  const [selectedCourt, setSelectedCourt] = useState<string>('all');
+  const [courtColorMap, setCourtColorMap] = useState<Record<string, string>>({});
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
 
   useEffect(() => {
+    loadCourts();
+  }, []);
+
+  useEffect(() => {
     fetchRentals();
   }, [currentWeek]);
+
+  const loadCourts = async () => {
+    try {
+      const response = await courtService.getCourts();
+      if (response.success && response.data) {
+        const names = response.data.map((c: any) => c.name);
+        setCourtNames(names);
+        const colorMap: Record<string, string> = {};
+        names.forEach((name: string, i: number) => {
+          colorMap[name] = COURT_COLORS[i % COURT_COLORS.length];
+        });
+        setCourtColorMap(colorMap);
+      }
+    } catch {
+      // ignore
+    }
+  };
 
   const fetchRentals = async () => {
     try {
@@ -70,8 +93,20 @@ export default function RentalsSchedule() {
         end_date: endDate,
       });
 
-      if ((response as any).status === 'success' || (response as any).success === true) {
-        setRentals(response.data.filter(r => r.status !== 'cancelada'));
+      if ((response as any).success === true || (response as any).status === 'success') {
+        const data = response.data.filter((r: CourtRental) => r.status !== 'cancelada');
+        setRentals(data);
+
+        // Build color map for any courts not in the list
+        const newColorMap = { ...courtColorMap };
+        let colorIdx = Object.keys(newColorMap).length;
+        data.forEach((r: CourtRental) => {
+          if (!newColorMap[r.court_name]) {
+            newColorMap[r.court_name] = COURT_COLORS[colorIdx % COURT_COLORS.length];
+            colorIdx++;
+          }
+        });
+        setCourtColorMap(newColorMap);
       }
     } catch (error) {
       console.error('Erro ao buscar locações:', error);
@@ -82,35 +117,29 @@ export default function RentalsSchedule() {
 
   const parseRentalDate = (dateString: string): string => {
     if (!dateString) return '';
-
     try {
-      // Se for formato YYYY-MM-DD, retorna como está
-      if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return dateString;
-      }
-      // Se for formato DD/MM/YYYY
+      if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) return dateString;
       if (dateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
         const [day, month, year] = dateString.split('/');
         return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       }
-      // Tenta parse como Date e formata
       const parsed = new Date(dateString);
-      if (!isNaN(parsed.getTime())) {
-        return format(parsed, 'yyyy-MM-dd');
-      }
-      console.error('Data inválida no RentalsSchedule:', dateString);
+      if (!isNaN(parsed.getTime())) return format(parsed, 'yyyy-MM-dd');
       return '';
-    } catch (error) {
-      console.error('Erro ao parsear data no RentalsSchedule:', dateString, error);
+    } catch {
       return '';
     }
   };
+
+  const filteredRentals = selectedCourt === 'all'
+    ? rentals
+    : rentals.filter(r => r.court_name === selectedCourt);
 
   const getRentalsForDayAndHour = (date: Date, hour: string): CourtRental[] => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const hourNum = parseInt(hour.split(':')[0]);
 
-    return rentals.filter((rental) => {
+    return filteredRentals.filter((rental) => {
       const rentalDateStr = parseRentalDate(rental.rental_date);
       if (rentalDateStr !== dateStr) return false;
       const startHour = parseInt(rental.start_time.split(':')[0]);
@@ -118,39 +147,69 @@ export default function RentalsSchedule() {
     });
   };
 
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(cents / 100);
+  // Assign lanes for overlapping rentals
+  const assignLanes = (dayRentals: CourtRental[]) => {
+    const laneMap = new Map<number, { lane: number; totalLanes: number }>();
+
+    const sorted = [...dayRentals].sort((a, b) =>
+      timeToMinutes(a.start_time) - timeToMinutes(b.start_time)
+    );
+
+    sorted.forEach((rental) => {
+      const rStart = timeToMinutes(rental.start_time);
+      const rEnd = timeToMinutes(rental.end_time);
+
+      const overlapping = sorted.filter((other) => {
+        if (other.id === rental.id) return false;
+        const oStart = timeToMinutes(other.start_time);
+        const oEnd = timeToMinutes(other.end_time);
+        return rStart < oEnd && rEnd > oStart;
+      });
+
+      const occupiedLanes = new Set<number>();
+      overlapping.forEach((other) => {
+        const otherLane = laneMap.get(other.id);
+        if (otherLane) occupiedLanes.add(otherLane.lane);
+      });
+
+      let lane = 0;
+      while (occupiedLanes.has(lane)) lane++;
+
+      const totalLanes = Math.max(lane + 1, ...overlapping.map((other) => {
+        const otherLane = laneMap.get(other.id);
+        return otherLane ? otherLane.totalLanes : 1;
+      }));
+
+      laneMap.set(rental.id, { lane, totalLanes });
+      overlapping.forEach((other) => {
+        const otherLane = laneMap.get(other.id);
+        if (otherLane) {
+          laneMap.set(other.id, { lane: otherLane.lane, totalLanes });
+        }
+      });
+    });
+
+    return laneMap;
   };
 
-  const formatTime = (timeString: string) => {
-    return timeString.substring(0, 5);
-  };
+  const formatCurrency = (cents: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
 
-  const getPaymentStatusColor = (status: string) => {
+  const formatTime = (timeString: string) => timeString.substring(0, 5);
+
+  const getCourtColor = (courtName: string) => courtColorMap[courtName] || '#6B7280';
+
+  const getPaymentBadgeStyle = (status: string) => {
     switch (status) {
-      case 'paga':
-        return '#10B981';
-      case 'pendente':
-        return '#F59E0B';
-      default:
-        return '#EF4444';
+      case 'paga': return { background: 'rgba(255,255,255,0.3)', color: 'white' };
+      case 'pendente': return { background: 'rgba(255,255,255,0.9)', color: '#92400E' };
+      default: return { background: 'rgba(255,255,255,0.3)', color: 'white' };
     }
   };
 
-  const previousWeek = () => {
-    setCurrentWeek(new Date(currentWeek.getTime() - 7 * 24 * 60 * 60 * 1000));
-  };
-
-  const nextWeek = () => {
-    setCurrentWeek(new Date(currentWeek.getTime() + 7 * 24 * 60 * 60 * 1000));
-  };
-
-  const goToToday = () => {
-    setCurrentWeek(new Date());
-  };
+  const previousWeek = () => setCurrentWeek(new Date(currentWeek.getTime() - 7 * 24 * 60 * 60 * 1000));
+  const nextWeek = () => setCurrentWeek(new Date(currentWeek.getTime() + 7 * 24 * 60 * 60 * 1000));
+  const goToToday = () => setCurrentWeek(new Date());
 
   if (isLoading) {
     return (
@@ -160,44 +219,85 @@ export default function RentalsSchedule() {
     );
   }
 
+  // Get all unique courts from this week's data
+  const allCourts = Array.from(new Set(rentals.map(r => r.court_name))).sort();
+
   return (
     <div className="schedule-page">
       {/* Header */}
       <div className="schedule-header">
-        <div className="schedule-title-section">
-          <h1>Agenda de Locações</h1>
-          <div className="schedule-nav">
-            <button type="button" className="nav-btn" onClick={previousWeek}>
-              ← Anterior
+        <div className="schedule-controls">
+          <div className="date-navigation">
+            <button type="button" className="nav-button" onClick={previousWeek}>
+              ←
             </button>
-            <button type="button" className="today-btn" onClick={goToToday}>
+            <button type="button" className="today-button" onClick={goToToday}>
               Hoje
             </button>
-            <button type="button" className="nav-btn" onClick={nextWeek}>
-              Próxima →
+            <button type="button" className="nav-button" onClick={nextWeek}>
+              →
+            </button>
+            <span className="month-year">
+              {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(addDays(weekStart, 6), 'dd MMM yyyy', { locale: ptBR })}
+            </span>
+          </div>
+
+          {/* Court filter */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              style={{
+                padding: '6px 14px',
+                borderRadius: '8px',
+                border: `2px solid ${selectedCourt === 'all' ? '#22C55E' : '#E5E7EB'}`,
+                background: selectedCourt === 'all' ? '#22C55E' : 'white',
+                color: selectedCourt === 'all' ? 'white' : '#374151',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+              onClick={() => setSelectedCourt('all')}
+            >
+              Todas
+            </button>
+            {(courtNames.length > 0 ? courtNames : allCourts).map((name) => (
+              <button
+                key={name}
+                type="button"
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  border: `2px solid ${selectedCourt === name ? getCourtColor(name) : '#E5E7EB'}`,
+                  background: selectedCourt === name ? getCourtColor(name) : 'white',
+                  color: selectedCourt === name ? 'white' : '#374151',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+                onClick={() => setSelectedCourt(name)}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+
+          <div className="action-buttons">
+            <button
+              type="button"
+              className="nav-button"
+              onClick={() => navigate('/locacoes')}
+            >
+              ← Lista
             </button>
           </div>
         </div>
-
-        <div className="schedule-actions">
-          <button type="button" className="btn-secondary" onClick={() => navigate('/locacoes')}>
-            ← Voltar para Locações
-          </button>
-        </div>
-      </div>
-
-      {/* Week info */}
-      <div style={{ textAlign: 'center', marginBottom: '20px', color: '#737373', fontSize: '14px' }}>
-        {format(weekStart, 'dd MMM', { locale: ptBR })} - {format(addDays(weekStart, 6), 'dd MMM yyyy', { locale: ptBR })}
       </div>
 
       {/* Grid */}
       <div className="schedule-grid-container">
         <div
           className="schedule-grid"
-          style={{
-            gridTemplateColumns: `80px repeat(7, 200px)`
-          }}
+          style={{ gridTemplateColumns: `80px repeat(7, 1fr)` }}
         >
           {/* Time column */}
           <div className="time-column">
@@ -210,18 +310,19 @@ export default function RentalsSchedule() {
           </div>
 
           {/* Days columns */}
-          {[1, 2, 3, 4, 5, 6, 0].map((dayOffset, index) => {
+          {[0, 1, 2, 3, 4, 5, 6].map((index) => {
             const currentDay = addDays(weekStart, index);
             const isToday = format(currentDay, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
+            // Get all rentals for this day
+            const dateStr = format(currentDay, 'yyyy-MM-dd');
+            const dayRentals = filteredRentals.filter(r => parseRentalDate(r.rental_date) === dateStr);
+            const laneMap = assignLanes(dayRentals);
+
             return (
-              <div
-                key={dayOffset}
-                className="day-column"
-                style={{ width: '200px' }}
-              >
+              <div key={index} className="day-column">
                 <div className={`day-header ${isToday ? 'today' : ''}`}>
-                  <div className="day-name">{DAYS_OF_WEEK[index]}</div>
+                  <div className="day-name">{DAYS_LABELS[index]}</div>
                   <div className="day-number">{format(currentDay, 'd')}</div>
                 </div>
 
@@ -229,13 +330,17 @@ export default function RentalsSchedule() {
                   const rentalsInHour = getRentalsForDayAndHour(currentDay, hour);
 
                   return (
-                    <div key={`${dayOffset}-${hour}`} style={{ position: 'relative', height: '240px' }}>
-                      {/* Renderizar locações desta hora */}
+                    <div key={`${index}-${hour}`} style={{ position: 'relative', height: '240px' }}>
+                      {/* Rental cards */}
                       {rentalsInHour.map((rental) => {
                         const hourStart = `${hour.split(':')[0]}:00`;
                         const topOffset = calculateOffset(rental.start_time, hourStart);
                         const height = calculateHeight(rental.start_time, rental.end_time);
-                        const bgColor = getPaymentStatusColor(rental.payment_status);
+                        const bgColor = getCourtColor(rental.court_name);
+                        const laneInfo = laneMap.get(rental.id) || { lane: 0, totalLanes: 1 };
+                        const widthPercent = 100 / laneInfo.totalLanes;
+                        const leftPercent = laneInfo.lane * widthPercent;
+                        const payBadge = getPaymentBadgeStyle(rental.payment_status);
 
                         return (
                           <div
@@ -244,78 +349,52 @@ export default function RentalsSchedule() {
                             style={{
                               position: 'absolute',
                               top: `${topOffset}%`,
-                              left: '0',
-                              right: '0',
+                              left: `calc(${leftPercent}% + 2px)`,
+                              width: `calc(${widthPercent}% - 4px)`,
                               height: `${height}%`,
+                              minHeight: '60px',
                               backgroundColor: bgColor,
-                              border: `2px solid ${bgColor}`,
                               borderRadius: '6px',
-                              padding: '8px',
+                              padding: '6px 8px',
                               cursor: 'pointer',
                               overflow: 'hidden',
                               zIndex: 1,
                             }}
                             onClick={() => navigate('/locacoes')}
-                            title={`${rental.renter_name} - ${rental.court_name}`}
+                            title={`${rental.renter_name} | ${rental.court_name} | ${formatTime(rental.start_time)}-${formatTime(rental.end_time)}`}
                           >
-                            <div style={{
-                              fontSize: '11px',
-                              fontWeight: '600',
-                              color: 'white',
-                              marginBottom: '4px',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}>
-                              {formatTime(rental.start_time)} - {formatTime(rental.end_time)}
+                            <div className="class-card-header" style={{ marginBottom: '2px' }}>
+                              <span className="class-time" style={{ fontSize: '10px', color: 'white' }}>
+                                {formatTime(rental.start_time)} - {formatTime(rental.end_time)}
+                              </span>
                             </div>
-                            <div style={{
-                              fontSize: '13px',
-                              fontWeight: '700',
-                              color: 'white',
-                              marginBottom: '2px',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}>
+                            <div className="class-name" style={{ fontSize: '12px', lineHeight: '1.3', color: 'white', marginBottom: '2px' }}>
                               {rental.court_name}
                             </div>
-                            <div style={{
-                              fontSize: '12px',
-                              color: 'rgba(255, 255, 255, 0.95)',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}>
+                            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {rental.renter_name}
                             </div>
-                            <div style={{
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              color: 'white',
-                              marginTop: '4px'
-                            }}>
-                              {formatCurrency(rental.price_cents)}
-                            </div>
-                            {rental.payment_status === 'pendente' && (
-                              <div style={{
-                                fontSize: '10px',
-                                background: 'rgba(255, 255, 255, 0.3)',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                display: 'inline-block',
-                                marginTop: '4px',
-                                color: 'white',
-                                fontWeight: '600'
-                              }}>
-                                Pendente
+                            {height >= 80 && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: 'white' }}>
+                                  {formatCurrency(rental.price_cents)}
+                                </span>
+                                <span style={{
+                                  fontSize: '9px',
+                                  fontWeight: 600,
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                  ...payBadge,
+                                }}>
+                                  {rental.payment_status === 'paga' ? 'Pago' : 'Pendente'}
+                                </span>
                               </div>
                             )}
                           </div>
                         );
                       })}
 
-                      {/* Slots de 10 em 10 minutos (invisíveis, apenas para estrutura) */}
+                      {/* Time slot lines */}
                       {TIME_SLOTS.filter(slot => slot.time.startsWith(hour.substring(0, 2))).map((slot) => (
                         <div
                           key={slot.time}
@@ -335,23 +414,17 @@ export default function RentalsSchedule() {
       <div style={{
         display: 'flex',
         justifyContent: 'center',
-        gap: '32px',
-        marginTop: '32px',
-        paddingBottom: '32px',
-        fontSize: '14px'
+        gap: '20px',
+        padding: '16px 0 32px',
+        fontSize: '13px',
+        flexWrap: 'wrap',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '20px', height: '20px', borderRadius: '4px', backgroundColor: '#10B981' }}></div>
-          <span>Paga</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '20px', height: '20px', borderRadius: '4px', backgroundColor: '#F59E0B' }}></div>
-          <span>Pendente</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '20px', height: '20px', borderRadius: '4px', backgroundColor: '#EF4444' }}></div>
-          <span>Cancelada</span>
-        </div>
+        {(courtNames.length > 0 ? courtNames : allCourts).map((name) => (
+          <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '4px', backgroundColor: getCourtColor(name) }}></div>
+            <span>{name}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

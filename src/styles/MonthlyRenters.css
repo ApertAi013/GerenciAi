@@ -1,0 +1,273 @@
+.monthly-renters-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.mr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.mr-header h1 {
+  font-size: 2rem;
+  color: #1F2937;
+  margin: 0;
+}
+
+.mr-header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.mr-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.mr-btn-primary {
+  background: #22C55E;
+  color: white;
+}
+
+.mr-btn-primary:hover {
+  background: #16A34A;
+}
+
+.mr-btn-primary:disabled {
+  background: #9CA3AF;
+  cursor: not-allowed;
+}
+
+.mr-btn-secondary {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+.mr-btn-secondary:hover {
+  background: #D1D5DB;
+}
+
+.mr-btn-cancel {
+  background: #E5E7EB;
+  color: #374151;
+  flex: 1;
+}
+
+.mr-btn-sm {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.mr-btn-edit {
+  background: #3B82F6;
+  color: white;
+}
+
+.mr-btn-edit:hover {
+  background: #2563EB;
+}
+
+.mr-btn-danger {
+  background: #EF4444;
+  color: white;
+}
+
+.mr-btn-danger:hover {
+  background: #DC2626;
+}
+
+.mr-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #F9FAFB;
+  border-radius: 12px;
+  border: 2px dashed #D1D5DB;
+}
+
+.mr-empty p {
+  color: #6B7280;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+/* Table */
+.mr-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.mr-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mr-table th {
+  background: #F9FAFB;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.mr-table td {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  color: #374151;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.mr-table tr:hover {
+  background: #F9FAFB;
+}
+
+.mr-status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Mobile cards - hidden on desktop */
+.mr-cards-mobile {
+  display: none;
+}
+
+.mr-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 12px;
+}
+
+/* Modal */
+.mr-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.mr-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.mr-modal h2 {
+  margin: 0 0 1.5rem;
+  color: #1F2937;
+  font-size: 1.5rem;
+}
+
+.mr-form-group {
+  margin-bottom: 14px;
+}
+
+.mr-form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.mr-form-group input,
+.mr-form-group select,
+.mr-form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.mr-form-group input:focus,
+.mr-form-group select:focus,
+.mr-form-group textarea:focus {
+  outline: none;
+  border-color: #22C55E;
+}
+
+.mr-form-group textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.mr-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.mr-form-grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.mr-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .monthly-renters-page {
+    padding: 1rem;
+  }
+
+  .mr-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .mr-header-actions {
+    flex-direction: column;
+  }
+
+  .mr-table-container {
+    display: none;
+  }
+
+  .mr-cards-mobile {
+    display: block;
+  }
+
+  .mr-form-grid,
+  .mr-form-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .mr-modal {
+    padding: 1.5rem;
+  }
+}

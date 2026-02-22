@@ -32,6 +32,10 @@ import Preferences from './pages/Preferences'
 import Announcements from './pages/Announcements'
 import AppPayments from './pages/AppPayments'
 import MyPlan from './pages/MyPlan'
+import MonthlyRenters from './pages/MonthlyRenters'
+import PublicBooking from './pages/PublicBooking'
+import PublicRentalStatus from './pages/PublicRentalStatus'
+import PublicRenterDashboard from './pages/PublicRenterDashboard'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import SystemGuide from './pages/SystemGuide'
@@ -87,6 +91,9 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/guia-do-sistema" element={<SystemGuide />} />
         <Route path="/privacidade" element={<PrivacyPolicy />} />
+        <Route path="/reservar/:bookingToken" element={<PublicBooking />} />
+        <Route path="/reserva/:rentalToken" element={<PublicRentalStatus />} />
+        <Route path="/minhas-reservas/:accessToken" element={<PublicRenterDashboard />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
@@ -103,6 +110,7 @@ export default function App() {
             <Route path="/quadras" element={<Courts />} />
             <Route path="/locacoes" element={<Rentals />} />
             <Route path="/locacoes/agenda" element={<RentalsSchedule />} />
+            <Route path="/mensalistas" element={<MonthlyRenters />} />
             <Route path="/avisos" element={<Announcements />} />
             <Route path="/pagamentos-app" element={<AppPayments />} />
             <Route path="/meu-plano" element={<MyPlan />} />

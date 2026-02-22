@@ -1,0 +1,513 @@
+.pb-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 50%, #F0F9FF 100%);
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.pb-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.pb-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6B7280;
+  font-size: 1.1rem;
+}
+
+.pb-error-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  max-width: 400px;
+  margin: 40px auto;
+}
+
+.pb-error-card h2 {
+  color: #EF4444;
+  margin-bottom: 12px;
+}
+
+.pb-error-card p {
+  color: #6B7280;
+}
+
+.pb-error-inline {
+  background: #FEE2E2;
+  color: #991B1B;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Header */
+.pb-header {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.pb-header h1 {
+  font-size: 1.75rem;
+  color: #1F2937;
+  margin: 0 0 6px;
+}
+
+.pb-subtitle {
+  color: #6B7280;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Progress */
+.pb-progress {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 24px;
+}
+
+.pb-progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.pb-progress-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #E5E7EB;
+  color: #9CA3AF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.pb-progress-step.active .pb-progress-dot {
+  background: #22C55E;
+  color: white;
+}
+
+.pb-progress-step.current .pb-progress-dot {
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+}
+
+.pb-progress-label {
+  font-size: 0.7rem;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pb-progress-step.active .pb-progress-label {
+  color: #22C55E;
+}
+
+/* Steps */
+.pb-step {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pb-step h2 {
+  margin: 0 0 6px;
+  font-size: 1.3rem;
+  color: #1F2937;
+}
+
+.pb-step-desc {
+  color: #6B7280;
+  font-size: 0.9rem;
+  margin: 0 0 20px;
+}
+
+.pb-step-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Form */
+.pb-form-group {
+  margin-bottom: 16px;
+}
+
+.pb-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.pb-form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #D1D5DB;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.pb-form-group input:focus {
+  outline: none;
+  border-color: #22C55E;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+/* Buttons */
+.pb-btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.pb-btn-primary {
+  background: #22C55E;
+  color: white;
+}
+
+.pb-btn-primary:hover {
+  background: #16A34A;
+}
+
+.pb-btn-primary:disabled {
+  background: #9CA3AF;
+  cursor: not-allowed;
+}
+
+.pb-btn-secondary {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+.pb-btn-secondary:hover {
+  background: #D1D5DB;
+}
+
+.pb-btn-danger {
+  background: #EF4444;
+  color: white;
+}
+
+.pb-btn-danger:hover {
+  background: #DC2626;
+}
+
+.pb-btn-full {
+  display: block;
+  width: 100%;
+}
+
+/* Courts grid */
+.pb-courts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pb-court-card {
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pb-court-card:hover {
+  border-color: #22C55E;
+}
+
+.pb-court-card.selected {
+  border-color: #22C55E;
+  background: #F0FDF4;
+}
+
+.pb-court-card h3 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  color: #1F2937;
+}
+
+.pb-court-card p {
+  margin: 0 0 8px;
+  color: #6B7280;
+  font-size: 0.85rem;
+}
+
+.pb-court-price {
+  display: inline-block;
+  background: #D1FAE5;
+  color: #065F46;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.pb-court-days {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.pb-day-chip {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  background: #F3F4F6;
+  color: #9CA3AF;
+}
+
+.pb-day-chip.active {
+  background: #DBEAFE;
+  color: #1D4ED8;
+}
+
+/* Date scroll */
+.pb-date-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pb-date-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.pb-date-scroll::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+
+.pb-date-card {
+  min-width: 60px;
+  padding: 10px 8px;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pb-date-card:hover {
+  border-color: #22C55E;
+}
+
+.pb-date-card.selected {
+  border-color: #22C55E;
+  background: #22C55E;
+  color: white;
+}
+
+.pb-date-day {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+.pb-date-card.selected .pb-date-day,
+.pb-date-card.selected .pb-date-month {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.pb-date-num {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.pb-date-month {
+  font-size: 0.65rem;
+  color: #9CA3AF;
+  text-transform: uppercase;
+}
+
+/* Time slots */
+.pb-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.pb-slot {
+  padding: 12px;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pb-slot:hover:not(.unavailable) {
+  border-color: #22C55E;
+}
+
+.pb-slot.selected {
+  border-color: #22C55E;
+  background: #F0FDF4;
+}
+
+.pb-slot.unavailable {
+  background: #F9FAFB;
+  border-color: #F3F4F6;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pb-slot-time {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1F2937;
+}
+
+.pb-slot.unavailable .pb-slot-time {
+  color: #9CA3AF;
+  text-decoration: line-through;
+}
+
+.pb-slot-price {
+  display: block;
+  font-size: 0.75rem;
+  color: #10B981;
+  margin-top: 2px;
+}
+
+.pb-slot-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #9CA3AF;
+  margin-top: 2px;
+}
+
+/* Confirmation card */
+.pb-confirm-card {
+  background: #F9FAFB;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.pb-confirm-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.pb-confirm-row:last-child {
+  border-bottom: none;
+}
+
+.pb-confirm-label {
+  color: #6B7280;
+  font-size: 0.9rem;
+}
+
+.pb-confirm-value {
+  color: #1F2937;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.pb-confirm-price {
+  color: #10B981 !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+}
+
+.pb-confirm-policy {
+  margin-top: 12px;
+  padding: 10px;
+  background: #FEF3C7;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #92400E;
+}
+
+/* Success */
+.pb-success-step {
+  text-align: center;
+}
+
+.pb-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #22C55E;
+  color: white;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+@media (max-width: 480px) {
+  .pb-page {
+    padding: 12px;
+  }
+
+  .pb-step {
+    padding: 20px;
+  }
+
+  .pb-progress {
+    gap: 20px;
+  }
+
+  .pb-progress-label {
+    display: none;
+  }
+
+  .pb-slots-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pb-step-actions {
+    flex-direction: column-reverse;
+  }
+}
