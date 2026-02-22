@@ -712,6 +712,118 @@ export default function Rentals() {
         )}
       </div>
 
+      {/* Mini Calendar - Today's Schedule */}
+      {(() => {
+        const today = new Date().toISOString().split('T')[0];
+        const todayRentals = rentals
+          .filter(r => {
+            const rd = r.rental_date?.substring(0, 10);
+            return rd === today && r.status !== 'cancelada';
+          })
+          .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+
+        const COURT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+        const courtColorMap: Record<string, string> = {};
+        courts.forEach((c, i) => { courtColorMap[c.name] = COURT_COLORS[i % COURT_COLORS.length]; });
+
+        const hours: number[] = [];
+        if (todayRentals.length > 0) {
+          const minH = Math.min(...todayRentals.map(r => parseInt((r.start_time || '08:00').split(':')[0])));
+          const maxH = Math.max(...todayRentals.map(r => parseInt((r.end_time || '22:00').split(':')[0])));
+          for (let h = Math.max(0, minH); h <= Math.min(23, maxH); h++) hours.push(h);
+        } else {
+          for (let h = 8; h <= 22; h++) hours.push(h);
+        }
+
+        return (
+          <div style={{
+            background: 'white', borderRadius: '12px', border: '1px solid #E5E7EB',
+            padding: '16px', marginTop: '16px',
+          }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', color: '#374151' }}>
+              Agenda de Hoje — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </h3>
+
+            {todayRentals.length === 0 ? (
+              <p style={{ color: '#9CA3AF', fontSize: '0.9rem', textAlign: 'center', padding: '20px 0' }}>
+                Nenhuma locação agendada para hoje
+              </p>
+            ) : (
+              <div style={{ position: 'relative', display: 'flex', gap: '0' }}>
+                {/* Time labels */}
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: '45px', flexShrink: 0 }}>
+                  {hours.map(h => (
+                    <div key={h} style={{
+                      height: '48px', fontSize: '0.75rem', color: '#9CA3AF',
+                      display: 'flex', alignItems: 'flex-start', paddingTop: '2px',
+                    }}>
+                      {String(h).padStart(2, '0')}:00
+                    </div>
+                  ))}
+                </div>
+
+                {/* Grid with rentals */}
+                <div style={{ flex: 1, position: 'relative', borderLeft: '1px solid #E5E7EB' }}>
+                  {/* Hour lines */}
+                  {hours.map(h => (
+                    <div key={h} style={{
+                      height: '48px', borderBottom: '1px solid #F3F4F6',
+                    }} />
+                  ))}
+
+                  {/* Rental blocks */}
+                  {todayRentals.map((rental) => {
+                    const startParts = (rental.start_time || '08:00').split(':');
+                    const endParts = (rental.end_time || '09:00').split(':');
+                    const startMin = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+                    const endMin = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+                    const baseMin = hours[0] * 60;
+                    const topPx = ((startMin - baseMin) / 60) * 48;
+                    const heightPx = Math.max(20, ((endMin - startMin) / 60) * 48 - 2);
+                    const color = courtColorMap[rental.court_name] || '#3B82F6';
+
+                    return (
+                      <div
+                        key={rental.id}
+                        style={{
+                          position: 'absolute', top: `${topPx}px`, left: '4px', right: '4px',
+                          height: `${heightPx}px`, background: `${color}15`,
+                          borderLeft: `3px solid ${color}`, borderRadius: '4px',
+                          padding: '4px 8px', overflow: 'hidden', fontSize: '0.75rem',
+                          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                        }}
+                        title={`${rental.renter_name} — ${rental.court_name} (${formatTime(rental.start_time)}-${formatTime(rental.end_time)})`}
+                      >
+                        <span style={{ fontWeight: 600, color: color, lineHeight: 1.2 }}>
+                          {formatTime(rental.start_time)}-{formatTime(rental.end_time)} {rental.court_name}
+                        </span>
+                        {heightPx > 28 && (
+                          <span style={{ color: '#6B7280', lineHeight: 1.2 }}>
+                            {rental.renter_name}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Court legend */}
+            {todayRentals.length > 0 && (
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
+                {courts.filter(c => todayRentals.some(r => r.court_name === c.name)).map(c => (
+                  <span key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#6B7280' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: courtColorMap[c.name] }} />
+                    {c.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Create Rental Modal */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
