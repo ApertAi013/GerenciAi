@@ -153,6 +153,7 @@ export default function Schedule() {
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
   const [prefilledData, setPrefilledData] = useState<{ weekday: string; start_time: string } | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [editingClass, setEditingClass] = useState<Class | null>(null);
 
   // Aplicar filtros nas turmas
   const filteredClasses = useMemo(() => {
@@ -355,6 +356,18 @@ export default function Schedule() {
     const weekday = NUMBER_TO_WEEKDAY[day];
     setPrefilledData({ weekday, start_time: hour });
     setShowCreateModal(true);
+  };
+
+  const handleClassClick = async (classId: string) => {
+    try {
+      const response = await classService.getClassById(Number(classId));
+      if (response.status === 'success' && response.data) {
+        setEditingClass(response.data);
+        setShowCreateModal(true);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar turma para edição:', err);
+    }
   };
 
   const handleDragStart = (event: any) => {
@@ -772,7 +785,7 @@ export default function Schedule() {
       {viewMode === 'month' ? (
         <MonthView currentDate={currentWeek} classes={filteredClasses} onSlotClick={handleSlotClick} />
       ) : viewMode === 'day' ? (
-        <DayView currentDate={currentWeek} classes={filteredClasses} onSlotClick={handleSlotClick} />
+        <DayView currentDate={currentWeek} classes={filteredClasses} onSlotClick={handleSlotClick} onClassClick={handleClassClick} />
       ) : (
         <WeekView
           currentWeek={currentWeek}
@@ -783,6 +796,7 @@ export default function Schedule() {
           isSaving={isSaving}
           onSlotClick={handleSlotClick}
           onStudentClick={setSelectedStudentId}
+          onClassClick={handleClassClick}
         />
       )}
 
@@ -804,13 +818,16 @@ export default function Schedule() {
           onClose={() => {
             setShowCreateModal(false);
             setPrefilledData(null);
+            setEditingClass(null);
           }}
           onSuccess={() => {
             setShowCreateModal(false);
             setPrefilledData(null);
+            setEditingClass(null);
             fetchClassesAndStudents();
           }}
           prefilledData={prefilledData}
+          editClass={editingClass || undefined}
         />
       )}
 

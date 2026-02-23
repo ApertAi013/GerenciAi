@@ -744,6 +744,17 @@
   font-weight: 500;
 }
 
+/* Clickable class name */
+.class-name.clickable,
+.day-class-name.clickable {
+  cursor: pointer;
+}
+
+.class-name.clickable:hover,
+.day-class-name.clickable:hover {
+  text-decoration: underline;
+}
+
 /* Level mismatch warning */
 .level-warning {
   color: #FCD34D;

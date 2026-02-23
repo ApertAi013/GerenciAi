@@ -27,6 +27,7 @@ interface DayViewProps {
   currentDate: Date;
   classes: ClassSchedule[];
   onSlotClick?: (day: number, hour: string) => void;
+  onClassClick?: (classId: string) => void;
 }
 
 const HOURS = [
@@ -35,7 +36,7 @@ const HOURS = [
   '18:00', '19:00', '20:00', '21:00'
 ];
 
-export default function DayView({ currentDate, classes, onSlotClick }: DayViewProps) {
+export default function DayView({ currentDate, classes, onSlotClick, onClassClick }: DayViewProps) {
   const dayOfWeek = currentDate.getDay();
   const classesForDay = classes.filter(cls => cls.day === dayOfWeek);
 
@@ -96,7 +97,12 @@ export default function DayView({ currentDate, classes, onSlotClick }: DayViewPr
                           {filled}/{capacity}
                         </span>
                       </div>
-                      <div className="day-class-name">{cls.name}</div>
+                      <div
+                        className="day-class-name clickable"
+                        onClick={(e) => { e.stopPropagation(); onClassClick?.(cls.id); }}
+                      >
+                        {cls.name}
+                      </div>
                       {cls.students.length > 0 && (
                         <div className="day-class-students">
                           {cls.students.map((student) => {

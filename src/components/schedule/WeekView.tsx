@@ -33,6 +33,7 @@ interface WeekViewProps {
   isSaving: boolean;
   onSlotClick?: (day: number, hour: string) => void;
   onStudentClick?: (studentId: number) => void;
+  onClassClick?: (classId: string) => void;
 }
 
 const HOURS = [
@@ -200,13 +201,15 @@ function ClassCard({
   slotHour,
   lane = 0,
   totalLanes = 1,
-  onStudentClick
+  onStudentClick,
+  onClassClick
 }: {
   classSchedule: ClassSchedule;
   slotHour: string;
   lane?: number;
   totalLanes?: number;
   onStudentClick?: (studentId: number) => void;
+  onClassClick?: (classId: string) => void;
 }) {
   const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
     id: `class-${classSchedule.id}`,
@@ -283,7 +286,12 @@ function ClassCard({
       </div>
 
       <div className="class-card-body">
-        <div className="class-name">{classSchedule.name}</div>
+        <div
+          className="class-name clickable"
+          onClick={(e) => { e.stopPropagation(); onClassClick?.(classSchedule.id); }}
+        >
+          {classSchedule.name}
+        </div>
 
         {classSchedule.students.length > 0 && (
           <div className="class-students">
@@ -343,7 +351,8 @@ export default function WeekView({
   onDragEnd,
   isSaving,
   onSlotClick,
-  onStudentClick
+  onStudentClick,
+  onClassClick
 }: WeekViewProps) {
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
 
@@ -494,6 +503,7 @@ export default function WeekView({
                               lane={laneInfo.lane}
                               totalLanes={laneInfo.totalLanes}
                               onStudentClick={onStudentClick}
+                              onClassClick={onClassClick}
                             />
                           );
                         })}
