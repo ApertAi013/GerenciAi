@@ -13,6 +13,7 @@ export const financialService = {
     student_id?: number;
     instructor_id?: number;
     modality_id?: number;
+    level_id?: number;
     page?: number;
     limit?: number;
   }): Promise<InvoicesResponse> {
@@ -25,6 +26,7 @@ export const financialService = {
     data: {
       instructors: Array<{ id: number; name: string; email: string }>;
       modalities: Array<{ id: number; name: string }>;
+      levels: Array<{ id: number; name: string; color: string }>;
     };
   }> {
     const response = await api.get('/api/invoices/filters');

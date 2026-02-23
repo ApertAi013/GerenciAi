@@ -15,6 +15,9 @@ export interface Invoice {
   payment_id?: number;
   payment_method?: 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'outro';
   status: 'aberta' | 'paga' | 'vencida' | 'cancelada' | 'estornada';
+  level_id?: number;
+  level_name?: string;
+  level_color?: string;
   notes?: string;
   paid_at?: string;
   created_at?: string;

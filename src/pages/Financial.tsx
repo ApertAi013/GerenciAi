@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { faMoneyBillWave, faXmark, faCheck, faUndo, faPenToSquare, faCalendarAlt, faFileInvoice, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { faMoneyBillWave, faXmark, faCheck, faUndo, faPenToSquare, faCalendarAlt, faFileInvoice, faExternalLinkAlt, faCog } from '@fortawesome/free-solid-svg-icons';
 import { financialService } from '../services/financialService';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
@@ -50,15 +50,58 @@ export default function Financial() {
   // New filter states
   const [instructorFilter, setInstructorFilter] = useState<string>('');
   const [modalityFilter, setModalityFilter] = useState<string>('');
+  const [levelFilter, setLevelFilter] = useState<string>('');
   const [instructors, setInstructors] = useState<Array<{ id: number; name: string; email: string }>>([]);
   const [modalities, setModalities] = useState<Array<{ id: number; name: string }>>([]);
+  const [levels, setLevels] = useState<Array<{ id: number; name: string; color: string }>>([]);
 
   // Filtro de mês - padrão é o mês atual
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
 
   // Ordenação
-  const [sortField, setSortField] = useState<'id' | 'student_name' | 'reference_month' | 'due_date' | 'final_amount_cents' | 'status'>('student_name');
+  const [sortField, setSortField] = useState<'id' | 'student_name' | 'level_name' | 'reference_month' | 'due_date' | 'final_amount_cents' | 'status'>('student_name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Personalização de colunas
+  type ColumnKey = 'id' | 'student_name' | 'plan_name' | 'level' | 'reference_month' | 'due_date' | 'final_amount_cents' | 'paid' | 'status' | 'actions';
+  const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
+    { key: 'id', label: 'ID' },
+    { key: 'student_name', label: 'Aluno' },
+    { key: 'plan_name', label: 'Plano' },
+    { key: 'level', label: 'Nível' },
+    { key: 'reference_month', label: 'Referência' },
+    { key: 'due_date', label: 'Vencimento' },
+    { key: 'final_amount_cents', label: 'Valor' },
+    { key: 'paid', label: 'Pago' },
+    { key: 'status', label: 'Status' },
+    { key: 'actions', label: 'Ações' },
+  ];
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(() => {
+    const saved = localStorage.getItem('financial_visible_columns');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Ensure new columns are included if not present
+        const allKeys = ALL_COLUMNS.map(c => c.key);
+        const validKeys = parsed.filter((k: string) => allKeys.includes(k as ColumnKey));
+        // Add any new columns that weren't in the saved config
+        allKeys.forEach(k => { if (!validKeys.includes(k)) validKeys.push(k); });
+        return validKeys;
+      } catch { return ALL_COLUMNS.map(c => c.key); }
+    }
+    return ALL_COLUMNS.map(c => c.key);
+  });
+  const [showColumnConfig, setShowColumnConfig] = useState(false);
+
+  const toggleColumn = (key: ColumnKey) => {
+    setVisibleColumns(prev => {
+      const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
+      localStorage.setItem('financial_visible_columns', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const isColumnVisible = (key: ColumnKey) => visibleColumns.includes(key);
 
   // Mensagem padrão do WhatsApp
   const [whatsappTemplate, setWhatsappTemplate] = useState<string>('');
@@ -145,6 +188,10 @@ Obrigado!`);
           aValue = a.final_amount_cents;
           bValue = b.final_amount_cents;
           break;
+        case 'level_name':
+          aValue = (a.level_name || '').toLowerCase();
+          bValue = (b.level_name || '').toLowerCase();
+          break;
         case 'status':
           aValue = a.status;
           bValue = b.status;
@@ -168,13 +215,14 @@ Obrigado!`);
   // Exportar para Excel (CSV)
   const exportToExcel = () => {
     // Cabeçalho
-    const headers = ['ID', 'Aluno', 'Plano', 'Referência', 'Vencimento', 'Valor Bruto', 'Desconto', 'Valor Final', 'Valor Pago', 'Status'];
+    const headers = ['ID', 'Aluno', 'Plano', 'Nível', 'Referência', 'Vencimento', 'Valor Bruto', 'Desconto', 'Valor Final', 'Valor Pago', 'Status'];
 
     // Dados
     const rows = invoices.map(inv => [
       inv.id,
       `"${inv.student_name || ''}"`,
       `"${inv.plan_name || ''}"`,
+      `"${inv.level_name || ''}"`,
       inv.reference_month,
       inv.due_date ? formatDate(inv.due_date) : '',
       (inv.amount_cents / 100).toFixed(2).replace('.', ','),
@@ -231,6 +279,7 @@ Obrigado!`);
         const data = response.data || response;
         setInstructors(data.instructors || []);
         setModalities(data.modalities || []);
+        setLevels(data.levels || []);
       } catch (error) {
         console.error('Erro ao carregar filtros:', error);
       }
@@ -269,7 +318,7 @@ Obrigado!`);
     } else {
       loadInvoices();
     }
-  }, [filter, instructorFilter, modalityFilter, selectedMonth]);
+  }, [filter, instructorFilter, modalityFilter, levelFilter, selectedMonth]);
 
   const loadInvoices = async () => {
     try {
@@ -279,6 +328,7 @@ Obrigado!`);
         status?: string;
         instructor_id?: number;
         modality_id?: number;
+        level_id?: number;
         reference_month?: string;
       } = {};
 
@@ -296,6 +346,11 @@ Obrigado!`);
       // Add modality filter
       if (modalityFilter) {
         params.modality_id = Number(modalityFilter);
+      }
+
+      // Add level filter
+      if (levelFilter) {
+        params.level_id = Number(levelFilter);
       }
 
       // Add month filter
@@ -735,6 +790,31 @@ Obrigado!`);
           >
             📊 Exportar Excel
           </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowColumnConfig(!showColumnConfig)}
+              className="column-config-btn"
+              title="Personalizar colunas"
+            >
+              <FontAwesomeIcon icon={faCog} /> Colunas
+            </button>
+            {showColumnConfig && (
+              <div className="column-config-dropdown">
+                <div className="column-config-header">Colunas visíveis</div>
+                {ALL_COLUMNS.map(col => (
+                  <label key={col.key} className="column-config-item">
+                    <input
+                      type="checkbox"
+                      checked={isColumnVisible(col.key)}
+                      onChange={() => toggleColumn(col.key)}
+                    />
+                    {col.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -861,13 +941,33 @@ Obrigado!`);
           </select>
         </div>
 
-        {(instructorFilter || modalityFilter) && (
+        {levels.length > 0 && (
+          <div className="filter-group">
+            <label htmlFor="level-filter">Nível:</label>
+            <select
+              id="level-filter"
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="">Todos</option>
+              {levels.map((level) => (
+                <option key={level.id} value={level.id}>
+                  {level.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {(instructorFilter || modalityFilter || levelFilter) && (
           <button
             type="button"
             className="btn-clear-filters"
             onClick={() => {
               setInstructorFilter('');
               setModalityFilter('');
+              setLevelFilter('');
             }}
           >
             Limpar filtros
@@ -879,27 +979,44 @@ Obrigado!`);
         <table className="invoices-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort('id')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                ID {renderSortIndicator('id')}
-              </th>
-              <th onClick={() => handleSort('student_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                Aluno {renderSortIndicator('student_name')}
-              </th>
-              <th>Plano</th>
-              <th onClick={() => handleSort('reference_month')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                Referência {renderSortIndicator('reference_month')}
-              </th>
-              <th onClick={() => handleSort('due_date')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                Vencimento {renderSortIndicator('due_date')}
-              </th>
-              <th onClick={() => handleSort('final_amount_cents')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                Valor {renderSortIndicator('final_amount_cents')}
-              </th>
-              <th>Pago</th>
-              <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                Status {renderSortIndicator('status')}
-              </th>
-              <th>Ações</th>
+              {isColumnVisible('id') && (
+                <th onClick={() => handleSort('id')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  ID {renderSortIndicator('id')}
+                </th>
+              )}
+              {isColumnVisible('student_name') && (
+                <th onClick={() => handleSort('student_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Aluno {renderSortIndicator('student_name')}
+                </th>
+              )}
+              {isColumnVisible('plan_name') && <th>Plano</th>}
+              {isColumnVisible('level') && (
+                <th onClick={() => handleSort('level_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Nível {renderSortIndicator('level_name')}
+                </th>
+              )}
+              {isColumnVisible('reference_month') && (
+                <th onClick={() => handleSort('reference_month')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Referência {renderSortIndicator('reference_month')}
+                </th>
+              )}
+              {isColumnVisible('due_date') && (
+                <th onClick={() => handleSort('due_date')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Vencimento {renderSortIndicator('due_date')}
+                </th>
+              )}
+              {isColumnVisible('final_amount_cents') && (
+                <th onClick={() => handleSort('final_amount_cents')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Valor {renderSortIndicator('final_amount_cents')}
+                </th>
+              )}
+              {isColumnVisible('paid') && <th>Pago</th>}
+              {isColumnVisible('status') && (
+                <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Status {renderSortIndicator('status')}
+                </th>
+              )}
+              {isColumnVisible('actions') && <th>Ações</th>}
             </tr>
           </thead>
           <tbody>
@@ -934,7 +1051,7 @@ Obrigado!`);
 
               return sortedInvoices.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="empty-state">
+                  <td colSpan={visibleColumns.length} className="empty-state">
                     {searchTerm
                       ? `Nenhuma fatura encontrada para "${searchTerm}"`
                       : filter === 'all'
@@ -948,10 +1065,10 @@ Obrigado!`);
               ) : (
                 sortedInvoices.map(invoice => (
                   <tr key={invoice.id}>
+                    {isColumnVisible('id') && (
                     <td>
                       <span
                         onClick={() => {
-                          // Copiar ID para clipboard e mostrar toast
                           navigator.clipboard.writeText(`#${invoice.id}`);
                           toast.success(`ID #${invoice.id} copiado!`, { duration: 1500 });
                         }}
@@ -968,6 +1085,8 @@ Obrigado!`);
                         #{invoice.id}
                       </span>
                     </td>
+                    )}
+                    {isColumnVisible('student_name') && (
                     <td>
                       <span
                         onClick={() => window.open(`/alunos/${invoice.student_id}`, '_blank')}
@@ -984,6 +1103,8 @@ Obrigado!`);
                         <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '10px', opacity: 0.5 }} />
                       </span>
                     </td>
+                    )}
+                    {isColumnVisible('plan_name') && (
                     <td>
                       {invoice.plan_name ? (
                         <span
@@ -1002,10 +1123,27 @@ Obrigado!`);
                         </span>
                       ) : '-'}
                     </td>
+                    )}
+                    {isColumnVisible('level') && (
+                    <td>
+                      {invoice.level_name ? (
+                        <span
+                          onClick={() => setLevelFilter(String(invoice.level_id))}
+                          className="level-badge"
+                          style={{
+                            backgroundColor: invoice.level_color || '#6b7280',
+                          }}
+                          title="Clique para filtrar por este nível"
+                        >
+                          {invoice.level_name}
+                        </span>
+                      ) : <span style={{ color: '#999' }}>-</span>}
+                    </td>
+                    )}
+                    {isColumnVisible('reference_month') && (
                     <td>
                       <span
                         onClick={() => {
-                          // Atualizar filtro de mês para este mês de referência
                           const [year, month] = invoice.reference_month.split('-');
                           if (year && month) {
                             setSelectedMonth(`${year}-${month.padStart(2, '0')}`);
@@ -1022,6 +1160,8 @@ Obrigado!`);
                         {invoice.reference_month}
                       </span>
                     </td>
+                    )}
+                    {isColumnVisible('due_date') && (
                     <td>
                       <span
                         onClick={() => {
@@ -1046,10 +1186,11 @@ Obrigado!`);
                         )}
                       </span>
                     </td>
+                    )}
+                    {isColumnVisible('final_amount_cents') && (
                     <td className="amount-cell">
                       <span
                         onClick={() => {
-                          // Copiar valor para clipboard
                           const valor = (invoice.final_amount_cents / 100).toFixed(2).replace('.', ',');
                           navigator.clipboard.writeText(`R$ ${valor}`);
                           toast.success(`Valor R$ ${valor} copiado!`, { duration: 1500 });
@@ -1070,6 +1211,8 @@ Obrigado!`);
                         )}
                       </span>
                     </td>
+                    )}
+                    {isColumnVisible('paid') && (
                     <td className="amount-cell">
                       {invoice.status === 'paga' && invoice.paid_amount_cents ? (
                         <span
@@ -1090,10 +1233,11 @@ Obrigado!`);
                         <span style={{ color: '#999' }}>-</span>
                       )}
                     </td>
+                    )}
+                    {isColumnVisible('status') && (
                     <td>
                       <span
                         onClick={() => {
-                          // Clicar no status abre ações rápidas dependendo do status
                           if (invoice.status === 'aberta' || invoice.status === 'vencida') {
                             openPaymentModal(invoice);
                           } else if (invoice.status === 'paga') {
@@ -1104,8 +1248,8 @@ Obrigado!`);
                           cursor: (invoice.status !== 'cancelada' && invoice.status !== 'estornada') ? 'pointer' : 'default',
                         }}
                         title={
-                          invoice.status === 'aberta' || invoice.status === 'vencida' 
-                            ? 'Clique para dar baixa' 
+                          invoice.status === 'aberta' || invoice.status === 'vencida'
+                            ? 'Clique para dar baixa'
                             : invoice.status === 'paga'
                             ? 'Clique para editar pagamento'
                             : undefined
@@ -1114,41 +1258,44 @@ Obrigado!`);
                         {getStatusBadge(invoice.status)}
                       </span>
                     </td>
-                  <td>
-                    <div className="action-buttons">
-                      {invoice.status === 'aberta' || invoice.status === 'vencida' ? (
-                        <>
-                          <button
-                            className="btn-action btn-whatsapp"
-                            onClick={() => handleWhatsAppClick(invoice)}
-                            title="Enviar cobrança via WhatsApp"
-                            style={{ backgroundColor: '#25D366', color: 'white' }}
-                          >
-                            <FontAwesomeIcon icon={faWhatsapp} />
-                          </button>
-                          <button
-                            className="btn-action btn-pay"
-                            onClick={() => openPaymentModal(invoice)}
-                            title="Dar baixa"
-                          >
-                            <FontAwesomeIcon icon={faMoneyBillWave} />
-                          </button>
-                          <button
-                            className="btn-action btn-cancel"
-                            onClick={() => handleCancelInvoice(invoice.id)}
-                            title="Cancelar"
-                          >
-                            <FontAwesomeIcon icon={faXmark} />
-                          </button>
-                        </>
-                      ) : invoice.status === 'paga' ? (
-                        <span className="paid-indicator" title={`Pago em ${formatDate(invoice.paid_at!)}`}>
-                          <FontAwesomeIcon icon={faCheck} style={{ color: '#27ae60' }} />
-                        </span>
-                      ) : null}
-                    </div>
-                  </td>
-                </tr>
+                    )}
+                    {isColumnVisible('actions') && (
+                    <td>
+                      <div className="action-buttons">
+                        {invoice.status === 'aberta' || invoice.status === 'vencida' ? (
+                          <>
+                            <button
+                              className="btn-action btn-whatsapp"
+                              onClick={() => handleWhatsAppClick(invoice)}
+                              title="Enviar cobrança via WhatsApp"
+                              style={{ backgroundColor: '#25D366', color: 'white' }}
+                            >
+                              <FontAwesomeIcon icon={faWhatsapp} />
+                            </button>
+                            <button
+                              className="btn-action btn-pay"
+                              onClick={() => openPaymentModal(invoice)}
+                              title="Dar baixa"
+                            >
+                              <FontAwesomeIcon icon={faMoneyBillWave} />
+                            </button>
+                            <button
+                              className="btn-action btn-cancel"
+                              onClick={() => handleCancelInvoice(invoice.id)}
+                              title="Cancelar"
+                            >
+                              <FontAwesomeIcon icon={faXmark} />
+                            </button>
+                          </>
+                        ) : invoice.status === 'paga' ? (
+                          <span className="paid-indicator" title={`Pago em ${formatDate(invoice.paid_at!)}`}>
+                            <FontAwesomeIcon icon={faCheck} style={{ color: '#27ae60' }} />
+                          </span>
+                        ) : null}
+                      </div>
+                    </td>
+                    )}
+                  </tr>
               ))
               );
             })()}
