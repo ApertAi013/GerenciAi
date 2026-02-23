@@ -1169,7 +1169,7 @@ Obrigado!`);
                           onClick={() => openLevelModal(invoice)}
                           className="level-badge"
                           style={{
-                            backgroundColor: invoice.level_color || '#6b7280',
+                            background: invoice.level_color || '#6b7280',
                           }}
                           title="Clique para alterar o nível do aluno"
                         >
@@ -1709,7 +1709,7 @@ Obrigado!`);
                 {levelEditInvoice.level_name ? (
                   <span
                     className="level-badge"
-                    style={{ backgroundColor: levelEditInvoice.level_color || '#6b7280' }}
+                    style={{ background: levelEditInvoice.level_color || '#6b7280' }}
                   >
                     {levelEditInvoice.level_name}
                   </span>

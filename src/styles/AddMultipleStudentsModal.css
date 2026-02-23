@@ -224,7 +224,7 @@
   color: #6b7280;
 }
 
-.level-badge {
+.add-students-modal .level-badge {
   display: inline-flex;
   padding: 0.25rem 0.625rem;
   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
