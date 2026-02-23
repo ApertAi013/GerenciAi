@@ -5,6 +5,8 @@ import type {
   RevenueSummary,
   StudentPaymentHistory,
   InvoiceSummary,
+  EnrollmentStatsResponse,
+  FinancialMonthlyResponse,
 } from '../types/reportTypes';
 
 export const reportService = {
@@ -72,6 +74,24 @@ export const reportService = {
     month?: number;
   }): Promise<ReportsResponse<InvoiceSummary>> {
     const response = await api.get<ReportsResponse<InvoiceSummary>>('/api/reports/invoices/summary', { params });
+    return response.data;
+  },
+
+  // Estatísticas de matrículas (novas, canceladas, ativos, churn por mês)
+  async getEnrollmentStats(params?: {
+    months?: number;
+    modality_id?: number;
+  }): Promise<ReportsResponse<EnrollmentStatsResponse>> {
+    const response = await api.get<ReportsResponse<EnrollmentStatsResponse>>('/api/reports/enrollment-stats', { params });
+    return response.data;
+  },
+
+  // Dados financeiros mensais completos (receita, ticket médio, por plano, por modalidade)
+  async getFinancialMonthly(params?: {
+    months?: number;
+    modality_id?: number;
+  }): Promise<ReportsResponse<FinancialMonthlyResponse>> {
+    const response = await api.get<ReportsResponse<FinancialMonthlyResponse>>('/api/reports/financial/monthly', { params });
     return response.data;
   },
 };

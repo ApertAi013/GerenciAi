@@ -101,6 +101,61 @@ export interface ActiveClientsData {
   meta?: number;
 }
 
+// Enrollment Stats
+export interface EnrollmentMonthlyData {
+  month: string;
+  new_enrollments: number;
+  cancellations: number;
+  active_at_end: number;
+  churn_rate: number;
+}
+
+export interface EnrollmentStatsResponse {
+  monthly: EnrollmentMonthlyData[];
+  summary: {
+    current_active: number;
+    total_new: number;
+    total_cancellations: number;
+  };
+}
+
+// Financial Monthly Breakdown
+export interface FinancialMonthlyData {
+  month: string;
+  faturado_cents: number;
+  recebido_cents: number;
+  overdue_cents: number;
+  pending_cents: number;
+  invoice_count: number;
+  paid_count: number;
+  ticket_medio_cents: number;
+}
+
+export interface PlanBreakdown {
+  plan_name: string;
+  enrollment_count: number;
+  total_received_cents: number;
+  percentage: number;
+}
+
+export interface ModalityBreakdown {
+  modality_name: string;
+  icon?: string;
+  enrollment_count: number;
+  percentage: number;
+}
+
+export interface FinancialMonthlyResponse {
+  monthly: FinancialMonthlyData[];
+  by_plan: PlanBreakdown[];
+  by_modality: ModalityBreakdown[];
+  overdue_summary: {
+    overdue_students: number;
+    total_overdue_cents: number;
+    overdue_invoice_count: number;
+  };
+}
+
 export interface ReportsResponse<T> {
   success: boolean;
   message: string;

@@ -498,7 +498,7 @@ export default function Dashboard() {
             </div>
             <div className="kpi-accent blue" />
           </div>
-          <div className="kpi-card" onClick={() => navigate('/matriculas')}>
+          <div className="kpi-card" onClick={() => navigate('/relatorios')}>
             <div className="kpi-icon green"><FontAwesomeIcon icon={faUserPlus} /></div>
             <div className="kpi-body">
               <span className="kpi-label">Novas no mês</span>
@@ -506,7 +506,7 @@ export default function Dashboard() {
             </div>
             <div className="kpi-accent green" />
           </div>
-          <div className="kpi-card" onClick={() => navigate('/matriculas')}>
+          <div className="kpi-card" onClick={() => navigate('/relatorios')}>
             <div className="kpi-icon red"><FontAwesomeIcon icon={faUserMinus} /></div>
             <div className="kpi-body">
               <span className="kpi-label">Canceladas</span>
