@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { format, addWeeks, subWeeks, addDays, addMonths, subMonths, addDays as addDaysUtil, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFilter, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faPlus, faTrash, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../services/classService';
 import { enrollmentService } from '../services/enrollmentService';
 import { rentalService } from '../services/rentalService';
@@ -154,10 +154,20 @@ export default function Schedule() {
   const [prefilledData, setPrefilledData] = useState<{ weekday: string; start_time: string } | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Aplicar filtros nas turmas
   const filteredClasses = useMemo(() => {
     let filtered = classes;
+
+    // Filtrar por nome
+    if (searchTerm.trim()) {
+      const term = searchTerm.trim().toLowerCase();
+      filtered = filtered.filter(cls =>
+        cls.name.toLowerCase().includes(term) ||
+        cls.sport.toLowerCase().includes(term)
+      );
+    }
 
     // Filtrar por modalidade
     if (selectedModalities.length > 0) {
@@ -175,7 +185,7 @@ export default function Schedule() {
     }
 
     return filtered;
-  }, [classes, selectedModalities, selectedLevels]);
+  }, [classes, searchTerm, selectedModalities, selectedLevels]);
 
   const handleFilterChange = (modalities: number[], levels: string[]) => {
     setSelectedModalities(modalities);
@@ -723,6 +733,26 @@ export default function Schedule() {
 
           <div className="month-year">
             {format(currentWeek, 'MMMM, yyyy', { locale: ptBR }).toUpperCase()}
+          </div>
+
+          <div className="schedule-search">
+            <FontAwesomeIcon icon={faSearch} className="schedule-search-icon" />
+            <input
+              type="text"
+              placeholder="Buscar turma..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="schedule-search-input"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                className="schedule-search-clear"
+                onClick={() => setSearchTerm('')}
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            )}
           </div>
 
           <div className="action-buttons">
