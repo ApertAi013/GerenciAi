@@ -125,6 +125,7 @@ export default function Dashboard() {
 
   // Expand/collapse states
   const [vagasExpanded, setVagasExpanded] = useState(false);
+  const [expandedLevels, setExpandedLevels] = useState<Set<string>>(new Set());
   const [levelsExpanded, setLevelsExpanded] = useState(false);
   const [agendaExpanded, setAgendaExpanded] = useState(false);
 
@@ -252,7 +253,7 @@ export default function Dashboard() {
     });
   }, [invoices, enrollments]);
 
-  // ── Vagas Data (per turma) ──
+  // ── Vagas Data (per turma, grouped by level) ──
   const vagasData = useMemo(() => {
     const activeClasses = classes
       .filter(c => c.status === 'ativa' && (c.capacity || 0) > 0)
@@ -264,6 +265,8 @@ export default function Dashboard() {
         pct: (c.capacity || 0) > 0
           ? Math.round(((c.enrolled_count || 0) / (c.capacity || 0)) * 100)
           : 0,
+        allowedLevels: c.allowed_levels || [],
+        color: c.color,
       }))
       .sort((a, b) => b.pct - a.pct);
 
@@ -271,8 +274,36 @@ export default function Dashboard() {
     const totalEnr = activeClasses.reduce((s, c) => s + c.enrolled, 0);
     const totalPct = totalCap > 0 ? Math.round((totalEnr / totalCap) * 100) : 0;
 
-    return { turmas: activeClasses, totalCap, totalEnr, totalPct };
-  }, [classes]);
+    // Group by level
+    const groupMap = new Map<string, typeof activeClasses>();
+    activeClasses.forEach(c => {
+      const lvls = c.allowedLevels.length > 0 ? c.allowedLevels : ['Sem nível'];
+      lvls.forEach(lvl => {
+        if (!groupMap.has(lvl)) groupMap.set(lvl, []);
+        groupMap.get(lvl)!.push(c);
+      });
+    });
+
+    // Sort groups by level order
+    const groups = Array.from(groupMap.entries())
+      .map(([levelName, turmas]) => {
+        const lvl = levels.find(l => l.name === levelName);
+        const cap = turmas.reduce((s, t) => s + t.capacity, 0);
+        const enr = turmas.reduce((s, t) => s + t.enrolled, 0);
+        return {
+          levelName,
+          color: lvl?.color || '#6B7280',
+          order: lvl?.order_index ?? 999,
+          turmas,
+          totalCap: cap,
+          totalEnr: enr,
+          pct: cap > 0 ? Math.round((enr / cap) * 100) : 0,
+        };
+      })
+      .sort((a, b) => a.order - b.order);
+
+    return { turmas: activeClasses, groups, totalCap, totalEnr, totalPct };
+  }, [classes, levels]);
 
   // ── Alunos por Nível ──
   const levelsData = useMemo(() => {
@@ -594,29 +625,49 @@ export default function Dashboard() {
             <span className="vagas-section-label">Por Turma</span>
 
             <div className="vagas-list">
-              {(vagasExpanded ? vagasData.turmas : vagasData.turmas.slice(0, VAGAS_COLLAPSED_COUNT)).map(turma => (
-                <div key={turma.id} className="vagas-item">
-                  <div className="vagas-item-row">
-                    <span className="vagas-mod-name">{turma.name}</span>
-                    <span className="vagas-mod-nums">{turma.enrolled}/{turma.capacity}</span>
+              {vagasData.groups.map(group => (
+                <div key={group.levelName} className="vagas-level-group">
+                  <div
+                    className={`vagas-level-header ${expandedLevels.has(group.levelName) ? 'expanded' : ''}`}
+                    onClick={() => {
+                      const next = new Set(expandedLevels);
+                      if (next.has(group.levelName)) next.delete(group.levelName);
+                      else next.add(group.levelName);
+                      setExpandedLevels(next);
+                    }}
+                  >
+                    <div className="vagas-level-left">
+                      <div className="vagas-level-dot" style={{ background: group.color }} />
+                      <span className="vagas-level-name">{group.levelName}</span>
+                      <span className="vagas-level-count">({group.turmas.length})</span>
+                    </div>
+                    <div className="vagas-level-right">
+                      <span className="vagas-level-nums">{group.totalEnr}/{group.totalCap}</span>
+                      <FontAwesomeIcon icon={expandedLevels.has(group.levelName) ? faChevronUp : faChevronDown} className="vagas-level-arrow" />
+                    </div>
                   </div>
-                  <div className="progress-track">
-                    <div className="progress-fill" style={{
-                      width: `${Math.min(turma.pct, 100)}%`,
-                      background: getProgressColor(turma.pct),
-                    }} />
-                  </div>
+                  {expandedLevels.has(group.levelName) && (
+                    <div className="vagas-level-turmas">
+                      {group.turmas.map(turma => (
+                        <div key={turma.id} className="vagas-item">
+                          <div className="vagas-item-row">
+                            <span className="vagas-mod-name">{turma.name}</span>
+                            <span className="vagas-mod-nums">{turma.enrolled}/{turma.capacity}</span>
+                          </div>
+                          <div className="progress-track">
+                            <div className="progress-fill" style={{
+                              width: `${Math.min(turma.pct, 100)}%`,
+                              background: getProgressColor(turma.pct),
+                            }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {vagasData.turmas.length === 0 && <p className="vagas-empty">Nenhuma turma cadastrada</p>}
             </div>
-
-            {vagasData.turmas.length > VAGAS_COLLAPSED_COUNT && (
-              <button className="expand-btn" onClick={() => setVagasExpanded(!vagasExpanded)}>
-                <FontAwesomeIcon icon={vagasExpanded ? faChevronUp : faChevronDown} />
-                {vagasExpanded ? 'Ver menos' : `Ver todas (${vagasData.turmas.length})`}
-              </button>
-            )}
           </div>
         </section>
 

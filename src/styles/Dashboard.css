@@ -760,6 +760,81 @@
   padding: 2rem 0;
 }
 
+/* Level groups */
+.vagas-level-group {
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.vagas-level-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.vagas-level-header:hover {
+  background: #f9fafb;
+}
+
+.vagas-level-header.expanded {
+  border-bottom: 1px solid var(--border-light);
+}
+
+.vagas-level-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vagas-level-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.vagas-level-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.vagas-level-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.vagas-level-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vagas-level-nums {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.vagas-level-arrow {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.vagas-level-turmas {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fafafa;
+}
+
 /* ===== ALUNOS POR NÍVEL ===== */
 .levels-content {
   padding: 1.25rem 1.5rem;
