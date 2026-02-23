@@ -7,6 +7,7 @@ interface Student {
   id: string;
   name: string;
   enrollmentId?: number;
+  isTrial?: boolean;
   level_name?: string;
 }
 
@@ -108,7 +109,12 @@ export default function DayView({ currentDate, classes, onSlotClick, onClassClic
                           {cls.students.map((student) => {
                             const levelMismatch = cls.allowed_levels && cls.allowed_levels.length > 0 && student.level_name && !cls.allowed_levels.includes(student.level_name);
                             return (
-                              <div key={student.id} className="day-student-chip">
+                              <div
+                                key={student.id}
+                                className={`day-student-chip ${student.isTrial ? 'trial' : ''}`}
+                                title={student.isTrial ? 'Aula experimental' : student.name}
+                              >
+                                {student.isTrial && '★ '}
                                 {levelMismatch && (
                                   <span
                                     className="level-warning"

@@ -8,6 +8,7 @@ interface Student {
   name: string;
   enrollmentId?: number;
   isMakeup?: boolean;
+  isTrial?: boolean;
   level_name?: string;
 }
 
@@ -65,10 +66,12 @@ const TIME_SLOTS = generateTimeSlots();
 function DraggableStudent({ student, classId, allowedLevels, onStudentClick }: { student: Student; classId: string; allowedLevels?: string[]; onStudentClick?: (studentId: number) => void }) {
   const uniqueId = `student-${student.id}-class-${classId}`;
 
+  const isSpecial = student.isMakeup || student.isTrial;
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: uniqueId,
     data: { type: 'student', studentId: student.id, classId },
-    disabled: student.isMakeup // Disable dragging for makeup students
+    disabled: isSpecial // Disable dragging for makeup and trial students
   });
 
   const levelMismatch = allowedLevels && allowedLevels.length > 0 && student.level_name && !allowedLevels.includes(student.level_name);
@@ -81,32 +84,46 @@ function DraggableStudent({ student, classId, allowedLevels, onStudentClick }: {
     : {};
 
   // Style for makeup students (yellow)
-  const makeupStyle: React.CSSProperties = student.isMakeup
+  const specialStyle: React.CSSProperties = student.isMakeup
     ? {
         backgroundColor: '#FFB300',
         color: '#1a1a1a',
         border: '1px solid #FF8F00',
         fontWeight: 500,
       }
+    : student.isTrial
+    ? {
+        backgroundColor: '#34D399',
+        color: '#064E3B',
+        border: '1px solid #10B981',
+        fontWeight: 500,
+      }
     : {};
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onStudentClick && !student.isMakeup) {
+    if (onStudentClick && !isSpecial) {
       onStudentClick(parseInt(student.id));
     }
   };
 
+  const chipTitle = student.isMakeup
+    ? 'Aluno de remarcação'
+    : student.isTrial
+    ? 'Aula experimental'
+    : student.name;
+
   return (
     <div
       ref={setNodeRef}
-      style={{ ...baseStyle, ...makeupStyle }}
-      {...(student.isMakeup ? {} : { ...listeners, ...attributes })}
-      className={`student-chip ${student.isMakeup ? 'makeup' : 'draggable'}`}
+      style={{ ...baseStyle, ...specialStyle }}
+      {...(isSpecial ? {} : { ...listeners, ...attributes })}
+      className={`student-chip ${isSpecial ? (student.isTrial ? 'trial' : 'makeup') : 'draggable'}`}
       onClick={handleClick}
-      title={student.isMakeup ? 'Aluno de remarcação' : student.name}
+      title={chipTitle}
     >
       {student.isMakeup && '↻ '}
+      {student.isTrial && '★ '}
       {levelMismatch && (
         <span
           className="level-warning"

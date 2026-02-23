@@ -420,6 +420,20 @@
   font-weight: 700;
 }
 
+.student-chip.trial {
+  background-color: #34D399;
+  color: #064E3B;
+  border: 1px solid #10B981;
+  font-weight: 500;
+}
+
+.day-student-chip.trial {
+  background-color: #34D399;
+  color: #064E3B;
+  border: 1px solid #10B981;
+  font-weight: 500;
+}
+
 /* Drag Overlay */
 .drag-overlay {
   background: var(--gradient-secondary);
