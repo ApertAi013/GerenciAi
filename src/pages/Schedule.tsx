@@ -35,7 +35,7 @@ interface ClassSchedule {
   students: Student[];
   color: string;
   modality_id: number;
-  level?: string;
+  allowed_levels?: string[];
   // Campos específicos de locação
   rentalDate?: string; // Para locações: data específica
   renterName?: string;
@@ -88,7 +88,7 @@ const convertClassToSchedule = (dbClass: Class & { students?: any[] }): ClassSch
     students: dbClass.students || [],
     color: color, // Agora usa a cor do banco!
     modality_id: dbClass.modality_id,
-    level: dbClass.level,
+    allowed_levels: dbClass.allowed_levels,
   };
 };
 
@@ -166,9 +166,10 @@ export default function Schedule() {
 
     // Filtrar por nível
     if (selectedLevels.length > 0) {
-      filtered = filtered.filter(cls =>
-        cls.level && selectedLevels.includes(cls.level)
-      );
+      filtered = filtered.filter(cls => {
+        if (!cls.allowed_levels || cls.allowed_levels.length === 0) return true;
+        return cls.allowed_levels.some(l => selectedLevels.includes(l));
+      });
     }
 
     return filtered;

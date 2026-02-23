@@ -59,14 +59,12 @@ export default function AddMultipleStudentsModal({
         let filteredStudents = studentsRes.data;
 
         if (classData.allowed_levels && classData.allowed_levels.length > 0) {
-          filteredStudents = filteredStudents.filter((student) =>
-            classData.allowed_levels!.includes(student.level || '')
-          );
-        } else if (classData.level && classData.level !== 'todos') {
-          filteredStudents = filteredStudents.filter(
-            (student) => student.level === classData.level
-          );
+          filteredStudents = filteredStudents.filter((student) => {
+            const studentLevel = student.level_name || student.level || '';
+            return classData.allowed_levels!.includes(studentLevel);
+          });
         }
+        // If allowed_levels is null/empty, all students are allowed
 
         setStudents(filteredStudents);
         setHasMoreStudents(studentsRes.data.length === STUDENTS_PER_PAGE);
@@ -108,14 +106,12 @@ export default function AddMultipleStudentsModal({
         let filteredStudents = studentsRes.data;
 
         if (classData.allowed_levels && classData.allowed_levels.length > 0) {
-          filteredStudents = filteredStudents.filter((student) =>
-            classData.allowed_levels!.includes(student.level || '')
-          );
-        } else if (classData.level && classData.level !== 'todos') {
-          filteredStudents = filteredStudents.filter(
-            (student) => student.level === classData.level
-          );
+          filteredStudents = filteredStudents.filter((student) => {
+            const studentLevel = student.level_name || student.level || '';
+            return classData.allowed_levels!.includes(studentLevel);
+          });
         }
+        // If allowed_levels is null/empty, all students are allowed
 
         setStudents(prev => [...prev, ...filteredStudents]);
         setHasMoreStudents(studentsRes.data.length === STUDENTS_PER_PAGE);
@@ -445,7 +441,7 @@ export default function AddMultipleStudentsModal({
                         <div className="student-name">{student.full_name}</div>
                         <div className="add-multiple-students-details">
                           <span>{student.email}</span>
-                          {student.level && <span className="level-badge">{student.level}</span>}
+                          {(student.level_name || student.level) && <span className="level-badge">{student.level_name || student.level}</span>}
                         </div>
                       </div>
                       {isSelected && (
@@ -547,7 +543,7 @@ export default function AddMultipleStudentsModal({
                       <div className="student-name">{student.full_name}</div>
                       <div className="add-multiple-students-details">
                         {student.email && <span>{student.email}</span>}
-                        {student.level && <span className="level-badge">{student.level}</span>}
+                        {(student.level_name || student.level) && <span className="level-badge">{student.level_name || student.level}</span>}
                       </div>
                     </div>
                     <div className="plan-select-wrapper">

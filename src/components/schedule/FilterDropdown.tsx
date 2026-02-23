@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { levelService } from '../../services/levelService';
 import type { Modality } from '../../types/classTypes';
+import type { Level } from '../../types/levelTypes';
 import '../../styles/FilterDropdown.css';
 
 interface FilterDropdownProps {
@@ -10,13 +12,6 @@ interface FilterDropdownProps {
   onClose: () => void;
 }
 
-const LEVELS = [
-  { value: 'iniciante', label: 'Iniciante' },
-  { value: 'intermediario', label: 'Intermediário' },
-  { value: 'avancado', label: 'Avançado' },
-  { value: 'todos', label: 'Turmas sem nível' },
-];
-
 export default function FilterDropdown({
   modalities,
   selectedModalities,
@@ -26,14 +21,30 @@ export default function FilterDropdown({
 }: FilterDropdownProps) {
   const [tempModalities, setTempModalities] = useState<number[]>(selectedModalities);
   const [tempLevels, setTempLevels] = useState<string[]>(selectedLevels);
+  const [levels, setLevels] = useState<{ value: string; label: string }[]>([]);
 
   useEffect(() => {
     setTempModalities(selectedModalities);
     setTempLevels(selectedLevels);
   }, [selectedModalities, selectedLevels]);
 
+  useEffect(() => {
+    const fetchLevels = async () => {
+      try {
+        const response = await levelService.getLevels();
+        const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+        if (isSuccess && response.data) {
+          setLevels(response.data.map((level: Level) => ({ value: level.name, label: level.name })));
+        }
+      } catch (error) {
+        console.error('Erro ao buscar níveis:', error);
+      }
+    };
+    fetchLevels();
+  }, []);
+
   const allModalityIds = modalities.map(m => m.id);
-  const allLevelValues = LEVELS.map(l => l.value);
+  const allLevelValues = levels.map(l => l.value);
   const allModalitiesSelected = allModalityIds.length > 0 && allModalityIds.every(id => tempModalities.includes(id));
   const allLevelsSelected = allLevelValues.every(val => tempLevels.includes(val));
 
@@ -131,7 +142,7 @@ export default function FilterDropdown({
                 <span style={{ fontWeight: 700 }}>Todos os níveis</span>
               </label>
               <div style={{ height: '1px', background: 'var(--border-light)', margin: 'var(--spacing-xs) 0' }}></div>
-              {LEVELS.map((level) => (
+              {levels.map((level) => (
                 <label key={level.value} className="filter-checkbox">
                   <input
                     type="checkbox"

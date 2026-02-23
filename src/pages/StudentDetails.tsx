@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { faCreditCard, faCoins, faCalendarDays, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { faCreditCard, faCoins, faCalendarDays, faPenToSquare, faChartSimple } from '@fortawesome/free-solid-svg-icons';
 import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
 import { financialService } from '../services/financialService';
@@ -320,10 +320,9 @@ Qualquer dúvida, estou à disposição!`;
     );
   }
 
-  // Tenta encontrar o nível por ID (novo sistema) ou por nome (sistema antigo)
   const currentLevel = student.level_id
     ? levels.find((l) => l.id === student.level_id)
-    : levels.find((l) => l.name.toLowerCase() === student.level?.toLowerCase());
+    : null;
 
   return (
     <div className="student-details">
@@ -512,11 +511,12 @@ Qualquer dúvida, estou à disposição!`;
             <h3>👤 Informações Pessoais</h3>
             <button
               type="button"
-              className="btn-icon"
+              className="btn-secondary"
               onClick={() => setShowLevelModal(true)}
-              title="Alterar nível"
+              style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              ⬆️
+              <FontAwesomeIcon icon={faChartSimple} />
+              Alterar Nível
             </button>
           </div>
           <div className="content-card-body">
@@ -657,6 +657,11 @@ Qualquer dúvida, estou à disposição!`;
                   ))}
                 </select>
               </div>
+              {selectedLevel && selectedLevel !== student.level_id && (
+                <div style={{ padding: '10px 14px', backgroundColor: '#fffbeb', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '0.85rem', color: '#92400e', marginTop: '8px' }}>
+                  <strong>Atenção:</strong> Se o aluno estiver matriculado em turmas que não aceitam o novo nível, ele aparecerá como "fora do nível" na tela de Turmas.
+                </div>
+              )}
             </div>
             <div className="modal-footer">
               <button
@@ -737,9 +742,9 @@ Qualquer dúvida, estou à disposição!`;
                                   <strong>Local:</strong> {cls.location}
                                 </p>
                               )}
-                              {cls.level && (
+                              {cls.allowed_levels && cls.allowed_levels.length > 0 && (
                                 <p style={{ margin: '0.25rem 0' }}>
-                                  <strong>Nível:</strong> {cls.level}
+                                  <strong>Nível:</strong> {cls.allowed_levels.join(', ')}
                                 </p>
                               )}
                             </div>

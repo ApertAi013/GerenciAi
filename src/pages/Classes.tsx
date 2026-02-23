@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faTrash, faVolleyball, faCalendarDays, faClock, faLocationDot, faUsers, faChartSimple, faPlus, faList, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faTrash, faVolleyball, faCalendarDays, faClock, faLocationDot, faUsers, faChartSimple, faPlus, faList, faUserGroup, faUserPlus, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../services/classService';
 import type { Class, Modality, ClassStudent } from '../types/classTypes';
 import CreateClassModal from '../components/CreateClassModal';
@@ -90,14 +90,24 @@ export default function Classes() {
     return days[weekday] || weekday;
   };
 
-  const getLevelLabel = (level?: string) => {
-    const levels: Record<string, string> = {
-      iniciante: 'Iniciante',
-      intermediario: 'Intermediário',
-      avancado: 'Avançado',
-      todos: 'Todos',
-    };
-    return level ? levels[level] || level : '-';
+  const getLevelLabel = (cls: Class) => {
+    if (cls.allowed_levels && cls.allowed_levels.length > 0) {
+      return cls.allowed_levels.join(', ');
+    }
+    return 'Todos os níveis';
+  };
+
+  // Check if a student's level is incompatible with the class
+  const isStudentLevelMismatch = (cls: Class, student: ClassStudent) => {
+    if (!cls.allowed_levels || cls.allowed_levels.length === 0) return false; // all levels allowed
+    if (!student.level_name) return false; // no level assigned, don't warn
+    return !cls.allowed_levels.includes(student.level_name);
+  };
+
+  // Count mismatched students in a class
+  const getMismatchCount = (cls: Class) => {
+    if (!cls.students || !cls.allowed_levels || cls.allowed_levels.length === 0) return 0;
+    return cls.students.filter(s => s.level_name && !cls.allowed_levels!.includes(s.level_name)).length;
   };
 
   const handleEditClass = (classData: Class) => {
@@ -221,8 +231,14 @@ export default function Classes() {
                   )}
                   <div className="info-item">
                     <span className="info-label">Nível:</span>
-                    <span className="info-value">{getLevelLabel(cls.level)}</span>
+                    <span className="info-value">{getLevelLabel(cls)}</span>
                   </div>
+                  {getMismatchCount(cls) > 0 && (
+                    <div className="info-item" style={{ color: '#f59e0b', fontSize: '0.8rem', marginTop: '2px' }}>
+                      <FontAwesomeIcon icon={faExclamationTriangle} style={{ marginRight: '4px' }} />
+                      <span>{getMismatchCount(cls)} aluno(s) fora do nível</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="info-column">
@@ -258,9 +274,24 @@ export default function Classes() {
                           key={student.enrollment_id}
                           className="student-chip"
                           onClick={() => setSelectedStudentId(student.student_id)}
-                          style={{ cursor: 'pointer' }}
+                          style={{
+                            cursor: 'pointer',
+                            ...(isStudentLevelMismatch(cls, student) ? { borderColor: '#f59e0b', backgroundColor: '#fffbeb' } : {})
+                          }}
                         >
+                          {isStudentLevelMismatch(cls, student) && (
+                            <FontAwesomeIcon
+                              icon={faExclamationTriangle}
+                              style={{ color: '#f59e0b', fontSize: '0.75rem', marginRight: '4px' }}
+                              title={`Nível do aluno (${student.level_name}) não corresponde aos níveis da turma (${cls.allowed_levels?.join(', ')})`}
+                            />
+                          )}
                           <span className="student-name">{student.student_name}</span>
+                          {student.level_name && (
+                            <span className="student-plan" style={isStudentLevelMismatch(cls, student) ? { color: '#f59e0b' } : {}}>
+                              {student.level_name}
+                            </span>
+                          )}
                           {student.plan_name && (
                             <span className="student-plan">{student.plan_name}</span>
                           )}

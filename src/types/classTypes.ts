@@ -3,6 +3,8 @@ export interface ClassStudent {
   student_name: string;
   enrollment_id: number;
   plan_name?: string;
+  level_name?: string;
+  is_makeup?: boolean;
 }
 
 export interface Class {

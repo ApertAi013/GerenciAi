@@ -193,9 +193,9 @@ export default function CreateClassModal({
         if (formData.name) payload.name = formData.name;
         if (schedules[0].end_time) payload.end_time = schedules[0].end_time;
         if (formData.location) payload.location = formData.location;
-        if (formData.level) payload.level = formData.level;
+        payload.level = 'todos'; // backward compat fallback
         if (formData.color) payload.color = formData.color;
-        if (selectedLevels.length > 0) payload.allowed_levels = selectedLevels;
+        payload.allowed_levels = selectedLevels.length > 0 ? selectedLevels : null;
 
         const response = await classService.updateClass(editClass.id, payload);
 
@@ -217,9 +217,9 @@ export default function CreateClassModal({
           if (formData.name) payload.name = formData.name;
           if (schedule.end_time) payload.end_time = schedule.end_time;
           if (formData.location) payload.location = formData.location;
-          if (formData.level) payload.level = formData.level;
+          payload.level = 'todos'; // backward compat fallback
           if (formData.color) payload.color = formData.color;
-          if (selectedLevels.length > 0) payload.allowed_levels = selectedLevels;
+          payload.allowed_levels = selectedLevels.length > 0 ? selectedLevels : null;
 
           const response = await classService.createClass(payload);
 
@@ -387,22 +387,6 @@ export default function CreateClassModal({
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Nível Legado */}
-          <div className="form-group">
-            <label htmlFor="level">Nível (Legado)</label>
-            <select
-              id="level"
-              value={formData.level}
-              onChange={(e) => setFormData({ ...formData, level: e.target.value as any })}
-            >
-              <option value="">Selecione...</option>
-              <option value="iniciante">Iniciante</option>
-              <option value="intermediario">Intermediário</option>
-              <option value="avancado">Avançado</option>
-              <option value="todos">Todos</option>
-            </select>
           </div>
 
           {/* Multi-Level Selection */}

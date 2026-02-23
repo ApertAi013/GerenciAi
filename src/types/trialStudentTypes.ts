@@ -10,6 +10,7 @@ export interface TrialStudent {
   birth_date?: string;
   sex?: 'M' | 'F' | 'N/I';
   level?: string; // Any level from the system, not restricted to specific values
+  level_name?: string; // Level name from JOIN with levels table
   status: 'ativo' | 'inativo';
   is_trial: boolean;
   trial_retention_days?: number;

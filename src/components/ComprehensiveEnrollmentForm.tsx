@@ -85,16 +85,10 @@ export default function ComprehensiveEnrollmentForm({
       // Filter by level
       if (studentData.level) {
         filtered = filtered.filter((cls) => {
-          // Show classes that allow this level
           if (cls.allowed_levels && cls.allowed_levels.length > 0) {
             return cls.allowed_levels.includes(studentData.level!);
           }
-          // If class has no specific level restrictions, show it
-          if (cls.level === 'todos') {
-            return true;
-          }
-          // Match by level field
-          return cls.level === studentData.level;
+          return true; // no restrictions
         });
       }
 
@@ -843,7 +837,7 @@ export default function ComprehensiveEnrollmentForm({
                 <strong>{createdStudent.full_name}</strong>
                 <p>CPF: {createdStudent.cpf}</p>
                 <p>Email: {createdStudent.email}</p>
-                <p>Nível: {createdStudent.level}</p>
+                <p>Nível: {createdStudent.level_name || createdStudent.level}</p>
               </div>
             </div>
 

@@ -411,7 +411,12 @@ export default function ConvertTrialStudentModal({
   const renderClassesStep = () => {
     // Filter classes by student level if available
     const filteredClasses = trialStudent.level
-      ? classes.filter((c) => !c.level || c.level === trialStudent.level)
+      ? classes.filter((c) => {
+          if (c.allowed_levels && c.allowed_levels.length > 0) {
+            return c.allowed_levels.includes(trialStudent.level!);
+          }
+          return true;
+        })
       : classes;
 
     return (
@@ -495,8 +500,8 @@ export default function ConvertTrialStudentModal({
                       }}
                     >
                       {classItem.schedule && <span>📅 {classItem.schedule}</span>}
-                      {classItem.level && (
-                        <span>📊 Nível: {classItem.level}</span>
+                      {classItem.allowed_levels && classItem.allowed_levels.length > 0 && (
+                        <span>📊 Nível: {classItem.allowed_levels.join(', ')}</span>
                       )}
                       {classItem.instructor_name && (
                         <span>👤 {classItem.instructor_name}</span>

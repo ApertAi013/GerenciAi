@@ -810,14 +810,14 @@ export default function TrialStudents() {
                       </div>
                     </td>
                     <td>
-                      {student.level ? (
+                      {(student.level_name || student.level) ? (
                         <span
                           style={{
                             textTransform: 'capitalize',
                             fontSize: '0.875rem',
                           }}
                         >
-                          {student.level}
+                          {student.level_name || student.level}
                         </span>
                       ) : (
                         <span style={{ color: '#999' }}>-</span>
@@ -1094,11 +1094,11 @@ function TrialStudentDetailsModal({
                       <strong>E-mail:</strong> {student.email}
                     </div>
                   )}
-                  {student.level && (
+                  {(student.level_name || student.level) && (
                     <div>
                       <strong>Nível:</strong>{' '}
                       <span style={{ textTransform: 'capitalize' }}>
-                        {student.level}
+                        {student.level_name || student.level}
                       </span>
                     </div>
                   )}

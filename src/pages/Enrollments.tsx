@@ -226,13 +226,13 @@ export default function Enrollments() {
 
       // Filter by student level if student is selected
       const selectedStudent = getSelectedStudent();
-      if (selectedStudent && selectedStudent.level) {
+      if (selectedStudent && (selectedStudent.level_name || selectedStudent.level)) {
+        const studentLevel = selectedStudent.level_name || selectedStudent.level;
         filtered = filtered.filter((cls) => {
           if (cls.allowed_levels && cls.allowed_levels.length > 0) {
-            return cls.allowed_levels.includes(selectedStudent.level!);
+            return cls.allowed_levels.includes(studentLevel!);
           }
-          if (cls.level === 'todos') return true;
-          return cls.level === selectedStudent.level;
+          return true;
         });
       }
 
@@ -1348,13 +1348,13 @@ function EditEnrollmentModal({
       }
 
       // Filter by student level
-      if (studentData && studentData.level) {
+      if (studentData && (studentData.level_name || studentData.level)) {
+        const studentLevel = studentData.level_name || studentData.level;
         filtered = filtered.filter((cls) => {
           if (cls.allowed_levels && cls.allowed_levels.length > 0) {
-            return cls.allowed_levels.includes(studentData.level!);
+            return cls.allowed_levels.includes(studentLevel!);
           }
-          if (cls.level === 'todos') return true;
-          return cls.level === studentData.level;
+          return true;
         });
       }
 

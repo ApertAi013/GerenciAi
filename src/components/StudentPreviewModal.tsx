@@ -180,13 +180,13 @@ export default function StudentPreviewModal({
                 <div className="info-value">{student.sex || '-'}</div>
               </div>
 
-              {student.level && (
+              {(student.level_name || student.level) && (
                 <div className="info-item">
                   <div className="info-label">
                     <span>📊</span>
                     <span>Nível</span>
                   </div>
-                  <div className="info-value">{student.level}</div>
+                  <div className="info-value">{student.level_name || student.level}</div>
                 </div>
               )}
 

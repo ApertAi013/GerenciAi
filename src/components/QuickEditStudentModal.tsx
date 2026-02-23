@@ -168,11 +168,6 @@ export default function QuickEditStudentModal() {
     setIsSaving(true);
     try {
       const payload: any = { ...editForm };
-      // Se level_id mudou, inclui nome do nível
-      if (payload.level_id && payload.level_id !== student.level_id) {
-        const lvl = levels.find((l) => l.id === payload.level_id);
-        if (lvl) payload.level = lvl.name;
-      }
       const response = await studentService.updateStudent(student.id, payload);
       if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success('Dados do aluno atualizados!');
@@ -304,10 +299,8 @@ export default function QuickEditStudentModal() {
     .filter((i) => i.status === 'aberta' && new Date(i.due_date) >= new Date())
     .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
 
-  const currentLevel = student
-    ? (student.level_id
-      ? levels.find((l) => l.id === student.level_id)
-      : levels.find((l) => l.name.toLowerCase() === student.level?.toLowerCase()))
+  const currentLevel = student && student.level_id
+    ? levels.find((l) => l.id === student.level_id)
     : null;
 
   const getInitials = (name: string) =>
