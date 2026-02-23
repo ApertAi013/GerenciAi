@@ -25,7 +25,7 @@ import {
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import '../styles/Signup.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.DEV ? '' : 'https://gerenciai-backend-798546007335.us-east1.run.app';
 
 interface Plan {
   id: number;
