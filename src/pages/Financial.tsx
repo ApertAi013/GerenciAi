@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { faMoneyBillWave, faXmark, faCheck, faUndo, faPenToSquare, faCalendarAlt, faFileInvoice, faExternalLinkAlt, faCog } from '@fortawesome/free-solid-svg-icons';
 import { financialService } from '../services/financialService';
+import { studentService } from '../services/studentService';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
 
@@ -54,6 +55,11 @@ export default function Financial() {
   const [instructors, setInstructors] = useState<Array<{ id: number; name: string; email: string }>>([]);
   const [modalities, setModalities] = useState<Array<{ id: number; name: string }>>([]);
   const [levels, setLevels] = useState<Array<{ id: number; name: string; color: string }>>([]);
+
+  // Estado para modal de edição de nível
+  const [showLevelModal, setShowLevelModal] = useState(false);
+  const [levelEditInvoice, setLevelEditInvoice] = useState<Invoice | null>(null);
+  const [selectedLevelId, setSelectedLevelId] = useState<number | null>(null);
 
   // Filtro de mês - padrão é o mês atual
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toISOString().slice(0, 7));
@@ -462,6 +468,38 @@ Obrigado!`);
     } catch (error: any) {
       console.error('Erro ao cancelar fatura:', error);
       alert(error.response?.data?.message || 'Erro ao cancelar fatura');
+    }
+  };
+
+  const openLevelModal = (invoice: Invoice) => {
+    setLevelEditInvoice(invoice);
+    setSelectedLevelId(invoice.level_id || null);
+    setShowLevelModal(true);
+  };
+
+  const handleUpdateLevel = async () => {
+    if (!levelEditInvoice || !selectedLevelId) return;
+    if (submitting) return;
+
+    try {
+      setSubmitting(true);
+      const selectedLevel = levels.find(l => l.id === selectedLevelId);
+      const response = await studentService.updateStudent(levelEditInvoice.student_id!, {
+        level_id: selectedLevelId,
+        level: selectedLevel?.name
+      } as any);
+
+      if ((response as any).status === 'success' || (response as any).success === true) {
+        toast.success('Nível atualizado com sucesso!');
+        setShowLevelModal(false);
+        setLevelEditInvoice(null);
+        loadInvoices();
+      }
+    } catch (error: any) {
+      console.error('Erro ao atualizar nível:', error);
+      toast.error(error.response?.data?.message || 'Erro ao atualizar nível');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -1128,16 +1166,25 @@ Obrigado!`);
                     <td>
                       {invoice.level_name ? (
                         <span
-                          onClick={() => setLevelFilter(String(invoice.level_id))}
+                          onClick={() => openLevelModal(invoice)}
                           className="level-badge"
                           style={{
                             backgroundColor: invoice.level_color || '#6b7280',
                           }}
-                          title="Clique para filtrar por este nível"
+                          title="Clique para alterar o nível do aluno"
                         >
                           {invoice.level_name}
+                          <FontAwesomeIcon icon={faPenToSquare} style={{ fontSize: '9px', opacity: 0.7, marginLeft: '4px' }} />
                         </span>
-                      ) : <span style={{ color: '#999' }}>-</span>}
+                      ) : (
+                        <span
+                          onClick={() => openLevelModal(invoice)}
+                          style={{ color: '#999', cursor: 'pointer' }}
+                          title="Clique para definir o nível do aluno"
+                        >
+                          -
+                        </span>
+                      )}
                     </td>
                     )}
                     {isColumnVisible('reference_month') && (
@@ -1643,6 +1690,70 @@ Obrigado!`);
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Level Edit Modal */}
+      {showLevelModal && levelEditInvoice && (
+        <div className="modal-overlay" onClick={() => setShowLevelModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h2>Alterar Nível do Aluno</h2>
+              <button type="button" className="modal-close" onClick={() => setShowLevelModal(false)}>×</button>
+            </div>
+
+            <div className="invoice-details">
+              <p><strong>Aluno:</strong> {levelEditInvoice.student_name}</p>
+              <p><strong>Nível atual:</strong>{' '}
+                {levelEditInvoice.level_name ? (
+                  <span
+                    className="level-badge"
+                    style={{ backgroundColor: levelEditInvoice.level_color || '#6b7280' }}
+                  >
+                    {levelEditInvoice.level_name}
+                  </span>
+                ) : 'Nenhum'}
+              </p>
+            </div>
+
+            <div className="payment-form">
+              <div className="form-group">
+                <label htmlFor="level-select">Novo Nível</label>
+                <select
+                  id="level-select"
+                  value={selectedLevelId || ''}
+                  onChange={(e) => setSelectedLevelId(e.target.value ? parseInt(e.target.value) : null)}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                >
+                  <option value="">Selecione um nível</option>
+                  {levels.map((level) => (
+                    <option key={level.id} value={level.id}>
+                      {level.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedLevelId && selectedLevelId !== levelEditInvoice.level_id && (
+                <div style={{ padding: '10px 14px', backgroundColor: '#fffbeb', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '0.85rem', color: '#92400e', marginTop: '8px' }}>
+                  <strong>Atenção:</strong> Se o aluno estiver em turmas que não aceitam o novo nível, ele aparecerá como "fora do nível" na tela de Turmas.
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowLevelModal(false)} disabled={submitting}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleUpdateLevel}
+                  disabled={submitting || !selectedLevelId || selectedLevelId === levelEditInvoice.level_id}
+                >
+                  {submitting ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
