@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faSave, faLock, faEnvelope, faIdBadge, faCalendar } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faSave, faLock, faEnvelope, faIdBadge, faCalendar, faBuilding, faCamera } from '@fortawesome/free-solid-svg-icons';
 import { authService } from '../services/authService';
 import { useAuthStore } from '../store/authStore';
+import { api } from '../services/api';
 import toast from 'react-hot-toast';
 import '../styles/Profile.css';
 
@@ -13,6 +14,9 @@ interface ProfileData {
   role: string;
   status: string;
   created_at: string;
+  display_name?: string;
+  business_description?: string;
+  logo_url?: string;
 }
 
 export default function Profile() {
@@ -24,6 +28,14 @@ export default function Profile() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Business profile form
+  const [displayName, setDisplayName] = useState('');
+  const [businessDescription, setBusinessDescription] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [isSavingBusiness, setIsSavingBusiness] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState('');
@@ -42,6 +54,9 @@ export default function Profile() {
         setProfile(response.data);
         setFullName(response.data.full_name);
         setEmail(response.data.email);
+        setDisplayName(response.data.display_name || '');
+        setBusinessDescription(response.data.business_description || '');
+        setLogoUrl(response.data.logo_url || '');
       }
     } catch (error) {
       toast.error('Erro ao carregar perfil');
@@ -75,6 +90,81 @@ export default function Profile() {
       toast.error(error.response?.data?.message || 'Erro ao atualizar perfil');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Imagem muito grande. Máximo 2MB.');
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await api.post('/api/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const url = response.data?.data?.url;
+      if (url) {
+        setLogoUrl(url);
+        // Save immediately
+        const saveResponse = await authService.updateProfile({ logo_url: url });
+        if (saveResponse.status === 'success') {
+          toast.success('Logo atualizada com sucesso');
+          setProfile(saveResponse.data);
+          if (user) {
+            setUser({ ...user, logo_url: url });
+          }
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao enviar imagem');
+    } finally {
+      setIsUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!window.confirm('Remover a logo?')) return;
+    try {
+      const response = await authService.updateProfile({ logo_url: '' });
+      if (response.status === 'success') {
+        setLogoUrl('');
+        setProfile(response.data);
+        if (user) {
+          setUser({ ...user, logo_url: undefined });
+        }
+        toast.success('Logo removida');
+      }
+    } catch {
+      toast.error('Erro ao remover logo');
+    }
+  };
+
+  const handleSaveBusiness = async () => {
+    setIsSavingBusiness(true);
+    try {
+      const response = await authService.updateProfile({
+        display_name: displayName.trim(),
+        business_description: businessDescription.trim(),
+      });
+      if (response.status === 'success') {
+        toast.success('Informações do negócio atualizadas');
+        setProfile(response.data);
+        if (user) {
+          setUser({ ...user, display_name: displayName.trim() || undefined, business_description: businessDescription.trim() || undefined });
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao salvar');
+    } finally {
+      setIsSavingBusiness(false);
     }
   };
 
@@ -132,11 +222,15 @@ export default function Profile() {
   return (
     <div className="profile-container">
       <div className="profile-header-section">
-        <div className="profile-avatar-large">
-          {profile?.full_name?.[0]?.toUpperCase() || 'U'}
-        </div>
+        {logoUrl ? (
+          <img src={logoUrl} alt="Logo" className="profile-avatar-large profile-avatar-img" />
+        ) : (
+          <div className="profile-avatar-large">
+            {profile?.full_name?.[0]?.toUpperCase() || 'U'}
+          </div>
+        )}
         <div>
-          <h1>{profile?.full_name}</h1>
+          <h1>{profile?.display_name || profile?.full_name}</h1>
           <p className="profile-role-badge">{getRoleLabel(profile?.role || '')}</p>
         </div>
       </div>
@@ -230,6 +324,76 @@ export default function Profile() {
           >
             <FontAwesomeIcon icon={faLock} />
             {isChangingPassword ? 'Alterando...' : 'Alterar Senha'}
+          </button>
+        </div>
+
+        {/* Business Profile */}
+        <div className="profile-card profile-card-business">
+          <h2><FontAwesomeIcon icon={faBuilding} /> Meu Negócio</h2>
+          <p className="profile-business-hint">
+            Estas informações aparecem nos links públicos de agendamento e locação.
+          </p>
+
+          <div className="profile-logo-section">
+            <div
+              className="profile-logo-circle"
+              onClick={() => logoInputRef.current?.click()}
+              title="Clique para enviar logo"
+            >
+              {isUploadingLogo ? (
+                <div className="profile-logo-spinner" />
+              ) : logoUrl ? (
+                <img src={logoUrl} alt="Logo" />
+              ) : (
+                <div className="profile-logo-placeholder">
+                  <FontAwesomeIcon icon={faCamera} />
+                  <span>Enviar Logo</span>
+                </div>
+              )}
+            </div>
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              style={{ display: 'none' }}
+              onChange={handleLogoUpload}
+            />
+            {logoUrl && (
+              <button className="profile-remove-logo" onClick={handleRemoveLogo}>
+                Remover logo
+              </button>
+            )}
+          </div>
+
+          <div className="profile-form-group">
+            <label>Nome de Exibição</label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Ex: Arena Beach Tennis"
+            />
+            <small className="profile-field-hint">Se vazio, será usado seu nome pessoal</small>
+          </div>
+
+          <div className="profile-form-group">
+            <label>Descrição</label>
+            <textarea
+              value={businessDescription}
+              onChange={(e) => setBusinessDescription(e.target.value.slice(0, 300))}
+              placeholder="Breve descrição do seu negócio..."
+              rows={3}
+            />
+            <small className="profile-field-hint">{businessDescription.length}/300 caracteres</small>
+          </div>
+
+          <button
+            className="profile-save-btn"
+            onClick={handleSaveBusiness}
+            disabled={isSavingBusiness}
+          >
+            <FontAwesomeIcon icon={faSave} />
+            {isSavingBusiness ? 'Salvando...' : 'Salvar Negócio'}
           </button>
         </div>
       </div>

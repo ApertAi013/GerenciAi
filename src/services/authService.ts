@@ -37,7 +37,7 @@ export const authService = {
   },
 
   // Atualizar perfil
-  async updateProfile(data: { full_name?: string; email?: string }): Promise<{ status: string; data: any; message: string }> {
+  async updateProfile(data: { full_name?: string; email?: string; display_name?: string; business_description?: string; logo_url?: string }): Promise<{ status: string; data: any; message: string }> {
     const response = await api.put('/api/auth/profile', data);
     return response.data;
   },

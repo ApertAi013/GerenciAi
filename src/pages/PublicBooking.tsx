@@ -14,6 +14,8 @@ export default function PublicBooking() {
 
   // Business info
   const [businessName, setBusinessName] = useState('');
+  const [businessDescription, setBusinessDescription] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [courts, setCourts] = useState<PublicCourt[]>([]);
 
   // Step 1: Identification
@@ -47,6 +49,8 @@ export default function PublicBooking() {
       setCourts(response.data || []);
       const infoResponse = await publicBookingService.getBookingInfo(bookingToken!);
       setBusinessName(infoResponse.data?.business_name || '');
+      setBusinessDescription(infoResponse.data?.business_description || '');
+      setLogoUrl(infoResponse.data?.logo_url || '');
     } catch {
       setError('Link de reserva inválido ou expirado.');
     } finally {
@@ -137,8 +141,9 @@ export default function PublicBooking() {
       <div className="pb-container">
         {/* Header */}
         <div className="pb-header">
+          {logoUrl && <img src={logoUrl} alt="" className="pb-logo" />}
           <h1>{businessName || 'Reserva de Quadra'}</h1>
-          <p className="pb-subtitle">Reserve seu horário online</p>
+          <p className="pb-subtitle">{businessDescription || 'Reserve seu horário online'}</p>
         </div>
 
         {/* Progress */}

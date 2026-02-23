@@ -20,6 +20,8 @@ export default function PublicTrialBooking() {
 
   // Business info
   const [businessName, setBusinessName] = useState('');
+  const [businessDescription, setBusinessDescription] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
 
   // Step 1: Identification
   const [fullName, setFullName] = useState('');
@@ -52,6 +54,8 @@ export default function PublicTrialBooking() {
       setLoading(true);
       const response = await publicTrialBookingService.getBookingInfo(bookingToken!);
       setBusinessName(response.data?.business_name || '');
+      setBusinessDescription(response.data?.business_description || '');
+      setLogoUrl(response.data?.logo_url || '');
 
       const modResponse = await publicTrialBookingService.getAvailableModalities(bookingToken!);
       setModalities(modResponse.data || []);
@@ -179,8 +183,9 @@ export default function PublicTrialBooking() {
       <div className="ptb-container">
         {/* Header */}
         <div className="ptb-header">
+          {logoUrl && <img src={logoUrl} alt="" className="ptb-logo" />}
           <h1>{businessName || 'Aula Experimental'}</h1>
-          <p className="ptb-subtitle">Agende sua aula experimental</p>
+          <p className="ptb-subtitle">{businessDescription || 'Agende sua aula experimental'}</p>
         </div>
 
         {/* Progress */}

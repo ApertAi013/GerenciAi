@@ -14,6 +14,9 @@ export interface User {
   billing_plan_slug?: string;
   max_students?: number;
   max_classes?: number;
+  display_name?: string;
+  business_description?: string;
+  logo_url?: string;
 }
 
 export interface AuthResponse {

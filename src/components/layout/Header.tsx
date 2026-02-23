@@ -277,7 +277,11 @@ export default function Header() {
             onClick={() => setShowMenu(!showMenu)}
           >
             <div className="user-avatar">
-              {user?.full_name?.[0]?.toUpperCase() || 'U'}
+              {user?.logo_url ? (
+                <img src={user.logo_url} alt="" className="user-avatar-img" />
+              ) : (
+                user?.full_name?.[0]?.toUpperCase() || 'U'
+              )}
             </div>
             <div className="user-info">
               <p className="user-name">{user?.full_name || 'Usuário'}</p>
