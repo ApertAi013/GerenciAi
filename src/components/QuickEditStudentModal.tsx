@@ -24,6 +24,8 @@ import type { Student, UpdateStudentRequest } from '../types/studentTypes';
 import type { Enrollment, Plan } from '../types/enrollmentTypes';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import type { Level } from '../types/levelTypes';
+import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
+import WhatsAppTemplatePicker from './WhatsAppTemplatePicker';
 import '../styles/QuickEditStudentModal.css';
 
 const weekdayMap: Record<string, string> = {
@@ -255,33 +257,38 @@ export default function QuickEditStudentModal() {
     }
   };
 
-  const handleWhatsApp = () => {
+  // Template picker state
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+
+  const sendWhatsApp = (message: string) => {
     if (!student) return;
     const phone = (student.phone || '').replace(/\D/g, '');
     const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
 
     const overdueInvoices = invoices.filter((i) => i.status === 'vencida' || (i.status === 'aberta' && new Date(i.due_date) < new Date()));
-    const nextInvoice = invoices
+    const nextInv = invoices
       .filter((i) => i.status === 'aberta' && new Date(i.due_date) >= new Date())
       .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
-    const targetInvoice = overdueInvoices[0] || nextInvoice;
+    const targetInvoice = overdueInvoices[0] || nextInv;
 
-    const valorStr = targetInvoice ? formatCurrency(targetInvoice.final_amount_cents) : '';
-    const vencStr = targetInvoice ? formatDate(targetInvoice.due_date) : 'em breve';
+    const applied = applyVariables(message, {
+      firstName: student.full_name.split(' ')[0],
+      fullName: student.full_name,
+      amount: targetInvoice ? formatCurrency(targetInvoice.final_amount_cents) : '',
+      dueDate: targetInvoice ? formatDate(targetInvoice.due_date) : 'em breve',
+      referenceMonth: targetInvoice?.reference_month || '',
+    });
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(applied)}`, '_blank');
+  };
 
-    const savedTemplate = localStorage.getItem('gerenciai_whatsapp_template');
-    let message: string;
-    if (savedTemplate) {
-      const firstName = student.full_name.split(' ')[0];
-      message = savedTemplate
-        .replace(/\[Nome\]/g, firstName)
-        .replace(/\[NomeCompleto\]/g, student.full_name)
-        .replace(/\[Valor\]/g, valorStr)
-        .replace(/\[Vencimento\]/g, vencStr);
+  const handleWhatsApp = () => {
+    if (!student) return;
+    const templates = getTemplates();
+    if (templates.length === 1) {
+      sendWhatsApp(templates[0].message);
     } else {
-      message = `Olá ${student.full_name.split(' ')[0]}!\n\nPassando para lembrar sobre sua mensalidade${valorStr ? ` de *${valorStr}*` : ''} com vencimento em *${vencStr}*.\n\nQualquer dúvida, estou à disposição!`;
+      setShowTemplatePicker(true);
     }
-    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const handleGoToFullPage = () => {
@@ -352,9 +359,21 @@ export default function QuickEditStudentModal() {
               </div>
               <div className="qe-header-actions">
                 {student.phone && (
-                  <button className="qe-btn-icon qe-btn-whatsapp" onClick={handleWhatsApp} title="WhatsApp">
-                    <FontAwesomeIcon icon={faWhatsapp} />
-                  </button>
+                  <div className="wtp-wrapper">
+                    <button className="qe-btn-icon qe-btn-whatsapp" onClick={handleWhatsApp} title="WhatsApp">
+                      <FontAwesomeIcon icon={faWhatsapp} />
+                    </button>
+                    {showTemplatePicker && (
+                      <WhatsAppTemplatePicker
+                        onSelect={(message) => {
+                          setShowTemplatePicker(false);
+                          sendWhatsApp(message);
+                        }}
+                        onClose={() => setShowTemplatePicker(false)}
+                        position="above"
+                      />
+                    )}
+                  </div>
                 )}
                 <button className="qe-btn-icon" onClick={handleGoToFullPage} title="Ver página completa">
                   <FontAwesomeIcon icon={faArrowUpRightFromSquare} />

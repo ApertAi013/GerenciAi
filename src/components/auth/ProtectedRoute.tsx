@@ -17,8 +17,11 @@ export default function ProtectedRoute() {
         return;
       }
 
-      // Se já tem usuário carregado, não precisa buscar novamente
+      // Se já tem usuário carregado, verificar billing_status
       if (user) {
+        if (user.billing_status === 'blocked') {
+          navigate('/billing-blocked');
+        }
         return;
       }
 
@@ -33,6 +36,12 @@ export default function ProtectedRoute() {
 
         if (isSuccess && userData) {
           setAuth(userData, token);
+
+          // Redirect blocked users to billing page
+          if (userData.billing_status === 'blocked') {
+            navigate('/billing-blocked');
+            return;
+          }
         } else {
           throw new Error('Falha na autenticação');
         }

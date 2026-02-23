@@ -6,6 +6,8 @@ import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { faMoneyBillWave, faXmark, faCheck, faUndo, faPenToSquare, faCalendarAlt, faFileInvoice, faExternalLinkAlt, faCog } from '@fortawesome/free-solid-svg-icons';
 import { financialService } from '../services/financialService';
 import { studentService } from '../services/studentService';
+import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
+import WhatsAppTemplatePicker from '../components/WhatsAppTemplatePicker';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
 
@@ -109,27 +111,23 @@ export default function Financial() {
 
   const isColumnVisible = (key: ColumnKey) => visibleColumns.includes(key);
 
-  // Mensagem padrão do WhatsApp
-  const [whatsappTemplate, setWhatsappTemplate] = useState<string>('');
+  // Estado do template picker
+  const [showTemplatePicker, setShowTemplatePicker] = useState<number | null>(null);
 
-  // Carregar template do WhatsApp das preferências
-  useEffect(() => {
-    const savedTemplate = localStorage.getItem('whatsapp_payment_template');
-    if (savedTemplate) {
-      setWhatsappTemplate(savedTemplate);
-    } else {
-      // Template padrão
-      setWhatsappTemplate(`Olá [Nome], tudo bem?
-
-Passando para lembrar do vencimento da sua mensalidade.
-
-*Pix 48.609.350/0001-86*
-
-Caso não for fazer aulas esse mês, favor nos informar!
-
-Obrigado!`);
-    }
-  }, []);
+  // Função para enviar WhatsApp com uma mensagem específica
+  const sendWhatsApp = (invoice: Invoice, message: string) => {
+    const phone = invoice.student_phone!.replace(/\D/g, '');
+    const firstName = (invoice.student_name || '').split(' ')[0];
+    const applied = applyVariables(message, {
+      firstName,
+      fullName: invoice.student_name || '',
+      amount: formatPrice(invoice.final_amount_cents),
+      dueDate: formatDate(invoice.due_date),
+      referenceMonth: invoice.reference_month,
+    });
+    const whatsappUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(applied)}`;
+    window.open(whatsappUrl, '_blank');
+  };
 
   // Função para abrir WhatsApp com mensagem personalizada
   const handleWhatsAppClick = (invoice: Invoice) => {
@@ -144,17 +142,12 @@ Obrigado!`);
       return;
     }
 
-    // Substituir variáveis na mensagem
-    const firstName = (invoice.student_name || '').split(' ')[0];
-    const message = whatsappTemplate
-      .replace(/\[Nome\]/g, firstName)
-      .replace(/\[NomeCompleto\]/g, invoice.student_name || '')
-      .replace(/\[Valor\]/g, formatPrice(invoice.final_amount_cents))
-      .replace(/\[Vencimento\]/g, formatDate(invoice.due_date))
-      .replace(/\[Referencia\]/g, invoice.reference_month);
-
-    const whatsappUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    const templates = getTemplates();
+    if (templates.length === 1) {
+      sendWhatsApp(invoice, templates[0].message);
+    } else {
+      setShowTemplatePicker(invoice.id);
+    }
   };
 
   // Handle sort
@@ -1311,14 +1304,25 @@ Obrigado!`);
                       <div className="action-buttons">
                         {invoice.status === 'aberta' || invoice.status === 'vencida' ? (
                           <>
-                            <button
-                              className="btn-action btn-whatsapp"
-                              onClick={() => handleWhatsAppClick(invoice)}
-                              title="Enviar cobrança via WhatsApp"
-                              style={{ backgroundColor: '#25D366', color: 'white' }}
-                            >
-                              <FontAwesomeIcon icon={faWhatsapp} />
-                            </button>
+                            <div className="wtp-wrapper">
+                              <button
+                                className="btn-action btn-whatsapp"
+                                onClick={() => handleWhatsAppClick(invoice)}
+                                title="Enviar cobrança via WhatsApp"
+                                style={{ backgroundColor: '#25D366', color: 'white' }}
+                              >
+                                <FontAwesomeIcon icon={faWhatsapp} />
+                              </button>
+                              {showTemplatePicker === invoice.id && (
+                                <WhatsAppTemplatePicker
+                                  onSelect={(message) => {
+                                    setShowTemplatePicker(null);
+                                    sendWhatsApp(invoice, message);
+                                  }}
+                                  onClose={() => setShowTemplatePicker(null)}
+                                />
+                              )}
+                            </div>
                             <button
                               className="btn-action btn-pay"
                               onClick={() => openPaymentModal(invoice)}

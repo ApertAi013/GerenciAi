@@ -15,6 +15,8 @@ import type { Invoice } from '../types/financialTypes';
 import type { Level } from '../types/levelTypes';
 import type { Class } from '../types/classTypes';
 import MakeupCreditsManager from '../components/MakeupCreditsManager';
+import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
+import WhatsAppTemplatePicker from '../components/WhatsAppTemplatePicker';
 import '../styles/StudentDetails.css';
 
 export default function StudentDetails() {
@@ -255,43 +257,38 @@ export default function StudentDetails() {
     );
   };
 
-  const handleWhatsAppClick = () => {
-    if (!student) return;
+  // Template picker state
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
+  const sendWhatsApp = (message: string) => {
+    if (!student) return;
     const phone = student.phone.replace(/\D/g, '');
     const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
-    const valorMensalidade = (financialStats.valor_proximo_vencimento / 100).toFixed(2).replace('.', ',');
+    const valorMensalidade = formatCurrency(financialStats.valor_proximo_vencimento);
     const vencimento = financialStats.proximo_vencimento?.toLocaleDateString('pt-BR') || 'em breve';
+    const refMonth = financialStats.proximo_vencimento
+      ? financialStats.proximo_vencimento.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      : '';
 
-    // Tentar usar o template salvo nas preferências
-    const savedTemplate = localStorage.getItem('gerenciai_whatsapp_template');
-    let message: string;
+    const applied = applyVariables(message, {
+      firstName: student.full_name.split(' ')[0],
+      fullName: student.full_name,
+      amount: valorMensalidade,
+      dueDate: vencimento,
+      referenceMonth: refMonth,
+    });
 
-    if (savedTemplate) {
-      // Substituir as variáveis do template
-      const firstName = student.full_name.split(' ')[0];
-      // Descobrir o mês de referência baseado na data de vencimento
-      const refMonth = financialStats.proximo_vencimento
-        ? financialStats.proximo_vencimento.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-        : '';
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(applied)}`, '_blank');
+  };
 
-      message = savedTemplate
-        .replace(/\[Nome\]/g, firstName)
-        .replace(/\[NomeCompleto\]/g, student.full_name)
-        .replace(/\[Valor\]/g, `R$ ${valorMensalidade}`)
-        .replace(/\[Vencimento\]/g, vencimento)
-        .replace(/\[Referencia\]/g, refMonth);
+  const handleWhatsAppClick = () => {
+    if (!student) return;
+    const templates = getTemplates();
+    if (templates.length === 1) {
+      sendWhatsApp(templates[0].message);
     } else {
-      // Mensagem padrão se não houver template salvo
-      message = `Olá ${student.full_name}!
-
-Passando para lembrar sobre sua mensalidade de *R$ ${valorMensalidade}* com vencimento em *${vencimento}*.
-
-Qualquer dúvida, estou à disposição!`;
+      setShowTemplatePicker(true);
     }
-
-    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
   };
 
   const formatCurrency = (cents: number) => {
@@ -358,15 +355,26 @@ Qualquer dúvida, estou à disposição!`;
           </div>
 
           <div className="student-header-actions">
-            <button
-              type="button"
-              className="btn-whatsapp"
-              onClick={handleWhatsAppClick}
-              title="Enviar mensagem de cobrança"
-            >
-              <FontAwesomeIcon icon={faWhatsapp} className="whatsapp-icon" />
-              WHATSAPP
-            </button>
+            <div className="wtp-wrapper">
+              <button
+                type="button"
+                className="btn-whatsapp"
+                onClick={handleWhatsAppClick}
+                title="Enviar mensagem de cobrança"
+              >
+                <FontAwesomeIcon icon={faWhatsapp} className="whatsapp-icon" />
+                WHATSAPP
+              </button>
+              {showTemplatePicker && (
+                <WhatsAppTemplatePicker
+                  onSelect={(message) => {
+                    setShowTemplatePicker(false);
+                    sendWhatsApp(message);
+                  }}
+                  onClose={() => setShowTemplatePicker(false)}
+                />
+              )}
+            </div>
             <button
               type="button"
               className="btn-secondary"

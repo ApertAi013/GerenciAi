@@ -285,6 +285,162 @@
   padding-top: 1rem;
 }
 
+/* Template Tabs */
+.template-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.template-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #374151;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.template-tab:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.template-tab.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.template-tab--add {
+  border-style: dashed;
+  color: #6b7280;
+  gap: 0.4rem;
+}
+
+.template-tab--add:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #eff6ff;
+}
+
+.template-tab-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-tab-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.75rem;
+  color: inherit;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.template-tab-delete:hover {
+  opacity: 1;
+}
+
+.template-tab.active .template-tab-delete {
+  color: white;
+}
+
+/* Add template form */
+.template-tab-add-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.template-tab-add-form input {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  width: 160px;
+  outline: none;
+}
+
+.template-tab-add-confirm {
+  padding: 0.45rem 0.75rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.template-tab-add-confirm:hover {
+  background: #2563eb;
+}
+
+.template-tab-add-cancel {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+}
+
+.template-tab-add-cancel:hover {
+  color: #ef4444;
+}
+
+/* Template name row */
+.template-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.template-name-row label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.template-name-input {
+  flex: 1;
+  max-width: 300px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.template-name-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .preferences-page {

@@ -1,50 +1,93 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+  getTemplates,
+  saveTemplates,
+  DEFAULT_MESSAGE,
+  type WhatsAppTemplate,
+} from '../utils/whatsappTemplates';
 import '../styles/Preferences.css';
 
 export default function Preferences() {
-  const [whatsappTemplate, setWhatsappTemplate] = useState<string>('');
+  const [templates, setTemplates] = useState<WhatsAppTemplate[]>([]);
+  const [selectedId, setSelectedId] = useState<string>('');
   const [defaultPassword, setDefaultPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Template padrão
-  const defaultTemplate = `Olá [Nome], tudo bem?
-
-Passando para lembrar do vencimento da sua mensalidade.
-
-*Pix 48.609.350/0001-86*
-
-Caso não for fazer aulas esse mês, favor nos informar!
-
-Obrigado!`;
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [newName, setNewName] = useState('');
 
   useEffect(() => {
-    // Carregar template salvo ou usar o padrão
-    const savedTemplate = localStorage.getItem('whatsapp_payment_template');
-    if (savedTemplate) {
-      setWhatsappTemplate(savedTemplate);
-    } else {
-      setWhatsappTemplate(defaultTemplate);
-    }
+    const loaded = getTemplates();
+    setTemplates(loaded);
+    if (loaded.length > 0) setSelectedId(loaded[0].id);
 
-    // Carregar senha padrão salva
     const savedPassword = localStorage.getItem('default_student_password');
-    if (savedPassword) {
-      setDefaultPassword(savedPassword);
-    }
+    if (savedPassword) setDefaultPassword(savedPassword);
   }, []);
 
+  const selectedTemplate = templates.find(t => t.id === selectedId);
+
+  const updateSelected = (field: 'name' | 'message', value: string) => {
+    setTemplates(prev =>
+      prev.map(t => t.id === selectedId ? { ...t, [field]: value } : t)
+    );
+  };
+
+  const handleAddTemplate = () => {
+    const name = newName.trim();
+    if (!name) {
+      toast.error('Digite um nome para o template');
+      return;
+    }
+    if (templates.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+      toast.error('Já existe um template com esse nome');
+      return;
+    }
+    const newTemplate: WhatsAppTemplate = {
+      id: Date.now().toString(36),
+      name,
+      message: DEFAULT_MESSAGE,
+    };
+    const updated = [...templates, newTemplate];
+    setTemplates(updated);
+    setSelectedId(newTemplate.id);
+    setIsAddingNew(false);
+    setNewName('');
+  };
+
+  const handleDeleteTemplate = (id: string) => {
+    if (templates.length <= 1) {
+      toast.error('Você precisa ter pelo menos um template');
+      return;
+    }
+    if (!confirm('Tem certeza que deseja excluir este template?')) return;
+    const updated = templates.filter(t => t.id !== id);
+    setTemplates(updated);
+    if (selectedId === id) {
+      setSelectedId(updated[0]?.id || '');
+    }
+  };
+
   const handleSave = () => {
-    // Validar senha se preenchida
     if (defaultPassword && defaultPassword.length < 6) {
       toast.error('A senha padrão deve ter no mínimo 6 caracteres');
       return;
     }
 
+    // Validate template names
+    for (const t of templates) {
+      if (!t.name.trim()) {
+        toast.error('Todos os templates devem ter um nome');
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
-      localStorage.setItem('whatsapp_payment_template', whatsappTemplate);
+      saveTemplates(templates);
 
       if (defaultPassword) {
         localStorage.setItem('default_student_password', defaultPassword);
@@ -60,10 +103,9 @@ Obrigado!`;
     }
   };
 
-  const handleReset = () => {
-    if (confirm('Tem certeza que deseja restaurar a mensagem padrão?')) {
-      setWhatsappTemplate(defaultTemplate);
-      localStorage.setItem('whatsapp_payment_template', defaultTemplate);
+  const handleResetMessage = () => {
+    if (confirm('Restaurar a mensagem deste template para o padrão?')) {
+      updateSelected('message', DEFAULT_MESSAGE);
       toast.success('Mensagem restaurada para o padrão');
     }
   };
@@ -74,9 +116,14 @@ Obrigado!`;
     toast.success('Senha padrão removida');
   };
 
-  // Preview da mensagem com variáveis substituídas
+  const insertVariable = (variable: string) => {
+    if (!selectedTemplate) return;
+    updateSelected('message', selectedTemplate.message + variable);
+  };
+
   const getPreview = () => {
-    return whatsappTemplate
+    if (!selectedTemplate) return '';
+    return selectedTemplate.message
       .replace(/\[Nome\]/g, 'João')
       .replace(/\[NomeCompleto\]/g, 'João da Silva')
       .replace(/\[Valor\]/g, 'R$ 150,00')
@@ -93,66 +140,132 @@ Obrigado!`;
       <div className="preferences-content">
         <section className="preference-section">
           <div className="section-header">
-            <h2>Mensagem de Cobrança via WhatsApp</h2>
+            <h2>Templates de WhatsApp</h2>
             <p className="section-description">
-              Configure a mensagem que será enviada ao clicar no botão de WhatsApp na tela de Financeiro.
+              Crie e gerencie templates de mensagem para enviar via WhatsApp. Ao clicar no botão de WhatsApp, você poderá escolher qual template usar.
             </p>
           </div>
 
-          <div className="variables-help">
-            <h4>Variáveis disponíveis:</h4>
-            <div className="variables-list">
-              <span className="variable-tag" onClick={() => setWhatsappTemplate(prev => prev + '[Nome]')}>
-                [Nome] <small>- Primeiro nome do aluno</small>
-              </span>
-              <span className="variable-tag" onClick={() => setWhatsappTemplate(prev => prev + '[NomeCompleto]')}>
-                [NomeCompleto] <small>- Nome completo</small>
-              </span>
-              <span className="variable-tag" onClick={() => setWhatsappTemplate(prev => prev + '[Valor]')}>
-                [Valor] <small>- Valor da fatura</small>
-              </span>
-              <span className="variable-tag" onClick={() => setWhatsappTemplate(prev => prev + '[Vencimento]')}>
-                [Vencimento] <small>- Data de vencimento</small>
-              </span>
-              <span className="variable-tag" onClick={() => setWhatsappTemplate(prev => prev + '[Referencia]')}>
-                [Referencia] <small>- Mês de referência</small>
-              </span>
-            </div>
+          {/* Template tabs */}
+          <div className="template-tabs">
+            {templates.map(t => (
+              <div
+                key={t.id}
+                className={`template-tab ${t.id === selectedId ? 'active' : ''}`}
+                onClick={() => setSelectedId(t.id)}
+              >
+                <span className="template-tab-name">{t.name}</span>
+                {templates.length > 1 && (
+                  <button
+                    type="button"
+                    className="template-tab-delete"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }}
+                    title="Excluir template"
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {isAddingNew ? (
+              <div className="template-tab-add-form">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Nome do template..."
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddTemplate();
+                    if (e.key === 'Escape') { setIsAddingNew(false); setNewName(''); }
+                  }}
+                />
+                <button type="button" className="template-tab-add-confirm" onClick={handleAddTemplate}>
+                  Criar
+                </button>
+                <button type="button" className="template-tab-add-cancel" onClick={() => { setIsAddingNew(false); setNewName(''); }}>
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="template-tab template-tab--add"
+                onClick={() => setIsAddingNew(true)}
+              >
+                <FontAwesomeIcon icon={faPlus} />
+                Novo
+              </button>
+            )}
           </div>
 
-          <div className="editor-container">
-            <div className="editor-column">
-              <label htmlFor="whatsapp-template">Mensagem:</label>
-              <textarea
-                id="whatsapp-template"
-                value={whatsappTemplate}
-                onChange={(e) => setWhatsappTemplate(e.target.value)}
-                rows={12}
-                placeholder="Digite sua mensagem personalizada..."
-              />
-            </div>
+          {selectedTemplate && (
+            <>
+              {/* Template name input */}
+              <div className="template-name-row">
+                <label htmlFor="template-name">Nome:</label>
+                <input
+                  id="template-name"
+                  type="text"
+                  value={selectedTemplate.name}
+                  onChange={(e) => updateSelected('name', e.target.value)}
+                  className="template-name-input"
+                />
+              </div>
 
-            <div className="preview-column">
-              <label>Prévia:</label>
-              <div className="message-preview">
-                <div className="whatsapp-bubble">
-                  {getPreview().split('\n').map((line, i) => (
-                    <p key={i}>{line || <br />}</p>
-                  ))}
+              <div className="variables-help">
+                <h4>Variáveis disponíveis:</h4>
+                <div className="variables-list">
+                  <span className="variable-tag" onClick={() => insertVariable('[Nome]')}>
+                    [Nome] <small>- Primeiro nome do aluno</small>
+                  </span>
+                  <span className="variable-tag" onClick={() => insertVariable('[NomeCompleto]')}>
+                    [NomeCompleto] <small>- Nome completo</small>
+                  </span>
+                  <span className="variable-tag" onClick={() => insertVariable('[Valor]')}>
+                    [Valor] <small>- Valor da fatura</small>
+                  </span>
+                  <span className="variable-tag" onClick={() => insertVariable('[Vencimento]')}>
+                    [Vencimento] <small>- Data de vencimento</small>
+                  </span>
+                  <span className="variable-tag" onClick={() => insertVariable('[Referencia]')}>
+                    [Referencia] <small>- Mês de referência</small>
+                  </span>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="section-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleReset}
-            >
-              Restaurar Padrão
-            </button>
-          </div>
+              <div className="editor-container">
+                <div className="editor-column">
+                  <label htmlFor="whatsapp-template">Mensagem:</label>
+                  <textarea
+                    id="whatsapp-template"
+                    value={selectedTemplate.message}
+                    onChange={(e) => updateSelected('message', e.target.value)}
+                    rows={12}
+                    placeholder="Digite sua mensagem personalizada..."
+                  />
+                </div>
+
+                <div className="preview-column">
+                  <label>Prévia:</label>
+                  <div className="message-preview">
+                    <div className="whatsapp-bubble">
+                      {getPreview().split('\n').map((line, i) => (
+                        <p key={i}>{line || <br />}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="section-actions">
+                <button type="button" className="btn-secondary" onClick={handleResetMessage}>
+                  Restaurar Mensagem Padrão
+                </button>
+              </div>
+            </>
+          )}
         </section>
 
         <section className="preference-section">
@@ -198,11 +311,7 @@ Obrigado!`;
 
             <div className="section-actions">
               {defaultPassword && (
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleClearPassword}
-                >
+                <button type="button" className="btn-secondary" onClick={handleClearPassword}>
                   Limpar Senha
                 </button>
               )}

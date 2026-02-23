@@ -43,6 +43,7 @@ import PublicTrialBooking from './pages/PublicTrialBooking'
 import PublicTrialBookingStatus from './pages/PublicTrialBookingStatus'
 import PublicTrialStudentDashboard from './pages/PublicTrialStudentDashboard'
 import Signup from './pages/Signup'
+import BillingBlocked from './pages/BillingBlocked'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import SystemGuide from './pages/SystemGuide'
@@ -105,6 +106,7 @@ export default function App() {
         <Route path="/aula-experimental/status/:bookingToken" element={<PublicTrialBookingStatus />} />
         <Route path="/aula-experimental/meus-agendamentos/:accessToken" element={<PublicTrialStudentDashboard />} />
         <Route path="/contratar" element={<Signup />} />
+        <Route path="/billing-blocked" element={<BillingBlocked />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>

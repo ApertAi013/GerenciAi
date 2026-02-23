@@ -30,6 +30,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+    // Billing blocked — redirect to payment screen
+    if (
+      error.response?.status === 402 &&
+      error.response?.data?.code === 'BILLING_BLOCKED' &&
+      !window.location.pathname.includes('/billing-blocked')
+    ) {
+      window.location.href = '/billing-blocked';
+      return Promise.reject(error);
+    }
+
     if (
       error.response?.status === 401 &&
       token &&
