@@ -200,8 +200,26 @@ export default function Dashboard() {
   const filteredEnrollments = useMemo(() => {
     if (!modalityClassIds) return enrollments;
     return enrollments.filter(e => {
+      // Check class_ids array if available
       const eClassIds = e.class_ids || [];
-      return eClassIds.some(id => modalityClassIds.has(id));
+      if (eClassIds.length > 0) {
+        return eClassIds.some(id => modalityClassIds.has(id));
+      }
+      // Fallback: check classes array (from backend JSON_ARRAYAGG)
+      const eClasses = (e as any).classes;
+      if (Array.isArray(eClasses)) {
+        return eClasses.some((c: any) => modalityClassIds.has(c.class_id));
+      }
+      // Try parsing if it's a JSON string
+      if (typeof eClasses === 'string') {
+        try {
+          const parsed = JSON.parse(eClasses);
+          if (Array.isArray(parsed)) {
+            return parsed.some((c: any) => modalityClassIds.has(c.class_id));
+          }
+        } catch { /* ignore */ }
+      }
+      return false;
     });
   }, [enrollments, modalityClassIds]);
 
