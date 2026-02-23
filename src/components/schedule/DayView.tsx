@@ -1,10 +1,13 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 interface Student {
   id: string;
   name: string;
   enrollmentId?: number;
+  level_name?: string;
 }
 
 interface ClassSchedule {
@@ -17,6 +20,7 @@ interface ClassSchedule {
   capacity: number;
   students: Student[];
   color: string;
+  allowed_levels?: string[];
 }
 
 interface DayViewProps {
@@ -95,11 +99,22 @@ export default function DayView({ currentDate, classes, onSlotClick }: DayViewPr
                       <div className="day-class-name">{cls.name}</div>
                       {cls.students.length > 0 && (
                         <div className="day-class-students">
-                          {cls.students.map((student) => (
-                            <div key={student.id} className="day-student-chip">
-                              {student.name}
-                            </div>
-                          ))}
+                          {cls.students.map((student) => {
+                            const levelMismatch = cls.allowed_levels && cls.allowed_levels.length > 0 && student.level_name && !cls.allowed_levels.includes(student.level_name);
+                            return (
+                              <div key={student.id} className="day-student-chip">
+                                {levelMismatch && (
+                                  <span
+                                    className="level-warning"
+                                    title={`Nível do aluno (${student.level_name}) não corresponde ao nível da turma (${cls.allowed_levels!.join(', ')})`}
+                                  >
+                                    <FontAwesomeIcon icon={faExclamationTriangle} />
+                                  </span>
+                                )}
+                                {student.name}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

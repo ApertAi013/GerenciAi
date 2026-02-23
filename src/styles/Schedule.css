@@ -744,6 +744,15 @@
   font-weight: 500;
 }
 
+/* Level mismatch warning */
+.level-warning {
+  color: #FCD34D;
+  margin-right: 4px;
+  font-size: 10px;
+  cursor: help;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.5));
+}
+
 /* Responsive */
 @media (max-width: 1400px) {
   .schedule-grid {

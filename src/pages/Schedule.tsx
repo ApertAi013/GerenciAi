@@ -21,6 +21,7 @@ interface Student {
   name: string;
   enrollmentId?: number;
   isMakeup?: boolean;
+  level_name?: string;
 }
 
 interface ClassSchedule {
@@ -238,7 +239,8 @@ export default function Schedule() {
                     id: s.student_id.toString(),
                     name: s.student_name,
                     enrollmentId: s.enrollment_id,
-                    isMakeup: s.is_makeup === true || s.is_makeup === 1
+                    isMakeup: s.is_makeup === true || s.is_makeup === 1,
+                    level_name: s.level_name || undefined
                   };
                 })
               : [];

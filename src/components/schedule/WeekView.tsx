@@ -1,13 +1,14 @@
 import { DndContext, DragOverlay, closestCenter, useDraggable, useDroppable } from '@dnd-kit/core';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClock, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faUsers, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 interface Student {
   id: string;
   name: string;
   enrollmentId?: number;
   isMakeup?: boolean;
+  level_name?: string;
 }
 
 interface ClassSchedule {
@@ -20,6 +21,7 @@ interface ClassSchedule {
   capacity: number;
   students: Student[];
   color: string;
+  allowed_levels?: string[];
 }
 
 interface WeekViewProps {
@@ -59,7 +61,7 @@ const generateTimeSlots = () => {
 const TIME_SLOTS = generateTimeSlots();
 
 // Componente de aluno arrastável
-function DraggableStudent({ student, classId, onStudentClick }: { student: Student; classId: string; onStudentClick?: (studentId: number) => void }) {
+function DraggableStudent({ student, classId, allowedLevels, onStudentClick }: { student: Student; classId: string; allowedLevels?: string[]; onStudentClick?: (studentId: number) => void }) {
   const uniqueId = `student-${student.id}-class-${classId}`;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -67,6 +69,8 @@ function DraggableStudent({ student, classId, onStudentClick }: { student: Stude
     data: { type: 'student', studentId: student.id, classId },
     disabled: student.isMakeup // Disable dragging for makeup students
   });
+
+  const levelMismatch = allowedLevels && allowedLevels.length > 0 && student.level_name && !allowedLevels.includes(student.level_name);
 
   const baseStyle: React.CSSProperties = transform
     ? {
@@ -102,6 +106,14 @@ function DraggableStudent({ student, classId, onStudentClick }: { student: Stude
       title={student.isMakeup ? 'Aluno de remarcação' : student.name}
     >
       {student.isMakeup && '↻ '}
+      {levelMismatch && (
+        <span
+          className="level-warning"
+          title={`Nível do aluno (${student.level_name}) não corresponde ao nível da turma (${allowedLevels!.join(', ')})`}
+        >
+          <FontAwesomeIcon icon={faExclamationTriangle} />
+        </span>
+      )}
       {student.name}
     </div>
   );
@@ -280,6 +292,7 @@ function ClassCard({
                 key={student.id}
                 student={student}
                 classId={classSchedule.id}
+                allowedLevels={classSchedule.allowed_levels}
                 onStudentClick={onStudentClick}
               />
             ))}
