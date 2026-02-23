@@ -14,7 +14,10 @@ import MonthView from '../components/schedule/MonthView';
 import DayView from '../components/schedule/DayView';
 import WeekView from '../components/schedule/WeekView';
 import FilterDropdown from '../components/schedule/FilterDropdown';
+import ScheduleOnboardingTour from '../components/schedule/ScheduleOnboardingTour';
 import '../styles/Schedule.css';
+
+const SCHEDULE_ONBOARDING_KEY = 'schedule_onboarding_completed';
 
 interface Student {
   id: string;
@@ -155,6 +158,7 @@ export default function Schedule() {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Aplicar filtros nas turmas
   const filteredClasses = useMemo(() => {
@@ -338,6 +342,21 @@ export default function Schedule() {
   useEffect(() => {
     fetchClassesAndStudents();
   }, [fetchClassesAndStudents]);
+
+  // Mostrar onboarding apenas uma vez, após carregar turmas
+  useEffect(() => {
+    if (!isLoading && classes.length > 0) {
+      const hasSeenOnboarding = localStorage.getItem(SCHEDULE_ONBOARDING_KEY);
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [isLoading, classes.length]);
+
+  const handleOnboardingFinish = () => {
+    localStorage.setItem(SCHEDULE_ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
 
   const handlePrevious = () => {
     if (viewMode === 'week') {
@@ -688,6 +707,8 @@ export default function Schedule() {
 
   return (
     <div className="schedule-page">
+      <ScheduleOnboardingTour run={showOnboarding} onFinish={handleOnboardingFinish} />
+
       {/* Header */}
       <div className="schedule-header">
         <div className="schedule-title">
