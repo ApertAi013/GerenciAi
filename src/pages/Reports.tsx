@@ -35,7 +35,7 @@ import { useAuthStore } from '../store/authStore';
 import { reportService } from '../services/reportService';
 import { modalityService } from '../services/modalityService';
 import type { Modality } from '../types/levelTypes';
-import type { EnrollmentMonthlyData, FinancialMonthlyData, PlanBreakdown, ModalityBreakdown } from '../types/reportTypes';
+import type { EnrollmentMonthlyData, FinancialMonthlyData, PlanBreakdown, ModalityBreakdown, CancelledEnrollment } from '../types/reportTypes';
 import '../styles/Reports.css';
 
 const formatCurrency = (cents: number) =>
@@ -68,6 +68,26 @@ export default function Reports() {
   const [byPlan, setByPlan] = useState<PlanBreakdown[]>([]);
   const [byModality, setByModality] = useState<ModalityBreakdown[]>([]);
   const [overdueSummary, setOverdueSummary] = useState({ overdue_students: 0, total_overdue_cents: 0, overdue_invoice_count: 0 });
+
+  // Cancelled popup
+  const [showCancelled, setShowCancelled] = useState(false);
+  const [cancelledList, setCancelledList] = useState<CancelledEnrollment[]>([]);
+  const [loadingCancelled, setLoadingCancelled] = useState(false);
+
+  const handleShowCancelled = async () => {
+    setShowCancelled(true);
+    setLoadingCancelled(true);
+    try {
+      const params: { months?: number; modality_id?: number } = { months };
+      if (selectedModality) params.modality_id = selectedModality;
+      const res = await reportService.getCancelledEnrollments(params);
+      setCancelledList(res.data || []);
+    } catch (error) {
+      console.error('Erro ao buscar cancelados:', error);
+    } finally {
+      setLoadingCancelled(false);
+    }
+  };
 
   // Period control
   type PeriodType = 'current' | 'previous' | '3m' | '6m' | '12m' | 'custom';
@@ -383,12 +403,12 @@ export default function Reports() {
           </div>
           <div className="rpt-kpi-accent teal" />
         </div>
-        <div className="rpt-kpi">
+        <div className="rpt-kpi rpt-kpi-clickable" onClick={handleShowCancelled} title="Clique para ver detalhes">
           <div className="rpt-kpi-icon red"><FontAwesomeIcon icon={faUserMinus} /></div>
           <div className="rpt-kpi-body">
             <span className="rpt-kpi-label">Canceladas</span>
             <span className="rpt-kpi-value red-text">{filteredEnrollment.reduce((s, m) => s + m.cancellations, 0)}</span>
-            <span className="rpt-kpi-detail">no período</span>
+            <span className="rpt-kpi-detail">clique para ver detalhes</span>
           </div>
           <div className="rpt-kpi-accent red" />
         </div>
@@ -635,6 +655,59 @@ export default function Reports() {
           )}
         </section>
       </div>
+
+      {/* Popup de Canceladas */}
+      {showCancelled && (
+        <div className="rpt-modal-overlay" onClick={() => setShowCancelled(false)}>
+          <div className="rpt-modal" onClick={e => e.stopPropagation()}>
+            <div className="rpt-modal-header">
+              <h3>Matrículas Canceladas</h3>
+              <button className="rpt-modal-close" onClick={() => setShowCancelled(false)}>
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            <div className="rpt-modal-body">
+              {loadingCancelled ? (
+                <div className="rpt-modal-loading">
+                  <div className="loading-spinner" />
+                  <p>Carregando...</p>
+                </div>
+              ) : cancelledList.length === 0 ? (
+                <div className="rpt-modal-empty">Nenhuma matrícula cancelada no período.</div>
+              ) : (
+                <div className="rpt-modal-list">
+                  <div className="rpt-modal-list-header">
+                    <span>Aluno</span>
+                    <span>Plano</span>
+                    <span>Data cancelamento</span>
+                    <span>Contato</span>
+                  </div>
+                  {cancelledList.map(item => (
+                    <div key={item.id} className="rpt-modal-list-row">
+                      <span className="rpt-modal-name">{item.student_name}</span>
+                      <span className="rpt-modal-plan">{item.plan_name}</span>
+                      <span className="rpt-modal-date">
+                        {new Date(item.cancelled_at).toLocaleDateString('pt-BR')}
+                      </span>
+                      <span className="rpt-modal-contact">
+                        {item.student_phone ? (
+                          <a href={`https://wa.me/55${item.student_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="rpt-modal-whatsapp">
+                            {item.student_phone}
+                          </a>
+                        ) : item.student_email || '—'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rpt-modal-footer">
+              <span className="rpt-modal-count">{cancelledList.length} cancelamento(s)</span>
+              <button className="rpt-modal-btn" onClick={() => setShowCancelled(false)}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
