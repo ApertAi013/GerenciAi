@@ -62,6 +62,9 @@ export default function Forms() {
   const [formStartsAt, setFormStartsAt] = useState('');
   const [formExpiresAt, setFormExpiresAt] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [useUrlMode, setUseUrlMode] = useState(false);
 
   // Targeting data
   const [modalities, setModalities] = useState<Array<{ id: number; name: string }>>([]);
@@ -348,9 +351,67 @@ export default function Forms() {
               </div>
 
               <div className="form-group">
-                <label>URL da Imagem (opcional)</label>
-                <input type="url" value={formImageUrl} onChange={e => setFormImageUrl(e.target.value)} placeholder="https://..." />
-                {formImageUrl && <img src={formImageUrl} alt="Preview" className="image-preview" onError={e => (e.currentTarget.style.display = 'none')} />}
+                <label>Imagem (opcional)</label>
+                {formImageUrl ? (
+                  <div className="image-dropzone-preview">
+                    <img src={formImageUrl} alt="Preview" />
+                    <button type="button" className="image-remove-btn" onClick={() => setFormImageUrl('')}><FontAwesomeIcon icon={faTimes} /></button>
+                  </div>
+                ) : isUploadingImage ? (
+                  <div className="image-dropzone uploading">
+                    <div className="image-uploading-spinner" />
+                    <span>Enviando imagem...</span>
+                  </div>
+                ) : useUrlMode ? (
+                  <div>
+                    <input type="url" value={formImageUrl} onChange={e => setFormImageUrl(e.target.value)} placeholder="https://..." />
+                    <button type="button" className="btn-toggle-upload" onClick={() => setUseUrlMode(false)}>Ou arraste uma imagem</button>
+                  </div>
+                ) : (
+                  <div
+                    className={`image-dropzone ${isDragging ? 'dragging' : ''}`}
+                    onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={async e => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      const file = e.dataTransfer.files[0];
+                      if (!file) return;
+                      if (file.size > 2 * 1024 * 1024) { toast.error('Imagem muito grande. Máximo 2MB.'); return; }
+                      if (!file.type.startsWith('image/')) { toast.error('Selecione uma imagem.'); return; }
+                      setIsUploadingImage(true);
+                      try {
+                        const url = await formService.uploadImage(file);
+                        setFormImageUrl(url);
+                      } catch { toast.error('Erro ao enviar imagem'); }
+                      finally { setIsUploadingImage(false); }
+                    }}
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = async (ev) => {
+                        const file = (ev.target as HTMLInputElement).files?.[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) { toast.error('Imagem muito grande. Máximo 2MB.'); return; }
+                        setIsUploadingImage(true);
+                        try {
+                          const url = await formService.uploadImage(file);
+                          setFormImageUrl(url);
+                        } catch { toast.error('Erro ao enviar imagem'); }
+                        finally { setIsUploadingImage(false); }
+                      };
+                      input.click();
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faPlus} style={{ fontSize: '1.5rem', color: '#9ca3af' }} />
+                    <span>Arraste uma imagem ou clique para selecionar</span>
+                    <small>JPEG, PNG, WebP ou GIF (máx. 2MB)</small>
+                  </div>
+                )}
+                {!formImageUrl && !isUploadingImage && !useUrlMode && (
+                  <button type="button" className="btn-toggle-upload" onClick={() => setUseUrlMode(true)}>Ou cole uma URL</button>
+                )}
               </div>
 
               <div className="form-group">
