@@ -176,4 +176,28 @@ export const trialStudentService = {
     const response = await api.post('/api/trial-students/booking-token/generate');
     return response.data;
   },
+
+  // ============================================================
+  // Custom Booking Links
+  // ============================================================
+
+  async getBookingLinks(): Promise<{ status: string; data: any[] }> {
+    const response = await api.get('/api/trial-students/booking-links');
+    return response.data;
+  },
+
+  async createBookingLink(data: { name: string; class_ids: number[] }): Promise<{ status: string; data: any }> {
+    const response = await api.post('/api/trial-students/booking-links', data);
+    return response.data;
+  },
+
+  async updateBookingLink(id: number, data: { name?: string; class_ids?: number[]; is_active?: boolean }): Promise<{ status: string; message: string }> {
+    const response = await api.put(`/api/trial-students/booking-links/${id}`, data);
+    return response.data;
+  },
+
+  async deleteBookingLink(id: number): Promise<{ status: string; message: string }> {
+    const response = await api.delete(`/api/trial-students/booking-links/${id}`);
+    return response.data;
+  },
 };

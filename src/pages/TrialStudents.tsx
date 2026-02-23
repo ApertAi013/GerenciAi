@@ -22,6 +22,10 @@ import {
   ChevronUp,
   ToggleLeft,
   ToggleRight,
+  Link2,
+  Plus,
+  Edit3,
+  ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { trialStudentService } from '../services/trialStudentService';
@@ -62,6 +66,12 @@ export default function TrialStudents() {
   const [bookingToken, setBookingToken] = useState<string | null>(null);
   const [generatingToken, setGeneratingToken] = useState(false);
 
+  // Booking links state
+  const [bookingLinks, setBookingLinks] = useState<any[]>([]);
+  const [showBookingLinksSection, setShowBookingLinksSection] = useState(true);
+  const [showCreateLinkModal, setShowCreateLinkModal] = useState(false);
+  const [editingLink, setEditingLink] = useState<any | null>(null);
+
   // Helper function to safely convert to number
   const safeNumber = (value: any, defaultValue: number = 0): number => {
     const num = Number(value);
@@ -74,6 +84,7 @@ export default function TrialStudents() {
     fetchTrialClassConfig();
     fetchUpcomingBookings();
     fetchAllClasses();
+    fetchBookingLinks();
   }, [statusFilter, expiredFilter]);
 
   const fetchStudents = async () => {
@@ -192,6 +203,44 @@ export default function TrialStudents() {
     } catch (error) {
       console.error('Error fetching upcoming bookings:', error);
     }
+  };
+
+  const fetchBookingLinks = async () => {
+    try {
+      const response = await trialStudentService.getBookingLinks();
+      if (response.status === 'success') {
+        setBookingLinks(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching booking links:', error);
+    }
+  };
+
+  const handleDeleteBookingLink = async (id: number, name: string) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o link "${name}"?`)) return;
+    try {
+      await trialStudentService.deleteBookingLink(id);
+      toast.success('Link excluído com sucesso');
+      fetchBookingLinks();
+    } catch (error) {
+      toast.error('Erro ao excluir link');
+    }
+  };
+
+  const handleToggleBookingLink = async (link: any) => {
+    try {
+      await trialStudentService.updateBookingLink(link.id, { is_active: !link.is_active });
+      toast.success(link.is_active ? 'Link desativado' : 'Link ativado');
+      fetchBookingLinks();
+    } catch (error) {
+      toast.error('Erro ao atualizar link');
+    }
+  };
+
+  const copyCustomBookingLink = (token: string) => {
+    const link = `${window.location.origin}/aula-experimental/${token}`;
+    navigator.clipboard.writeText(link);
+    toast.success('Link copiado!');
   };
 
   const handleToggleClass = async (classId: number, currentConfig: any) => {
@@ -638,6 +687,115 @@ export default function TrialStudents() {
         )}
       </div>
 
+      {/* Custom Booking Links Section */}
+      <div className="trial-config-section">
+        <div
+          className="trial-config-header"
+          onClick={() => setShowBookingLinksSection(!showBookingLinksSection)}
+          style={{ cursor: 'pointer' }}
+        >
+          <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Link2 size={20} />
+            Links Personalizados
+            <span style={{ fontSize: '0.8rem', color: '#666', fontWeight: 400 }}>
+              ({bookingLinks.filter((l: any) => l.is_active).length} ativos)
+            </span>
+          </h2>
+          {showBookingLinksSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
+
+        {showBookingLinksSection && (
+          <div className="trial-config-body">
+            <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '1rem' }}>
+              Crie links de agendamento que mostram apenas turmas específicas. Ideal para divulgar modalidades separadamente.
+            </p>
+
+            <button
+              className="btn-primary"
+              onClick={() => { setEditingLink(null); setShowCreateLinkModal(true); }}
+              style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Plus size={18} /> Criar Link Personalizado
+            </button>
+
+            {bookingLinks.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#999', padding: '1.5rem 0' }}>
+                Nenhum link personalizado criado. O link global continua funcionando normalmente.
+              </p>
+            ) : (
+              <div className="booking-links-list">
+                {bookingLinks.map((link: any) => (
+                  <div key={link.id} className={`booking-link-card ${link.is_active ? 'active' : 'inactive'}`}>
+                    <div className="booking-link-top">
+                      <div className="booking-link-info">
+                        <div className="booking-link-name">
+                          {link.name}
+                          {!link.is_active && (
+                            <span className="booking-link-inactive-badge">Inativo</span>
+                          )}
+                        </div>
+                        <div className="booking-link-classes">
+                          {link.classes && link.classes.length > 0 ? (
+                            link.classes.map((c: any) => (
+                              <span key={c.id} className="booking-link-class-badge">
+                                {c.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span style={{ color: '#999', fontSize: '0.8rem' }}>
+                              {link.class_ids?.length || 0} turma(s)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="booking-link-actions">
+                        <button
+                          className="trial-toggle-btn"
+                          onClick={() => handleToggleBookingLink(link)}
+                          style={{ color: link.is_active ? '#22c55e' : '#ccc' }}
+                          title={link.is_active ? 'Desativar' : 'Ativar'}
+                        >
+                          {link.is_active ? <ToggleRight size={26} /> : <ToggleLeft size={26} />}
+                        </button>
+                        <button
+                          className="trial-action-btn"
+                          onClick={() => copyCustomBookingLink(link.token)}
+                          title="Copiar link"
+                        >
+                          <Copy size={16} />
+                        </button>
+                        <button
+                          className="trial-action-btn"
+                          onClick={() => { setEditingLink(link); setShowCreateLinkModal(true); }}
+                          title="Editar"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button
+                          className="trial-action-btn delete"
+                          onClick={() => handleDeleteBookingLink(link.id, link.name)}
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="booking-link-url">
+                      <input
+                        type="text"
+                        readOnly
+                        value={`${window.location.origin}/aula-experimental/${link.token}`}
+                        onClick={(e) => (e.target as HTMLInputElement).select()}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Upcoming Trial Bookings Mini Agenda */}
       {upcomingBookings.length > 0 && (
         <div className="trial-upcoming-section">
@@ -964,6 +1122,21 @@ export default function TrialStudents() {
         />
       )}
 
+      {/* Create/Edit Booking Link Modal */}
+      {showCreateLinkModal && (
+        <CreateBookingLinkModal
+          link={editingLink}
+          allClasses={allClasses}
+          trialClassConfigs={trialClassConfigs}
+          onClose={() => { setShowCreateLinkModal(false); setEditingLink(null); }}
+          onSuccess={() => {
+            fetchBookingLinks();
+            setShowCreateLinkModal(false);
+            setEditingLink(null);
+          }}
+        />
+      )}
+
       {/* Share Link Modal */}
       {showShareModal && bookingToken && (
         <div className="trial-modal-overlay" onClick={() => setShowShareModal(false)}>
@@ -1271,6 +1444,213 @@ function TrialStudentDetailsModal({
         <div className="trial-modal-footer">
           <button className="btn-secondary" onClick={onClose}>
             Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Modal de Criação/Edição de Link Personalizado
+interface CreateBookingLinkModalProps {
+  link: any | null;
+  allClasses: any[];
+  trialClassConfigs: any[];
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, onClose, onSuccess }: CreateBookingLinkModalProps) {
+  const [name, setName] = useState(link?.name || '');
+  const [selectedClassIds, setSelectedClassIds] = useState<number[]>(link?.class_ids || []);
+  const [saving, setSaving] = useState(false);
+  const [classSearch, setClassSearch] = useState('');
+
+  const WEEKDAY_LABELS_LOCAL: Record<string, string> = {
+    seg: 'Seg', ter: 'Ter', qua: 'Qua', qui: 'Qui',
+    sex: 'Sex', sab: 'Sáb', dom: 'Dom',
+  };
+
+  // Group classes by modality
+  const enabledConfigIds = new Set(trialClassConfigs.filter((c: any) => c.is_enabled).map((c: any) => c.class_id));
+
+  const classesGrouped: Record<string, any[]> = {};
+  allClasses.forEach((c: any) => {
+    const mod = c.modality_name || c.modality || 'Sem modalidade';
+    if (!classesGrouped[mod]) classesGrouped[mod] = [];
+    classesGrouped[mod].push(c);
+  });
+
+  // Sort within groups
+  const weekdayOrder = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
+  Object.values(classesGrouped).forEach(classes => {
+    classes.sort((a: any, b: any) => {
+      const wa = weekdayOrder.indexOf(a.weekday) ?? 99;
+      const wb = weekdayOrder.indexOf(b.weekday) ?? 99;
+      if (wa !== wb) return wa - wb;
+      return (a.start_time || '').localeCompare(b.start_time || '');
+    });
+  });
+
+  const toggleClass = (id: number) => {
+    setSelectedClassIds(prev =>
+      prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleModality = (modality: string) => {
+    const modClasses = classesGrouped[modality] || [];
+    const modIds = modClasses.map((c: any) => c.id);
+    const allSelected = modIds.every((id: number) => selectedClassIds.includes(id));
+    if (allSelected) {
+      setSelectedClassIds(prev => prev.filter(id => !modIds.includes(id)));
+    } else {
+      setSelectedClassIds(prev => [...new Set([...prev, ...modIds])]);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error('Informe um nome para o link');
+      return;
+    }
+    if (selectedClassIds.length === 0) {
+      toast.error('Selecione pelo menos uma turma');
+      return;
+    }
+    setSaving(true);
+    try {
+      if (link) {
+        await trialStudentService.updateBookingLink(link.id, { name: name.trim(), class_ids: selectedClassIds });
+        toast.success('Link atualizado com sucesso');
+      } else {
+        await trialStudentService.createBookingLink({ name: name.trim(), class_ids: selectedClassIds });
+        toast.success('Link criado com sucesso');
+      }
+      onSuccess();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao salvar link');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const filteredGroups = Object.entries(classesGrouped).filter(([modality, classes]) => {
+    if (!classSearch.trim()) return true;
+    const search = classSearch.toLowerCase();
+    return modality.toLowerCase().includes(search) ||
+      classes.some((c: any) => c.name?.toLowerCase().includes(search));
+  });
+
+  return (
+    <div className="trial-modal-overlay" onClick={onClose}>
+      <div className="trial-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px' }}>
+        <div className="trial-modal-header">
+          <h2>
+            <Link2 size={24} style={{ marginRight: '0.5rem', display: 'inline' }} />
+            {link ? 'Editar Link Personalizado' : 'Criar Link Personalizado'}
+          </h2>
+          <button className="trial-modal-close" onClick={onClose}>
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="trial-modal-body">
+          <div className="trial-form-group">
+            <label className="required">Nome do Link</label>
+            <input
+              type="text"
+              placeholder="Ex: Link Beach Tennis, Link Manhã..."
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="trial-form-group">
+            <label className="required">
+              Turmas ({selectedClassIds.length} selecionada{selectedClassIds.length !== 1 ? 's' : ''})
+            </label>
+            <input
+              type="text"
+              placeholder="Buscar turma..."
+              value={classSearch}
+              onChange={(e) => setClassSearch(e.target.value)}
+              style={{ marginBottom: '0.75rem' }}
+            />
+            <div className="booking-link-class-selector">
+              {filteredGroups.map(([modality, classes]) => {
+                const modIds = classes.map((c: any) => c.id);
+                const allSelected = modIds.every((id: number) => selectedClassIds.includes(id));
+                const someSelected = modIds.some((id: number) => selectedClassIds.includes(id));
+                return (
+                  <div key={modality} className="booking-link-modality-group">
+                    <div
+                      className="booking-link-modality-header"
+                      onClick={() => toggleModality(modality)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                        onChange={() => toggleModality(modality)}
+                      />
+                      <span className="booking-link-modality-name">{modality}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#999' }}>
+                        ({classes.filter((c: any) => selectedClassIds.includes(c.id)).length}/{classes.length})
+                      </span>
+                    </div>
+                    <div className="booking-link-class-list">
+                      {classes.map((c: any) => {
+                        const isEnabled = enabledConfigIds.has(c.id);
+                        return (
+                          <label
+                            key={c.id}
+                            className={`booking-link-class-item ${selectedClassIds.includes(c.id) ? 'selected' : ''} ${!isEnabled ? 'not-enabled' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedClassIds.includes(c.id)}
+                              onChange={() => toggleClass(c.id)}
+                            />
+                            <span
+                              className="trial-config-class-dot"
+                              style={{ background: c.color || '#3B82F6' }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{c.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#999' }}>
+                                {WEEKDAY_LABELS_LOCAL[c.weekday] || c.weekday} · {c.start_time?.slice(0, 5)} - {c.end_time?.slice(0, 5)}
+                                {!isEnabled && <span style={{ color: '#ef4444', marginLeft: 6 }}>(Não habilitada)</span>}
+                              </div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredGroups.length === 0 && (
+                <p style={{ textAlign: 'center', color: '#999', padding: '1rem 0' }}>Nenhuma turma encontrada</p>
+              )}
+            </div>
+          </div>
+
+          {selectedClassIds.some(id => !enabledConfigIds.has(id)) && (
+            <div style={{
+              background: '#fff3cd', borderLeft: '4px solid #ffc107',
+              padding: '0.75rem 1rem', borderRadius: 8, fontSize: '0.8rem', color: '#856404', marginTop: '0.5rem'
+            }}>
+              Algumas turmas selecionadas não estão habilitadas para aula experimental. Elas não aparecerão no link enquanto não forem habilitadas na seção acima.
+            </div>
+          )}
+        </div>
+
+        <div className="trial-modal-footer">
+          <button className="btn-secondary" onClick={onClose}>Cancelar</button>
+          <button className="btn-primary" onClick={handleSave} disabled={saving}>
+            {saving ? 'Salvando...' : link ? 'Salvar Alterações' : 'Criar Link'}
           </button>
         </div>
       </div>
