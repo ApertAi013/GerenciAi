@@ -80,6 +80,26 @@ export const rentalService = {
   },
 
   /**
+   * Verificar conflitos com turmas (horário x local)
+   */
+  checkClassConflicts: async (
+    courtName: string,
+    rentalDate: string,
+    startTime: string,
+    endTime: string
+  ): Promise<ApiResponse<{ has_conflicts: boolean; conflicts: Array<{ id: number; name: string; modality: string; start_time: string; end_time: string }> }>> => {
+    const response = await api.get('/api/court-rentals/class-conflicts', {
+      params: {
+        court_name: courtName,
+        rental_date: rentalDate,
+        start_time: startTime,
+        end_time: endTime,
+      },
+    });
+    return response.data;
+  },
+
+  /**
    * Listar todas as quadras cadastradas com estatísticas
    */
   getCourts: async (): Promise<ApiResponse<Court[]>> => {

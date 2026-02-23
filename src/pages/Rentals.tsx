@@ -169,6 +169,30 @@ export default function Rentals() {
         return;
       }
 
+      // Verificar conflitos com turmas
+      try {
+        const classConflictRes = await rentalService.checkClassConflicts(
+          formData.court_name,
+          formData.rental_date,
+          formData.start_time,
+          formData.end_time
+        );
+
+        if (classConflictRes.data.has_conflicts) {
+          const classConflicts = classConflictRes.data.conflicts
+            .map(c => `${c.name} (${c.modality}) - ${c.start_time.substring(0, 5)} às ${c.end_time.substring(0, 5)}`)
+            .join('\n');
+
+          const shouldContinue = window.confirm(
+            `Atenção: Esta locação conflita com turmas ativas:\n\n${classConflicts}\n\nDeseja continuar mesmo assim?`
+          );
+
+          if (!shouldContinue) return;
+        }
+      } catch (conflictErr) {
+        console.error('Erro ao verificar conflitos com turmas:', conflictErr);
+      }
+
       // Criar locação
       const response = await rentalService.createRental(formData);
       if ((response as any).status === 'success' || (response as any).success === true) {
