@@ -5,18 +5,21 @@ import { authService } from '../services/authService';
 import {
   faCalendarDays,
   faMoneyBillWave,
-  faUsers,
   faChartLine,
   faMobileScreenButton,
-  faBell,
   faRobot,
   faComments,
   faCheck,
   faGift,
   faPlay,
   faVideo,
-  faPercent
+  faPercent,
+  faUserPlus,
+  faTableTennis,
+  faCreditCard,
+  faArrowRight
 } from '@fortawesome/free-solid-svg-icons';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import '../styles/LandingPage.css';
 
 export default function LandingPage() {
@@ -59,7 +62,7 @@ export default function LandingPage() {
       });
     }, observerOptions);
 
-    document.querySelectorAll('.recursos-section, .ia-section, .parceria-section, .contato-section').forEach(section => {
+    document.querySelectorAll('.recursos-section, .ia-section, .parceria-section, .app-section, .contato-section').forEach(section => {
       sectionObserver.observe(section);
     });
 
@@ -155,10 +158,7 @@ export default function LandingPage() {
   };
 
   const handleContratar = () => {
-    const phone = '5531992048792';
-    const message = `Olá! Gostaria de contratar o ArenaAi - Gestão de Quadras Inteligente.`;
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    navigate('/contratar');
   };
 
   const handleCTA = () => {
@@ -279,50 +279,50 @@ export default function LandingPage() {
           <div className="recursos-grid">
             <div className="recurso-card">
               <div className="recurso-icon">
-                <FontAwesomeIcon icon={faCalendarDays} size="3x" color="#f04f28" />
+                <FontAwesomeIcon icon={faUserPlus} size="3x" color="#f04f28" />
               </div>
-              <h3>Agenda Inteligente</h3>
-              <p>Organize horários, aulas e eventos automaticamente. Sem conflitos, sem dor de cabeça.</p>
+              <h3>Alunos Experimentais</h3>
+              <p>Sistema completo de aulas experimentais com links de agendamento público, acompanhamento de status e conversão automática.</p>
             </div>
 
             <div className="recurso-card">
               <div className="recurso-icon">
-                <FontAwesomeIcon icon={faMoneyBillWave} size="3x" color="#f04f28" />
+                <FontAwesomeIcon icon={faTableTennis} size="3x" color="#f04f28" />
               </div>
-              <h3>Controle Financeiro</h3>
-              <p>Acompanhe pagamentos, mensalidades e inadimplências em tempo real com relatórios completos.</p>
+              <h3>Locação de Quadras</h3>
+              <p>Agendamento visual com preços por horário, link público para reservas, controle de mensalistas e detecção de conflitos.</p>
             </div>
 
             <div className="recurso-card">
               <div className="recurso-icon">
-                <FontAwesomeIcon icon={faUsers} size="3x" color="#f04f28" />
+                <FontAwesomeIcon icon={faCreditCard} size="3x" color="#f04f28" />
               </div>
-              <h3>Gestão de Alunos</h3>
-              <p>Cadastre alunos, controle presenças e organize turmas de forma simples e rápida.</p>
+              <h3>Gestão Financeira</h3>
+              <p>Cobranças automáticas via PIX e cartão, controle de inadimplência, pagamento direto pelo app do aluno.</p>
             </div>
 
             <div className="recurso-card">
               <div className="recurso-icon">
-                <FontAwesomeIcon icon={faChartLine} size="3x" color="#f04f28" />
+                <FontAwesomeIcon icon={faWhatsapp} size="3x" color="#f04f28" />
               </div>
-              <h3>Relatórios em Tempo Real</h3>
-              <p>Veja métricas de ocupação, faturamento e performance da sua quadra instantaneamente.</p>
+              <h3>Automação WhatsApp</h3>
+              <p>Lembretes de cobrança, confirmação de pagamento e templates personalizáveis enviados automaticamente.</p>
             </div>
 
             <div className="recurso-card">
               <div className="recurso-icon">
                 <FontAwesomeIcon icon={faMobileScreenButton} size="3x" color="#f04f28" />
               </div>
-              <h3>WhatsApp Integrado</h3>
-              <p>Envie lembretes de pagamento e confirmações de aula direto pelo WhatsApp.</p>
+              <h3>App Mobile</h3>
+              <p>App completo para alunos: créditos, cancelamentos, reservas de aula experimental, pagamentos e notificações push.</p>
             </div>
 
             <div className="recurso-card">
               <div className="recurso-icon">
-                <FontAwesomeIcon icon={faBell} size="3x" color="#f04f28" />
+                <FontAwesomeIcon icon={faCalendarDays} size="3x" color="#f04f28" />
               </div>
-              <h3>Notificações Automáticas</h3>
-              <p>Receba alertas sobre inadimplência, horários vagos e oportunidades de vendas.</p>
+              <h3>Agenda Inteligente</h3>
+              <p>Drag-and-drop de turmas e alunos, visão semanal e diária, busca rápida e detecção automática de conflitos.</p>
             </div>
           </div>
         </div>
@@ -535,12 +535,84 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* APP SHOWCASE SECTION */}
+      <section className="app-section">
+        <div className="app-content">
+          <div className="app-left">
+            <h2 className="section-title">App completo para seus alunos</h2>
+            <p className="section-subtitle" style={{ textAlign: 'left' }}>Seus alunos gerenciam tudo na palma da mão. Você reduz trabalho operacional.</p>
+
+            <div className="app-features-list">
+              <div className="app-feature-item">
+                <FontAwesomeIcon icon={faCheck} className="app-feature-check" />
+                <span>Créditos e cancelamentos de aula</span>
+              </div>
+              <div className="app-feature-item">
+                <FontAwesomeIcon icon={faCheck} className="app-feature-check" />
+                <span>Reservas de aula experimental</span>
+              </div>
+              <div className="app-feature-item">
+                <FontAwesomeIcon icon={faCheck} className="app-feature-check" />
+                <span>Pagamento de mensalidade pelo app</span>
+              </div>
+              <div className="app-feature-item">
+                <FontAwesomeIcon icon={faCheck} className="app-feature-check" />
+                <span>Formulários e pesquisas</span>
+              </div>
+              <div className="app-feature-item">
+                <FontAwesomeIcon icon={faCheck} className="app-feature-check" />
+                <span>Notificações push em tempo real</span>
+              </div>
+              <div className="app-feature-item">
+                <FontAwesomeIcon icon={faCheck} className="app-feature-check" />
+                <span>Avisos e comunicados do gestor</span>
+              </div>
+            </div>
+
+            <button className="btn-cta" onClick={handleContratar} style={{ marginTop: 24 }}>
+              Quero o app para meus alunos
+              <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: 8 }} />
+            </button>
+          </div>
+
+          <div className="app-right">
+            <div className="app-mockup">
+              <div className="app-phone">
+                <div className="app-phone-notch"></div>
+                <div className="app-phone-screen">
+                  <div className="app-screen-header">
+                    <span>ArenaAi</span>
+                    <span className="app-screen-bell">🔔</span>
+                  </div>
+                  <div className="app-screen-card">
+                    <div className="app-screen-label">Próxima aula</div>
+                    <div className="app-screen-value">Terça, 18h - Beach Tennis</div>
+                  </div>
+                  <div className="app-screen-card">
+                    <div className="app-screen-label">Créditos restantes</div>
+                    <div className="app-screen-value" style={{ color: '#22C55E' }}>3 aulas</div>
+                  </div>
+                  <div className="app-screen-card">
+                    <div className="app-screen-label">Fatura</div>
+                    <div className="app-screen-value">R$ 200,00 <span className="app-screen-badge">Pago</span></div>
+                  </div>
+                  <div className="app-screen-btn">Reservar aula experimental</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CONTATO SECTION */}
       <section id="contato" className="contato-section">
         <div className="contato-content">
           <h2 className="section-title">Pronto para transformar sua gestão?</h2>
-          <p className="section-subtitle">Teste grátis por 14 dias. Sem cartão de crédito.</p>
-          <button className="btn-cta-large" onClick={handleContratar}>Começar agora</button>
+          <p className="section-subtitle">Teste grátis por 30 dias. Sem cartão de crédito.</p>
+          <button className="btn-cta-large" onClick={handleContratar}>
+            Começar agora
+            <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: 12 }} />
+          </button>
         </div>
       </section>
     </div>
