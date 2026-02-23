@@ -14,6 +14,7 @@ import {
   faTimes,
   faChevronLeft,
   faChevronRight,
+  faCalendarAlt,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   BarChart,
@@ -69,7 +70,25 @@ export default function Reports() {
   const [overdueSummary, setOverdueSummary] = useState({ overdue_students: 0, total_overdue_cents: 0, overdue_invoice_count: 0 });
 
   // Period control
-  const [months, setMonths] = useState(6);
+  type PeriodType = 'current' | 'previous' | '3m' | '6m' | '12m' | 'custom';
+  const [periodType, setPeriodType] = useState<PeriodType>('6m');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const [showCustomPicker, setShowCustomPicker] = useState(false);
+
+  const months = periodType === 'current' ? 1 : periodType === 'previous' ? 2 : periodType === '3m' ? 3 : periodType === '12m' ? 12 : periodType === 'custom' ? 12 : 6;
+
+  const getPeriodLabel = () => {
+    const now = new Date();
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    if (periodType === 'current') return `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+    if (periodType === 'previous') {
+      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return `${monthNames[prev.getMonth()]} ${prev.getFullYear()}`;
+    }
+    if (periodType === 'custom' && customStart && customEnd) return `${customStart} a ${customEnd}`;
+    return `Últimos ${months} meses`;
+  };
 
   useEffect(() => {
     const fetchModalities = async () => {
@@ -117,42 +136,79 @@ export default function Reports() {
     fetchReports();
   }, [user, months, selectedModality]);
 
+  // Filter data by period
+  const filteredFinancial = (() => {
+    if (periodType === 'current') {
+      const now = new Date();
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      return financialMonthly.filter(m => m.month === key);
+    }
+    if (periodType === 'previous') {
+      const now = new Date();
+      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const key = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+      return financialMonthly.filter(m => m.month === key);
+    }
+    if (periodType === 'custom' && customStart && customEnd) {
+      return financialMonthly.filter(m => m.month >= customStart && m.month <= customEnd);
+    }
+    return financialMonthly;
+  })();
+
+  const filteredEnrollment = (() => {
+    if (periodType === 'current') {
+      const now = new Date();
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      return enrollmentStats.filter(m => m.month === key);
+    }
+    if (periodType === 'previous') {
+      const now = new Date();
+      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const key = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+      return enrollmentStats.filter(m => m.month === key);
+    }
+    if (periodType === 'custom' && customStart && customEnd) {
+      return enrollmentStats.filter(m => m.month >= customStart && m.month <= customEnd);
+    }
+    return enrollmentStats;
+  })();
+
   // Calculated totals
-  const totalFaturado = financialMonthly.reduce((s, m) => s + m.faturado_cents, 0);
-  const totalRecebido = financialMonthly.reduce((s, m) => s + m.recebido_cents, 0);
+  const totalFaturado = filteredFinancial.reduce((s, m) => s + m.faturado_cents, 0);
+  const totalRecebido = filteredFinancial.reduce((s, m) => s + m.recebido_cents, 0);
   const avgTicket = (() => {
-    const totalPaid = financialMonthly.reduce((s, m) => s + m.paid_count, 0);
+    const totalPaid = filteredFinancial.reduce((s, m) => s + m.paid_count, 0);
     return totalPaid > 0 ? Math.round(totalRecebido / totalPaid) : 0;
   })();
 
   // Chart data for revenue
-  const revenueChartData = financialMonthly.map(m => ({
+  const revenueChartData = filteredFinancial.map(m => ({
     month: formatMonthLabel(m.month),
     Faturado: m.faturado_cents / 100,
     Recebido: m.recebido_cents / 100,
   }));
 
   // Chart data for enrollments
-  const enrollmentChartData = enrollmentStats.map(m => ({
+  const enrollmentChartData = filteredEnrollment.map(m => ({
     month: formatMonthLabel(m.month),
     Novas: m.new_enrollments,
     Canceladas: m.cancellations,
   }));
 
   // Chart data for active clients
-  const activeChartData = enrollmentStats.map(m => ({
+  const activeChartData = filteredEnrollment.map(m => ({
     month: formatMonthLabel(m.month),
     Ativos: m.active_at_end,
   }));
 
   // Chart data for churn
-  const churnChartData = enrollmentStats.map(m => ({
+  const churnChartData = filteredEnrollment.map(m => ({
     month: formatMonthLabel(m.month),
     'Churn %': m.churn_rate,
   }));
 
   // Chart data for ticket medio
-  const ticketChartData = financialMonthly.map(m => ({
+  const ticketChartData = filteredFinancial.map(m => ({
     month: formatMonthLabel(m.month),
     'Ticket Medio': m.ticket_medio_cents / 100,
   }));
@@ -196,28 +252,61 @@ export default function Reports() {
         <div className="rpt-header-inner">
           <div>
             <h1 className="rpt-title">Relatórios</h1>
-            <p className="rpt-subtitle">Visão geral dos últimos {months} meses</p>
+            <p className="rpt-subtitle">{getPeriodLabel()}</p>
           </div>
           <div className="rpt-header-right">
-            <div className="rpt-period-control">
-              <button
-                className="rpt-period-btn"
-                onClick={() => setMonths(m => Math.max(3, m - 3))}
-                disabled={months <= 3}
-              >
-                <FontAwesomeIcon icon={faChevronLeft} />
-              </button>
-              <span className="rpt-period-label">{months} meses</span>
-              <button
-                className="rpt-period-btn"
-                onClick={() => setMonths(m => Math.min(24, m + 3))}
-                disabled={months >= 24}
-              >
-                <FontAwesomeIcon icon={faChevronRight} />
-              </button>
-            </div>
+            <FontAwesomeIcon icon={faCalendarAlt} className="rpt-period-icon" />
           </div>
         </div>
+        <div className="rpt-period-tabs">
+          {([
+            { key: 'current' as PeriodType, label: 'Mês atual' },
+            { key: 'previous' as PeriodType, label: 'Mês anterior' },
+            { key: '3m' as PeriodType, label: '3 meses' },
+            { key: '6m' as PeriodType, label: '6 meses' },
+            { key: '12m' as PeriodType, label: '12 meses' },
+            { key: 'custom' as PeriodType, label: 'Personalizado' },
+          ]).map(tab => (
+            <button
+              key={tab.key}
+              className={`rpt-period-tab ${periodType === tab.key ? 'active' : ''}`}
+              onClick={() => {
+                setPeriodType(tab.key);
+                if (tab.key === 'custom') setShowCustomPicker(true);
+                else setShowCustomPicker(false);
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {showCustomPicker && periodType === 'custom' && (
+          <div className="rpt-custom-period">
+            <div className="rpt-custom-field">
+              <label>De</label>
+              <input
+                type="month"
+                value={customStart}
+                onChange={e => setCustomStart(e.target.value)}
+              />
+            </div>
+            <div className="rpt-custom-field">
+              <label>Até</label>
+              <input
+                type="month"
+                value={customEnd}
+                onChange={e => setCustomEnd(e.target.value)}
+              />
+            </div>
+            <button
+              className="rpt-custom-apply"
+              onClick={() => setShowCustomPicker(false)}
+              disabled={!customStart || !customEnd}
+            >
+              Aplicar
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Active Filters */}
@@ -289,7 +378,7 @@ export default function Reports() {
           <div className="rpt-kpi-icon teal"><FontAwesomeIcon icon={faUserPlus} /></div>
           <div className="rpt-kpi-body">
             <span className="rpt-kpi-label">Novas</span>
-            <span className="rpt-kpi-value">{enrollmentSummary.total_new}</span>
+            <span className="rpt-kpi-value">{filteredEnrollment.reduce((s, m) => s + m.new_enrollments, 0)}</span>
             <span className="rpt-kpi-detail">no período</span>
           </div>
           <div className="rpt-kpi-accent teal" />
@@ -298,7 +387,7 @@ export default function Reports() {
           <div className="rpt-kpi-icon red"><FontAwesomeIcon icon={faUserMinus} /></div>
           <div className="rpt-kpi-body">
             <span className="rpt-kpi-label">Canceladas</span>
-            <span className="rpt-kpi-value red-text">{enrollmentSummary.total_cancellations}</span>
+            <span className="rpt-kpi-value red-text">{filteredEnrollment.reduce((s, m) => s + m.cancellations, 0)}</span>
             <span className="rpt-kpi-detail">no período</span>
           </div>
           <div className="rpt-kpi-accent red" />

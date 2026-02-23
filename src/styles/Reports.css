@@ -82,6 +82,103 @@
   gap: 1rem;
 }
 
+.rpt-period-icon {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1.5rem;
+}
+
+/* Period Tabs */
+.rpt-period-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 1.2rem;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+}
+
+.rpt-period-tab {
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.rpt-period-tab:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.rpt-period-tab.active {
+  background: var(--gradient-primary);
+  color: var(--color-black);
+  background: var(--color-orange);
+}
+
+/* Custom Period Picker */
+.rpt-custom-period {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.rpt-custom-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rpt-custom-field label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rpt-custom-field input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-pure-white);
+  font-size: 0.82rem;
+}
+
+.rpt-custom-field input:focus {
+  outline: none;
+  border-color: var(--color-orange);
+}
+
+.rpt-custom-apply {
+  padding: 0.4rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-orange);
+  color: var(--color-black);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.rpt-custom-apply:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.rpt-custom-apply:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .rpt-period-control {
   display: flex;
   align-items: center;
