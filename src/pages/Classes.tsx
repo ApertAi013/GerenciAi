@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faTrash, faVolleyball, faCalendarDays, faClock, faLocationDot, faUsers, faChartSimple, faPlus, faList, faUserGroup, faUserPlus, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faTrash, faVolleyball, faCalendarDays, faClock, faLocationDot, faUsers, faChartSimple, faPlus, faList, faUserGroup, faUserPlus, faExclamationTriangle, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { classService } from '../services/classService';
 import type { Class, Modality, ClassStudent } from '../types/classTypes';
 import CreateClassModal from '../components/CreateClassModal';
@@ -18,6 +18,7 @@ export default function Classes() {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [expandedClassId, setExpandedClassId] = useState<number | null>(null);
   const [addStudentsClassId, setAddStudentsClassId] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -110,6 +111,15 @@ export default function Classes() {
     return cls.students.filter(s => s.level_name && !cls.allowed_levels!.includes(s.level_name)).length;
   };
 
+  const filteredClasses = useMemo(() => {
+    if (!searchTerm.trim()) return classes;
+    const term = searchTerm.trim().toLowerCase();
+    return classes.filter(cls =>
+      (cls.name || '').toLowerCase().includes(term) ||
+      (cls.modality_name || '').toLowerCase().includes(term)
+    );
+  }, [classes, searchTerm]);
+
   const handleEditClass = (classData: Class) => {
     setEditingClass(classData);
     setShowCreateModal(true);
@@ -150,6 +160,25 @@ export default function Classes() {
       {/* Header */}
       <div className="classes-header">
         <h1>Turmas</h1>
+        <div className="classes-search">
+          <FontAwesomeIcon icon={faSearch} className="classes-search-icon" />
+          <input
+            type="text"
+            placeholder="Buscar turma..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="classes-search-input"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              className="classes-search-clear"
+              onClick={() => setSearchTerm('')}
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          )}
+        </div>
         <div className="header-actions">
           <button type="button" className="btn-secondary" onClick={() => setShowModalitiesModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
             <FontAwesomeIcon icon={faList} />
@@ -164,7 +193,7 @@ export default function Classes() {
 
       {/* Classes Grid */}
       <div className="classes-grid-modern">
-        {classes.map((cls) => {
+        {filteredClasses.map((cls) => {
           const statusColor = cls.status === 'ativa' ? '#10b981' : cls.status === 'suspensa' ? '#f59e0b' : '#ef4444';
           const statusLabel = cls.status === 'ativa' ? 'OPERANDO' : cls.status === 'suspensa' ? 'SUSPENSA' : 'CANCELADA';
           const enrolledCount = cls.enrolled_count || cls.students?.length || 0;
@@ -336,12 +365,14 @@ export default function Classes() {
           );
         })}
 
-        {classes.length === 0 && (
+        {filteredClasses.length === 0 && (
           <div className="empty-state">
-            <p>Nenhuma turma cadastrada ainda.</p>
-            <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)}>
-              + CRIAR PRIMEIRA TURMA
-            </button>
+            <p>{searchTerm ? 'Nenhuma turma encontrada.' : 'Nenhuma turma cadastrada ainda.'}</p>
+            {!searchTerm && (
+              <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)}>
+                + CRIAR PRIMEIRA TURMA
+              </button>
+            )}
           </div>
         )}
       </div>
