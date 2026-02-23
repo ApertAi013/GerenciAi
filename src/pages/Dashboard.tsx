@@ -22,6 +22,8 @@ import {
   faBullhorn,
   faPaperPlane,
   faTableTennis,
+  faFilter,
+  faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import {
@@ -123,6 +125,9 @@ export default function Dashboard() {
   const [rentals, setRentals] = useState<CourtRental[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
+  // Filter state
+  const [selectedModality, setSelectedModality] = useState<number | null>(null);
+
   // Expand/collapse states
   const [vagasExpanded, setVagasExpanded] = useState(false);
   const [expandedLevels, setExpandedLevels] = useState<Set<string>>(new Set());
@@ -185,26 +190,52 @@ export default function Dashboard() {
     }
   };
 
+  // ── Class IDs for selected modality ──
+  const modalityClassIds = useMemo(() => {
+    if (!selectedModality) return null;
+    return new Set(classes.filter(c => c.modality_id === selectedModality).map(c => c.id));
+  }, [classes, selectedModality]);
+
+  // ── Filter enrollments by modality ──
+  const filteredEnrollments = useMemo(() => {
+    if (!modalityClassIds) return enrollments;
+    return enrollments.filter(e => {
+      const eClassIds = e.class_ids || [];
+      return eClassIds.some(id => modalityClassIds.has(id));
+    });
+  }, [enrollments, modalityClassIds]);
+
+  // ── Filter invoices by modality (via enrollment) ──
+  const filteredInvoices = useMemo(() => {
+    if (!modalityClassIds) return invoices;
+    const filteredEnrollmentIds = new Set(filteredEnrollments.map(e => e.id));
+    return invoices.filter(inv => {
+      const eid = (inv as any).enrollment_id;
+      return eid ? filteredEnrollmentIds.has(eid) : false;
+    });
+  }, [invoices, filteredEnrollments, modalityClassIds]);
+
   // ── Enrollment Stats ──
   const enrollmentStats = useMemo(() => {
     const currentMonth = getCurrentMonth();
-    const ativas = enrollments.filter(e => e.status === 'ativa').length;
-    const canceladas = enrollments.filter(e => {
+    const ativas = filteredEnrollments.filter(e => e.status === 'ativa').length;
+    const canceladas = filteredEnrollments.filter(e => {
       if (e.status !== 'cancelada') return false;
       const date = (e as any).updated_at || e.created_at || e.start_date;
       return date && date.substring(0, 7) === currentMonth;
     }).length;
-    const novas = enrollments.filter(e => {
+    const novas = filteredEnrollments.filter(e => {
       const date = e.created_at || e.start_date;
       return date && date.substring(0, 7) === currentMonth;
     }).length;
     return { ativas, canceladas, novas };
-  }, [enrollments]);
+  }, [filteredEnrollments]);
 
   // ── Financial Stats (current month) ──
   const financialStats = useMemo(() => {
     const currentMonth = getCurrentMonth();
-    const monthInvoices = invoices.filter(inv => inv.reference_month === currentMonth);
+    const srcInvoices = selectedModality ? filteredInvoices : invoices;
+    const monthInvoices = srcInvoices.filter(inv => inv.reference_month === currentMonth);
 
     const total = monthInvoices.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0);
     const totalCount = monthInvoices.length;
@@ -229,18 +260,20 @@ export default function Dashboard() {
       toReceive: pendingTotal + overdueTotal,
       toReceiveCount: pendingCount + overdueCount,
     };
-  }, [invoices]);
+  }, [invoices, filteredInvoices, selectedModality]);
 
   // ── Chart Data (last 6 months) ──
   const chartData = useMemo(() => {
     const months = getLastMonths(6);
+    const srcInvoices = selectedModality ? filteredInvoices : invoices;
+    const srcEnrollments = selectedModality ? filteredEnrollments : enrollments;
     return months.map(({ key, label }) => {
-      const mi = invoices.filter(inv => inv.reference_month === key);
+      const mi = srcInvoices.filter(inv => inv.reference_month === key);
       const faturado = mi.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0) / 100;
       const recebido = mi
         .filter(inv => inv.status === 'paga')
         .reduce((s, inv) => s + Number(inv.paid_amount_cents || inv.final_amount_cents || 0), 0) / 100;
-      const matriculas = enrollments.filter(e => {
+      const matriculas = srcEnrollments.filter(e => {
         const d = e.created_at || e.start_date;
         return d && d.substring(0, 7) === key;
       }).length;
@@ -251,7 +284,7 @@ export default function Dashboard() {
         matriculas,
       };
     });
-  }, [invoices, enrollments]);
+  }, [invoices, enrollments, filteredInvoices, filteredEnrollments, selectedModality]);
 
   // ── Vagas Data (per turma, grouped by level) ──
   const vagasData = useMemo(() => {
@@ -483,6 +516,39 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
+
+      {/* ── Filtro de Modalidade ── */}
+      <div className="dash-filter-bar">
+        <div className="dash-filter-chips">
+          {selectedModality && (
+            <span className="dash-filter-chip active">
+              {modalities.find(m => m.id === selectedModality)?.icon}{' '}
+              {modalities.find(m => m.id === selectedModality)?.name}
+              <button className="dash-filter-chip-x" onClick={() => setSelectedModality(null)}>
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </span>
+          )}
+          {!selectedModality && (
+            <span className="dash-filter-chip muted">Todos os dados</span>
+          )}
+        </div>
+        <div className="dash-filter-select-wrap">
+          <FontAwesomeIcon icon={faFilter} className="dash-filter-icon" />
+          <select
+            className="dash-filter-select"
+            value={selectedModality || ''}
+            onChange={e => setSelectedModality(e.target.value ? parseInt(e.target.value) : null)}
+          >
+            <option value="">Filtrar por modalidade</option>
+            {modalities.map(m => (
+              <option key={m.id} value={m.id}>
+                {m.icon ? `${m.icon} ` : ''}{m.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {/* ── Matrículas ── */}
       <section className="dash-section">
