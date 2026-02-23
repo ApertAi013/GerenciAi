@@ -35,6 +35,7 @@ import MyPlan from './pages/MyPlan'
 import MonthlyRenters from './pages/MonthlyRenters'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
+import Forms from './pages/Forms'
 import PublicBooking from './pages/PublicBooking'
 import PublicRentalStatus from './pages/PublicRentalStatus'
 import PublicRenterDashboard from './pages/PublicRenterDashboard'
@@ -120,6 +121,7 @@ export default function App() {
             <Route path="/locacoes/agenda" element={<RentalsSchedule />} />
             <Route path="/mensalistas" element={<MonthlyRenters />} />
             <Route path="/avisos" element={<Announcements />} />
+            <Route path="/formularios" element={<Forms />} />
             <Route path="/pagamentos-app" element={<AppPayments />} />
             <Route path="/meu-plano" element={<MyPlan />} />
             <Route path="/ia" element={<AI />} />
