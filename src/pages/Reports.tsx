@@ -72,22 +72,6 @@ export default function Reports() {
   // Cancelled popup
   const [showCancelled, setShowCancelled] = useState(false);
   const [cancelledList, setCancelledList] = useState<CancelledEnrollment[]>([]);
-  const [loadingCancelled, setLoadingCancelled] = useState(false);
-
-  const handleShowCancelled = async () => {
-    setShowCancelled(true);
-    setLoadingCancelled(true);
-    try {
-      const params: { months?: number; modality_id?: number } = { months };
-      if (selectedModality) params.modality_id = selectedModality;
-      const res = await reportService.getCancelledEnrollments(params);
-      setCancelledList(res.data || []);
-    } catch (error) {
-      console.error('Erro ao buscar cancelados:', error);
-    } finally {
-      setLoadingCancelled(false);
-    }
-  };
 
   // Period control
   type PeriodType = 'current' | 'previous' | '3m' | '6m' | '12m' | 'custom';
@@ -132,9 +116,10 @@ export default function Reports() {
         const params: { months: number; modality_id?: number } = { months };
         if (selectedModality) params.modality_id = selectedModality;
 
-        const [enrollmentRes, financialRes] = await Promise.all([
+        const [enrollmentRes, financialRes, cancelledRes] = await Promise.all([
           reportService.getEnrollmentStats(params),
           reportService.getFinancialMonthly(params),
+          reportService.getCancelledEnrollments(params),
         ]);
 
         if (enrollmentRes.data?.monthly) {
@@ -147,6 +132,7 @@ export default function Reports() {
           setByModality(financialRes.data.by_modality || []);
           setOverdueSummary(financialRes.data.overdue_summary || { overdue_students: 0, total_overdue_cents: 0, overdue_invoice_count: 0 });
         }
+        setCancelledList(cancelledRes.data || []);
       } catch (error) {
         console.error('Erro ao buscar relatórios:', error);
       } finally {
@@ -403,7 +389,7 @@ export default function Reports() {
           </div>
           <div className="rpt-kpi-accent teal" />
         </div>
-        <div className="rpt-kpi rpt-kpi-clickable" onClick={handleShowCancelled} title="Clique para ver detalhes">
+        <div className="rpt-kpi rpt-kpi-clickable" onClick={() => setShowCancelled(true)} title="Clique para ver detalhes">
           <div className="rpt-kpi-icon red"><FontAwesomeIcon icon={faUserMinus} /></div>
           <div className="rpt-kpi-body">
             <span className="rpt-kpi-label">Canceladas</span>
@@ -667,12 +653,7 @@ export default function Reports() {
               </button>
             </div>
             <div className="rpt-modal-body">
-              {loadingCancelled ? (
-                <div className="rpt-modal-loading">
-                  <div className="loading-spinner" />
-                  <p>Carregando...</p>
-                </div>
-              ) : cancelledList.length === 0 ? (
+              {cancelledList.length === 0 ? (
                 <div className="rpt-modal-empty">Nenhuma matrícula cancelada no período.</div>
               ) : (
                 <div className="rpt-modal-list">
