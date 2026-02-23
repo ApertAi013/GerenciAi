@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import { studentService } from '../../services/studentService';
@@ -147,6 +147,8 @@ export default function Header() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      case 'trial_booking': return faUserPlus;
+      case 'court_booking': return faCalendarCheck;
       case 'warning': return faCircleExclamation;
       case 'success': return faCircleCheck;
       default: return faCircleInfo;
@@ -155,10 +157,25 @@ export default function Header() {
 
   const getNotificationColor = (type: string) => {
     switch (type) {
+      case 'trial_booking': return '#8b5cf6';
+      case 'court_booking': return '#f59e0b';
       case 'warning': return '#f5576c';
-      case 'success': return '#38f9d7';
+      case 'success': return '#10b981';
       default: return '#667eea';
     }
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'agora';
+    if (diffMin < 60) return `${diffMin}min`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `${diffH}h`;
+    const diffD = Math.floor(diffH / 24);
+    return `${diffD}d`;
   };
 
   return (
@@ -233,8 +250,8 @@ export default function Header() {
                   notifications.map((notif) => (
                     <div
                       key={notif.id}
-                      className={`notification-item ${!notif.isRead ? 'unread' : ''}`}
-                      onClick={() => markAsRead(notif.id)}
+                      className={`notification-item ${!notif.is_read ? 'unread' : ''}`}
+                      onClick={() => !notif.is_read && markAsRead(notif.id)}
                     >
                       <div className="notification-icon" style={{ color: getNotificationColor(notif.type) }}>
                         <FontAwesomeIcon icon={getNotificationIcon(notif.type)} />
@@ -242,8 +259,9 @@ export default function Header() {
                       <div className="notification-content">
                         <div className="notification-title">{notif.title}</div>
                         <div className="notification-message">{notif.message}</div>
+                        <div className="notification-time">{formatTimeAgo(notif.created_at)}</div>
                       </div>
-                      {!notif.isRead && <div className="unread-dot"></div>}
+                      {!notif.is_read && <div className="unread-dot"></div>}
                     </div>
                   ))
                 )}
@@ -277,10 +295,10 @@ export default function Header() {
 
           {showMenu && (
             <div className="user-menu">
-              <button type="button" className="menu-item">
+              <button type="button" className="menu-item" onClick={() => { navigate('/perfil'); setShowMenu(false); }}>
                 <FontAwesomeIcon icon={faUser} /> Meu Perfil
               </button>
-              <button type="button" className="menu-item">
+              <button type="button" className="menu-item" onClick={() => { navigate('/configuracoes'); setShowMenu(false); }}>
                 <FontAwesomeIcon icon={faGear} /> Configurações
               </button>
               <button type="button" className="menu-item logout" onClick={handleLogout}>

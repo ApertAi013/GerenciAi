@@ -30,6 +30,24 @@ export const authService = {
     sessionStorage.removeItem('token');
   },
 
+  // Obter perfil completo
+  async getProfile(): Promise<{ status: string; data: { id: number; full_name: string; email: string; role: string; status: string; created_at: string } }> {
+    const response = await api.get('/api/auth/profile');
+    return response.data;
+  },
+
+  // Atualizar perfil
+  async updateProfile(data: { full_name?: string; email?: string }): Promise<{ status: string; data: any; message: string }> {
+    const response = await api.put('/api/auth/profile', data);
+    return response.data;
+  },
+
+  // Trocar senha
+  async changePassword(data: { current_password: string; new_password: string }): Promise<{ status: string; message: string }> {
+    const response = await api.put('/api/auth/change-password', data);
+    return response.data;
+  },
+
   // Solicitar reset de senha
   async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
     const response = await api.post('/api/auth/request-password-reset', { email });

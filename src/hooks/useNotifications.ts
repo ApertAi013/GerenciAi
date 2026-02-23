@@ -1,102 +1,73 @@
-import { useEffect, useState } from 'react';
-import { financialService } from '../services/financialService';
-import { studentService } from '../services/studentService';
-import type { Invoice } from '../types/financialTypes';
+import { useEffect, useState, useCallback } from 'react';
+import { notificationService } from '../services/notificationService';
+import type { Notification } from '../services/notificationService';
 
-export interface Notification {
-  id: string;
-  type: 'warning' | 'info' | 'success';
-  title: string;
-  message: string;
-  timestamp: Date;
-  isRead: boolean;
-}
+export type { Notification };
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
-      const notifs: Notification[] = [];
-      const now = new Date();
+      const [notifsRes, countRes] = await Promise.all([
+        notificationService.getNotifications(),
+        notificationService.getUnreadCount(),
+      ]);
 
-      // Buscar faturas vencidas
-      const invoiceResponse = await financialService.getInvoices();
-      if (invoiceResponse.status === 'success') {
-        const overdue = invoiceResponse.data.invoices.filter((inv: Invoice) =>
-          inv.status === 'vencida'
-        );
-
-        if (overdue.length > 0) {
-          notifs.push({
-            id: 'overdue-invoices',
-            type: 'warning',
-            title: 'Faturas Vencidas',
-            message: `Você tem ${overdue.length} ${overdue.length === 1 ? 'fatura vencida' : 'faturas vencidas'}`,
-            timestamp: now,
-            isRead: false,
-          });
-        }
+      if (notifsRes.status === 'success') {
+        setNotifications(notifsRes.data);
       }
-
-      // Buscar novos alunos (últimos 7 dias)
-      const studentResponse = await studentService.getStudents({});
-      if (studentResponse.status === 'success') {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-        const newStudents = studentResponse.data.filter((student) =>
-          new Date(student.created_at) >= sevenDaysAgo
-        );
-
-        if (newStudents.length > 0) {
-          notifs.push({
-            id: 'new-students',
-            type: 'success',
-            title: 'Novos Alunos',
-            message: `${newStudents.length} ${newStudents.length === 1 ? 'novo aluno cadastrado' : 'novos alunos cadastrados'} esta semana`,
-            timestamp: now,
-            isRead: false,
-          });
-        }
+      if (countRes.status === 'success') {
+        setUnreadCount(countRes.data.count);
       }
-
-      // Notificação informativa se não houver alertas
-      if (notifs.length === 0) {
-        notifs.push({
-          id: 'all-clear',
-          type: 'info',
-          title: 'Tudo em dia',
-          message: 'Não há pendências no momento',
-          timestamp: now,
-          isRead: true, // Esta notificação já começa como "lida"
-        });
-      }
-
-      setNotifications(notifs);
     } catch (error) {
       console.error('Erro ao buscar notificações:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
+
+    // Poll every 60s
+    const interval = setInterval(fetchNotifications, 60000);
+
+    // Refetch on tab focus
+    const handleFocus = () => fetchNotifications();
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchNotifications]);
+
+  const markAsRead = useCallback(async (notificationId: number) => {
+    try {
+      await notificationService.markAsRead(notificationId);
+      setNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Erro ao marcar notificação como lida:', error);
+    }
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-  };
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
+      );
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Erro ao marcar todas como lidas:', error);
+    }
+  }, []);
 
   return {
     notifications,

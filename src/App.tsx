@@ -33,6 +33,8 @@ import Announcements from './pages/Announcements'
 import AppPayments from './pages/AppPayments'
 import MyPlan from './pages/MyPlan'
 import MonthlyRenters from './pages/MonthlyRenters'
+import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 import PublicBooking from './pages/PublicBooking'
 import PublicRentalStatus from './pages/PublicRentalStatus'
 import PublicRenterDashboard from './pages/PublicRenterDashboard'
@@ -132,6 +134,8 @@ export default function App() {
             <Route path="/instrutores" element={<Instructors />} />
             <Route path="/alunos-experimentais" element={<TrialStudents />} />
             <Route path="/preferencias" element={<Preferences />} />
+            <Route path="/perfil" element={<Profile />} />
+            <Route path="/configuracoes" element={<Settings />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/migracao" element={<DataMigration />} />
           </Route>

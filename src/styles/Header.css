@@ -280,6 +280,12 @@
   line-height: 1.4;
 }
 
+.notification-time {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
 .unread-dot {
   position: absolute;
   top: 20px;
