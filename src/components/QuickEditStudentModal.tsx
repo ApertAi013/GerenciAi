@@ -71,6 +71,7 @@ export default function QuickEditStudentModal() {
   // Enrollment confirmation modals
   const [showPlanChangeModal, setShowPlanChangeModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showReactivationModal, setShowReactivationModal] = useState(false);
   const [pendingSavePayload, setPendingSavePayload] = useState<any>(null);
 
   // Payment inline
@@ -249,6 +250,9 @@ export default function QuickEditStudentModal() {
       payload.class_ids = enrollmentForm.class_ids;
     }
 
+    const statusReactivated = enrollmentForm.status === 'ativa' &&
+      (currentEnrollment.status === 'cancelada' || currentEnrollment.status === 'suspensa');
+
     // Show plan change modal
     if (planChanged) {
       setPendingSavePayload(payload);
@@ -263,19 +267,46 @@ export default function QuickEditStudentModal() {
       return;
     }
 
+    // Show reactivation modal
+    if (statusReactivated) {
+      setPendingSavePayload(payload);
+      setShowReactivationModal(true);
+      return;
+    }
+
     await executeSaveEnrollment(payload);
   };
 
-  const executeSaveEnrollment = async (payload: any) => {
+  const closeAllModals = () => {
+    setShowPlanChangeModal(false);
+    setShowCancelModal(false);
+    setShowReactivationModal(false);
+    setPendingSavePayload(null);
+  };
+
+  const executeSaveEnrollment = async (payload: any, generateInvoice?: 'now' | 'next_month') => {
     setIsSaving(true);
     try {
       const response = await enrollmentService.updateEnrollment(editingEnrollmentId!, payload);
       if ((response as any).status === 'success' || (response as any).success === true) {
-        toast.success('Matrícula atualizada!');
+        // Generate invoice on reactivation if requested
+        if (generateInvoice === 'now') {
+          try {
+            await enrollmentService.generateFirstInvoice({ enrollment_id: editingEnrollmentId!, invoice_type: 'full' });
+            toast.success('Matrícula atualizada e fatura gerada!');
+          } catch (invErr: any) {
+            const msg = invErr?.response?.data?.message || '';
+            if (msg.includes('já existe') || msg.includes('Já existe')) {
+              toast.success('Matrícula atualizada! Já existe fatura para este período.');
+            } else {
+              toast.success('Matrícula atualizada! Erro ao gerar fatura.');
+            }
+          }
+        } else {
+          toast.success(generateInvoice === 'next_month' ? 'Matrícula reativada! Cobrança no próximo mês.' : 'Matrícula atualizada!');
+        }
         setEditingEnrollmentId(null);
-        setShowPlanChangeModal(false);
-        setShowCancelModal(false);
-        setPendingSavePayload(null);
+        closeAllModals();
         await fetchData();
       } else {
         toast.error((response as any).message || 'Erro ao salvar matrícula');
@@ -291,13 +322,22 @@ export default function QuickEditStudentModal() {
     if (!pendingSavePayload) return;
     const payload = { ...pendingSavePayload, update_open_invoices: updateInvoices, refund_and_regenerate: refundAndRegenerate };
 
-    // Check if also cancelling
+    // Check if also cancelling or reactivating
     const currentEnrollment = enrollments.find(e => e.id === editingEnrollmentId);
-    const statusChangedToCancelled = pendingSavePayload.status === 'cancelada' && currentEnrollment?.status !== 'cancelada';
+    const statusChangedToCancelled = payload.status === 'cancelada' && currentEnrollment?.status !== 'cancelada';
+    const statusReactivated = payload.status === 'ativa' &&
+      (currentEnrollment?.status === 'cancelada' || currentEnrollment?.status === 'suspensa');
+
     if (statusChangedToCancelled) {
       setPendingSavePayload(payload);
       setShowPlanChangeModal(false);
       setShowCancelModal(true);
+      return;
+    }
+    if (statusReactivated) {
+      setPendingSavePayload(payload);
+      setShowPlanChangeModal(false);
+      setShowReactivationModal(true);
       return;
     }
 
@@ -307,6 +347,11 @@ export default function QuickEditStudentModal() {
   const handleCancelChoice = async (cancelInvoices: boolean) => {
     if (!pendingSavePayload) return;
     await executeSaveEnrollment({ ...pendingSavePayload, cancel_invoices: cancelInvoices });
+  };
+
+  const handleReactivationChoice = async (invoiceOption: 'now' | 'due_day' | 'next_month') => {
+    if (!pendingSavePayload) return;
+    await executeSaveEnrollment(pendingSavePayload, invoiceOption === 'next_month' ? 'next_month' : 'now');
   };
 
   const handleStartPayment = (invoice: Invoice) => {
@@ -884,7 +929,7 @@ export default function QuickEditStudentModal() {
           <div className="qe-confirm-modal" onClick={(e) => e.stopPropagation()}>
             <div className="qe-confirm-header">
               <h3>Alterar Plano</h3>
-              <button className="qe-btn-icon qe-btn-close" onClick={() => { setShowPlanChangeModal(false); setPendingSavePayload(null); }}>
+              <button className="qe-btn-icon qe-btn-close" onClick={closeAllModals}>
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
@@ -904,7 +949,7 @@ export default function QuickEditStudentModal() {
                 <strong>Estornar fatura paga e gerar nova</strong>
                 <small>A fatura paga do mês será estornada e uma nova será gerada com o novo valor</small>
               </button>
-              <button className="qe-confirm-btn qe-confirm-btn-cancel" onClick={() => { setShowPlanChangeModal(false); setPendingSavePayload(null); }}>
+              <button className="qe-confirm-btn qe-confirm-btn-cancel" onClick={closeAllModals}>
                 Cancelar
               </button>
             </div>
@@ -918,7 +963,7 @@ export default function QuickEditStudentModal() {
           <div className="qe-confirm-modal" onClick={(e) => e.stopPropagation()}>
             <div className="qe-confirm-header">
               <h3>Cancelar Matrícula</h3>
-              <button className="qe-btn-icon qe-btn-close" onClick={() => { setShowCancelModal(false); setPendingSavePayload(null); }}>
+              <button className="qe-btn-icon qe-btn-close" onClick={closeAllModals}>
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
@@ -934,7 +979,41 @@ export default function QuickEditStudentModal() {
                 <strong>Manter faturas em aberto</strong>
                 <small>As faturas em aberto continuarão ativas para cobrança</small>
               </button>
-              <button className="qe-confirm-btn qe-confirm-btn-cancel" onClick={() => { setShowCancelModal(false); setPendingSavePayload(null); }}>
+              <button className="qe-confirm-btn qe-confirm-btn-cancel" onClick={closeAllModals}>
+                Voltar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reactivation Confirmation Modal */}
+      {showReactivationModal && (
+        <div className="qe-confirm-overlay" onClick={(e) => e.stopPropagation()}>
+          <div className="qe-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="qe-confirm-header">
+              <h3>Reativar Matrícula</h3>
+              <button className="qe-btn-icon qe-btn-close" onClick={closeAllModals}>
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+            <p className="qe-confirm-text">
+              A matrícula será reativada. Como deseja lidar com a cobrança?
+            </p>
+            <div className="qe-confirm-options">
+              <button className="qe-confirm-btn qe-confirm-btn-primary" onClick={() => handleReactivationChoice('now')} disabled={isSaving}>
+                <strong>Gerar fatura agora</strong>
+                <small>Uma fatura será gerada imediatamente com vencimento hoje</small>
+              </button>
+              <button className="qe-confirm-btn qe-confirm-btn-secondary" onClick={() => handleReactivationChoice('due_day')} disabled={isSaving}>
+                <strong>Gerar no dia de vencimento</strong>
+                <small>A fatura será gerada com a data de vencimento normal da matrícula</small>
+              </button>
+              <button className="qe-confirm-btn qe-confirm-btn-secondary" onClick={() => handleReactivationChoice('next_month')} disabled={isSaving}>
+                <strong>Cobrar a partir do próximo mês</strong>
+                <small>Nenhuma fatura agora, cobrança começa no próximo ciclo</small>
+              </button>
+              <button className="qe-confirm-btn qe-confirm-btn-cancel" onClick={closeAllModals}>
                 Voltar
               </button>
             </div>
