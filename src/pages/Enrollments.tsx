@@ -1351,10 +1351,14 @@ function EditEnrollmentModal({
       if (studentData && (studentData.level_name || studentData.level)) {
         const studentLevel = studentData.level_name || studentData.level;
         filtered = filtered.filter((cls) => {
-          if (cls.allowed_levels && cls.allowed_levels.length > 0) {
-            return cls.allowed_levels.includes(studentLevel!);
+          let levels = cls.allowed_levels;
+          if (!levels || levels.length === 0) return true;
+          // Parse JSON string if needed
+          if (typeof levels === 'string') {
+            try { levels = JSON.parse(levels); } catch { return true; }
           }
-          return true;
+          if (!Array.isArray(levels) || levels.length === 0) return true;
+          return levels.includes(studentLevel!);
         });
       }
 

@@ -637,3 +637,102 @@
     flex-direction: column;
   }
 }
+
+/* ===== CLASS SELECTOR (Enrollment Edit) ===== */
+.qe-class-selector {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.qe-class-selector > label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.qe-class-count {
+  color: #6366f1;
+  font-weight: 700;
+}
+
+.qe-class-list {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.5rem;
+}
+
+.qe-class-group {
+  margin-bottom: 0.5rem;
+}
+
+.qe-class-group:last-child {
+  margin-bottom: 0;
+}
+
+.qe-class-day {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #9ca3af;
+  padding: 0.25rem 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+.qe-class-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+
+.qe-class-item:hover {
+  background: #f9fafb;
+}
+
+.qe-class-item-selected {
+  background: #eef2ff;
+  border-color: #6366f1;
+}
+
+.qe-class-item-full {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qe-class-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.qe-class-item-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.qe-class-item-time {
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+
+.qe-class-check {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  min-width: 40px;
+  text-align: right;
+}
+
+.qe-class-check.checked {
+  color: #6366f1;
+  font-weight: 700;
+  font-size: 0.9rem;
+}

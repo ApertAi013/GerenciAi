@@ -20,10 +20,12 @@ import { enrollmentService } from '../services/enrollmentService';
 import { financialService } from '../services/financialService';
 import { levelService } from '../services/levelService';
 import { planService } from '../services/planService';
+import { classService } from '../services/classService';
 import type { Student, UpdateStudentRequest } from '../types/studentTypes';
 import type { Enrollment, Plan } from '../types/enrollmentTypes';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import type { Level } from '../types/levelTypes';
+import type { Class } from '../types/classTypes';
 import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
 import WhatsAppTemplatePicker from './WhatsAppTemplatePicker';
 import '../styles/QuickEditStudentModal.css';
@@ -61,7 +63,10 @@ export default function QuickEditStudentModal() {
 
   // Enrollment edit
   const [editingEnrollmentId, setEditingEnrollmentId] = useState<number | null>(null);
-  const [enrollmentForm, setEnrollmentForm] = useState<{ due_day?: number; status?: string; plan_id?: number }>({});
+  const [enrollmentForm, setEnrollmentForm] = useState<{ due_day?: number; status?: string; plan_id?: number; class_ids?: number[] }>({});
+  const [allClasses, setAllClasses] = useState<Class[]>([]);
+  const [classesLoaded, setClassesLoaded] = useState(false);
+  const [originalPlanId, setOriginalPlanId] = useState<number | null>(null);
 
   // Payment inline
   const [payingInvoiceId, setPayingInvoiceId] = useState<number | null>(null);
@@ -186,10 +191,12 @@ export default function QuickEditStudentModal() {
 
   const handleStartEditEnrollment = async (enrollment: Enrollment) => {
     setEditingEnrollmentId(enrollment.id);
+    setOriginalPlanId(enrollment.plan_id);
     setEnrollmentForm({
       due_day: enrollment.due_day,
       status: enrollment.status,
       plan_id: enrollment.plan_id,
+      class_ids: enrollment.class_ids || [],
     });
     // Lazy load plans
     if (plans.length === 0) {
@@ -198,17 +205,64 @@ export default function QuickEditStudentModal() {
         if (res.data) setPlans(res.data);
       } catch { /* ignore */ }
     }
+    // Lazy load classes
+    if (!classesLoaded) {
+      try {
+        const res = await classService.getClasses({ status: 'ativa', limit: 1000 });
+        if (res.data) setAllClasses(Array.isArray(res.data) ? res.data : res.data.classes || []);
+        setClassesLoaded(true);
+      } catch { /* ignore */ }
+    }
   };
 
   const handleSaveEnrollment = async () => {
     if (!editingEnrollmentId) return;
+
+    const currentEnrollment = enrollments.find(e => e.id === editingEnrollmentId);
+    if (!currentEnrollment) return;
+
+    const planChanged = enrollmentForm.plan_id !== currentEnrollment.plan_id;
+    const statusChangedToCancelled = enrollmentForm.status === 'cancelada' && currentEnrollment.status !== 'cancelada';
+
+    // Validate class count matches sessions_per_week when plan changed
+    if (planChanged) {
+      const selectedPlan = plans.find(p => p.id === enrollmentForm.plan_id);
+      if (selectedPlan && (enrollmentForm.class_ids || []).length !== selectedPlan.sessions_per_week) {
+        toast.error(`O plano ${selectedPlan.name} requer ${selectedPlan.sessions_per_week} turma(s). Você selecionou ${(enrollmentForm.class_ids || []).length}.`);
+        return;
+      }
+    }
+
+    const payload: any = {
+      due_day: enrollmentForm.due_day,
+      status: enrollmentForm.status as any,
+      plan_id: enrollmentForm.plan_id,
+    };
+
+    // Send class_ids when plan changed
+    if (planChanged && enrollmentForm.class_ids) {
+      payload.class_ids = enrollmentForm.class_ids;
+    }
+
+    // Ask about invoice handling for plan changes
+    if (planChanged) {
+      const choice = window.confirm(
+        'O plano foi alterado. Deseja atualizar o valor das faturas abertas para o novo plano?'
+      );
+      payload.update_open_invoices = choice;
+    }
+
+    // Ask about invoice handling for cancellation
+    if (statusChangedToCancelled) {
+      const choice = window.confirm(
+        'Deseja cancelar também as faturas abertas desta matrícula?'
+      );
+      payload.cancel_invoices = choice;
+    }
+
     setIsSaving(true);
     try {
-      const response = await enrollmentService.updateEnrollment(editingEnrollmentId, {
-        due_day: enrollmentForm.due_day,
-        status: enrollmentForm.status as any,
-        plan_id: enrollmentForm.plan_id,
-      });
+      const response = await enrollmentService.updateEnrollment(editingEnrollmentId, payload);
       if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success('Matrícula atualizada!');
         setEditingEnrollmentId(null);
@@ -312,6 +366,49 @@ export default function QuickEditStudentModal() {
 
   const getInitials = (name: string) =>
     name.split(' ').map((w) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+
+  // Filter classes for enrollment editing
+  const getFilteredClasses = () => {
+    const selectedPlan = plans.find(p => p.id === enrollmentForm.plan_id);
+    let filtered = allClasses.filter(c => c.status === 'ativa');
+    // Filter by plan modality
+    if (selectedPlan?.modality_id) {
+      filtered = filtered.filter(c => c.modality_id === selectedPlan.modality_id);
+    }
+    // Filter by student level
+    const studentLevel = student?.level_name || (student as any)?.level;
+    if (studentLevel) {
+      filtered = filtered.filter(c => {
+        let levels = c.allowed_levels;
+        if (!levels || levels.length === 0) return true;
+        if (typeof levels === 'string') {
+          try { levels = JSON.parse(levels as any); } catch { return true; }
+        }
+        if (!Array.isArray(levels) || levels.length === 0) return true;
+        return levels.includes(studentLevel);
+      });
+    }
+    return filtered;
+  };
+
+  const handleClassToggle = (classId: number) => {
+    const current = enrollmentForm.class_ids || [];
+    const selectedPlan = plans.find(p => p.id === enrollmentForm.plan_id);
+    if (current.includes(classId)) {
+      setEnrollmentForm(prev => ({ ...prev, class_ids: current.filter(id => id !== classId) }));
+    } else {
+      if (selectedPlan && current.length >= selectedPlan.sessions_per_week) {
+        toast.error(`O plano permite apenas ${selectedPlan.sessions_per_week} turma(s)`);
+        return;
+      }
+      setEnrollmentForm(prev => ({ ...prev, class_ids: [...current, classId] }));
+    }
+  };
+
+  const weekdayFull: Record<string, string> = {
+    seg: 'Segunda', ter: 'Terça', qua: 'Quarta',
+    qui: 'Quinta', sex: 'Sexta', sab: 'Sábado', dom: 'Domingo',
+  };
 
   const sortedInvoices = [...invoices].sort(
     (a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime()
@@ -507,10 +604,17 @@ export default function QuickEditStudentModal() {
                                   <label>Plano</label>
                                   <select
                                     value={enrollmentForm.plan_id || ''}
-                                    onChange={(e) => setEnrollmentForm((prev) => ({ ...prev, plan_id: parseInt(e.target.value) }))}
+                                    onChange={(e) => {
+                                      const newPlanId = parseInt(e.target.value);
+                                      setEnrollmentForm((prev) => ({
+                                        ...prev,
+                                        plan_id: newPlanId,
+                                        class_ids: newPlanId !== originalPlanId ? [] : prev.class_ids,
+                                      }));
+                                    }}
                                   >
                                     {plans.map((p) => (
-                                      <option key={p.id} value={p.id}>{p.name} — {formatCurrency(p.price_cents)}</option>
+                                      <option key={p.id} value={p.id}>{p.name} — {formatCurrency(p.price_cents)} ({p.sessions_per_week}x/sem)</option>
                                     ))}
                                   </select>
                                 </div>
@@ -536,6 +640,65 @@ export default function QuickEditStudentModal() {
                                   </select>
                                 </div>
                               </div>
+
+                              {/* Class selector - shown when plan changes */}
+                              {enrollmentForm.plan_id !== originalPlanId && (() => {
+                                const selectedPlan = plans.find(p => p.id === enrollmentForm.plan_id);
+                                const filtered = getFilteredClasses();
+                                const grouped = filtered.reduce((acc, cls) => {
+                                  if (!acc[cls.weekday]) acc[cls.weekday] = [];
+                                  acc[cls.weekday].push(cls);
+                                  return acc;
+                                }, {} as Record<string, Class[]>);
+                                const weekdays = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
+
+                                return (
+                                  <div className="qe-class-selector">
+                                    <label>
+                                      Selecionar Turmas
+                                      {selectedPlan && (
+                                        <span className="qe-class-count">
+                                          {' '}({(enrollmentForm.class_ids || []).length}/{selectedPlan.sessions_per_week})
+                                        </span>
+                                      )}
+                                    </label>
+                                    <div className="qe-class-list">
+                                      {weekdays.map(day => {
+                                        const dayClasses = grouped[day];
+                                        if (!dayClasses || dayClasses.length === 0) return null;
+                                        return (
+                                          <div key={day} className="qe-class-group">
+                                            <div className="qe-class-day">{weekdayFull[day]}</div>
+                                            {dayClasses.map(cls => {
+                                              const isSelected = (enrollmentForm.class_ids || []).includes(cls.id);
+                                              const isFull = (cls.enrolled_count || 0) >= cls.capacity;
+                                              return (
+                                                <div
+                                                  key={cls.id}
+                                                  className={`qe-class-item ${isSelected ? 'qe-class-item-selected' : ''} ${isFull && !isSelected ? 'qe-class-item-full' : ''}`}
+                                                  onClick={() => !isFull || isSelected ? handleClassToggle(cls.id) : null}
+                                                >
+                                                  <div className="qe-class-item-info">
+                                                    <span className="qe-class-item-name">{cls.name || cls.modality_name}</span>
+                                                    <span className="qe-class-item-time">
+                                                      {cls.start_time?.slice(0, 5)}{cls.end_time ? ` - ${cls.end_time.slice(0, 5)}` : ''}
+                                                      {' · '}{cls.enrolled_count || 0}/{cls.capacity}
+                                                    </span>
+                                                  </div>
+                                                  <span className={`qe-class-check ${isSelected ? 'checked' : ''}`}>
+                                                    {isSelected ? '✓' : isFull ? 'Lotada' : ''}
+                                                  </span>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
                               <div className="qe-enrollment-actions">
                                 <button className="qe-btn qe-btn-primary qe-btn-sm" onClick={handleSaveEnrollment} disabled={isSaving}>
                                   <FontAwesomeIcon icon={faFloppyDisk} /> {isSaving ? 'Salvando...' : 'Salvar'}

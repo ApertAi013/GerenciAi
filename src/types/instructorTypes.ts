@@ -12,6 +12,8 @@ export interface InstructorPermissions {
   create_classes?: boolean;
   edit_classes?: boolean;
   delete_classes?: boolean;
+  manage_trial_students?: boolean;
+  manage_booking_links?: boolean;
 }
 
 export interface InstructorClass {
