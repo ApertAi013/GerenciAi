@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Allow: /contratar
+Allow: /login
+Allow: /privacidade
+Allow: /guia-do-sistema
+Disallow: /dashboard
+Disallow: /alunos
+Disallow: /turmas
+Disallow: /matriculas
+Disallow: /financeiro
+Disallow: /relatorios
+Disallow: /configuracoes
+Disallow: /chat
+Disallow: /billing-blocked
+Disallow: /reset-password
+
+Sitemap: https://arenai.com.br/sitemap.xml

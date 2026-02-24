@@ -156,6 +156,17 @@ export interface FinancialMonthlyResponse {
   };
 }
 
+export interface CancelledEnrollment {
+  id: number;
+  cancelled_at: string;
+  created_at: string;
+  student_id: number;
+  student_name: string;
+  student_phone?: string;
+  student_email?: string;
+  plan_name: string;
+}
+
 export interface ReportsResponse<T> {
   success: boolean;
   message: string;

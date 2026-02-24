@@ -203,13 +203,13 @@ export default function LandingPage() {
           {/* Hero Content */}
           <div className="hero-content">
             <h2 className="hero-headline">
-              Gerencie sua quadra<br />
+              Gestão de quadras esportivas<br />
               sem dor de cabeça.<br />
               <span className="headline-accent">Deixe a ArenaAi fazer o trabalho.</span>
             </h2>
 
             <p className="hero-text">
-              ArenaAi organiza horários, alunos, pagamentos e ocupação da sua quadra esportiva em um só painel.
+              ArenaAi organiza horários, alunos, pagamentos e ocupação da sua arena de beach tennis, society, futevôlei e padel em um só painel.
               <strong> Zero planilha. Zero estresse.</strong>
             </p>
 
@@ -233,7 +233,7 @@ export default function LandingPage() {
 
           {/* Hero Image */}
           <div className="hero-image">
-            <img src="/hero-person.png" alt="Gestor Esportivo" className="person-image" />
+            <img src="/hero-person.png" alt="Gestor de quadra esportiva usando o sistema ArenaAi para gerenciar arena de beach tennis e society" className="person-image" />
           </div>
 
           {/* Floating Dashboard Cards */}
@@ -273,8 +273,8 @@ export default function LandingPage() {
       <section id="recursos" className="recursos-section">
         <div className="section-transition"></div>
         <div className="recursos-content">
-          <h2 className="section-title">Recursos que fazem a diferença</h2>
-          <p className="section-subtitle">Tudo que você precisa para gerenciar sua quadra em um só lugar</p>
+          <h2 className="section-title">Recursos para gestão de quadras esportivas</h2>
+          <p className="section-subtitle">Tudo que você precisa para gerenciar sua arena de beach tennis, society, futevôlei e padel</p>
 
           <div className="recursos-grid">
             <div className="recurso-card">
@@ -289,7 +289,7 @@ export default function LandingPage() {
               <div className="recurso-icon">
                 <FontAwesomeIcon icon={faTableTennis} size="3x" color="#f04f28" />
               </div>
-              <h3>Locação de Quadras</h3>
+              <h3>Locação de Quadras de Areia e Society</h3>
               <p>Agendamento visual com preços por horário, link público para reservas, controle de mensalistas e detecção de conflitos.</p>
             </div>
 
@@ -332,8 +332,8 @@ export default function LandingPage() {
       <section id="ia" className="ia-section">
         <div className="ia-content">
           <div className="ia-left">
-            <h2 className="section-title">Inteligência Artificial trabalhando para você</h2>
-            <p className="section-subtitle">Nossa IA cuida do operacional enquanto você foca no que importa: seus alunos</p>
+            <h2 className="section-title">IA para gestão de arenas esportivas</h2>
+            <p className="section-subtitle">Nossa inteligência artificial cuida do operacional da sua quadra enquanto você foca no que importa: seus alunos</p>
 
             <div className="ia-features">
               <div className="ia-feature">
@@ -493,11 +493,11 @@ export default function LandingPage() {
           <div className="parceria-right">
             <div className="apertai-showcase">
               <div className="apertai-logo-container">
-                <img src="/apertai-logo.svg" alt="Apertai Sports Replay" className="apertai-logo" />
+                <img src="/apertai-logo.svg" alt="Apertai - Sistema de replays esportivos para quadras de beach tennis e padel" className="apertai-logo" />
               </div>
 
               <div className="apertai-player-container">
-                <img src="/tennis-player.png" alt="Jogador de Tênis" className="tennis-player" />
+                <img src="/tennis-player.png" alt="Jogador de beach tennis em quadra de areia com sistema de replay Apertai" className="tennis-player" />
 
                 <div className="floating-video-card card-replay">
                   <div className="video-card-icon">
@@ -539,8 +539,8 @@ export default function LandingPage() {
       <section className="app-section">
         <div className="app-content">
           <div className="app-left">
-            <h2 className="section-title">App completo para seus alunos</h2>
-            <p className="section-subtitle" style={{ textAlign: 'left' }}>Seus alunos gerenciam tudo na palma da mão. Você reduz trabalho operacional.</p>
+            <h2 className="section-title">App para alunos da sua quadra esportiva</h2>
+            <p className="section-subtitle" style={{ textAlign: 'left' }}>Seus alunos de beach tennis, society, futevôlei e padel gerenciam tudo na palma da mão.</p>
 
             <div className="app-features-list">
               <div className="app-feature-item">
@@ -607,8 +607,8 @@ export default function LandingPage() {
       {/* CONTATO SECTION */}
       <section id="contato" className="contato-section">
         <div className="contato-content">
-          <h2 className="section-title">Pronto para transformar sua gestão?</h2>
-          <p className="section-subtitle">Teste grátis por 30 dias. Sem cartão de crédito.</p>
+          <h2 className="section-title">Pronto para transformar a gestão da sua quadra?</h2>
+          <p className="section-subtitle">Sistema completo para arenas de beach tennis, society, futevôlei e padel. Teste grátis por 30 dias.</p>
           <button className="btn-cta-large" onClick={handleContratar}>
             Começar agora
             <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: 12 }} />

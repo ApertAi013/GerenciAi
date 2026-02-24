@@ -7,6 +7,7 @@ import type {
   InvoiceSummary,
   EnrollmentStatsResponse,
   FinancialMonthlyResponse,
+  CancelledEnrollment,
 } from '../types/reportTypes';
 
 export const reportService = {
@@ -92,6 +93,16 @@ export const reportService = {
     modality_id?: number;
   }): Promise<ReportsResponse<FinancialMonthlyResponse>> {
     const response = await api.get<ReportsResponse<FinancialMonthlyResponse>>('/api/reports/financial/monthly', { params });
+    return response.data;
+  },
+
+  // Lista de matrículas canceladas (para popup)
+  async getCancelledEnrollments(params?: {
+    months?: number;
+    modality_id?: number;
+    month?: string;
+  }): Promise<ReportsResponse<CancelledEnrollment[]>> {
+    const response = await api.get<ReportsResponse<CancelledEnrollment[]>>('/api/reports/cancelled-enrollments', { params });
     return response.data;
   },
 };
