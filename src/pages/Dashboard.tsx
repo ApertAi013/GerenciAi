@@ -621,12 +621,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                <a
-                  className="dash-promo-btn"
-                  href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Tenho%20interesse%20na%20promo%C3%A7%C3%A3o%20ApertAi%20%2B%20ArenaAi"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a className="dash-promo-btn" href="/apertai">
                   <FontAwesomeIcon icon={faBullhorn} /> Saiba mais
                 </a>
               </div>
