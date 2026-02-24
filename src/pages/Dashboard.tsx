@@ -213,7 +213,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (carouselHovered) return;
     const interval = setInterval(() => {
-      setCarouselSlide(prev => (prev === 0 ? 1 : 0));
+      setCarouselSlide(prev => (prev + 1) % 3);
     }, 8000);
     return () => clearInterval(interval);
   }, [carouselHovered]);
@@ -598,34 +598,65 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
+
+            {/* Slide 3: Promoção ApertAi */}
+            <div className="dash-carousel-slide">
+              <div className="dash-promo-content">
+                <div className="dash-promo-text">
+                  <div className="dash-promo-badge">
+                    <FontAwesomeIcon icon={faBullhorn} /> Promoção Exclusiva
+                  </div>
+                  <h2 className="dash-promo-title">
+                    Contrate o <span className="dash-promo-highlight">ApertAi</span> e ganhe!
+                  </h2>
+                  <div className="dash-promo-benefits">
+                    <div className="dash-promo-benefit">
+                      <FontAwesomeIcon icon={faGift} />
+                      <span><strong>1 mês grátis</strong> do ApertAi</span>
+                    </div>
+                    <div className="dash-promo-benefit">
+                      <FontAwesomeIcon icon={faDollarSign} />
+                      <span><strong>Desconto especial</strong> no ArenaAi</span>
+                    </div>
+                  </div>
+                </div>
+                <a
+                  className="dash-promo-btn"
+                  href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Tenho%20interesse%20na%20promo%C3%A7%C3%A3o%20ApertAi%20%2B%20ArenaAi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FontAwesomeIcon icon={faBullhorn} /> Saiba mais
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Navigation arrows */}
           <button
             className="dash-carousel-arrow dash-carousel-arrow-left"
-            onClick={() => setCarouselSlide(0)}
+            onClick={() => setCarouselSlide(prev => (prev - 1 + 3) % 3)}
             style={{ opacity: carouselSlide === 0 ? 0 : 1 }}
           >
             <FontAwesomeIcon icon={faChevronLeft} />
           </button>
           <button
             className="dash-carousel-arrow dash-carousel-arrow-right"
-            onClick={() => setCarouselSlide(1)}
-            style={{ opacity: carouselSlide === 1 ? 0 : 1 }}
+            onClick={() => setCarouselSlide(prev => (prev + 1) % 3)}
+            style={{ opacity: carouselSlide === 2 ? 0 : 1 }}
           >
             <FontAwesomeIcon icon={faChevronRightSolid} />
           </button>
 
           {/* Dots */}
           <div className="dash-carousel-dots">
-            <span
-              className={`dash-carousel-dot ${carouselSlide === 0 ? 'active' : ''}`}
-              onClick={() => setCarouselSlide(0)}
-            />
-            <span
-              className={`dash-carousel-dot ${carouselSlide === 1 ? 'active' : ''}`}
-              onClick={() => setCarouselSlide(1)}
-            />
+            {[0, 1, 2].map(i => (
+              <span
+                key={i}
+                className={`dash-carousel-dot ${carouselSlide === i ? 'active' : ''}`}
+                onClick={() => setCarouselSlide(i)}
+              />
+            ))}
           </div>
         </div>
       </header>

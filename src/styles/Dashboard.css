@@ -305,6 +305,110 @@
   }
 }
 
+/* ===== Promo Slide ===== */
+.dash-promo-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.dash-promo-text {
+  flex: 1;
+}
+
+.dash-promo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(139, 92, 246, 0.2);
+  color: #C4B5FD;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dash-promo-title {
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0 0 12px;
+  line-height: 1.2;
+}
+
+.dash-promo-highlight {
+  background: linear-gradient(135deg, #A78BFA, #7C3AED);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dash-promo-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-promo-benefit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+}
+
+.dash-promo-benefit svg {
+  color: #A78BFA;
+  font-size: 0.85rem;
+  width: 16px;
+}
+
+.dash-promo-btn {
+  background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+  color: #fff;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+  text-decoration: none;
+}
+
+.dash-promo-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.4);
+  color: #fff;
+}
+
+@media (max-width: 700px) {
+  .dash-promo-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .dash-promo-title {
+    font-size: 1.3rem;
+  }
+
+  .dash-promo-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* ===== FILTER BAR ===== */
 .dash-filter-bar {
   display: flex;
