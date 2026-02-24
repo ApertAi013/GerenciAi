@@ -68,6 +68,11 @@ export default function QuickEditStudentModal() {
   const [classesLoaded, setClassesLoaded] = useState(false);
   const [originalPlanId, setOriginalPlanId] = useState<number | null>(null);
 
+  // Enrollment confirmation modals
+  const [showPlanChangeModal, setShowPlanChangeModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [pendingSavePayload, setPendingSavePayload] = useState<any>(null);
+
   // Payment inline
   const [payingInvoiceId, setPayingInvoiceId] = useState<number | null>(null);
   const [paymentForm, setPaymentForm] = useState<{ paid_at: string; method: string; amount_cents: number }>({
@@ -244,28 +249,33 @@ export default function QuickEditStudentModal() {
       payload.class_ids = enrollmentForm.class_ids;
     }
 
-    // Ask about invoice handling for plan changes
+    // Show plan change modal
     if (planChanged) {
-      const choice = window.confirm(
-        'O plano foi alterado. Deseja atualizar o valor das faturas abertas para o novo plano?'
-      );
-      payload.update_open_invoices = choice;
+      setPendingSavePayload(payload);
+      setShowPlanChangeModal(true);
+      return;
     }
 
-    // Ask about invoice handling for cancellation
+    // Show cancel modal
     if (statusChangedToCancelled) {
-      const choice = window.confirm(
-        'Deseja cancelar também as faturas abertas desta matrícula?'
-      );
-      payload.cancel_invoices = choice;
+      setPendingSavePayload(payload);
+      setShowCancelModal(true);
+      return;
     }
 
+    await executeSaveEnrollment(payload);
+  };
+
+  const executeSaveEnrollment = async (payload: any) => {
     setIsSaving(true);
     try {
-      const response = await enrollmentService.updateEnrollment(editingEnrollmentId, payload);
+      const response = await enrollmentService.updateEnrollment(editingEnrollmentId!, payload);
       if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success('Matrícula atualizada!');
         setEditingEnrollmentId(null);
+        setShowPlanChangeModal(false);
+        setShowCancelModal(false);
+        setPendingSavePayload(null);
         await fetchData();
       } else {
         toast.error((response as any).message || 'Erro ao salvar matrícula');
@@ -275,6 +285,28 @@ export default function QuickEditStudentModal() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handlePlanChangeChoice = async (updateInvoices: boolean, refundAndRegenerate: boolean = false) => {
+    if (!pendingSavePayload) return;
+    const payload = { ...pendingSavePayload, update_open_invoices: updateInvoices, refund_and_regenerate: refundAndRegenerate };
+
+    // Check if also cancelling
+    const currentEnrollment = enrollments.find(e => e.id === editingEnrollmentId);
+    const statusChangedToCancelled = pendingSavePayload.status === 'cancelada' && currentEnrollment?.status !== 'cancelada';
+    if (statusChangedToCancelled) {
+      setPendingSavePayload(payload);
+      setShowPlanChangeModal(false);
+      setShowCancelModal(true);
+      return;
+    }
+
+    await executeSaveEnrollment(payload);
+  };
+
+  const handleCancelChoice = async (cancelInvoices: boolean) => {
+    if (!pendingSavePayload) return;
+    await executeSaveEnrollment({ ...pendingSavePayload, cancel_invoices: cancelInvoices });
   };
 
   const handleStartPayment = (invoice: Invoice) => {
@@ -845,6 +877,70 @@ export default function QuickEditStudentModal() {
           </>
         )}
       </div>
+
+      {/* Plan Change Confirmation Modal */}
+      {showPlanChangeModal && (
+        <div className="qe-confirm-overlay" onClick={(e) => e.stopPropagation()}>
+          <div className="qe-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="qe-confirm-header">
+              <h3>Alterar Plano</h3>
+              <button className="qe-btn-icon qe-btn-close" onClick={() => { setShowPlanChangeModal(false); setPendingSavePayload(null); }}>
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+            <p className="qe-confirm-text">
+              O plano desta matrícula será alterado. O que deseja fazer com as faturas em aberto?
+            </p>
+            <div className="qe-confirm-options">
+              <button className="qe-confirm-btn qe-confirm-btn-primary" onClick={() => handlePlanChangeChoice(true)} disabled={isSaving}>
+                <strong>Atualizar faturas em aberto</strong>
+                <small>As faturas em aberto serão atualizadas com o novo valor do plano</small>
+              </button>
+              <button className="qe-confirm-btn qe-confirm-btn-secondary" onClick={() => handlePlanChangeChoice(false)} disabled={isSaving}>
+                <strong>Manter faturas com valor antigo</strong>
+                <small>As faturas em aberto manterão o valor antigo, apenas novas faturas terão o novo valor</small>
+              </button>
+              <button className="qe-confirm-btn qe-confirm-btn-danger" onClick={() => handlePlanChangeChoice(false, true)} disabled={isSaving}>
+                <strong>Estornar fatura paga e gerar nova</strong>
+                <small>A fatura paga do mês será estornada e uma nova será gerada com o novo valor</small>
+              </button>
+              <button className="qe-confirm-btn qe-confirm-btn-cancel" onClick={() => { setShowPlanChangeModal(false); setPendingSavePayload(null); }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Enrollment Confirmation Modal */}
+      {showCancelModal && (
+        <div className="qe-confirm-overlay" onClick={(e) => e.stopPropagation()}>
+          <div className="qe-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="qe-confirm-header">
+              <h3>Cancelar Matrícula</h3>
+              <button className="qe-btn-icon qe-btn-close" onClick={() => { setShowCancelModal(false); setPendingSavePayload(null); }}>
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+            <p className="qe-confirm-text">
+              Você está cancelando esta matrícula. O que deseja fazer com as faturas em aberto?
+            </p>
+            <div className="qe-confirm-options">
+              <button className="qe-confirm-btn qe-confirm-btn-danger" onClick={() => handleCancelChoice(true)} disabled={isSaving}>
+                <strong>Cancelar faturas em aberto</strong>
+                <small>As faturas em aberto serão canceladas junto com a matrícula</small>
+              </button>
+              <button className="qe-confirm-btn qe-confirm-btn-secondary" onClick={() => handleCancelChoice(false)} disabled={isSaving}>
+                <strong>Manter faturas em aberto</strong>
+                <small>As faturas em aberto continuarão ativas para cobrança</small>
+              </button>
+              <button className="qe-confirm-btn qe-confirm-btn-cancel" onClick={() => { setShowCancelModal(false); setPendingSavePayload(null); }}>
+                Voltar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

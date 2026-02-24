@@ -736,3 +736,139 @@
   font-weight: 700;
   font-size: 0.9rem;
 }
+
+/* ===== CONFIRMATION MODALS ===== */
+.qe-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  animation: qe-fadeIn 0.15s ease-out;
+  padding: 1rem;
+}
+
+.qe-confirm-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  animation: qe-slideUp 0.2s ease-out;
+  overflow: hidden;
+}
+
+.qe-confirm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem 0.75rem;
+}
+
+.qe-confirm-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.qe-confirm-text {
+  padding: 0 1.5rem;
+  margin: 0 0 1.25rem;
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.qe-confirm-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0 1.5rem 1.5rem;
+}
+
+.qe-confirm-btn {
+  width: 100%;
+  text-align: left;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: #fff;
+}
+
+.qe-confirm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.qe-confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.qe-confirm-btn strong {
+  font-size: 0.88rem;
+  color: #1f2937;
+}
+
+.qe-confirm-btn small {
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.3;
+}
+
+.qe-confirm-btn-primary {
+  background: #6366f1;
+  border-color: #6366f1;
+}
+
+.qe-confirm-btn-primary strong,
+.qe-confirm-btn-primary small {
+  color: #fff;
+}
+
+.qe-confirm-btn-primary small {
+  opacity: 0.85;
+}
+
+.qe-confirm-btn-secondary {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.qe-confirm-btn-danger {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.qe-confirm-btn-danger strong,
+.qe-confirm-btn-danger small {
+  color: #fff;
+}
+
+.qe-confirm-btn-danger small {
+  opacity: 0.85;
+}
+
+.qe-confirm-btn-cancel {
+  background: transparent;
+  border: none;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.88rem;
+  padding: 0.6rem;
+}
+
+.qe-confirm-btn-cancel:hover {
+  color: #374151;
+  box-shadow: none;
+  transform: none;
+}
