@@ -209,14 +209,15 @@ export default function Dashboard() {
     }
   };
 
-  // ── Carousel auto-slide ──
+  // ── Carousel auto-slide (boas-vindas 2s, promos 8s) ──
   useEffect(() => {
     if (carouselHovered) return;
-    const interval = setInterval(() => {
+    const delay = carouselSlide === 0 ? 2000 : 8000;
+    const timeout = setTimeout(() => {
       setCarouselSlide(prev => (prev + 1) % 3);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [carouselHovered]);
+    }, delay);
+    return () => clearTimeout(timeout);
+  }, [carouselHovered, carouselSlide]);
 
   // ── Class IDs for selected modality ──
   const modalityClassIds = useMemo(() => {
