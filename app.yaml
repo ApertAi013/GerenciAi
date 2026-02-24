@@ -9,10 +9,19 @@ handlers:
   http_headers:
     Cache-Control: 'public, max-age=31536000, immutable'
 
-# Serve other static files (images, favicon, etc)
-- url: /(.*\.(json|ico|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot))
+# Serve SEO files (robots.txt, sitemap.xml)
+- url: /(robots\.txt|sitemap\.xml)
   static_files: dist/\1
-  upload: dist/.*\.(json|ico|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot)
+  upload: dist/(robots\.txt|sitemap\.xml)
+  secure: always
+  redirect_http_response_code: 301
+  http_headers:
+    Cache-Control: 'public, max-age=3600'
+
+# Serve other static files (images, favicon, etc)
+- url: /(.*\.(json|ico|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot|txt|xml))
+  static_files: dist/\1
+  upload: dist/.*\.(json|ico|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot|txt|xml)
   secure: always
   redirect_http_response_code: 301
   http_headers:
