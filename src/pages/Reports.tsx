@@ -116,10 +116,9 @@ export default function Reports() {
         const params: { months: number; modality_id?: number } = { months };
         if (selectedModality) params.modality_id = selectedModality;
 
-        const [enrollmentRes, financialRes, cancelledRes] = await Promise.all([
+        const [enrollmentRes, financialRes] = await Promise.all([
           reportService.getEnrollmentStats(params),
           reportService.getFinancialMonthly(params),
-          reportService.getCancelledEnrollments(params),
         ]);
 
         if (enrollmentRes.data?.monthly) {
@@ -132,7 +131,15 @@ export default function Reports() {
           setByModality(financialRes.data.by_modality || []);
           setOverdueSummary(financialRes.data.overdue_summary || { overdue_students: 0, total_overdue_cents: 0, overdue_invoice_count: 0 });
         }
-        setCancelledList(cancelledRes.data || []);
+
+        // Load cancelled separately so it doesn't break other data if it fails
+        try {
+          const cancelledRes = await reportService.getCancelledEnrollments(params);
+          setCancelledList(cancelledRes.data || []);
+        } catch (cancelErr) {
+          console.error('Erro ao buscar cancelados:', cancelErr);
+          setCancelledList([]);
+        }
       } catch (error) {
         console.error('Erro ao buscar relatórios:', error);
       } finally {
