@@ -34,6 +34,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { reportService } from '../services/reportService';
 import { modalityService } from '../services/modalityService';
+import { api } from '../services/api';
 import type { Modality } from '../types/levelTypes';
 import type { EnrollmentMonthlyData, FinancialMonthlyData, PlanBreakdown, ModalityBreakdown, CancelledEnrollment } from '../types/reportTypes';
 import '../styles/Reports.css';
@@ -134,8 +135,9 @@ export default function Reports() {
 
         // Load cancelled separately so it doesn't break other data if it fails
         try {
-          const cancelledRes = await reportService.getCancelledEnrollments(params);
-          setCancelledList(cancelledRes.data || []);
+          const cancelledResp = await api.get('/api/reports/cancelled-enrollments', { params });
+          const cancelledData = cancelledResp.data;
+          setCancelledList(cancelledData?.data || []);
         } catch (cancelErr) {
           console.error('Erro ao buscar cancelados:', cancelErr);
           setCancelledList([]);
