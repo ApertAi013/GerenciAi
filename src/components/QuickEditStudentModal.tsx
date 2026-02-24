@@ -446,12 +446,7 @@ export default function QuickEditStudentModal() {
 
   // Filter classes for enrollment editing
   const getFilteredClasses = () => {
-    const selectedPlan = plans.find(p => p.id === enrollmentForm.plan_id);
     let filtered = allClasses.filter(c => c.status === 'ativa');
-    // Filter by plan modality
-    if (selectedPlan?.modality_id) {
-      filtered = filtered.filter(c => c.modality_id === selectedPlan.modality_id);
-    }
     // Filter by student level
     const studentLevel = student?.level_name || (student as any)?.level;
     if (studentLevel) {

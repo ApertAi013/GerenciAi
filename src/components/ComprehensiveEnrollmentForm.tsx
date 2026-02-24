@@ -76,12 +76,6 @@ export default function ComprehensiveEnrollmentForm({
     if (classes.length > 0) {
       let filtered = classes;
 
-      // Filter by plan modality (if plan has a specific modality)
-      const selectedPlanData = plans.find((p) => p.id === selectedPlanId);
-      if (selectedPlanData?.modality_id) {
-        filtered = filtered.filter((cls) => cls.modality_id === selectedPlanData.modality_id);
-      }
-
       // Filter by level
       if (studentData.level) {
         filtered = filtered.filter((cls) => {

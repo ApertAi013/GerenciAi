@@ -218,12 +218,6 @@ export default function Enrollments() {
     if (classesWithDetails.length > 0) {
       let filtered = classesWithDetails;
 
-      // Filter by plan modality (if plan has a specific modality)
-      const currentSelectedPlan = plans.find(p => p.id === formData.plan_id);
-      if (currentSelectedPlan?.modality_id) {
-        filtered = filtered.filter((cls) => cls.modality_id === currentSelectedPlan.modality_id);
-      }
-
       // Filter by student level if student is selected
       const selectedStudent = getSelectedStudent();
       if (selectedStudent && (selectedStudent.level_name || selectedStudent.level)) {
@@ -1340,12 +1334,6 @@ function EditEnrollmentModal({
   useEffect(() => {
     if (classesWithDetails.length > 0) {
       let filtered = classesWithDetails;
-
-      // Filter by plan modality (if plan has a specific modality)
-      const currentPlan = plans.find((p) => p.id === formData.plan_id);
-      if (currentPlan?.modality_id) {
-        filtered = filtered.filter((cls) => cls.modality_id === currentPlan.modality_id);
-      }
 
       // Filter by student level
       if (studentData && (studentData.level_name || studentData.level)) {
