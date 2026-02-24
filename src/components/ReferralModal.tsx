@@ -20,7 +20,7 @@ interface ReferralModalProps {
   onClose: () => void;
 }
 
-const FRONTEND_URL = import.meta.env.DEV ? 'http://localhost:5173' : 'https://arenaai.web.app';
+const FRONTEND_URL = import.meta.env.DEV ? 'http://localhost:5173' : 'https://arenai.com.br';
 
 export default function ReferralModal({ isOpen, onClose }: ReferralModalProps) {
   const [data, setData] = useState<ReferralCode | null>(null);
