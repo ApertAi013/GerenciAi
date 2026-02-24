@@ -135,6 +135,176 @@
   letter-spacing: 1px;
 }
 
+/* ===== CAROUSEL ===== */
+.dash-carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-carousel-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dash-carousel-slide {
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+.dash-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: rgba(255,255,255,0.8);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.dash-carousel-arrow:hover {
+  background: rgba(255,255,255,0.25);
+  color: white;
+}
+
+.dash-carousel-arrow-left {
+  left: 12px;
+}
+
+.dash-carousel-arrow-right {
+  right: 12px;
+}
+
+.dash-carousel-dots {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+
+.dash-carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dash-carousel-dot.active {
+  background: var(--color-orange);
+  width: 24px;
+  border-radius: 4px;
+}
+
+/* Referral slide */
+.dash-referral-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  min-height: 80px;
+}
+
+.dash-referral-text {
+  flex: 1;
+}
+
+.dash-referral-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--gradient-primary);
+  color: var(--color-black);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 99px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dash-referral-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-pure-white);
+  margin: 0 0 6px;
+}
+
+.dash-referral-desc {
+  font-size: 0.9rem;
+  color: var(--color-grey-soft);
+  margin: 0 0 12px;
+}
+
+.dash-referral-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.dash-referral-stats span {
+  color: var(--color-orange);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.dash-referral-btn {
+  background: var(--gradient-primary);
+  color: var(--color-black);
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(245, 138, 37, 0.3);
+}
+
+.dash-referral-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(245, 138, 37, 0.4);
+}
+
+@media (max-width: 700px) {
+  .dash-referral-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .dash-referral-title {
+    font-size: 1.3rem;
+  }
+
+  .dash-referral-stats {
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .dash-referral-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* ===== FILTER BAR ===== */
 .dash-filter-bar {
   display: flex;

@@ -24,6 +24,9 @@ import {
   faTableTennis,
   faFilter,
   faTimes,
+  faGift,
+  faChevronLeft,
+  faChevronRight as faChevronRightSolid,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import {
@@ -46,6 +49,8 @@ import { levelService } from '../services/levelService';
 import { rentalService } from '../services/rentalService';
 import { announcementService } from '../services/announcementService';
 import type { Announcement } from '../services/announcementService';
+import { referralService } from '../services/referralService';
+import ReferralModal from '../components/ReferralModal';
 import type { Invoice } from '../types/financialTypes';
 import type { Class, Modality } from '../types/classTypes';
 import type { Enrollment } from '../types/enrollmentTypes';
@@ -142,6 +147,12 @@ export default function Dashboard() {
   const [announceSent, setAnnounceSent] = useState(false);
   const [announceError, setAnnounceError] = useState('');
 
+  // Referral carousel
+  const [carouselSlide, setCarouselSlide] = useState(0);
+  const [referralStats, setReferralStats] = useState({ clicks: 0, signups: 0, conversions: 0 });
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [carouselHovered, setCarouselHovered] = useState(false);
+
   // Redirect admin to admin panel
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -183,12 +194,29 @@ export default function Dashboard() {
       } catch (e) {
         console.warn('Erro ao buscar avisos:', e);
       }
+
+      // Fetch referral stats
+      try {
+        const refData = await referralService.getMyReferralCode();
+        setReferralStats({ clicks: refData.clicks, signups: refData.signups, conversions: refData.conversions });
+      } catch (e) {
+        console.warn('Erro ao buscar dados de indicação:', e);
+      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // ── Carousel auto-slide ──
+  useEffect(() => {
+    if (carouselHovered) return;
+    const interval = setInterval(() => {
+      setCarouselSlide(prev => (prev === 0 ? 1 : 0));
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [carouselHovered]);
 
   // ── Class IDs for selected modality ──
   const modalityClassIds = useMemo(() => {
@@ -513,27 +541,97 @@ export default function Dashboard() {
 
   return (
     <div className="dash">
-      {/* ── Header ── */}
-      <header className="dash-header">
-        <div className="dash-header-inner">
-          <div>
-            <h1 className="dash-greeting">
-              {getGreeting()},{' '}
-              <span className="dash-name">{user?.full_name?.split(' ')[0]}</span>
-            </h1>
-            <p className="dash-subtitle">
-              Resumo geral do sistema &bull;{' '}
-              {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
+      {/* ── Header Carousel ── */}
+      <header
+        className="dash-header"
+        onMouseEnter={() => setCarouselHovered(true)}
+        onMouseLeave={() => setCarouselHovered(false)}
+      >
+        <div className="dash-carousel">
+          <div
+            className="dash-carousel-track"
+            style={{ transform: `translateX(-${carouselSlide * 100}%)` }}
+          >
+            {/* Slide 1: Boas-vindas */}
+            <div className="dash-carousel-slide">
+              <div className="dash-header-inner">
+                <div>
+                  <h1 className="dash-greeting">
+                    {getGreeting()},{' '}
+                    <span className="dash-name">{user?.full_name?.split(' ')[0]}</span>
+                  </h1>
+                  <p className="dash-subtitle">
+                    Resumo geral do sistema &bull;{' '}
+                    {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
+                </div>
+                <div className="dash-date">
+                  <span className="dash-date-num">{new Date().getDate()}</span>
+                  <span className="dash-date-month">
+                    {new Date().toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Slide 2: Indique e Ganhe */}
+            <div className="dash-carousel-slide">
+              <div className="dash-referral-content">
+                <div className="dash-referral-text">
+                  <div className="dash-referral-badge">
+                    <FontAwesomeIcon icon={faGift} /> Indique e Ganhe
+                  </div>
+                  <h2 className="dash-referral-title">
+                    Ganhe <span className="dash-name">1 mês grátis</span> por indicação!
+                  </h2>
+                  <p className="dash-referral-desc">
+                    Indique outros gestores de quadras e ganhe desconto na sua próxima fatura
+                  </p>
+                  <div className="dash-referral-stats">
+                    <span>{referralStats.clicks} cliques</span>
+                    <span>{referralStats.signups} cadastros</span>
+                    <span>{referralStats.conversions} conversões</span>
+                  </div>
+                </div>
+                <button className="dash-referral-btn" onClick={() => setShowReferralModal(true)}>
+                  <FontAwesomeIcon icon={faGift} /> Compartilhar meu link
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="dash-date">
-            <span className="dash-date-num">{new Date().getDate()}</span>
-            <span className="dash-date-month">
-              {new Date().toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
-            </span>
+
+          {/* Navigation arrows */}
+          <button
+            className="dash-carousel-arrow dash-carousel-arrow-left"
+            onClick={() => setCarouselSlide(0)}
+            style={{ opacity: carouselSlide === 0 ? 0 : 1 }}
+          >
+            <FontAwesomeIcon icon={faChevronLeft} />
+          </button>
+          <button
+            className="dash-carousel-arrow dash-carousel-arrow-right"
+            onClick={() => setCarouselSlide(1)}
+            style={{ opacity: carouselSlide === 1 ? 0 : 1 }}
+          >
+            <FontAwesomeIcon icon={faChevronRightSolid} />
+          </button>
+
+          {/* Dots */}
+          <div className="dash-carousel-dots">
+            <span
+              className={`dash-carousel-dot ${carouselSlide === 0 ? 'active' : ''}`}
+              onClick={() => setCarouselSlide(0)}
+            />
+            <span
+              className={`dash-carousel-dot ${carouselSlide === 1 ? 'active' : ''}`}
+              onClick={() => setCarouselSlide(1)}
+            />
           </div>
         </div>
       </header>
+
+      {/* Referral Modal */}
+      <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} />
 
       {/* ── Filtro de Modalidade ── */}
       <div className="dash-filter-bar">

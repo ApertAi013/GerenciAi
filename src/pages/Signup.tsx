@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCheck,
@@ -92,6 +92,7 @@ const FAQ_ITEMS = [
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const formRef = useRef<HTMLDivElement>(null);
 
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -112,9 +113,29 @@ export default function Signup() {
   // FAQ
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  // Referral
+  const referralCode = searchParams.get('ref') || '';
+  const [referrerName, setReferrerName] = useState('');
+
   useEffect(() => {
     fetchPlans();
   }, []);
+
+  // Track referral click and fetch referrer info
+  useEffect(() => {
+    if (!referralCode) return;
+    // Track click
+    fetch(`${API_URL}/api/public/referral/${referralCode}/click`).catch(() => {});
+    // Get referrer name
+    fetch(`${API_URL}/api/public/referral/${referralCode}/info`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          setReferrerName(data.data.name);
+        }
+      })
+      .catch(() => {});
+  }, [referralCode]);
 
   const fetchPlans = async () => {
     try {
@@ -171,7 +192,8 @@ export default function Signup() {
           email: email.trim(),
           phone: phone.replace(/\D/g, ''),
           plan_slug: selectedPlan.slug,
-          action
+          action,
+          ...(referralCode ? { referral_code: referralCode } : {})
         })
       });
 
@@ -341,6 +363,14 @@ export default function Signup() {
         <h1>Comece a gerenciar sua quadra <span className="signup-hero-accent">hoje mesmo</span></h1>
         <p>Escolha o plano ideal e tenha acesso imediato a todas as ferramentas que você precisa.</p>
       </section>
+
+      {/* REFERRAL BANNER */}
+      {referrerName && (
+        <div className="signup-referral-banner">
+          <FontAwesomeIcon icon={faStar} className="signup-referral-icon" />
+          <span>Você foi indicado(a) por <strong>{referrerName}</strong>!</span>
+        </div>
+      )}
 
       {/* FEATURES GRID */}
       <section className="signup-features">

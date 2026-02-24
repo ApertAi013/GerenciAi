@@ -878,3 +878,34 @@
     flex-direction: column;
   }
 }
+
+/* REFERRAL BANNER */
+.signup-referral-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  margin: -20px auto 0;
+  max-width: 600px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  animation: refBannerSlide 0.5s ease-out;
+}
+
+.signup-referral-banner strong {
+  color: #F59E0B;
+}
+
+.signup-referral-icon {
+  color: #F59E0B;
+  font-size: 18px;
+}
+
+@keyframes refBannerSlide {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
