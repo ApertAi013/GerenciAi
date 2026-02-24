@@ -1580,7 +1580,12 @@ function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, onClose, 
             />
             <div className="booking-link-class-selector">
               {filteredGroups.map(([modality, classes]) => {
-                const modIds = classes.map((c: any) => c.id);
+                const search = classSearch.trim().toLowerCase();
+                const modalityMatches = search && modality.toLowerCase().includes(search);
+                const visibleClasses = !search || modalityMatches
+                  ? classes
+                  : classes.filter((c: any) => c.name?.toLowerCase().includes(search));
+                const modIds = visibleClasses.map((c: any) => c.id);
                 const allSelected = modIds.every((id: number) => selectedClassIds.includes(id));
                 const someSelected = modIds.some((id: number) => selectedClassIds.includes(id));
                 return (
@@ -1597,11 +1602,11 @@ function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, onClose, 
                       />
                       <span className="booking-link-modality-name">{modality}</span>
                       <span style={{ fontSize: '0.75rem', color: '#999' }}>
-                        ({classes.filter((c: any) => selectedClassIds.includes(c.id)).length}/{classes.length})
+                        ({visibleClasses.filter((c: any) => selectedClassIds.includes(c.id)).length}/{visibleClasses.length})
                       </span>
                     </div>
                     <div className="booking-link-class-list">
-                      {classes.map((c: any) => {
+                      {visibleClasses.map((c: any) => {
                         const isEnabled = enabledConfigIds.has(c.id);
                         return (
                           <label

@@ -167,6 +167,16 @@ export interface CancelledEnrollment {
   plan_name: string;
 }
 
+export interface NewEnrollment {
+  id: number;
+  created_at: string;
+  student_id: number;
+  student_name: string;
+  student_phone?: string;
+  student_email?: string;
+  plan_name: string;
+}
+
 export interface ReportsResponse<T> {
   success: boolean;
   message: string;

@@ -1338,6 +1338,26 @@ export default function Financial() {
                               <FontAwesomeIcon icon={faXmark} />
                             </button>
                           </>
+                        ) : invoice.status === 'cancelada' ? (
+                          <div className="wtp-wrapper">
+                            <button
+                              className="btn-action btn-whatsapp"
+                              onClick={() => handleWhatsAppClick(invoice)}
+                              title="Enviar mensagem via WhatsApp"
+                              style={{ backgroundColor: '#25D366', color: 'white' }}
+                            >
+                              <FontAwesomeIcon icon={faWhatsapp} />
+                            </button>
+                            {showTemplatePicker === invoice.id && (
+                              <WhatsAppTemplatePicker
+                                onSelect={(message) => {
+                                  setShowTemplatePicker(null);
+                                  sendWhatsApp(invoice, message);
+                                }}
+                                onClose={() => setShowTemplatePicker(null)}
+                              />
+                            )}
+                          </div>
                         ) : invoice.status === 'paga' ? (
                           <span className="paid-indicator" title={`Pago em ${formatDate(invoice.paid_at!)}`}>
                             <FontAwesomeIcon icon={faCheck} style={{ color: '#27ae60' }} />

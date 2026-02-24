@@ -760,6 +760,29 @@
   text-decoration: underline;
 }
 
+.rpt-modal-whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #25D366;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.rpt-modal-whatsapp-btn:hover {
+  background: #1da851;
+}
+
+.rpt-modal-contact .wtp-wrapper {
+  position: relative;
+}
+
 .rpt-modal-footer {
   display: flex;
   justify-content: space-between;

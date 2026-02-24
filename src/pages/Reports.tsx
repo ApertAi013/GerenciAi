@@ -36,7 +36,10 @@ import { reportService } from '../services/reportService';
 import { modalityService } from '../services/modalityService';
 import { api } from '../services/api';
 import type { Modality } from '../types/levelTypes';
-import type { EnrollmentMonthlyData, FinancialMonthlyData, PlanBreakdown, ModalityBreakdown, CancelledEnrollment } from '../types/reportTypes';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import WhatsAppTemplatePicker from '../components/WhatsAppTemplatePicker';
+import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
+import type { EnrollmentMonthlyData, FinancialMonthlyData, PlanBreakdown, ModalityBreakdown, CancelledEnrollment, NewEnrollment } from '../types/reportTypes';
 import '../styles/Reports.css';
 
 const formatCurrency = (cents: number) =>
@@ -73,6 +76,13 @@ export default function Reports() {
   // Cancelled popup
   const [showCancelled, setShowCancelled] = useState(false);
   const [cancelledList, setCancelledList] = useState<CancelledEnrollment[]>([]);
+
+  // New enrollments popup
+  const [showNewEnrollments, setShowNewEnrollments] = useState(false);
+  const [newEnrollmentsList, setNewEnrollmentsList] = useState<NewEnrollment[]>([]);
+
+  // WhatsApp template picker
+  const [showWppPicker, setShowWppPicker] = useState<number | null>(null);
 
   // Period control
   type PeriodType = 'current' | 'previous' | '3m' | '6m' | '12m' | 'custom';
@@ -133,14 +143,20 @@ export default function Reports() {
           setOverdueSummary(financialRes.data.overdue_summary || { overdue_students: 0, total_overdue_cents: 0, overdue_invoice_count: 0 });
         }
 
-        // Load cancelled separately so it doesn't break other data if it fails
+        // Load cancelled and new enrollments separately so they don't break other data
         try {
           const cancelledResp = await api.get('/api/reports/cancelled-enrollments', { params });
-          const cancelledData = cancelledResp.data;
-          setCancelledList(cancelledData?.data || []);
+          setCancelledList(cancelledResp.data?.data || []);
         } catch (cancelErr) {
           console.error('Erro ao buscar cancelados:', cancelErr);
           setCancelledList([]);
+        }
+        try {
+          const newResp = await api.get('/api/reports/new-enrollments', { params });
+          setNewEnrollmentsList(newResp.data?.data || []);
+        } catch (newErr) {
+          console.error('Erro ao buscar novas matrículas:', newErr);
+          setNewEnrollmentsList([]);
         }
       } catch (error) {
         console.error('Erro ao buscar relatórios:', error);
@@ -150,6 +166,41 @@ export default function Reports() {
     };
     fetchReports();
   }, [user, months, selectedModality]);
+
+  // WhatsApp helper for popups
+  const handlePopupWhatsApp = (phone: string | undefined, studentName: string, itemId: number) => {
+    if (!phone) return;
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length < 10) return;
+    const templates = getTemplates();
+    if (templates.length === 1) {
+      const firstName = studentName.split(' ')[0];
+      const applied = applyVariables(templates[0].message, {
+        firstName,
+        fullName: studentName,
+        amount: '',
+        dueDate: '',
+        referenceMonth: '',
+      });
+      window.open(`https://wa.me/55${cleaned}?text=${encodeURIComponent(applied)}`, '_blank');
+    } else {
+      setShowWppPicker(showWppPicker === itemId ? null : itemId);
+    }
+  };
+
+  const sendPopupWhatsApp = (phone: string, studentName: string, message: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    const firstName = studentName.split(' ')[0];
+    const applied = applyVariables(message, {
+      firstName,
+      fullName: studentName,
+      amount: '',
+      dueDate: '',
+      referenceMonth: '',
+    });
+    window.open(`https://wa.me/55${cleaned}?text=${encodeURIComponent(applied)}`, '_blank');
+    setShowWppPicker(null);
+  };
 
   // Filter data by period
   const filteredFinancial = (() => {
@@ -389,12 +440,12 @@ export default function Reports() {
           </div>
           <div className="rpt-kpi-accent blue" />
         </div>
-        <div className="rpt-kpi">
+        <div className="rpt-kpi rpt-kpi-clickable" onClick={() => setShowNewEnrollments(true)} title="Clique para ver detalhes">
           <div className="rpt-kpi-icon teal"><FontAwesomeIcon icon={faUserPlus} /></div>
           <div className="rpt-kpi-body">
             <span className="rpt-kpi-label">Novas</span>
             <span className="rpt-kpi-value">{filteredEnrollment.reduce((s, m) => s + m.new_enrollments, 0)}</span>
-            <span className="rpt-kpi-detail">no período</span>
+            <span className="rpt-kpi-detail">clique para ver detalhes</span>
           </div>
           <div className="rpt-kpi-accent teal" />
         </div>
@@ -653,11 +704,11 @@ export default function Reports() {
 
       {/* Popup de Canceladas */}
       {showCancelled && (
-        <div className="rpt-modal-overlay" onClick={() => setShowCancelled(false)}>
+        <div className="rpt-modal-overlay" onClick={() => { setShowCancelled(false); setShowWppPicker(null); }}>
           <div className="rpt-modal" onClick={e => e.stopPropagation()}>
             <div className="rpt-modal-header">
               <h3>Matrículas Canceladas</h3>
-              <button className="rpt-modal-close" onClick={() => setShowCancelled(false)}>
+              <button className="rpt-modal-close" onClick={() => { setShowCancelled(false); setShowWppPicker(null); }}>
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
@@ -681,9 +732,22 @@ export default function Reports() {
                       </span>
                       <span className="rpt-modal-contact">
                         {item.student_phone ? (
-                          <a href={`https://wa.me/55${item.student_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="rpt-modal-whatsapp">
-                            {item.student_phone}
-                          </a>
+                          <div className="wtp-wrapper">
+                            <button
+                              className="rpt-modal-whatsapp-btn"
+                              onClick={() => handlePopupWhatsApp(item.student_phone, item.student_name, item.id)}
+                              title="Enviar WhatsApp"
+                            >
+                              <FontAwesomeIcon icon={faWhatsapp} /> {item.student_phone}
+                            </button>
+                            {showWppPicker === item.id && (
+                              <WhatsAppTemplatePicker
+                                onSelect={(message) => sendPopupWhatsApp(item.student_phone!, item.student_name, message)}
+                                onClose={() => setShowWppPicker(null)}
+                                position="below"
+                              />
+                            )}
+                          </div>
                         ) : item.student_email || '—'}
                       </span>
                     </div>
@@ -693,7 +757,68 @@ export default function Reports() {
             </div>
             <div className="rpt-modal-footer">
               <span className="rpt-modal-count">{cancelledList.length} cancelamento(s)</span>
-              <button className="rpt-modal-btn" onClick={() => setShowCancelled(false)}>Fechar</button>
+              <button className="rpt-modal-btn" onClick={() => { setShowCancelled(false); setShowWppPicker(null); }}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup de Novas Matrículas */}
+      {showNewEnrollments && (
+        <div className="rpt-modal-overlay" onClick={() => { setShowNewEnrollments(false); setShowWppPicker(null); }}>
+          <div className="rpt-modal" onClick={e => e.stopPropagation()}>
+            <div className="rpt-modal-header">
+              <h3>Novas Matrículas</h3>
+              <button className="rpt-modal-close" onClick={() => { setShowNewEnrollments(false); setShowWppPicker(null); }}>
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            <div className="rpt-modal-body">
+              {newEnrollmentsList.length === 0 ? (
+                <div className="rpt-modal-empty">Nenhuma nova matrícula no período.</div>
+              ) : (
+                <div className="rpt-modal-list">
+                  <div className="rpt-modal-list-header">
+                    <span>Aluno</span>
+                    <span>Plano</span>
+                    <span>Data matrícula</span>
+                    <span>Contato</span>
+                  </div>
+                  {newEnrollmentsList.map(item => (
+                    <div key={item.id} className="rpt-modal-list-row">
+                      <span className="rpt-modal-name">{item.student_name}</span>
+                      <span className="rpt-modal-plan">{item.plan_name}</span>
+                      <span className="rpt-modal-date">
+                        {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                      </span>
+                      <span className="rpt-modal-contact">
+                        {item.student_phone ? (
+                          <div className="wtp-wrapper">
+                            <button
+                              className="rpt-modal-whatsapp-btn"
+                              onClick={() => handlePopupWhatsApp(item.student_phone, item.student_name, item.id)}
+                              title="Enviar WhatsApp"
+                            >
+                              <FontAwesomeIcon icon={faWhatsapp} /> {item.student_phone}
+                            </button>
+                            {showWppPicker === item.id && (
+                              <WhatsAppTemplatePicker
+                                onSelect={(message) => sendPopupWhatsApp(item.student_phone!, item.student_name, message)}
+                                onClose={() => setShowWppPicker(null)}
+                                position="below"
+                              />
+                            )}
+                          </div>
+                        ) : item.student_email || '—'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rpt-modal-footer">
+              <span className="rpt-modal-count">{newEnrollmentsList.length} matrícula(s)</span>
+              <button className="rpt-modal-btn" onClick={() => { setShowNewEnrollments(false); setShowWppPicker(null); }}>Fechar</button>
             </div>
           </div>
         </div>
