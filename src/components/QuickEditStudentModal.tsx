@@ -195,7 +195,7 @@ export default function QuickEditStudentModal() {
     if (plans.length === 0) {
       try {
         const res = await planService.getPlans();
-        if (res.plans) setPlans(res.plans);
+        if (res.data) setPlans(res.data);
       } catch { /* ignore */ }
     }
   };
