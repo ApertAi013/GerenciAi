@@ -3,6 +3,13 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface Arena {
+  id: number;
+  name: string;
+  is_default: boolean;
+  status: string;
+}
+
 export interface User {
   id: number;
   full_name: string;
@@ -17,6 +24,8 @@ export interface User {
   display_name?: string;
   business_description?: string;
   logo_url?: string;
+  arenas?: Arena[];
+  current_arena_id?: number;
 }
 
 export interface AuthResponse {

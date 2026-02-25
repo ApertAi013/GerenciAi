@@ -22,7 +22,8 @@ import {
   faCog,
   faBullhorn,
   faMobileAlt,
-  faClipboardCheck
+  faClipboardCheck,
+  faBuilding
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -36,7 +37,8 @@ interface MenuItem {
   icon: IconDefinition;
   featureCode?: string; // Feature flag opcional
   isPremium?: boolean; // Badge PRO
-  adminOnly?: boolean; // Apenas para admin/gestor
+  adminOnly?: boolean; // Apenas para admin
+  gestorOnly?: boolean; // Apenas para admin/gestor
 }
 
 const menuItems: MenuItem[] = [
@@ -60,6 +62,7 @@ const menuItems: MenuItem[] = [
   { path: '/ia', label: 'IA', icon: faBrain, isPremium: true },
   { path: '/whatsapp', label: 'WhatsApp', icon: faWhatsapp, isPremium: true },
   { path: '/chat', label: 'Chat IA', icon: faRobot, isPremium: true },
+  { path: '/arenas', label: 'Arenas', icon: faBuilding, gestorOnly: true },
   { path: '/meu-plano', label: 'Meu Plano', icon: faCrown },
   { path: '/preferencias', label: 'Preferências', icon: faCog },
   { path: '/admin/monitoring', label: 'Gerenciador', icon: faGauge, adminOnly: true },
@@ -76,6 +79,11 @@ export default function Sidebar() {
     // Verificar se é admin-only
     if (item.adminOnly) {
       return user?.role === 'admin';
+    }
+
+    // Verificar se é gestor-only (admin + gestor)
+    if (item.gestorOnly) {
+      return user?.role === 'admin' || user?.role === 'gestor';
     }
 
     // Se não tem feature flag, sempre exibe

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faCalendarCheck, faBuilding, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import { studentService } from '../../services/studentService';
@@ -19,18 +19,30 @@ interface SearchResult {
 }
 
 export default function Header() {
-  const { user } = useAuthStore();
+  const { user, currentArenaId, setCurrentArena } = useAuthStore();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showArenaMenu, setShowArenaMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+  const arenaRef = useRef<HTMLDivElement>(null);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { openQuickEdit } = useQuickEditStore();
+
+  const arenas = user?.arenas || [];
+  const currentArena = arenas.find(a => a.id === currentArenaId) || arenas[0];
+  const hasMultipleArenas = arenas.length > 1;
+
+  const handleSwitchArena = (arenaId: number) => {
+    setCurrentArena(arenaId);
+    setShowArenaMenu(false);
+    window.location.reload();
+  };
 
   const handleLogout = () => {
     authService.logout();
@@ -44,6 +56,9 @@ export default function Header() {
       }
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
+      }
+      if (arenaRef.current && !arenaRef.current.contains(event.target as Node)) {
+        setShowArenaMenu(false);
       }
     };
 
@@ -212,6 +227,39 @@ export default function Header() {
       </div>
 
       <div className="header-actions">
+        {/* Arena Switcher */}
+        {hasMultipleArenas && currentArena && (
+          <div className="header-arena-container" ref={arenaRef}>
+            <button
+              type="button"
+              className="arena-switcher-btn"
+              onClick={() => setShowArenaMenu(!showArenaMenu)}
+            >
+              <FontAwesomeIcon icon={faBuilding} className="arena-icon" />
+              <span className="arena-name">{currentArena.name}</span>
+              <FontAwesomeIcon icon={faExchangeAlt} className="arena-switch-icon" />
+            </button>
+
+            {showArenaMenu && (
+              <div className="arena-dropdown">
+                <div className="arena-dropdown-header">Trocar Arena</div>
+                {arenas.map((arena) => (
+                  <button
+                    key={arena.id}
+                    type="button"
+                    className={`arena-dropdown-item ${arena.id === currentArenaId ? 'active' : ''}`}
+                    onClick={() => handleSwitchArena(arena.id)}
+                  >
+                    <FontAwesomeIcon icon={faBuilding} />
+                    <span>{arena.name}</span>
+                    {arena.is_default && <span className="arena-default-badge">Padrao</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Notificações */}
         <div className="header-notification-container" ref={notificationsRef}>
           <button

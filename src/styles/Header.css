@@ -296,6 +296,109 @@
   border-radius: 50%;
 }
 
+/* Arena Switcher */
+.header-arena-container {
+  position: relative;
+}
+
+.arena-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid #E5E5E5;
+  background: #FAFAFA;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #404040;
+  transition: all 0.2s;
+}
+
+.arena-switcher-btn:hover {
+  background: #F0F0F0;
+  border-color: #FF9900;
+}
+
+.arena-icon {
+  color: #FF9900;
+  font-size: 14px;
+}
+
+.arena-name {
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arena-switch-icon {
+  color: #A3A3A3;
+  font-size: 11px;
+}
+
+.arena-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.arena-dropdown-header {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #F0F0F0;
+  background: #FAFAFA;
+}
+
+.arena-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+  font-family: inherit;
+  color: #404040;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.arena-dropdown-item:hover {
+  background: #F5F5F5;
+}
+
+.arena-dropdown-item.active {
+  background: #FFF8EC;
+  color: #FF9900;
+  font-weight: 600;
+}
+
+.arena-default-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  color: #FF9900;
+  background: #FFF3E0;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
 .header-user {
   position: relative;
 }

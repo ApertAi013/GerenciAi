@@ -11,12 +11,16 @@ export const api = axios.create({
   },
 });
 
-// Interceptor para adicionar token automaticamente em todas as requisições
+// Interceptor para adicionar token e arena automaticamente em todas as requisições
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    const arenaId = localStorage.getItem('currentArenaId') || sessionStorage.getItem('currentArenaId');
+    if (arenaId) {
+      config.headers['X-Arena-Id'] = arenaId;
     }
     return config;
   },
