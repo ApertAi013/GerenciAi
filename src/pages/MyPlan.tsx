@@ -21,6 +21,10 @@ import {
   faMobileAlt,
   faGift,
   faPercent,
+  faCopy,
+  faQrcode,
+  faChevronDown,
+  faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
 
 // --------------- Types ---------------
@@ -49,6 +53,8 @@ interface Invoice {
   final_amount_cents: number;
   status: string;
   paid_at: string | null;
+  asaas_pix_payload: string | null;
+  asaas_pix_qr_image: string | null;
 }
 
 interface Plan {
@@ -90,6 +96,8 @@ export default function MyPlan() {
   const [loading, setLoading] = useState(true);
   const [upgradingPlanId, setUpgradingPlanId] = useState<number | null>(null);
   const [promiseLoading, setPromiseLoading] = useState(false);
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState<number | null>(null);
+  const [copiedInvoiceId, setCopiedInvoiceId] = useState<number | null>(null);
 
   // Upgrade modal
   const [upgradeModalPlan, setUpgradeModalPlan] = useState<Plan | null>(null);
@@ -172,6 +180,20 @@ export default function MyPlan() {
       toast.error(err.response?.data?.message || 'Erro ao prometer pagamento');
     } finally {
       setPromiseLoading(false);
+    }
+  };
+
+  // ---------- PIX copy ----------
+
+  const handleCopyPix = async (invoice: Invoice) => {
+    if (!invoice.asaas_pix_payload) return;
+    try {
+      await navigator.clipboard.writeText(invoice.asaas_pix_payload);
+      setCopiedInvoiceId(invoice.id);
+      toast.success('Codigo PIX copiado!');
+      setTimeout(() => setCopiedInvoiceId(null), 3000);
+    } catch {
+      toast.error('Erro ao copiar');
     }
   };
 
@@ -723,30 +745,114 @@ export default function MyPlan() {
                   <th style={{ textAlign: 'right', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Valor</th>
                   <th style={{ textAlign: 'center', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Status</th>
                   <th style={{ textAlign: 'left', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Pago em</th>
+                  <th style={{ textAlign: 'center', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Acao</th>
                 </tr>
               </thead>
               <tbody>
-                {recentInvoices.map((inv) => (
-                  <tr key={inv.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                    <td style={{ padding: '12px', color: '#111827', fontWeight: 500 }}>
-                      {inv.reference_month}
-                    </td>
-                    <td style={{ padding: '12px', color: '#6B7280' }}>
-                      {new Date(inv.due_date).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>
-                      {formatBRL(inv.final_amount_cents)}
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      {getInvoiceStatusBadge(inv.status)}
-                    </td>
-                    <td style={{ padding: '12px', color: '#6B7280' }}>
-                      {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('pt-BR') : '-'}
-                    </td>
-                  </tr>
-                ))}
+                {recentInvoices.map((inv) => {
+                  const isPending = inv.status === 'pending' || inv.status === 'overdue';
+                  const hasPix = isPending && (inv.asaas_pix_payload || inv.asaas_pix_qr_image);
+                  const isExpanded = expandedInvoiceId === inv.id;
+
+                  return (
+                    <tr key={inv.id} style={{ borderBottom: isExpanded ? 'none' : '1px solid #F3F4F6' }}>
+                      <td style={{ padding: '12px', color: '#111827', fontWeight: 500 }}>
+                        {inv.reference_month}
+                      </td>
+                      <td style={{ padding: '12px', color: '#6B7280' }}>
+                        {new Date(inv.due_date).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>
+                        {formatBRL(inv.final_amount_cents)}
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
+                        {getInvoiceStatusBadge(inv.status)}
+                      </td>
+                      <td style={{ padding: '12px', color: '#6B7280' }}>
+                        {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('pt-BR') : '-'}
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
+                        {hasPix && (
+                          <button
+                            onClick={() => setExpandedInvoiceId(isExpanded ? null : inv.id)}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 6,
+                              padding: '6px 14px', borderRadius: 8, border: 'none',
+                              backgroundColor: isExpanded ? '#E5E7EB' : '#10B981',
+                              color: isExpanded ? '#374151' : '#fff',
+                              fontWeight: 600, fontSize: 12, cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            <FontAwesomeIcon icon={isExpanded ? faChevronUp : faQrcode} />
+                            {isExpanded ? 'Fechar' : 'Pagar'}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+
+            {/* Expanded PIX payment section */}
+            {expandedInvoiceId && (() => {
+              const inv = recentInvoices.find(i => i.id === expandedInvoiceId);
+              if (!inv) return null;
+              const isCopied = copiedInvoiceId === inv.id;
+
+              return (
+                <div style={{
+                  background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
+                  border: '1px solid #A7F3D0',
+                  borderRadius: 12, padding: '24px',
+                  marginTop: 8, marginBottom: 8,
+                  textAlign: 'center',
+                }}>
+                  <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#065F46' }}>
+                    <FontAwesomeIcon icon={faQrcode} style={{ marginRight: 8 }} />
+                    Pagar via PIX
+                  </h3>
+                  <p style={{ margin: '0 0 16px', fontSize: 13, color: '#6B7280' }}>
+                    Fatura {inv.reference_month} - {formatBRL(inv.final_amount_cents)}
+                  </p>
+
+                  {inv.asaas_pix_qr_image && (
+                    <div style={{ marginBottom: 16 }}>
+                      <img
+                        src={`data:image/png;base64,${inv.asaas_pix_qr_image}`}
+                        alt="QR Code PIX"
+                        style={{
+                          width: 200, height: 200,
+                          borderRadius: 12, border: '2px solid #D1FAE5',
+                          background: '#fff', padding: 8,
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {inv.asaas_pix_payload && (
+                    <button
+                      onClick={() => handleCopyPix(inv)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                        padding: '10px 24px', borderRadius: 10, border: 'none',
+                        backgroundColor: isCopied ? '#059669' : '#111827',
+                        color: '#fff', fontWeight: 600, fontSize: 14,
+                        cursor: 'pointer', transition: 'all 0.2s',
+                      }}
+                    >
+                      <FontAwesomeIcon icon={isCopied ? faCheckCircle : faCopy} />
+                      {isCopied ? 'Copiado!' : 'Copiar codigo PIX'}
+                    </button>
+                  )}
+
+                  <p style={{ margin: '16px 0 0', fontSize: 12, color: '#9CA3AF' }}>
+                    Apos o pagamento, o status e atualizado automaticamente em ate 5 minutos.
+                  </p>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
