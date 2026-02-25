@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBuilding, faUsers, faUserGroup, faPen, faPowerOff, faArrowRightToBracket, faPlus, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { arenaService } from '../services/arenaService';
 import { useAuthStore } from '../store/authStore';
 import type { Arena } from '../types/authTypes';
-import '../styles/Settings.css';
 
 interface ArenaWithCounts extends Arena {
   student_count?: number;
@@ -47,14 +48,13 @@ export default function Arenas() {
       return;
     }
 
-    if (!confirm(`Tem certeza que deseja desativar a arena "${arena.name}"? Alunos e turmas desta arena nao serao mais visíveis.`)) {
+    if (!confirm(`Tem certeza que deseja desativar a arena "${arena.name}"? Alunos e turmas desta arena nao serao mais visiveis.`)) {
       return;
     }
 
     try {
       await arenaService.deleteArena(id);
       fetchArenas();
-      // Update user's arenas list
       if (user) {
         const updatedArenas = user.arenas?.filter(a => a.id !== id) || [];
         setUser({ ...user, arenas: updatedArenas });
@@ -84,115 +84,283 @@ export default function Arenas() {
   }
 
   return (
-    <div className="settings-page">
-      <div className="page-header">
+    <div style={{ padding: '0' }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: '32px',
+      }}>
         <div>
-          <h1>Gerenciar Arenas</h1>
-          <p style={{ color: '#737373', fontSize: '14px', marginTop: '4px' }}>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1a1a1a' }}>Arenas</h1>
+          <p style={{ color: '#737373', fontSize: '14px', marginTop: '6px', margin: '6px 0 0 0' }}>
             Gerencie suas arenas. Cada arena possui alunos, turmas e quadras independentes.
           </p>
         </div>
         <button
           type="button"
-          className="btn-primary"
-          onClick={() => {
-            setEditingArena(null);
-            setShowCreateModal(true);
+          onClick={() => { setEditingArena(null); setShowCreateModal(true); }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            background: '#FF9900',
+            color: 'white',
+            border: 'none',
+            borderRadius: '10px',
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            transition: 'background 0.2s',
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#e68a00')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#FF9900')}
         >
-          + Nova Arena
+          <FontAwesomeIcon icon={faPlus} />
+          Nova Arena
         </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}
 
-      <div className="settings-content">
-        <div className="levels-grid">
-          {arenas.map((arena) => (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+        gap: '20px',
+      }}>
+        {arenas.map((arena) => {
+          const isActive = arena.id === currentArenaId;
+          return (
             <div
               key={arena.id}
-              className="level-card"
               style={{
-                borderLeft: arena.id === currentArenaId
-                  ? '4px solid #FF9900'
-                  : '4px solid #E5E5E5',
+                background: 'white',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: isActive
+                  ? '0 0 0 2px #FF9900, 0 4px 16px rgba(255, 153, 0, 0.15)'
+                  : '0 2px 8px rgba(0, 0, 0, 0.06)',
+                transition: 'box-shadow 0.2s, transform 0.2s',
+                position: 'relative',
+                overflow: 'hidden',
               }}
             >
-              <div className="level-header">
-                <h3>{arena.name}</h3>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {arena.is_default && (
-                    <span className="badge badge-default">Padrao</span>
-                  )}
-                  {arena.id === currentArenaId && (
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: '#FF9900',
-                      background: '#FFF3E0',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                    }}>Ativa</span>
-                  )}
+              {/* Top accent bar */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: isActive ? '#FF9900' : '#E5E5E5',
+              }} />
+
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: isActive ? '#FFF3E0' : '#F5F5F5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <FontAwesomeIcon
+                    icon={faBuilding}
+                    style={{ fontSize: '20px', color: isActive ? '#FF9900' : '#A3A3A3' }}
+                  />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      color: '#1a1a1a',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>{arena.name}</h3>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    {arena.is_default && (
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#737373',
+                        background: '#F0F0F0',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                      }}>Padrao</span>
+                    )}
+                    {isActive && (
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#16a34a',
+                        background: '#f0fdf4',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}>
+                        <FontAwesomeIcon icon={faCheckCircle} style={{ fontSize: '10px' }} />
+                        Selecionada
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
+              {/* Description */}
               {arena.description && (
-                <p className="level-description">{arena.description}</p>
+                <p style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '13px',
+                  color: '#737373',
+                  lineHeight: '1.5',
+                }}>{arena.description}</p>
               )}
 
-              <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '13px', color: '#737373' }}>
-                {arena.student_count !== undefined && (
-                  <span>{arena.student_count} aluno{arena.student_count !== 1 ? 's' : ''}</span>
-                )}
-                {arena.class_count !== undefined && (
-                  <span>{arena.class_count} turma{arena.class_count !== 1 ? 's' : ''}</span>
-                )}
+              {/* Stats */}
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                marginBottom: '20px',
+              }}>
+                <div style={{
+                  flex: 1,
+                  background: '#FAFAFA',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}>
+                  <FontAwesomeIcon icon={faUsers} style={{ color: '#667eea', fontSize: '16px' }} />
+                  <div>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a1a' }}>
+                      {arena.student_count ?? 0}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#A3A3A3', fontWeight: 500 }}>Alunos</div>
+                  </div>
+                </div>
+                <div style={{
+                  flex: 1,
+                  background: '#FAFAFA',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}>
+                  <FontAwesomeIcon icon={faUserGroup} style={{ color: '#f59e0b', fontSize: '16px' }} />
+                  <div>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a1a' }}>
+                      {arena.class_count ?? 0}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#A3A3A3', fontWeight: 500 }}>Turmas</div>
+                  </div>
+                </div>
               </div>
 
-              <div className="level-actions">
-                {arena.id !== currentArenaId && (
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {!isActive && (
                   <button
                     type="button"
-                    className="btn-primary"
                     onClick={() => handleSwitchToArena(arena.id)}
-                    style={{ fontSize: '12px' }}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '10px 16px',
+                      background: '#FF9900',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#e68a00')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = '#FF9900')}
                   >
+                    <FontAwesomeIcon icon={faArrowRightToBracket} />
                     Acessar
                   </button>
                 )}
                 <button
                   type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setEditingArena(arena);
-                    setShowCreateModal(true);
+                  onClick={() => { setEditingArena(arena); setShowCreateModal(true); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    padding: '10px 16px',
+                    background: 'white',
+                    color: '#404040',
+                    border: '1px solid #E5E5E5',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    transition: 'all 0.2s',
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F5F5F5'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; }}
                 >
+                  <FontAwesomeIcon icon={faPen} style={{ fontSize: '11px' }} />
                   Editar
                 </button>
                 {!arena.is_default && (
                   <button
                     type="button"
-                    className="btn-danger"
                     onClick={() => handleDeactivate(arena.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '10px 16px',
+                      background: 'white',
+                      color: '#ef4444',
+                      border: '1px solid #fecaca',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#fef2f2'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; }}
                   >
+                    <FontAwesomeIcon icon={faPowerOff} style={{ fontSize: '11px' }} />
                     Desativar
                   </button>
                 )}
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {showCreateModal && (
         <ArenaModal
           arena={editingArena}
-          onClose={() => {
-            setShowCreateModal(false);
-            setEditingArena(null);
-          }}
+          onClose={() => { setShowCreateModal(false); setEditingArena(null); }}
           onSuccess={handleSuccess}
         />
       )}
@@ -234,7 +402,6 @@ function ArenaModal({
         await arenaService.updateArena(arena.id, formData);
       } else {
         const response = await arenaService.createArena(formData);
-        // Update user's arenas list with new arena
         if (user && response.data) {
           const newArena: Arena = {
             id: response.data.id,
@@ -257,66 +424,160 @@ function ArenaModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{isEditMode ? 'Editar Arena' : 'Criar Nova Arena'}</h2>
-          <button type="button" className="modal-close" onClick={onClose}>
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'white',
+          borderRadius: '16px',
+          width: '100%',
+          maxWidth: '480px',
+          padding: '32px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+        }}
+      >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '24px',
+        }}>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#1a1a1a' }}>
+            {isEditMode ? 'Editar Arena' : 'Criar Nova Arena'}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '20px',
+              color: '#A3A3A3',
+              cursor: 'pointer',
+              padding: '4px 8px',
+              borderRadius: '6px',
+            }}
+          >
             &times;
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div style={{
+            background: '#fef2f2',
+            color: '#ef4444',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            marginBottom: '20px',
+          }}>{error}</div>
+        )}
 
-        <form onSubmit={handleSubmit} className="level-form">
-          <div className="form-group">
-            <label htmlFor="arena-name">Nome *</label>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '20px' }}>
+            <label htmlFor="arena-name" style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#404040',
+              marginBottom: '6px',
+            }}>Nome *</label>
             <input
               id="arena-name"
               type="text"
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="Ex: Arena Norte, Unidade 2"
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Ex: Arena Norte, Unidade Centro"
               required
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                border: '1px solid #D4D4D4',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+                transition: 'border-color 0.2s',
+              }}
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="arena-description">Descricao</label>
+          <div style={{ marginBottom: '24px' }}>
+            <label htmlFor="arena-description" style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#404040',
+              marginBottom: '6px',
+            }}>Descricao</label>
             <textarea
               id="arena-description"
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Descricao opcional da arena"
               rows={3}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                border: '1px solid #D4D4D4',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+                resize: 'vertical',
+              }}
             />
           </div>
 
-          <div className="modal-actions">
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
             <button
               type="button"
-              className="btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
+              style={{
+                padding: '10px 20px',
+                background: 'white',
+                color: '#404040',
+                border: '1px solid #E5E5E5',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="btn-primary"
               disabled={isSubmitting}
+              style={{
+                padding: '10px 24px',
+                background: '#FF9900',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                opacity: isSubmitting ? 0.7 : 1,
+              }}
             >
               {isSubmitting
-                ? isEditMode
-                  ? 'Salvando...'
-                  : 'Criando...'
-                : isEditMode
-                ? 'Salvar Alteracoes'
-                : 'Criar Arena'}
+                ? isEditMode ? 'Salvando...' : 'Criando...'
+                : isEditMode ? 'Salvar' : 'Criar Arena'}
             </button>
           </div>
         </form>
