@@ -433,6 +433,14 @@
   white-space: nowrap;
 }
 
+/* ========== AÇÕES DO HEADER FINANCEIRO ========== */
+.financial-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 /* ========== AÇÕES DA FATURA ========== */
 .invoice-actions {
   display: flex;

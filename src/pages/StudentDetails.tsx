@@ -722,7 +722,7 @@ export default function StudentDetails() {
         <div className="content-card content-card-full">
           <div className="content-card-header">
             <h3>Histórico Financeiro</h3>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="financial-header-actions">
               <button
                 type="button"
                 className="btn-sm btn-advance"
@@ -732,9 +732,8 @@ export default function StudentDetails() {
               </button>
               <button
                 type="button"
-                className="btn-icon"
+                className="btn-sm btn-primary"
                 onClick={() => navigate(`/financeiro?student_id=${student.id}`)}
-                title="Ver financeiro completo"
               >
                 Ver completo
               </button>
