@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { faCreditCard, faCoins, faCalendarDays, faPenToSquare, faChartSimple } from '@fortawesome/free-solid-svg-icons';
+import { faCreditCard, faCoins, faCalendarDays, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
 import { financialService } from '../services/financialService';
 import { levelService } from '../services/levelService';
 import { classService } from '../services/classService';
+import { useQuickEditStore } from '../store/quickEditStore';
 import type { Student } from '../types/studentTypes';
 import type { Enrollment } from '../types/enrollmentTypes';
 import type { Invoice } from '../types/financialTypes';
@@ -19,24 +20,63 @@ import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
 import WhatsAppTemplatePicker from '../components/WhatsAppTemplatePicker';
 import '../styles/StudentDetails.css';
 
+const translatePaymentMethod = (method?: string): string => {
+  const map: Record<string, string> = {
+    pix: 'PIX',
+    cartao: 'Cartão',
+    dinheiro: 'Dinheiro',
+    boleto: 'Boleto',
+    outro: 'Outro',
+  };
+  return method ? map[method] || method : '--';
+};
+
+const translateStatus = (status: string): string => {
+  const map: Record<string, string> = {
+    aberta: 'Aberta',
+    paga: 'Paga',
+    vencida: 'Vencida',
+    cancelada: 'Cancelada',
+    estornada: 'Estornada',
+  };
+  return map[status] || status;
+};
+
 export default function StudentDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { openQuickEdit, isOpen: quickEditOpen } = useQuickEditStore();
 
   const [student, setStudent] = useState<Student | null>(null);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [levels, setLevels] = useState<Level[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showLevelModal, setShowLevelModal] = useState(false);
-  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
 
   // Estados para adicionar aluno a turma
   const [showAddToClassModal, setShowAddToClassModal] = useState(false);
   const [availableClasses, setAvailableClasses] = useState<Class[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
+
+  // Registrar Pagamento
+  const [payingInvoiceId, setPayingInvoiceId] = useState<number | null>(null);
+  const [paymentForm, setPaymentForm] = useState({
+    paid_at: new Date().toISOString().split('T')[0],
+    method: 'pix' as string,
+    amount_cents: 0,
+  });
+  const [isSavingPayment, setIsSavingPayment] = useState(false);
+
+  // Adiantar Pagamento
+  const [showAdvanceModal, setShowAdvanceModal] = useState(false);
+  const [advanceEnrollmentId, setAdvanceEnrollmentId] = useState<number | null>(null);
+  const [advanceForm, setAdvanceForm] = useState({
+    paid_at: new Date().toISOString().split('T')[0],
+    method: 'pix' as string,
+    amount_cents: 0,
+  });
+  const [isAdvancing, setIsAdvancing] = useState(false);
 
   // Financial stats
   const [financialStats, setFinancialStats] = useState({
@@ -45,6 +85,15 @@ export default function StudentDetails() {
     proximo_vencimento: null as Date | null,
     valor_proximo_vencimento: 0,
   });
+
+  // Refresh data when QuickEdit modal closes
+  const wasQuickEditOpen = useRef(false);
+  useEffect(() => {
+    if (wasQuickEditOpen.current && !quickEditOpen) {
+      fetchStudentData();
+    }
+    wasQuickEditOpen.current = quickEditOpen;
+  }, [quickEditOpen]);
 
   useEffect(() => {
     if (id) {
@@ -65,31 +114,14 @@ export default function StudentDetails() {
 
       if (studentRes.status === 'success' && studentRes.data) {
         setStudent(studentRes.data);
-        // Define o nível selecionado (prioriza level_id, senão busca pelo nome)
-        if (studentRes.data.level_id) {
-          setSelectedLevel(studentRes.data.level_id);
-        } else if (studentRes.data.level) {
-          const levelMatch = levelsRes.status === 'success'
-            ? levelsRes.data.find(l => l.name.toLowerCase() === studentRes.data.level?.toLowerCase())
-            : null;
-          setSelectedLevel(levelMatch?.id || null);
-        }
       }
 
       if (enrollmentsRes.status === 'success') {
-        // Mapear o array 'classes' retornado pelo backend para os campos esperados pelo frontend
         const enrollmentsWithMappedClasses = enrollmentsRes.data.map((enrollment: any) => {
-          // Parse classes se vier como string JSON
           let classesArray = enrollment.classes;
           if (typeof classesArray === 'string') {
-            try {
-              classesArray = JSON.parse(classesArray);
-            } catch {
-              classesArray = null;
-            }
+            try { classesArray = JSON.parse(classesArray); } catch { classesArray = null; }
           }
-
-          // Se o backend retornou um array 'classes', extrair class_ids e class_names
           if (classesArray && Array.isArray(classesArray) && classesArray.length > 0) {
             const weekdayMap: Record<string, string> = {
               'seg': 'Segunda', 'ter': 'Terça', 'qua': 'Quarta',
@@ -114,8 +146,11 @@ export default function StudentDetails() {
       }
 
       if (invoicesRes.status === 'success') {
-        setInvoices(invoicesRes.data);
-        calculateFinancialStats(invoicesRes.data);
+        const inv = Array.isArray(invoicesRes.data)
+          ? invoicesRes.data
+          : (invoicesRes.data as any)?.invoices || [];
+        setInvoices(inv);
+        calculateFinancialStats(inv);
       }
 
       if (levelsRes.status === 'success') {
@@ -134,54 +169,22 @@ export default function StudentDetails() {
     );
     const saldo_devedor = overdue.reduce((sum, inv) => sum + inv.final_amount_cents, 0);
 
-    // Find next due invoice
     const upcoming = invoicesList
       .filter((inv) => inv.status === 'aberta' && new Date(inv.due_date) >= new Date())
       .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
 
     setFinancialStats({
       saldo_devedor,
-      creditos: 0, // TODO: implement credits
+      creditos: 0,
       proximo_vencimento: upcoming ? new Date(upcoming.due_date) : null,
       valor_proximo_vencimento: upcoming?.final_amount_cents || 0,
     });
   };
 
-  const handleUpdateLevel = async () => {
-    if (!student || !selectedLevel) return;
-
-    try {
-      // Encontra o nível selecionado para pegar o nome
-      const selectedLevelObj = levels.find(l => l.id === selectedLevel);
-      if (!selectedLevelObj) {
-        toast.error('Nível selecionado não encontrado');
-        return;
-      }
-
-      // Tenta atualizar usando ambos os campos para compatibilidade
-      const response = await studentService.updateStudent(student.id, {
-        level_id: selectedLevel,
-        level: selectedLevelObj.name
-      } as any);
-
-      if ((response as any).status === 'success' || (response as any).success === true) {
-        toast.success('Nível do aluno atualizado com sucesso!');
-        setShowLevelModal(false);
-        fetchStudentData();
-      } else {
-        toast.error(response.message || 'Erro ao atualizar nível do aluno');
-      }
-    } catch (error: any) {
-      console.error('Erro ao atualizar nível:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Erro ao atualizar nível do aluno';
-      toast.error(errorMessage);
-    }
-  };
+  // --- Add to class handlers ---
 
   const handleOpenAddToClassModal = async () => {
-    // Verificar se o aluno tem matrícula ativa
     const activeEnrollment = enrollments.find(e => e.status === 'ativa');
-
     if (!activeEnrollment) {
       toast.error('Este aluno não possui matrícula ativa. Crie uma matrícula primeiro.');
       return;
@@ -190,12 +193,8 @@ export default function StudentDetails() {
     try {
       setIsLoadingClasses(true);
       setShowAddToClassModal(true);
-
-      // Buscar todas as turmas ativas
       const classesRes = await classService.getClasses({ status: 'ativa' });
-
       if (classesRes.status === 'success') {
-        // Filtrar turmas que o aluno ainda não está matriculado
         const currentClassIds = activeEnrollment.class_ids || [];
         const available = classesRes.data.filter(
           (cls) => !currentClassIds.includes(cls.id)
@@ -216,7 +215,6 @@ export default function StudentDetails() {
       toast.error('Selecione pelo menos uma turma');
       return;
     }
-
     const activeEnrollment = enrollments.find(e => e.status === 'ativa');
     if (!activeEnrollment) {
       toast.error('Matrícula ativa não encontrada');
@@ -224,40 +222,189 @@ export default function StudentDetails() {
     }
 
     try {
-      // Combinar turmas atuais com as novas selecionadas
       const currentClassIds = activeEnrollment.class_ids || [];
       const updatedClassIds = [...currentClassIds, ...selectedClasses];
-
       const response = await enrollmentService.updateEnrollmentClasses(
         activeEnrollment.id,
         { class_ids: updatedClassIds }
       );
-
       if ((response as any).status === 'success' || (response as any).success === true) {
         toast.success(`Aluno adicionado a ${selectedClasses.length} turma(s) com sucesso!`);
         setShowAddToClassModal(false);
         setSelectedClasses([]);
-        // Recarregar dados do aluno
         fetchStudentData();
       } else {
         toast.error(response.message || 'Erro ao adicionar aluno às turmas');
       }
     } catch (error: any) {
       console.error('Erro ao adicionar às turmas:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Erro ao adicionar aluno às turmas';
-      toast.error(errorMessage);
+      toast.error(error?.response?.data?.message || error?.message || 'Erro ao adicionar aluno às turmas');
     }
   };
 
   const handleToggleClass = (classId: number) => {
     setSelectedClasses((prev) =>
-      prev.includes(classId)
-        ? prev.filter((id) => id !== classId)
-        : [...prev, classId]
+      prev.includes(classId) ? prev.filter((cid) => cid !== classId) : [...prev, classId]
     );
   };
 
-  // Template picker state
+  // --- Register payment handlers ---
+
+  const handleStartPayment = (invoice: Invoice) => {
+    setPayingInvoiceId(invoice.id);
+    setPaymentForm({
+      paid_at: new Date().toISOString().split('T')[0],
+      method: 'pix',
+      amount_cents: invoice.final_amount_cents - (invoice.paid_amount_cents || 0),
+    });
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!payingInvoiceId) return;
+    setIsSavingPayment(true);
+    try {
+      const response = await financialService.registerPayment({
+        invoice_id: payingInvoiceId,
+        paid_at: paymentForm.paid_at,
+        method: paymentForm.method as any,
+        amount_cents: paymentForm.amount_cents,
+      });
+      if (response.status === 'success') {
+        toast.success('Pagamento registrado!');
+        setPayingInvoiceId(null);
+        fetchStudentData();
+      } else {
+        toast.error(response.message || 'Erro ao registrar pagamento');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao registrar pagamento');
+    } finally {
+      setIsSavingPayment(false);
+    }
+  };
+
+  // --- Cancel invoice handler ---
+
+  const handleCancelInvoice = async (invoiceId: number) => {
+    if (!confirm('Tem certeza que deseja cancelar esta fatura?')) return;
+    try {
+      const response = await financialService.cancelInvoice(invoiceId);
+      if (response.status === 'success') {
+        toast.success('Fatura cancelada!');
+        fetchStudentData();
+      } else {
+        toast.error(response.message || 'Erro ao cancelar fatura');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao cancelar fatura');
+    }
+  };
+
+  // --- Advance payment handlers ---
+
+  const getNextMonth = () => {
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    return `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  const getNextMonthLabel = () => {
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    return nextMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
+
+  const handleOpenAdvanceModal = () => {
+    const active = enrollments.filter(e => e.status === 'ativa');
+    if (active.length === 0) {
+      toast.error('Nenhuma matrícula ativa encontrada');
+      return;
+    }
+    const first = active[0];
+    setAdvanceEnrollmentId(first.id);
+    setAdvanceForm({
+      paid_at: new Date().toISOString().split('T')[0],
+      method: 'pix',
+      amount_cents: first.plan_price_cents || 0,
+    });
+    setShowAdvanceModal(true);
+  };
+
+  const handleAdvanceEnrollmentChange = (enrollmentId: number) => {
+    setAdvanceEnrollmentId(enrollmentId);
+    const enrollment = enrollments.find(e => e.id === enrollmentId);
+    if (enrollment) {
+      setAdvanceForm(prev => ({
+        ...prev,
+        amount_cents: enrollment.plan_price_cents || 0,
+      }));
+    }
+  };
+
+  const handleConfirmAdvance = async () => {
+    if (!advanceEnrollmentId) return;
+    setIsAdvancing(true);
+    const referenceMonth = getNextMonth();
+
+    try {
+      // 1. Generate invoices for next month
+      try {
+        await financialService.generateInvoices({ reference_month: referenceMonth });
+      } catch (err: any) {
+        // Ignore - invoice may already exist
+        console.log('Generate invoices:', err?.response?.data?.message || 'OK');
+      }
+
+      // 2. Re-fetch invoices to find the generated one
+      const invoicesRes = await financialService.getInvoices({ student_id: parseInt(id!) });
+      let allInvoices: Invoice[] = [];
+      if (invoicesRes.status === 'success') {
+        allInvoices = Array.isArray(invoicesRes.data)
+          ? invoicesRes.data
+          : (invoicesRes.data as any)?.invoices || [];
+      }
+
+      // 3. Find invoice for this enrollment + next month
+      const targetInvoice = allInvoices.find(
+        inv => inv.enrollment_id === advanceEnrollmentId && inv.reference_month === referenceMonth
+      );
+
+      if (!targetInvoice) {
+        toast.error('Não foi possível encontrar a fatura do próximo mês');
+        setIsAdvancing(false);
+        return;
+      }
+
+      if (targetInvoice.status === 'paga') {
+        toast.error('A fatura do próximo mês já está paga');
+        setIsAdvancing(false);
+        return;
+      }
+
+      // 4. Register payment
+      const payResponse = await financialService.registerPayment({
+        invoice_id: targetInvoice.id,
+        paid_at: advanceForm.paid_at,
+        method: advanceForm.method as any,
+        amount_cents: advanceForm.amount_cents,
+      });
+
+      if (payResponse.status === 'success') {
+        toast.success('Pagamento adiantado registrado com sucesso!');
+        setShowAdvanceModal(false);
+        fetchStudentData();
+      } else {
+        toast.error(payResponse.message || 'Erro ao registrar pagamento');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao processar adiantamento');
+    } finally {
+      setIsAdvancing(false);
+    }
+  };
+
+  // --- WhatsApp handlers ---
+
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const sendWhatsApp = (message: string) => {
@@ -291,12 +438,16 @@ export default function StudentDetails() {
     }
   };
 
+  // --- Helpers ---
+
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     }).format(cents / 100);
   };
+
+  // --- Render ---
 
   if (isLoading) {
     return (
@@ -320,6 +471,12 @@ export default function StudentDetails() {
   const currentLevel = student.level_id
     ? levels.find((l) => l.id === student.level_id)
     : null;
+
+  const activeEnrollments = enrollments.filter(e => e.status === 'ativa');
+
+  const sortedInvoices = [...invoices].sort(
+    (a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime()
+  );
 
   return (
     <div className="student-details">
@@ -378,7 +535,7 @@ export default function StudentDetails() {
             <button
               type="button"
               className="btn-secondary"
-              onClick={() => setShowEditModal(true)}
+              onClick={() => openQuickEdit(student.id)}
             >
               <FontAwesomeIcon icon={faPenToSquare} /> EDITAR
             </button>
@@ -431,7 +588,7 @@ export default function StudentDetails() {
         {/* Enrollments Section */}
         <div className="content-card">
           <div className="content-card-header">
-            <h3>📋 Matrículas</h3>
+            <h3>Matrículas</h3>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 type="button"
@@ -439,7 +596,7 @@ export default function StudentDetails() {
                 onClick={handleOpenAddToClassModal}
                 title="Adicionar aluno a uma turma"
               >
-                ➕ Turma
+                + Turma
               </button>
               <button
                 type="button"
@@ -447,7 +604,7 @@ export default function StudentDetails() {
                 onClick={() => navigate('/matriculas')}
                 title="Ver todas as matrículas"
               >
-                📋
+                Ver todas
               </button>
             </div>
           </div>
@@ -516,16 +673,7 @@ export default function StudentDetails() {
         {/* Student Info Section */}
         <div className="content-card">
           <div className="content-card-header">
-            <h3>👤 Informações Pessoais</h3>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => setShowLevelModal(true)}
-              style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-              <FontAwesomeIcon icon={faChartSimple} />
-              Alterar Nível
-            </button>
+            <h3>Informações Pessoais</h3>
           </div>
           <div className="content-card-body">
             <div className="info-grid">
@@ -570,18 +718,27 @@ export default function StudentDetails() {
           <MakeupCreditsManager studentId={parseInt(id!)} studentName={student.full_name} />
         </div>
 
-        {/* Invoices Section */}
+        {/* Invoices Section - Expanded */}
         <div className="content-card content-card-full">
           <div className="content-card-header">
-            <h3>💵 Histórico Financeiro</h3>
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => navigate(`/financeiro?student_id=${student.id}`)}
-              title="Ver financeiro completo"
-            >
-              📊
-            </button>
+            <h3>Histórico Financeiro</h3>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn-sm btn-advance"
+                onClick={handleOpenAdvanceModal}
+              >
+                Adiantar Pagamento
+              </button>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => navigate(`/financeiro?student_id=${student.id}`)}
+                title="Ver financeiro completo"
+              >
+                Ver completo
+              </button>
+            </div>
           </div>
           <div className="content-card-body">
             {invoices.length === 0 ? (
@@ -592,31 +749,63 @@ export default function StudentDetails() {
                   <thead>
                     <tr>
                       <th>Referência</th>
+                      <th>Plano</th>
                       <th>Vencimento</th>
-                      <th>Valor</th>
+                      <th>Valor Bruto</th>
+                      <th>Desconto</th>
+                      <th>Valor Final</th>
+                      <th>Pago</th>
+                      <th>Método</th>
                       <th>Status</th>
                       <th>Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {invoices.slice(0, 10).map((invoice) => (
+                    {sortedInvoices.map((invoice) => (
                       <tr key={invoice.id}>
                         <td>{invoice.reference_month}</td>
+                        <td>{invoice.plan_name || '--'}</td>
                         <td>{new Date(invoice.due_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                        <td>{formatCurrency(invoice.final_amount_cents)}</td>
+                        <td>{formatCurrency(invoice.amount_cents)}</td>
+                        <td>{invoice.discount_cents ? formatCurrency(invoice.discount_cents) : '--'}</td>
+                        <td><strong>{formatCurrency(invoice.final_amount_cents)}</strong></td>
+                        <td>{invoice.paid_amount_cents ? formatCurrency(invoice.paid_amount_cents) : '--'}</td>
+                        <td>{translatePaymentMethod(invoice.payment_method)}</td>
                         <td>
                           <span className={`status-badge status-${invoice.status}`}>
-                            {invoice.status}
+                            {translateStatus(invoice.status)}
                           </span>
                         </td>
                         <td>
-                          <button
-                            type="button"
-                            className="btn-sm btn-primary"
-                            onClick={() => navigate(`/financeiro?student_id=${student.id}`)}
-                          >
-                            Ver
-                          </button>
+                          <div className="invoice-actions">
+                            {(invoice.status === 'aberta' || invoice.status === 'vencida') && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn-sm btn-success"
+                                  onClick={() => handleStartPayment(invoice)}
+                                >
+                                  Pagar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-sm btn-danger"
+                                  onClick={() => handleCancelInvoice(invoice.id)}
+                                >
+                                  Cancelar
+                                </button>
+                              </>
+                            )}
+                            {invoice.status === 'paga' && (
+                              <button
+                                type="button"
+                                className="btn-sm btn-primary"
+                                onClick={() => navigate(`/financeiro?student_id=${student.id}`)}
+                              >
+                                Ver
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -628,64 +817,141 @@ export default function StudentDetails() {
         </div>
       </div>
 
-      {/* Level Change Modal */}
-      {showLevelModal && (
-        <div className="modal-overlay" onClick={() => setShowLevelModal(false)}>
+      {/* Register Payment Modal */}
+      {payingInvoiceId && (
+        <div className="modal-overlay" onClick={() => setPayingInvoiceId(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Alterar Nível do Aluno</h2>
-              <button type="button" className="modal-close" onClick={() => setShowLevelModal(false)}>
+              <h2>Registrar Pagamento</h2>
+              <button type="button" className="modal-close" onClick={() => setPayingInvoiceId(null)}>
                 ✕
               </button>
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>Nível Atual</label>
-                <p className="current-level">
-                  {currentLevel ? (
-                    <span className="level-badge" style={{ backgroundColor: currentLevel.color }}>
-                      {currentLevel.name}
-                    </span>
-                  ) : (
-                    'Nenhum'
-                  )}
-                </p>
+                <label>Valor (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={(paymentForm.amount_cents / 100).toFixed(2)}
+                  onChange={(e) => setPaymentForm(prev => ({
+                    ...prev,
+                    amount_cents: Math.round(parseFloat(e.target.value || '0') * 100),
+                  }))}
+                />
               </div>
               <div className="form-group">
-                <label>Novo Nível</label>
+                <label>Data do Pagamento</label>
+                <input
+                  type="date"
+                  value={paymentForm.paid_at}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, paid_at: e.target.value }))}
+                />
+              </div>
+              <div className="form-group">
+                <label>Método</label>
                 <select
-                  value={selectedLevel || ''}
-                  onChange={(e) => setSelectedLevel(e.target.value ? parseInt(e.target.value) : null)}
+                  value={paymentForm.method}
+                  onChange={(e) => setPaymentForm(prev => ({ ...prev, method: e.target.value }))}
                 >
-                  <option value="">Selecione um nível</option>
-                  {levels.map((level) => (
-                    <option key={level.id} value={level.id}>
-                      {level.name}
-                    </option>
-                  ))}
+                  <option value="pix">PIX</option>
+                  <option value="cartao">Cartão</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="boleto">Boleto</option>
+                  <option value="outro">Outro</option>
                 </select>
               </div>
-              {selectedLevel && selectedLevel !== student.level_id && (
-                <div style={{ padding: '10px 14px', backgroundColor: '#fffbeb', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '0.85rem', color: '#92400e', marginTop: '8px' }}>
-                  <strong>Atenção:</strong> Se o aluno estiver matriculado em turmas que não aceitam o novo nível, ele aparecerá como "fora do nível" na tela de Turmas.
-                </div>
-              )}
             </div>
             <div className="modal-footer">
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setShowLevelModal(false)}
-              >
+              <button type="button" className="btn-secondary" onClick={() => setPayingInvoiceId(null)}>
                 Cancelar
               </button>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleUpdateLevel}
-                disabled={!selectedLevel || selectedLevel === student.level_id}
-              >
-                Salvar
+              <button type="button" className="btn-primary" onClick={handleConfirmPayment} disabled={isSavingPayment}>
+                {isSavingPayment ? 'Salvando...' : 'Confirmar Pagamento'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Advance Payment Modal */}
+      {showAdvanceModal && (
+        <div className="modal-overlay" onClick={() => setShowAdvanceModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Adiantar Pagamento</h2>
+              <button type="button" className="modal-close" onClick={() => setShowAdvanceModal(false)}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              {activeEnrollments.length > 1 && (
+                <div className="form-group">
+                  <label>Matrícula</label>
+                  <select
+                    value={advanceEnrollmentId || ''}
+                    onChange={(e) => handleAdvanceEnrollmentChange(parseInt(e.target.value))}
+                  >
+                    {activeEnrollments.map(enr => (
+                      <option key={enr.id} value={enr.id}>
+                        {enr.plan_name} — {formatCurrency(enr.plan_price_cents || 0)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {activeEnrollments.length === 1 && (
+                <div className="advance-info-box">
+                  <p><strong>Plano:</strong> {activeEnrollments[0].plan_name}</p>
+                  <p><strong>Valor do plano:</strong> {formatCurrency(activeEnrollments[0].plan_price_cents || 0)}</p>
+                </div>
+              )}
+
+              <div className="advance-info-box advance-info-highlight">
+                <p><strong>Mês de referência:</strong> {getNextMonthLabel()}</p>
+              </div>
+
+              <div className="form-group">
+                <label>Valor (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={(advanceForm.amount_cents / 100).toFixed(2)}
+                  onChange={(e) => setAdvanceForm(prev => ({
+                    ...prev,
+                    amount_cents: Math.round(parseFloat(e.target.value || '0') * 100),
+                  }))}
+                />
+              </div>
+              <div className="form-group">
+                <label>Data do Pagamento</label>
+                <input
+                  type="date"
+                  value={advanceForm.paid_at}
+                  onChange={(e) => setAdvanceForm(prev => ({ ...prev, paid_at: e.target.value }))}
+                />
+              </div>
+              <div className="form-group">
+                <label>Método</label>
+                <select
+                  value={advanceForm.method}
+                  onChange={(e) => setAdvanceForm(prev => ({ ...prev, method: e.target.value }))}
+                >
+                  <option value="pix">PIX</option>
+                  <option value="cartao">Cartão</option>
+                  <option value="dinheiro">Dinheiro</option>
+                  <option value="boleto">Boleto</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={() => setShowAdvanceModal(false)}>
+                Cancelar
+              </button>
+              <button type="button" className="btn-primary" onClick={handleConfirmAdvance} disabled={isAdvancing}>
+                {isAdvancing ? 'Processando...' : 'Gerar e Registrar Pagamento'}
               </button>
             </div>
           </div>

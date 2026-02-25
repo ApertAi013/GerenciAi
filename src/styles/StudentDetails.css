@@ -429,6 +429,78 @@
   background-color: #f8f9fa;
 }
 
+.invoices-table th {
+  white-space: nowrap;
+}
+
+/* ========== AÇÕES DA FATURA ========== */
+.invoice-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+}
+
+/* ========== BOTÃO ADIANTAR ========== */
+.btn-sm.btn-advance {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.btn-sm.btn-advance:hover {
+  opacity: 0.9;
+}
+
+/* ========== BOTÕES SUCCESS / DANGER ========== */
+.btn-sm.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-sm.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-sm.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-sm.btn-danger:hover {
+  background-color: #c82333;
+}
+
+/* ========== INFO BOX ADIANTAR ========== */
+.advance-info-box {
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.advance-info-box p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.advance-info-highlight {
+  background-color: #e8f0fe;
+  border-color: #4285f4;
+}
+
+/* ========== BADGES EXTRAS ========== */
+.status-badge.status-cancelada {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.status-badge.status-estornada {
+  background-color: #fce4ec;
+  color: #c62828;
+}
+
 /* ========== BOTÕES PRINCIPAIS ========== */
 .btn-primary {
   background-color: #007bff;
