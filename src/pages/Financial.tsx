@@ -307,9 +307,9 @@ export default function Financial() {
     // Check if there's a student_id in URL params
     const studentIdParam = searchParams.get('student_id');
     if (studentIdParam) {
-      // Find the student name from invoices to set searchTerm
-      loadInvoices().then(() => {
-        const studentInvoice = invoices.find(inv => inv.student_id === Number(studentIdParam));
+      // Find the student name from the loaded invoices to set searchTerm
+      loadInvoices().then((loaded) => {
+        const studentInvoice = loaded.find((inv: Invoice) => inv.student_id === Number(studentIdParam));
         if (studentInvoice?.student_name) {
           setSearchTerm(studentInvoice.student_name);
         }
@@ -378,9 +378,11 @@ export default function Financial() {
       }
 
       setInvoices(invoiceList);
+      return invoiceList;
     } catch (error) {
       console.error('Erro ao carregar faturas:', error);
       alert('Erro ao carregar faturas');
+      return [];
     } finally {
       setLoading(false);
     }
