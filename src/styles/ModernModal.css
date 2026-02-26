@@ -77,6 +77,15 @@
   color: #1a1a1a;
 }
 
+/* Form inside modal must also be flex column to preserve scroll */
+.mm-modal form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* Content */
 .mm-content {
   flex: 1;
