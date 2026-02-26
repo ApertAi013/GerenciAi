@@ -38,6 +38,13 @@ import {
   faSearch,
   faCommentDots,
   faPen,
+  faGripVertical,
+  faMousePointer,
+  faVoteYea,
+  faCamera,
+  faTshirt,
+  faTrophy,
+  faEnvelope,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import toast from 'react-hot-toast';
@@ -48,6 +55,7 @@ import { levelService } from '../services/levelService';
 import { modalityService } from '../services/modalityService';
 import { classService } from '../services/classService';
 import { planService } from '../services/planService';
+import { studentService } from '../services/studentService';
 import { api } from '../services/api';
 
 // ─── Types ───
@@ -399,6 +407,14 @@ export default function Onboarding() {
   const [planDescription, setPlanDescription] = useState('');
   const [createdPlans, setCreatedPlans] = useState<CreatedPlan[]>([]);
 
+  // Step 5 — Student
+  const [studentName, setStudentName] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [studentCpf, setStudentCpf] = useState('');
+  const [studentPhone, setStudentPhone] = useState('');
+  const [studentLevel, setStudentLevel] = useState('');
+  const [createdStudent, setCreatedStudent] = useState<{ id: number; name: string } | null>(null);
+
   // ─── Handlers ───
 
   const handleSkip = async () => {
@@ -574,6 +590,29 @@ export default function Onboarding() {
       toast.success(`Plano "${res.data.name}" criado!`);
     } catch {
       toast.error('Erro ao criar plano');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateStudent = async () => {
+    if (!studentName.trim() || !studentEmail.trim() || !studentCpf.trim()) {
+      toast.error('Preencha nome, email e CPF');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await studentService.createStudent({
+        full_name: studentName.trim(),
+        email: studentEmail.trim(),
+        cpf: studentCpf.replace(/\D/g, ''),
+        phone: studentPhone.trim() || undefined,
+        level: studentLevel || undefined,
+      });
+      setCreatedStudent({ id: res.data.id, name: res.data.full_name });
+      toast.success(`Aluno "${res.data.full_name}" cadastrado!`);
+    } catch {
+      toast.error('Erro ao cadastrar aluno');
     } finally {
       setLoading(false);
     }
@@ -1127,43 +1166,122 @@ export default function Onboarding() {
   const renderStep5 = () => (
     <div className="onb-fade" key="step5">
       <div style={styles.stepIndicator}>ETAPA 5 DE 8</div>
-      <h1 style={styles.stepTitle}>Alunos e Matrículas</h1>
+      <h1 style={styles.stepTitle}>Cadastre seu Primeiro Aluno</h1>
       <p style={styles.stepSubtitle}>
-        Com níveis, turmas e planos configurados, o próximo passo é cadastrar alunos e criar matrículas.
-        As faturas são geradas automaticamente a partir da matrícula.
+        Agora que a arena está configurada, cadastre um aluno para testar o fluxo completo.
+        Depois você pode criar a matrícula vinculando plano e turmas.
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={styles.featureCard}>
-          <div style={styles.featureIcon}><FontAwesomeIcon icon={faUsers} /></div>
+      {/* Student creation form */}
+      {!createdStudent ? (
+        <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ flex: 1, ...styles.formGroup }}>
+              <label style={styles.label}>Nome Completo *</label>
+              <input
+                style={styles.input}
+                value={studentName}
+                onChange={e => setStudentName(e.target.value)}
+                placeholder="Ex: João Silva"
+                onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
+            </div>
+            <div style={{ flex: 1, ...styles.formGroup }}>
+              <label style={styles.label}>CPF *</label>
+              <input
+                style={styles.input}
+                value={studentCpf}
+                onChange={e => setStudentCpf(e.target.value)}
+                placeholder="000.000.000-00"
+                onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ flex: 1, ...styles.formGroup }}>
+              <label style={styles.label}>Email *</label>
+              <input
+                type="email"
+                style={styles.input}
+                value={studentEmail}
+                onChange={e => setStudentEmail(e.target.value)}
+                placeholder="aluno@email.com"
+                onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
+            </div>
+            <div style={{ flex: 1, ...styles.formGroup }}>
+              <label style={styles.label}>Telefone</label>
+              <input
+                type="tel"
+                style={styles.input}
+                value={studentPhone}
+                onChange={e => setStudentPhone(e.target.value)}
+                placeholder="(00) 00000-0000"
+                onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
+            </div>
+          </div>
+
+          {createdLevels.length > 0 && (
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Nível</label>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {createdLevels.map(l => (
+                  <div
+                    key={l.id}
+                    style={styles.levelChip(studentLevel === l.name)}
+                    onClick={() => setStudentLevel(studentLevel === l.name ? '' : l.name)}
+                  >
+                    {l.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            style={{ ...styles.createBtn, opacity: loading || !studentName.trim() || !studentEmail.trim() || !studentCpf.trim() ? 0.6 : 1 }}
+            onClick={handleCreateStudent}
+            disabled={loading || !studentName.trim() || !studentEmail.trim() || !studentCpf.trim()}
+          >
+            {loading ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faPlus} />}
+            Cadastrar Aluno
+          </button>
+        </div>
+      ) : (
+        <div style={{
+          background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)',
+          borderRadius: '12px', padding: '20px', display: 'flex', alignItems: 'center', gap: '14px',
+        }}>
+          <div style={{
+            width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <FontAwesomeIcon icon={faCheck} style={{ color: '#10b981', fontSize: '1.2rem' }} />
+          </div>
           <div>
-            <div style={styles.featureTitle}>Cadastro de Alunos</div>
-            <div style={styles.featureDesc}>
-              Cadastre com nome, email, telefone, CPF e nível. O aluno recebe acesso ao app automaticamente
-              com login por email + senha temporária.
+            <div style={{ fontWeight: 700, fontSize: '1rem' }}>Aluno cadastrado!</div>
+            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
+              <strong style={{ color: '#10b981' }}>{createdStudent.name}</strong> — Agora vá em Matrículas para vincular um plano e turmas.
             </div>
           </div>
         </div>
+      )}
 
+      {/* Enrollment + Financial info */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '24px' }}>
         <div style={styles.featureCard}>
           <div style={styles.featureIcon}><FontAwesomeIcon icon={faClipboardList} /></div>
           <div>
             <div style={styles.featureTitle}>Matrículas</div>
             <div style={styles.featureDesc}>
-              Selecione o aluno, escolha um plano (que define preço e aulas/semana) e vincule às turmas.
-              As faturas mensais são geradas automaticamente com cobrança PIX.
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={{ ...styles.featureIcon, background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
-            <FontAwesomeIcon icon={faCalendarCheck} />
-          </div>
-          <div>
-            <div style={styles.featureTitle}>Controle de Frequência</div>
-            <div style={styles.featureDesc}>
-              Marque presença dos alunos por turma. Os instrutores também podem registrar presença pelo app.
+              Selecione o aluno, escolha um plano e vincule às turmas. As faturas mensais são geradas
+              automaticamente com cobrança PIX.
             </div>
           </div>
         </div>
@@ -1175,8 +1293,7 @@ export default function Onboarding() {
           <div>
             <div style={styles.featureTitle}>Financeiro Automático</div>
             <div style={styles.featureDesc}>
-              Faturas mensais geradas automaticamente. Cobranças PIX, registro de pagamento, relatórios
-              de inadimplência e dashboard financeiro completo.
+              Faturas geradas automaticamente. Cobranças PIX, registro de pagamento e dashboard financeiro.
             </div>
           </div>
         </div>
@@ -1184,39 +1301,21 @@ export default function Onboarding() {
 
       {/* Search bar highlight */}
       <div style={{
-        marginTop: '24px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)',
-        borderRadius: '12px', padding: '18px 20px',
+        marginTop: '20px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)',
+        borderRadius: '12px', padding: '16px 18px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '8px',
-            background: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <FontAwesomeIcon icon={faSearch} style={{ color: '#3b82f6' }} />
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '1rem' }}>Busca rápida de alunos</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <FontAwesomeIcon icon={faSearch} style={{ color: '#3b82f6' }} />
+          <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Busca rápida de alunos</span>
         </div>
-        <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
-          A qualquer momento, use a <strong style={{ color: '#3b82f6' }}>barra de pesquisa no topo</strong> da tela para
-          encontrar qualquer aluno pelo nome. Clique no resultado para abrir a ficha completa e
-          editar rapidamente todas as informações — dados pessoais, nível, turmas, matrículas e faturas.
+        <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0 }}>
+          Use a <strong style={{ color: '#3b82f6' }}>barra de pesquisa no topo</strong> para encontrar qualquer aluno
+          e editar rapidamente todas as informações — dados, nível, turmas, matrículas e faturas.
         </p>
-        <div style={{
-          marginTop: '12px', padding: '10px 16px', borderRadius: '8px',
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-          display: 'flex', alignItems: 'center', gap: '10px',
-        }}>
-          <FontAwesomeIcon icon={faSearch} style={{ color: 'rgba(255,255,255,0.25)' }} />
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.88rem' }}>Buscar aluno por nome...</span>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
-            <FontAwesomeIcon icon={faPen} style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }} />
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.72rem' }}>Edição rápida</span>
-          </div>
-        </div>
       </div>
 
       <div style={styles.infoBox}>
-        Vá para <strong>Alunos</strong> no menu para cadastrar, depois crie matrículas em <strong>Matrículas</strong>.
+        Cadastre mais alunos em <strong>Alunos</strong>, crie matrículas em <strong>Matrículas</strong>.
         As faturas aparecem em <strong>Financeiro</strong>.
       </div>
 
@@ -1564,6 +1663,236 @@ export default function Onboarding() {
         </div>
       </div>
 
+      {/* Avisos e Comunicados - detailed section */}
+      <div style={{
+        background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)',
+        borderRadius: '14px', padding: '22px', marginBottom: '24px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+          <div style={{
+            width: '42px', height: '42px', borderRadius: '10px',
+            background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <FontAwesomeIcon icon={faBullhorn} style={{ color: '#f59e0b', fontSize: '1.3rem' }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>Avisos e Comunicados</div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)' }}>Envie mensagens direto para o app dos seus alunos</div>
+          </div>
+        </div>
+
+        <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 16px 0' }}>
+          Comunique-se com seus alunos pelo <strong style={{ color: '#f59e0b' }}>app</strong> de forma rápida e organizada.
+          Crie avisos com título e conteúdo, e seus alunos recebem instantaneamente no celular.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faEnvelope} style={{ color: '#f59e0b', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Tipos de aviso</strong> — Informativo, importante ou urgente.
+              Cada tipo aparece com destaque diferente no app do aluno.
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faFilter} style={{ color: '#f59e0b', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Segmentação</strong> — Envie para todos, por turma,
+              por nível ou para alunos específicos. Alcance exatamente quem precisa.
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faBell} style={{ color: '#f59e0b', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Notificação push</strong> — O aluno recebe no celular
+              na hora. Perfeito para avisos de chuva, mudança de horário, eventos, etc.
+            </span>
+          </div>
+        </div>
+
+        <div style={{
+          marginTop: '14px', padding: '10px 14px', borderRadius: '8px',
+          background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)',
+          fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5,
+        }}>
+          Acesse <strong>Avisos</strong> no menu lateral para criar e gerenciar seus comunicados.
+        </div>
+      </div>
+
+      {/* Formulários - detailed section */}
+      <div style={{
+        background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.2)',
+        borderRadius: '14px', padding: '22px', marginBottom: '24px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+          <div style={{
+            width: '42px', height: '42px', borderRadius: '10px',
+            background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <FontAwesomeIcon icon={faClipboardList} style={{ color: '#8b5cf6', fontSize: '1.3rem' }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>Formulários Interativos</div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)' }}>Pesquisas, votações e enquetes com fotos</div>
+          </div>
+        </div>
+
+        <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 16px 0' }}>
+          Crie formulários personalizados e envie para seus alunos pelo app.
+          Suporte a <strong style={{ color: '#8b5cf6' }}>imagens e fotos</strong> nas opções — perfeito para votações visuais!
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faVoteYea} style={{ color: '#8b5cf6', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Escolha única ou múltipla</strong> — Perguntas com opções
+              que o aluno seleciona. Ideal para pesquisas de satisfação e preferências.
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faCamera} style={{ color: '#8b5cf6', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Opções com foto</strong> — Adicione imagens às opções!
+              Use para votação de camisas, uniformes, modelos de troféu, etc.
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faPen} style={{ color: '#8b5cf6', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Resposta aberta</strong> — Texto livre para sugestões,
+              feedback detalhado ou qualquer informação que precisar coletar.
+            </span>
+          </div>
+        </div>
+
+        {/* Example use cases */}
+        <h4 style={{ fontSize: '0.88rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '10px' }}>
+          Exemplos de uso:
+        </h4>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
+          {[
+            { icon: faTshirt, label: 'Votação de camisas', color: '#ec4899' },
+            { icon: faTrophy, label: 'Inscrição campeonato', color: '#f59e0b' },
+            { icon: faClipboardList, label: 'Pesquisa satisfação', color: '#10b981' },
+            { icon: faCalendarCheck, label: 'Confirmação de evento', color: '#3b82f6' },
+          ].map((ex, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px',
+              background: 'rgba(255,255,255,0.04)', borderRadius: '20px',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}>
+              <FontAwesomeIcon icon={ex.icon} style={{ color: ex.color, fontSize: '0.8rem' }} />
+              <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>{ex.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          padding: '10px 14px', borderRadius: '8px',
+          background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)',
+          fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5,
+        }}>
+          Acesse <strong>Formulários</strong> no menu lateral. Crie quantas perguntas quiser,
+          adicione fotos e envie para turmas ou alunos específicos.
+        </div>
+      </div>
+
+      {/* Agenda Interativa - detailed section */}
+      <div style={{
+        background: 'rgba(236,72,153,0.06)', border: '1px solid rgba(236,72,153,0.2)',
+        borderRadius: '14px', padding: '22px', marginBottom: '24px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+          <div style={{
+            width: '42px', height: '42px', borderRadius: '10px',
+            background: 'rgba(236,72,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <FontAwesomeIcon icon={faCalendarDays} style={{ color: '#ec4899', fontSize: '1.3rem' }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>Agenda Interativa</div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)' }}>Drag-and-drop, criação rápida e gestão visual</div>
+          </div>
+        </div>
+
+        <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 16px 0' }}>
+          A agenda semanal do ArenaAi é <strong style={{ color: '#ec4899' }}>totalmente interativa</strong>.
+          Arraste, clique e gerencie todas as suas turmas visualmente.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faGripVertical} style={{ color: '#ec4899', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Arrastar turmas</strong> — Mude o horário ou dia de uma turma
+              simplesmente arrastando o bloco na agenda. Tudo atualiza automaticamente.
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faMousePointer} style={{ color: '#ec4899', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Clique para criar</strong> — Clique em qualquer horário
+              vazio na agenda e crie uma nova turma direto ali, sem sair da tela.
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faUsers} style={{ color: '#ec4899', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Gerenciar alunos</strong> — Clique em uma turma na agenda
+              para ver os alunos, verificar frequência, arrastar alunos entre turmas e mais.
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faChartLine} style={{ color: '#ec4899', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Relatórios completos</strong> — Financeiro, frequência,
+              inadimplência, evolução de alunos. Dados para tomar decisões com confiança.
+            </span>
+          </div>
+        </div>
+
+        <div style={{
+          marginTop: '14px', padding: '10px 14px', borderRadius: '8px',
+          background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.15)',
+          fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5,
+        }}>
+          Acesse <strong>Agenda</strong> no menu lateral para ver sua semana.
+          Use <strong>Relatórios</strong> para análises financeiras e de frequência.
+        </div>
+      </div>
+
+      {/* Remaining features as compact cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px' }}>
         <div style={styles.featureCard}>
           <div style={{ ...styles.featureIcon, background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}>
@@ -1572,31 +1901,7 @@ export default function Onboarding() {
           <div>
             <div style={styles.featureTitle}>App Mobile para Alunos</div>
             <div style={styles.featureDesc}>
-              Turmas, faturas, horários, avisos e pagamento PIX. Disponível no plano Starter+.
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={{ ...styles.featureIcon, background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
-            <FontAwesomeIcon icon={faBullhorn} />
-          </div>
-          <div>
-            <div style={styles.featureTitle}>Avisos e Comunicados</div>
-            <div style={styles.featureDesc}>
-              Envie mensagens para todos ou turmas específicas. Aparecem no app e no painel.
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={{ ...styles.featureIcon, background: 'rgba(139,92,246,0.12)', color: '#8b5cf6' }}>
-            <FontAwesomeIcon icon={faClipboardList} />
-          </div>
-          <div>
-            <div style={styles.featureTitle}>Formulários</div>
-            <div style={styles.featureDesc}>
-              Pesquisas de satisfação e enquetes personalizadas para seus alunos.
+              Turmas, faturas, horários, avisos, formulários e pagamento PIX direto no celular.
             </div>
           </div>
         </div>
@@ -1621,18 +1926,6 @@ export default function Onboarding() {
             <div style={styles.featureTitle}>Instrutores</div>
             <div style={styles.featureDesc}>
               Cadastre instrutores com permissões granulares e vincule às turmas.
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.featureCard}>
-          <div style={{ ...styles.featureIcon, background: 'rgba(236,72,153,0.12)', color: '#ec4899' }}>
-            <FontAwesomeIcon icon={faCalendarDays} />
-          </div>
-          <div>
-            <div style={styles.featureTitle}>Agenda + Relatórios</div>
-            <div style={styles.featureDesc}>
-              Agenda semanal drag-and-drop, relatórios financeiros e de frequência completos.
             </div>
           </div>
         </div>

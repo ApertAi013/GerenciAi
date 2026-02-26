@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faPen, faTrash, faDollarSign, faCalendarWeek, faChartLine, faPowerOff, faCheckCircle, faTableTennis } from '@fortawesome/free-solid-svg-icons';
 import { planService } from '../services/planService';
 import { modalityService } from '../services/modalityService';
 import type { CreatePlanRequest, UpdatePlanRequest, BulkAdjustRequest, BulkAdjustResponse } from '../services/planService';
 import type { Plan } from '../types/enrollmentTypes';
 import type { Modality } from '../types/classTypes';
 import '../styles/Settings.css';
+
+const formatCurrency = (cents: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
 
 export default function Plans() {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -39,7 +44,6 @@ export default function Plans() {
     try {
       setIsLoading(true);
       const response = await planService.getPlans();
-      // Suporta ambos formatos: { success: true } e { status: 'success' }
       const isSuccess = (response as any).status === 'success' || (response as any).success === true;
       if (isSuccess && response.data) {
         setPlans(response.data);
@@ -88,110 +92,222 @@ export default function Plans() {
   }
 
   return (
-    <div className="settings-page">
-      <div className="page-header">
-        <h1>Gerenciar Planos</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+    <div style={{ padding: 0 }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px',
+      }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1a1a1a' }}>Planos</h1>
+          <p style={{ color: '#737373', fontSize: '14px', marginTop: '6px', margin: '6px 0 0 0' }}>
+            Gerencie os planos de matrícula. Defina preço, frequência semanal e modalidade.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
             type="button"
-            className="btn-secondary"
             onClick={() => setShowBulkAdjustModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 20px', background: '#F5F5F5', color: '#404040',
+              border: 'none', borderRadius: '10px', fontSize: '14px',
+              fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#EBEBEB')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#F5F5F5')}
           >
-            📊 Reajuste Global
+            <FontAwesomeIcon icon={faChartLine} />
+            Reajuste Global
           </button>
           <button
             type="button"
-            className="btn-primary"
-            onClick={() => {
-              setEditingPlan(null);
-              setShowCreateModal(true);
+            onClick={() => { setEditingPlan(null); setShowCreateModal(true); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 20px', background: '#FF9900', color: 'white',
+              border: 'none', borderRadius: '10px', fontSize: '14px',
+              fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'background 0.2s',
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#e68a00')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#FF9900')}
           >
-            + Novo Plano
+            <FontAwesomeIcon icon={faPlus} />
+            Novo Plano
           </button>
         </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
 
-      <div className="settings-content">
-        <div className="plans-grid">
-          {plans.map((plan) => (
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px',
+      }}>
+        {plans.map((plan) => {
+          const isActive = plan.status === 'ativo';
+          return (
             <div
               key={plan.id}
-              className={`plan-card ${plan.status === 'inativo' ? 'inactive' : ''}`}
+              style={{
+                background: 'white', borderRadius: '16px', padding: '24px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                transition: 'box-shadow 0.2s, transform 0.2s',
+                position: 'relative', overflow: 'hidden',
+                opacity: isActive ? 1 : 0.65,
+              }}
             >
-              <div className="plan-header">
-                <h3>{plan.name}</h3>
-                <span className={`badge ${plan.status === 'ativo' ? 'badge-active' : 'badge-inactive'}`}>
-                  {plan.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                </span>
-              </div>
+              {/* Top accent bar */}
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
+                background: isActive ? '#FF9900' : '#D4D4D4',
+              }} />
 
-              <div className="plan-price">
-                R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
-                <span className="plan-frequency">/mês</span>
-              </div>
-
-              <div className="plan-sessions">
-                {plan.sessions_per_week}x por semana
-              </div>
-
-              {plan.modality_name && (
-                <div className="plan-modality" style={{ 
-                  fontSize: '0.85rem', 
-                  color: '#666', 
-                  marginTop: '0.5rem',
-                  padding: '0.25rem 0.5rem',
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: '4px',
-                  display: 'inline-block'
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '12px',
+                  background: isActive ? '#FFF3E0' : '#F5F5F5',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 }}>
-                  🏐 {plan.modality_name}
+                  <FontAwesomeIcon
+                    icon={faDollarSign}
+                    style={{ fontSize: '20px', color: isActive ? '#FF9900' : '#A3A3A3' }}
+                  />
                 </div>
-              )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{
+                    margin: 0, fontSize: '18px', fontWeight: 700, color: '#1a1a1a',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{plan.name}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <span style={{
+                      fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
+                      ...(isActive
+                        ? { color: '#16a34a', background: '#f0fdf4' }
+                        : { color: '#737373', background: '#F0F0F0' }),
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                    }}>
+                      <FontAwesomeIcon icon={isActive ? faCheckCircle : faPowerOff} style={{ fontSize: '9px' }} />
+                      {isActive ? 'Ativo' : 'Inativo'}
+                    </span>
+                    {plan.modality_name && (
+                      <span style={{
+                        fontSize: '11px', fontWeight: 600, color: '#6366f1',
+                        background: '#EEF2FF', padding: '2px 8px', borderRadius: '4px',
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                      }}>
+                        <FontAwesomeIcon icon={faTableTennis} style={{ fontSize: '9px' }} />
+                        {plan.modality_name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
 
+              {/* Price + sessions */}
+              <div style={{
+                display: 'flex', gap: '12px', marginBottom: '16px',
+              }}>
+                <div style={{
+                  flex: 1, background: '#FAFAFA', borderRadius: '10px', padding: '12px 16px',
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                }}>
+                  <FontAwesomeIcon icon={faDollarSign} style={{ color: '#FF9900', fontSize: '16px' }} />
+                  <div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#1a1a1a' }}>
+                      {formatCurrency(plan.price_cents)}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#A3A3A3', fontWeight: 500 }}>por mês</div>
+                  </div>
+                </div>
+                <div style={{
+                  flex: 1, background: '#FAFAFA', borderRadius: '10px', padding: '12px 16px',
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                }}>
+                  <FontAwesomeIcon icon={faCalendarWeek} style={{ color: '#3B82F6', fontSize: '16px' }} />
+                  <div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#1a1a1a' }}>
+                      {plan.sessions_per_week}x
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#A3A3A3', fontWeight: 500 }}>por semana</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
               {plan.description && (
-                <p className="plan-description">{plan.description}</p>
+                <p style={{
+                  margin: '0 0 16px 0', fontSize: '13px', color: '#737373', lineHeight: '1.5',
+                }}>{plan.description}</p>
               )}
 
-              <div className="plan-actions">
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setEditingPlan(plan);
-                    setShowCreateModal(true);
+                  onClick={() => { setEditingPlan(plan); setShowCreateModal(true); }}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px', background: '#F5F5F5', color: '#404040',
+                    border: 'none', borderRadius: '10px', fontSize: '13px',
+                    fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'background 0.2s',
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#EBEBEB')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#F5F5F5')}
                 >
+                  <FontAwesomeIcon icon={faPen} style={{ fontSize: '12px' }} />
                   Editar
                 </button>
                 <button
                   type="button"
-                  className={plan.status === 'ativo' ? 'btn-warning' : 'btn-success'}
                   onClick={() => handleToggleStatus(plan)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px',
+                    background: isActive ? '#FFFBEB' : '#f0fdf4',
+                    color: isActive ? '#D97706' : '#16a34a',
+                    border: 'none', borderRadius: '10px', fontSize: '13px',
+                    fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = isActive ? '#FEF3C7' : '#dcfce7')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = isActive ? '#FFFBEB' : '#f0fdf4')}
                 >
-                  {plan.status === 'ativo' ? 'Desativar' : 'Ativar'}
+                  <FontAwesomeIcon icon={isActive ? faPowerOff : faCheckCircle} style={{ fontSize: '12px' }} />
+                  {isActive ? 'Desativar' : 'Ativar'}
                 </button>
                 <button
                   type="button"
-                  className="btn-danger"
                   onClick={() => handleDelete(plan.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px', background: '#FEF2F2', color: '#EF4444',
+                    border: 'none', borderRadius: '10px', fontSize: '13px',
+                    fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FEE2E2')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#FEF2F2')}
                 >
+                  <FontAwesomeIcon icon={faTrash} style={{ fontSize: '12px' }} />
                   Excluir
                 </button>
               </div>
             </div>
-          ))}
+          );
+        })}
 
-          {plans.length === 0 && (
-            <div className="empty-state">
-              <p>Nenhum plano cadastrado ainda.</p>
-              <p>Clique em "+ Novo Plano" para começar.</p>
-            </div>
-          )}
-        </div>
+        {plans.length === 0 && (
+          <div style={{
+            gridColumn: '1 / -1', textAlign: 'center', padding: '48px 24px',
+            background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          }}>
+            <FontAwesomeIcon icon={faDollarSign} style={{ fontSize: '40px', color: '#E5E5E5', marginBottom: '16px' }} />
+            <p style={{ color: '#737373', fontSize: '15px', margin: '0 0 8px 0' }}>Nenhum plano cadastrado ainda.</p>
+            <p style={{ color: '#A3A3A3', fontSize: '13px', margin: 0 }}>Clique em "Novo Plano" para começar.</p>
+          </div>
+        )}
       </div>
 
       {showCreateModal && (

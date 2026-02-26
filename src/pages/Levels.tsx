@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faPen, faTrash, faLayerGroup, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
 import { levelService } from '../services/levelService';
 import type { Level, CreateLevelRequest, UpdateLevelRequest } from '../types/levelTypes';
 import '../styles/Settings.css';
@@ -60,78 +62,167 @@ export default function Levels() {
   }
 
   return (
-    <div className="settings-page">
-      <div className="page-header">
-        <h1>Gerenciar Níveis</h1>
+    <div style={{ padding: 0 }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px',
+      }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1a1a1a' }}>Níveis</h1>
+          <p style={{ color: '#737373', fontSize: '14px', marginTop: '6px', margin: '6px 0 0 0' }}>
+            Gerencie os níveis dos seus alunos. Cada nível pode ter uma cor e ser usado para filtrar turmas.
+          </p>
+        </div>
         <button
           type="button"
-          className="btn-primary"
-          onClick={() => {
-            setEditingLevel(null);
-            setShowCreateModal(true);
+          onClick={() => { setEditingLevel(null); setShowCreateModal(true); }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '10px 20px', background: '#FF9900', color: 'white',
+            border: 'none', borderRadius: '10px', fontSize: '14px',
+            fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            transition: 'background 0.2s',
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#e68a00')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#FF9900')}
         >
-          + Novo Nível
+          <FontAwesomeIcon icon={faPlus} />
+          Novo Nível
         </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}
 
-      <div className="settings-content">
-        <div className="levels-grid">
-          {levels.map((level) => (
-            <div
-              key={level.id}
-              className="level-card"
-              style={{
-                borderLeft: level.color ? `4px solid ${level.color}` : undefined,
-              }}
-            >
-              <div className="level-header">
-                <h3>{level.name}</h3>
-                {level.is_default && (
-                  <span className="badge badge-default">Padrão</span>
-                )}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px',
+      }}>
+        {levels.map((level) => (
+          <div
+            key={level.id}
+            style={{
+              background: 'white', borderRadius: '16px', padding: '24px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+              transition: 'box-shadow 0.2s, transform 0.2s',
+              position: 'relative', overflow: 'hidden',
+            }}
+          >
+            {/* Top accent bar */}
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
+              background: level.color || '#E5E5E5',
+            }} />
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+              <div style={{
+                width: '48px', height: '48px', borderRadius: '12px',
+                background: level.color ? `${level.color}18` : '#F5F5F5',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <FontAwesomeIcon
+                  icon={faLayerGroup}
+                  style={{ fontSize: '20px', color: level.color || '#A3A3A3' }}
+                />
               </div>
-              {level.description && <p className="level-description">{level.description}</p>}
-              {level.color && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <span style={{ fontSize: '0.875rem', color: '#666' }}>Cor:</span>
-                  <div
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '4px',
-                      backgroundColor: level.color,
-                      border: '1px solid #ddd',
-                    }}
-                  />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={{
+                    margin: 0, fontSize: '18px', fontWeight: 700, color: '#1a1a1a',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{level.name}</h3>
                 </div>
-              )}
-              <div className="level-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setEditingLevel(level);
-                    setShowCreateModal(true);
-                  }}
-                >
-                  Editar
-                </button>
-                {!level.is_default && (
-                  <button
-                    type="button"
-                    className="btn-danger"
-                    onClick={() => handleDelete(level.id)}
-                  >
-                    Excluir
-                  </button>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                  {level.is_default && (
+                    <span style={{
+                      fontSize: '11px', fontWeight: 600, color: '#737373',
+                      background: '#F0F0F0', padding: '2px 8px', borderRadius: '4px',
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                    }}>
+                      <FontAwesomeIcon icon={faShieldAlt} style={{ fontSize: '9px' }} />
+                      Padrão
+                    </span>
+                  )}
+                  {level.color && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{
+                        width: '14px', height: '14px', borderRadius: '4px',
+                        backgroundColor: level.color, border: '1px solid rgba(0,0,0,0.08)',
+                      }} />
+                      <span style={{ fontSize: '11px', color: '#A3A3A3', fontFamily: 'monospace' }}>
+                        {level.color}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* Description */}
+            {level.description && (
+              <p style={{
+                margin: '0 0 16px 0', fontSize: '13px', color: '#737373', lineHeight: '1.5',
+              }}>{level.description}</p>
+            )}
+
+            {/* Order info */}
+            {level.order_index !== undefined && level.order_index > 0 && (
+              <div style={{
+                background: '#FAFAFA', borderRadius: '10px', padding: '10px 14px',
+                marginBottom: '16px', fontSize: '13px', color: '#737373',
+              }}>
+                Ordem: <strong style={{ color: '#1a1a1a' }}>{level.order_index}</strong>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => { setEditingLevel(level); setShowCreateModal(true); }}
+                style={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  padding: '10px 16px', background: '#F5F5F5', color: '#404040',
+                  border: 'none', borderRadius: '10px', fontSize: '13px',
+                  fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#EBEBEB')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#F5F5F5')}
+              >
+                <FontAwesomeIcon icon={faPen} style={{ fontSize: '12px' }} />
+                Editar
+              </button>
+              {!level.is_default && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(level.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px', background: '#FEF2F2', color: '#EF4444',
+                    border: 'none', borderRadius: '10px', fontSize: '13px',
+                    fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FEE2E2')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#FEF2F2')}
+                >
+                  <FontAwesomeIcon icon={faTrash} style={{ fontSize: '12px' }} />
+                  Excluir
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {levels.length === 0 && (
+          <div style={{
+            gridColumn: '1 / -1', textAlign: 'center', padding: '48px 24px',
+            background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          }}>
+            <FontAwesomeIcon icon={faLayerGroup} style={{ fontSize: '40px', color: '#E5E5E5', marginBottom: '16px' }} />
+            <p style={{ color: '#737373', fontSize: '15px', margin: '0 0 8px 0' }}>Nenhum nível cadastrado ainda.</p>
+            <p style={{ color: '#A3A3A3', fontSize: '13px', margin: 0 }}>Clique em "Novo Nível" para começar.</p>
+          </div>
+        )}
       </div>
 
       {showCreateModal && (
