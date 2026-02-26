@@ -4,6 +4,7 @@ import { levelService } from '../services/levelService';
 import type { Modality, Class } from '../types/classTypes';
 import type { Level } from '../types/levelTypes';
 import '../styles/Classes.css';
+import '../styles/ModernModal.css';
 
 interface ScheduleSlot {
   weekday: '' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom';
@@ -244,17 +245,18 @@ export default function CreateClassModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>{isEditMode ? 'Editar Turma' : 'Criar Nova Turma'}</h2>
-          <button type="button" className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="mm-close" onClick={onClose}>×</button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="mm-error">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="class-form">
-          <div className="form-group">
+        <form onSubmit={handleSubmit}>
+          <div className="mm-content">
+          <div className="mm-field">
             <label htmlFor="modality_id">Modalidade *</label>
             <select
               id="modality_id"
@@ -271,7 +273,7 @@ export default function CreateClassModal({
             </select>
           </div>
 
-          <div className="form-group">
+          <div className="mm-field">
             <label htmlFor="name">Nome da Turma (opcional)</label>
             <input
               id="name"
@@ -283,14 +285,14 @@ export default function CreateClassModal({
           </div>
 
           {/* Duração da Aula */}
-          <div className="form-group">
+          <div className="mm-field">
             <label>Duração da Aula *</label>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
               {[30, 60, 90].map(mins => (
                 <button
                   key={mins}
                   type="button"
-                  className={duration === mins ? 'btn-primary' : 'btn-secondary'}
+                  className={duration === mins ? 'mm-btn mm-btn-primary' : 'mm-btn mm-btn-secondary'}
                   onClick={() => handleDurationChange(mins as 30 | 60 | 90)}
                   style={{ flex: 1 }}
                 >
@@ -304,13 +306,13 @@ export default function CreateClassModal({
           </div>
 
           {/* Horários Múltiplos */}
-          <div className="form-group">
+          <div className="mm-field">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <label style={{ margin: 0 }}>Horários da Turma *</label>
               {!isEditMode && (
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="mm-btn mm-btn-secondary"
                   onClick={addSchedule}
                   style={{ fontSize: '0.875rem', padding: '0.375rem 0.75rem' }}
                 >
@@ -332,7 +334,7 @@ export default function CreateClassModal({
                   {!isEditMode && schedules.length > 1 && (
                     <button
                       type="button"
-                      className="btn-danger"
+                      className="mm-btn mm-btn-danger"
                       onClick={() => removeSchedule(index)}
                       style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
                     >
@@ -341,8 +343,8 @@ export default function CreateClassModal({
                   )}
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group" style={{ margin: 0 }}>
+                <div className="mm-field-row">
+                  <div className="mm-field" style={{ margin: 0 }}>
                     <label>Dia da Semana *</label>
                     <select
                       value={schedule.weekday}
@@ -364,7 +366,7 @@ export default function CreateClassModal({
                     </select>
                   </div>
 
-                  <div className="form-group" style={{ margin: 0 }}>
+                  <div className="mm-field" style={{ margin: 0 }}>
                     <label>Horário Início *</label>
                     <input
                       type="time"
@@ -374,7 +376,7 @@ export default function CreateClassModal({
                     />
                   </div>
 
-                  <div className="form-group" style={{ margin: 0 }}>
+                  <div className="mm-field" style={{ margin: 0 }}>
                     <label>Horário Fim</label>
                     <input
                       type="time"
@@ -391,7 +393,7 @@ export default function CreateClassModal({
 
           {/* Multi-Level Selection */}
           {levels.length > 0 && (
-            <div className="form-group">
+            <div className="mm-field">
               <label>Níveis Permitidos (Múltipla Escolha)</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>
                 {levels.map((level) => (
@@ -429,7 +431,7 @@ export default function CreateClassModal({
           )}
 
           {/* Color Picker */}
-          <div className="form-group">
+          <div className="mm-field">
             <label>Cor da Turma *</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
               {/* Preset Colors */}
@@ -486,8 +488,8 @@ export default function CreateClassModal({
             </small>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="mm-field-row">
+            <div className="mm-field">
               <label htmlFor="location">Local</label>
               <input
                 id="location"
@@ -498,7 +500,7 @@ export default function CreateClassModal({
               />
             </div>
 
-            <div className="form-group">
+            <div className="mm-field">
               <label htmlFor="capacity">Capacidade</label>
               <input
                 id="capacity"
@@ -510,11 +512,12 @@ export default function CreateClassModal({
             </div>
           </div>
 
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
+          </div>
+          <div className="mm-footer">
+            <button type="button" className="mm-btn mm-btn-secondary" onClick={onClose} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            <button type="submit" className="mm-btn mm-btn-primary" disabled={isSubmitting}>
               {isSubmitting
                 ? (isEditMode ? 'Salvando...' : 'Criando...')
                 : (isEditMode ? 'Salvar Alterações' : `Criar ${schedules.length > 1 ? `${schedules.length} Turmas` : 'Turma'}`)

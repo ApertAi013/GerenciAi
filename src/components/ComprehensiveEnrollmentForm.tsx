@@ -10,6 +10,7 @@ import type { Plan } from '../types/enrollmentTypes';
 import type { Class } from '../types/classTypes';
 import type { Level } from '../types/levelTypes';
 import './ComprehensiveEnrollmentForm.css';
+import '../styles/ModernModal.css';
 
 interface ComprehensiveEnrollmentFormProps {
   onClose: () => void;
@@ -353,11 +354,11 @@ export default function ComprehensiveEnrollmentForm({
   }));
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content comprehensive-enrollment-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-xl comprehensive-enrollment-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>Nova Matrícula Completa</h2>
-          <button type="button" className="modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             ✕
           </button>
         </div>
@@ -382,14 +383,15 @@ export default function ComprehensiveEnrollmentForm({
           </div>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        <div className="mm-content">
+        {error && <div className="mm-error">{error}</div>}
 
         {/* Step 1: Student Data */}
         {currentStep === 'student' && (
           <div className="step-content">
             <h3>Informações do Aluno</h3>
             <form onSubmit={(e) => { e.preventDefault(); handleStudentStepNext(); }} className="student-form">
-              <div className="form-group">
+              <div className="mm-field">
                 <label htmlFor="full_name">Nome Completo *</label>
                 <input
                   id="full_name"
@@ -402,8 +404,8 @@ export default function ComprehensiveEnrollmentForm({
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              <div className="mm-field-row">
+                <div className="mm-field">
                   <label htmlFor="cpf">CPF *</label>
                   <input
                     id="cpf"
@@ -417,7 +419,7 @@ export default function ComprehensiveEnrollmentForm({
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="mm-field">
                   <label htmlFor="birth_date">Data de Nascimento</label>
                   <input
                     id="birth_date"
@@ -430,7 +432,7 @@ export default function ComprehensiveEnrollmentForm({
                 </div>
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label htmlFor="email">Email *</label>
                 <input
                   id="email"
@@ -443,8 +445,8 @@ export default function ComprehensiveEnrollmentForm({
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              <div className="mm-field-row">
+                <div className="mm-field">
                   <label htmlFor="phone">Telefone</label>
                   <input
                     id="phone"
@@ -457,7 +459,7 @@ export default function ComprehensiveEnrollmentForm({
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="mm-field">
                   <label htmlFor="sex">Sexo</label>
                   <select
                     id="sex"
@@ -478,7 +480,7 @@ export default function ComprehensiveEnrollmentForm({
                 </div>
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label htmlFor="level">Nível *</label>
                 <select
                   id="level"
@@ -502,11 +504,11 @@ export default function ComprehensiveEnrollmentForm({
                 </select>
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
+              <div className="mm-footer">
+                <button type="button" className="mm-btn mm-btn-secondary" onClick={onClose} disabled={isSubmitting}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                <button type="submit" className="mm-btn mm-btn-primary" disabled={isSubmitting}>
                   {isSubmitting ? 'Criando...' : 'Próximo: Plano'}
                 </button>
               </div>
@@ -535,7 +537,7 @@ export default function ComprehensiveEnrollmentForm({
               ))}
             </div>
 
-            <div className="form-group" style={{ marginTop: '1.5rem' }}>
+            <div className="mm-field" style={{ marginTop: '1.5rem' }}>
               <label htmlFor="contract_type">Tipo de Contrato *</label>
               <select
                 id="contract_type"
@@ -550,8 +552,8 @@ export default function ComprehensiveEnrollmentForm({
               </small>
             </div>
 
-            <div className="form-row" style={{ marginTop: '1rem' }}>
-              <div className="form-group">
+            <div className="mm-field-row" style={{ marginTop: '1rem' }}>
+              <div className="mm-field">
                 <label htmlFor="start_date">Data de Início</label>
                 <input
                   id="start_date"
@@ -561,7 +563,7 @@ export default function ComprehensiveEnrollmentForm({
                 />
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label htmlFor="due_day">Dia de Vencimento</label>
                 <input
                   id="due_day"
@@ -578,7 +580,7 @@ export default function ComprehensiveEnrollmentForm({
             <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
               <h4 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Desconto (Opcional)</h4>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label htmlFor="discount_type">Tipo de Desconto</label>
                 <select
                   id="discount_type"
@@ -592,8 +594,8 @@ export default function ComprehensiveEnrollmentForm({
               </div>
 
               {discountType !== 'none' && (
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="mm-field-row">
+                  <div className="mm-field">
                     <label htmlFor="discount_value">
                       Valor do Desconto {discountType === 'percentage' ? '(%)' : '(R$)'}
                     </label>
@@ -617,7 +619,7 @@ export default function ComprehensiveEnrollmentForm({
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="mm-field">
                     <label htmlFor="discount_until">Desconto válido até</label>
                     <input
                       id="discount_until"
@@ -637,7 +639,7 @@ export default function ComprehensiveEnrollmentForm({
             <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>
               <h4 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Pagamento da Primeira Mensalidade</h4>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
@@ -649,8 +651,8 @@ export default function ComprehensiveEnrollmentForm({
               </div>
 
               {markFirstAsPaid && (
-                <div className="form-row" style={{ marginTop: '1rem' }}>
-                  <div className="form-group">
+                <div className="mm-field-row" style={{ marginTop: '1rem' }}>
+                  <div className="mm-field">
                     <label htmlFor="payment_date">Data do Pagamento</label>
                     <input
                       id="payment_date"
@@ -660,7 +662,7 @@ export default function ComprehensiveEnrollmentForm({
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="mm-field">
                     <label htmlFor="payment_method">Forma de Pagamento</label>
                     <select
                       id="payment_method"
@@ -679,11 +681,11 @@ export default function ComprehensiveEnrollmentForm({
               )}
             </div>
 
-            <div className="modal-actions">
-              <button type="button" className="btn-secondary" onClick={() => setCurrentStep('student')}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setCurrentStep('student')}>
                 Voltar
               </button>
-              <button type="button" className="btn-primary" onClick={handlePlanStepNext}>
+              <button type="button" className="mm-btn mm-btn-primary" onClick={handlePlanStepNext}>
                 Próximo: Turmas
               </button>
             </div>
@@ -820,11 +822,11 @@ export default function ComprehensiveEnrollmentForm({
               <strong>Turmas Selecionadas:</strong> {selectedClassIds.length} / {selectedPlan?.sessions_per_week || 0}
             </div>
 
-            <div className="modal-actions">
-              <button type="button" className="btn-secondary" onClick={() => setCurrentStep('plan')}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setCurrentStep('plan')}>
                 Voltar
               </button>
-              <button type="button" className="btn-primary" onClick={handleClassesStepNext}>
+              <button type="button" className="mm-btn mm-btn-primary" onClick={handleClassesStepNext}>
                 Próximo: Revisar
               </button>
             </div>
@@ -890,16 +892,17 @@ export default function ComprehensiveEnrollmentForm({
               })}
             </div>
 
-            <div className="modal-actions">
-              <button type="button" className="btn-secondary" onClick={() => setCurrentStep('classes')} disabled={isSubmitting}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setCurrentStep('classes')} disabled={isSubmitting}>
                 Voltar
               </button>
-              <button type="button" className="btn-primary" onClick={handleFinalSubmit} disabled={isSubmitting}>
+              <button type="button" className="mm-btn mm-btn-primary" onClick={handleFinalSubmit} disabled={isSubmitting}>
                 {isSubmitting ? 'Criando Matrícula...' : 'Finalizar Matrícula'}
               </button>
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

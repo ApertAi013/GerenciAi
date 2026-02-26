@@ -3,6 +3,7 @@ import { X, Calendar, Calculator, Receipt, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { enrollmentService } from '../services/enrollmentService';
 import '../styles/Enrollments.css';
+import '../styles/ModernModal.css';
 
 interface GenerateFirstInvoiceModalProps {
   enrollmentId: number;
@@ -125,16 +126,16 @@ export default function GenerateFirstInvoiceModal({
   console.log('GenerateFirstInvoiceModal - prestes a renderizar JSX');
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 9999 }}>
-      <div className="modal-content" style={{ maxWidth: '600px' }}>
-        <div className="modal-header">
+    <div className="mm-overlay" style={{ zIndex: 9999 }}>
+      <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2><Receipt size={20} /> Gerar Primeira Fatura</h2>
-          <button className="close-btn" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
 
-        <div className="modal-body">
+        <div className="mm-content">
           <div className="info-box" style={{
             backgroundColor: '#f0f9ff',
             padding: '1rem',
@@ -236,16 +237,14 @@ export default function GenerateFirstInvoiceModal({
           </div>
         </div>
 
-        <div className="modal-footer" style={{
+        <div className="mm-footer" style={{
           display: 'flex',
           justifyContent: 'space-between',
-          gap: '1rem',
-          paddingTop: '1rem',
-          borderTop: '1px solid #e5e7eb'
+          gap: '1rem'
         }}>
           <button
             type="button"
-            className="btn btn-secondary"
+            className="mm-btn mm-btn-secondary"
             onClick={handleSkip}
             disabled={isSubmitting}
           >
@@ -254,7 +253,7 @@ export default function GenerateFirstInvoiceModal({
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               type="button"
-              className="btn btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -262,7 +261,7 @@ export default function GenerateFirstInvoiceModal({
             </button>
             <button
               type="button"
-              className="btn btn-primary"
+              className="mm-btn mm-btn-primary"
               onClick={handleSubmit}
               disabled={isSubmitting || !selectedType}
             >

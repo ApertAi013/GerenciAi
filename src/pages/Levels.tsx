@@ -4,6 +4,7 @@ import { faPlus, faPen, faTrash, faLayerGroup, faShieldAlt } from '@fortawesome/
 import { levelService } from '../services/levelService';
 import type { Level, CreateLevelRequest, UpdateLevelRequest } from '../types/levelTypes';
 import '../styles/Settings.css';
+import '../styles/ModernModal.css';
 
 export default function Levels() {
   const [levels, setLevels] = useState<Level[]>([]);
@@ -291,77 +292,79 @@ function LevelModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>{isEditMode ? 'Editar Nível' : 'Criar Novo Nível'}</h2>
-          <button type="button" className="modal-close" onClick={onClose}>
-            ✕
+          <button type="button" className="mm-close" onClick={onClose}>
+            ×
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="mm-error">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="level-form">
-          <div className="form-group">
-            <label htmlFor="name">Nome *</label>
-            <input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description">Descrição</label>
-            <textarea
-              id="description"
-              value={formData.description || ''}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              rows={3}
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="color">Cor</label>
+        <form onSubmit={handleSubmit}>
+          <div className="mm-content">
+            <div className="mm-field">
+              <label htmlFor="name">Nome *</label>
               <input
-                id="color"
-                type="color"
-                value={formData.color || '#2196f3'}
+                id="name"
+                type="text"
+                value={formData.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, color: e.target.value })
+                  setFormData({ ...formData, name: e.target.value })
                 }
+                required
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="order_index">Ordem</label>
-              <input
-                id="order_index"
-                type="number"
-                value={formData.order_index || 0}
+            <div className="mm-field">
+              <label htmlFor="description">Descrição</label>
+              <textarea
+                id="description"
+                value={formData.description || ''}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    order_index: parseInt(e.target.value),
-                  })
+                  setFormData({ ...formData, description: e.target.value })
                 }
-                min="0"
+                rows={3}
               />
+            </div>
+
+            <div className="mm-field-row">
+              <div className="mm-field">
+                <label htmlFor="color">Cor</label>
+                <input
+                  id="color"
+                  type="color"
+                  value={formData.color || '#2196f3'}
+                  onChange={(e) =>
+                    setFormData({ ...formData, color: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="mm-field">
+                <label htmlFor="order_index">Ordem</label>
+                <input
+                  id="order_index"
+                  type="number"
+                  value={formData.order_index || 0}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      order_index: parseInt(e.target.value),
+                    })
+                  }
+                  min="0"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="modal-actions">
+          <div className="mm-footer">
             <button
               type="button"
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -369,7 +372,7 @@ function LevelModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               disabled={isSubmitting}
             >
               {isSubmitting

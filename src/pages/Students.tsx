@@ -9,6 +9,7 @@ import type { Student } from '../types/studentTypes';
 import type { Level } from '../types/levelTypes';
 import ComprehensiveEnrollmentForm from '../components/ComprehensiveEnrollmentForm';
 import '../styles/Students.css';
+import '../styles/ModernModal.css';
 
 export default function Students() {
   const navigate = useNavigate();
@@ -573,114 +574,116 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>Criar Novo Aluno</h2>
-          <button type="button" className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="mm-close" onClick={onClose}>✕</button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="mm-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="student-form">
-          <div className="form-group">
-            <label htmlFor="full_name">Nome Completo *</label>
-            <input
-              id="full_name"
-              type="text"
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="cpf">CPF *</label>
+          <div className="mm-content">
+            <div className="mm-field">
+              <label htmlFor="full_name">Nome Completo *</label>
               <input
-                id="cpf"
+                id="full_name"
                 type="text"
-                value={formData.cpf}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                placeholder="000.000.000-00"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                 required
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="birth_date">Data de Nascimento</label>
-              <input
-                id="birth_date"
-                type="date"
-                value={formData.birth_date}
-                onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
-              />
-            </div>
-          </div>
+            <div className="mm-field-row">
+              <div className="mm-field">
+                <label htmlFor="cpf">CPF *</label>
+                <input
+                  id="cpf"
+                  type="text"
+                  value={formData.cpf}
+                  onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                  placeholder="000.000.000-00"
+                  required
+                />
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email *</label>
-            <input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="phone">Telefone</label>
-              <input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="(00) 00000-0000"
-              />
+              <div className="mm-field">
+                <label htmlFor="birth_date">Data de Nascimento</label>
+                <input
+                  id="birth_date"
+                  type="date"
+                  value={formData.birth_date}
+                  onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                />
+              </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="sex">Sexo</label>
+            <div className="mm-field">
+              <label htmlFor="email">Email *</label>
+              <input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="mm-field-row">
+              <div className="mm-field">
+                <label htmlFor="phone">Telefone</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+
+              <div className="mm-field">
+                <label htmlFor="sex">Sexo</label>
+                <select
+                  id="sex"
+                  value={formData.sex}
+                  onChange={(e) => setFormData({ ...formData, sex: e.target.value as any })}
+                >
+                  <option value="">Selecione...</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Outro">Outro</option>
+                  <option value="N/I">Prefiro não informar</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mm-field">
+              <label htmlFor="level">Nível</label>
               <select
-                id="sex"
-                value={formData.sex}
-                onChange={(e) => setFormData({ ...formData, sex: e.target.value as any })}
+                id="level"
+                value={formData.level_id || ''}
+                onChange={(e) => {
+                  const sel = levels.find(l => l.id === Number(e.target.value));
+                  setFormData({ ...formData, level_id: sel?.id, level: sel?.name || '' });
+                }}
               >
                 <option value="">Selecione...</option>
-                <option value="Masculino">Masculino</option>
-                <option value="Feminino">Feminino</option>
-                <option value="Outro">Outro</option>
-                <option value="N/I">Prefiro não informar</option>
+                {levels.map((level) => (
+                  <option key={level.id} value={level.id}>
+                    {level.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="level">Nível</label>
-            <select
-              id="level"
-              value={formData.level_id || ''}
-              onChange={(e) => {
-                const sel = levels.find(l => l.id === Number(e.target.value));
-                setFormData({ ...formData, level_id: sel?.id, level: sel?.name || '' });
-              }}
-            >
-              <option value="">Selecione...</option>
-              {levels.map((level) => (
-                <option key={level.id} value={level.id}>
-                  {level.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
+          <div className="mm-footer">
+            <button type="button" className="mm-btn mm-btn-secondary" onClick={onClose} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            <button type="submit" className="mm-btn mm-btn-primary" disabled={isSubmitting}>
               {isSubmitting ? 'Criando...' : 'Criar Aluno'}
             </button>
           </div>
@@ -693,63 +696,65 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 // View Student Modal Component
 function ViewStudentModal({ student, onClose }: { student: Student; onClose: () => void }) {
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>Perfil do Aluno</h2>
-          <button type="button" className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="mm-close" onClick={onClose}>✕</button>
         </div>
 
-        <div className="student-profile">
-          <div className="profile-avatar-large">
-            👤
-          </div>
-
-          <div className="profile-info-grid">
-            <div className="profile-info-item">
-              <span className="profile-label">Nome Completo</span>
-              <span className="profile-value">{student.full_name}</span>
+        <div className="mm-content">
+          <div className="student-profile">
+            <div className="profile-avatar-large">
+              👤
             </div>
 
-            <div className="profile-info-item">
-              <span className="profile-label">CPF</span>
-              <span className="profile-value">{student.cpf}</span>
-            </div>
+            <div className="profile-info-grid">
+              <div className="profile-info-item">
+                <span className="profile-label">Nome Completo</span>
+                <span className="profile-value">{student.full_name}</span>
+              </div>
 
-            <div className="profile-info-item">
-              <span className="profile-label">Email</span>
-              <span className="profile-value">{student.email}</span>
-            </div>
+              <div className="profile-info-item">
+                <span className="profile-label">CPF</span>
+                <span className="profile-value">{student.cpf}</span>
+              </div>
 
-            <div className="profile-info-item">
-              <span className="profile-label">Telefone</span>
-              <span className="profile-value">{student.phone || '-'}</span>
-            </div>
+              <div className="profile-info-item">
+                <span className="profile-label">Email</span>
+                <span className="profile-value">{student.email}</span>
+              </div>
 
-            <div className="profile-info-item">
-              <span className="profile-label">Data de Nascimento</span>
-              <span className="profile-value">
-                {student.birth_date ? new Date(student.birth_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
-              </span>
-            </div>
+              <div className="profile-info-item">
+                <span className="profile-label">Telefone</span>
+                <span className="profile-value">{student.phone || '-'}</span>
+              </div>
 
-            <div className="profile-info-item">
-              <span className="profile-label">Sexo</span>
-              <span className="profile-value">{student.sex || '-'}</span>
-            </div>
-
-            <div className="profile-info-item">
-              <span className="profile-label">Nível</span>
-              <span className="profile-value">{student.level_name || '-'}</span>
-            </div>
-
-            <div className="profile-info-item">
-              <span className="profile-label">Status</span>
-              <span className="profile-value">
-                <span className={`status-badge status-${student.status}`}>
-                  {student.status === 'ativo' ? 'Ativo' : student.status === 'inativo' ? 'Inativo' : 'Pendente'}
+              <div className="profile-info-item">
+                <span className="profile-label">Data de Nascimento</span>
+                <span className="profile-value">
+                  {student.birth_date ? new Date(student.birth_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
                 </span>
-              </span>
+              </div>
+
+              <div className="profile-info-item">
+                <span className="profile-label">Sexo</span>
+                <span className="profile-value">{student.sex || '-'}</span>
+              </div>
+
+              <div className="profile-info-item">
+                <span className="profile-label">Nível</span>
+                <span className="profile-value">{student.level_name || '-'}</span>
+              </div>
+
+              <div className="profile-info-item">
+                <span className="profile-label">Status</span>
+                <span className="profile-value">
+                  <span className={`status-badge status-${student.status}`}>
+                    {student.status === 'ativo' ? 'Ativo' : student.status === 'inativo' ? 'Inativo' : 'Pendente'}
+                  </span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -793,67 +798,69 @@ function EditStudentModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>Editar Aluno</h2>
-          <button type="button" className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="mm-close" onClick={onClose}>✕</button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="mm-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="student-form">
-          <div className="form-group">
-            <label htmlFor="full_name">Nome Completo</label>
-            <input
-              id="full_name"
-              type="text"
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              required
-            />
+          <div className="mm-content">
+            <div className="mm-field">
+              <label htmlFor="full_name">Nome Completo</label>
+              <input
+                id="full_name"
+                type="text"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="mm-field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="mm-field">
+              <label htmlFor="phone">Telefone</label>
+              <input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+
+            <div className="mm-field">
+              <label htmlFor="status">Status</label>
+              <select
+                id="status"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+              >
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+                <option value="pendente">Pendente</option>
+              </select>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="phone">Telefone</label>
-            <input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="(00) 00000-0000"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="status">Status</label>
-            <select
-              id="status"
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-            >
-              <option value="ativo">Ativo</option>
-              <option value="inativo">Inativo</option>
-              <option value="pendente">Pendente</option>
-            </select>
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
+          <div className="mm-footer">
+            <button type="button" className="mm-btn mm-btn-secondary" onClick={onClose} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            <button type="submit" className="mm-btn mm-btn-primary" disabled={isSubmitting}>
               {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
             </button>
           </div>

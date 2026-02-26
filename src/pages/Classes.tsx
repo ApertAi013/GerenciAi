@@ -7,6 +7,7 @@ import CreateClassModal from '../components/CreateClassModal';
 import StudentPreviewModal from '../components/StudentPreviewModal';
 import AddMultipleStudentsModal from '../components/AddMultipleStudentsModal';
 import '../styles/Classes.css';
+import '../styles/ModernModal.css';
 
 export default function Classes() {
   const [classes, setClasses] = useState<Class[]>([]);
@@ -498,17 +499,17 @@ function ModalitiesModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modalities-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>Gerenciar Modalidades</h2>
-          <button type="button" className="modal-close" onClick={onClose}>✕</button>
+          <button type="button" className="mm-close" onClick={onClose}>×</button>
         </div>
 
-        <div className="modalities-content">
+        <div className="mm-content">
           {!showCreateForm && (
             <button
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               onClick={() => setShowCreateForm(true)}
               style={{ marginBottom: '1.5rem' }}
             >
@@ -518,10 +519,10 @@ function ModalitiesModal({
 
           {showCreateForm && (
             <div className="create-modality-form">
-              {error && <div className="error-message">{error}</div>}
+              {error && <div className="mm-error">{error}</div>}
 
               <form onSubmit={handleSubmit}>
-                <div className="form-group">
+                <div className="mm-field">
                   <label htmlFor="modality_name">Nome da Modalidade *</label>
                   <input
                     id="modality_name"
@@ -533,7 +534,7 @@ function ModalitiesModal({
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="mm-field">
                   <label htmlFor="modality_description">Descrição</label>
                   <textarea
                     id="modality_description"
@@ -544,16 +545,16 @@ function ModalitiesModal({
                   />
                 </div>
 
-                <div className="form-actions">
+                <div className="mm-footer">
                   <button
                     type="button"
-                    className="btn-secondary"
+                    className="mm-btn mm-btn-secondary"
                     onClick={handleCancel}
                     disabled={isSubmitting}
                   >
                     Cancelar
                   </button>
-                  <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                  <button type="submit" className="mm-btn mm-btn-primary" disabled={isSubmitting}>
                     {isSubmitting ? 'Salvando...' : editingModality ? 'Atualizar' : 'Criar'}
                   </button>
                 </div>

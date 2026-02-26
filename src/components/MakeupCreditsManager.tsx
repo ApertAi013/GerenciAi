@@ -18,6 +18,7 @@ import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { courtReservationService } from '../services/courtReservationService';
 import type { CreditHistoryItem } from '../services/courtReservationService';
 import '../styles/MakeupCreditsManager.css';
+import '../styles/ModernModal.css';
 
 interface MakeupCreditsManagerProps {
   studentId: number;
@@ -227,16 +228,16 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
 
       {/* Add Credits Modal */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Adicionar Créditos</h2>
-              <button className="modal-close" onClick={() => setShowAddModal(false)}>
+              <button type="button" className="mm-close" onClick={() => setShowAddModal(false)}>
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
+            <div className="mm-content">
+              <div className="mm-field">
                 <label>Quantidade de Créditos</label>
                 <input
                   type="number"
@@ -246,7 +247,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
                   className="form-control"
                 />
               </div>
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Observação (opcional)</label>
                 <textarea
                   value={addNotes}
@@ -261,8 +262,8 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
                 <p>Aluno terá {credits + creditsToAdd} créditos após esta operação</p>
               </div>
             </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowAddModal(false)}>
                 Cancelar
               </button>
               <button type="button" className="btn btn-success" onClick={handleAddCredits}>
@@ -275,16 +276,16 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
 
       {/* Remove Credits Modal */}
       {showRemoveModal && (
-        <div className="modal-overlay" onClick={() => setShowRemoveModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowRemoveModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Remover Créditos</h2>
-              <button className="modal-close" onClick={() => setShowRemoveModal(false)}>
+              <button type="button" className="mm-close" onClick={() => setShowRemoveModal(false)}>
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
+            <div className="mm-content">
+              <div className="mm-field">
                 <label>Quantidade de Créditos</label>
                 <input
                   type="number"
@@ -296,7 +297,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
                 />
                 <small>Máximo: {credits} créditos</small>
               </div>
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Motivo (opcional)</label>
                 <textarea
                   value={removeNotes}
@@ -311,8 +312,8 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
                 <p>Aluno ficará com {credits - creditsToRemove} créditos após esta operação</p>
               </div>
             </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowRemoveModal(false)}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowRemoveModal(false)}>
                 Cancelar
               </button>
               <button type="button" className="btn btn-warning" onClick={handleRemoveCredits}>
@@ -325,22 +326,22 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
 
       {/* Set Password Modal */}
       {showPasswordModal && (
-        <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowPasswordModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Definir Senha do App Mobile</h2>
-              <button className="modal-close" onClick={() => setShowPasswordModal(false)}>
+              <button type="button" className="mm-close" onClick={() => setShowPasswordModal(false)}>
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
-            <div className="modal-body">
+            <div className="mm-content">
               <div className="alert alert-info">
                 <p>
                   <strong><FontAwesomeIcon icon={faMobileScreenButton} /> Informação:</strong> Esta senha permitirá que <strong>{studentName}</strong> faça
                   login no aplicativo mobile para gerenciar suas reservas e créditos.
                 </p>
               </div>
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Nova Senha</label>
                 <input
                   type="password"
@@ -351,7 +352,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
                   minLength={6}
                 />
               </div>
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Confirmar Senha</label>
                 <input
                   type="password"
@@ -366,13 +367,13 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
                 <p className="text-danger">As senhas não coincidem</p>
               )}
             </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowPasswordModal(false)}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowPasswordModal(false)}>
                 Cancelar
               </button>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="mm-btn mm-btn-primary"
                 onClick={handleSetPassword}
                 disabled={!newPassword || newPassword !== confirmPassword}
               >
@@ -385,15 +386,15 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
 
       {/* History Modal */}
       {showHistoryModal && (
-        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
-          <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Histórico de Créditos</h2>
-              <button className="modal-close" onClick={() => setShowHistoryModal(false)}>
+              <button type="button" className="mm-close" onClick={() => setShowHistoryModal(false)}>
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
-            <div className="modal-body">
+            <div className="mm-content">
               {history.length === 0 ? (
                 <p className="empty-state">Nenhum histórico de créditos encontrado</p>
               ) : (
@@ -425,8 +426,8 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
                 </div>
               )}
             </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowHistoryModal(false)}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowHistoryModal(false)}>
                 Fechar
               </button>
             </div>

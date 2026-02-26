@@ -6,6 +6,7 @@ import { levelService } from '../services/levelService';
 import type { CreateTrialStudentRequest } from '../types/trialStudentTypes';
 import type { Level } from '../types/levelTypes';
 import '../styles/TrialStudents.css';
+import '../styles/ModernModal.css';
 
 interface CreateTrialStudentModalProps {
   onClose: () => void;
@@ -87,22 +88,22 @@ export default function CreateTrialStudentModal({
   };
 
   return (
-    <div className="trial-modal-overlay" onClick={onClose}>
-      <div className="trial-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="trial-modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>
             <User size={24} style={{ display: 'inline', marginRight: '0.5rem' }} />
             Novo Aluno Experimental
           </h2>
-          <button className="trial-modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="trial-modal-body">
+          <div className="mm-content">
             {/* Nome Completo */}
-            <div className="trial-form-group">
+            <div className="mm-field">
               <label htmlFor="full_name" className="required">
                 <User size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
                 Nome Completo
@@ -120,8 +121,8 @@ export default function CreateTrialStudentModal({
             </div>
 
             {/* Telefone e Email */}
-            <div className="trial-form-row">
-              <div className="trial-form-group">
+            <div className="mm-field-row">
+              <div className="mm-field">
                 <label htmlFor="phone">
                   <Phone size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
                   Telefone
@@ -138,7 +139,7 @@ export default function CreateTrialStudentModal({
                 <small>Opcional - útil para envio de follow-ups via WhatsApp</small>
               </div>
 
-              <div className="trial-form-group">
+              <div className="mm-field">
                 <label htmlFor="email">
                   <Mail size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
                   E-mail
@@ -157,8 +158,8 @@ export default function CreateTrialStudentModal({
             </div>
 
             {/* Nível e Período de Retenção */}
-            <div className="trial-form-row">
-              <div className="trial-form-group">
+            <div className="mm-field-row">
+              <div className="mm-field">
                 <label htmlFor="level">
                   <TrendingUp size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
                   Nível
@@ -188,7 +189,7 @@ export default function CreateTrialStudentModal({
                 </select>
               </div>
 
-              <div className="trial-form-group">
+              <div className="mm-field">
                 <label htmlFor="retention_days">
                   <Calendar size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
                   Período de Retenção
@@ -217,7 +218,7 @@ export default function CreateTrialStudentModal({
             </div>
 
             {/* Observações */}
-            <div className="trial-form-group">
+            <div className="mm-field">
               <label htmlFor="notes">
                 <FileText size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
                 Observações
@@ -256,10 +257,10 @@ export default function CreateTrialStudentModal({
             </div>
           </div>
 
-          <div className="trial-modal-footer">
+          <div className="mm-footer">
             <button
               type="button"
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -267,7 +268,7 @@ export default function CreateTrialStudentModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Criando...' : 'Criar Aluno Experimental'}

@@ -12,6 +12,7 @@ import { financialService } from '../services/financialService';
 import type { Form, FormResponse, CreateFormRequest } from '../services/formService';
 import toast from 'react-hot-toast';
 import '../styles/Forms.css';
+import '../styles/ModernModal.css';
 
 const RESPONSE_TYPE_LABELS: Record<string, string> = {
   single_choice: 'Escolha Única',
@@ -333,24 +334,24 @@ export default function Forms() {
 
       {/* Create/Edit Modal */}
       {showFormModal && (
-        <div className="modal-overlay" onClick={() => setShowFormModal(false)}>
-          <div className="forms-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowFormModal(false)}>
+          <div className="mm-modal mm-modal-lg" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>{editingForm ? 'Editar Formulário' : 'Novo Formulário'}</h2>
-              <button className="modal-close" onClick={() => setShowFormModal(false)}>&times;</button>
+              <button className="mm-close" onClick={() => setShowFormModal(false)}>&times;</button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
+            <div className="mm-content">
+              <div className="mm-field">
                 <label>Título *</label>
                 <input type="text" value={formTitle} onChange={e => setFormTitle(e.target.value)} maxLength={200} placeholder="Ex: Compra da Camisa Nova" />
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Descrição</label>
                 <textarea value={formDescription} onChange={e => setFormDescription(e.target.value)} rows={3} placeholder="Descreva o formulário..." />
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Imagem (opcional)</label>
                 {formImageUrl ? (
                   <div className="image-dropzone-preview">
@@ -414,7 +415,7 @@ export default function Forms() {
                 )}
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Tipo de Resposta</label>
                 <select value={formResponseType} onChange={e => setFormResponseType(e.target.value as any)}>
                   <option value="single_choice">Escolha Única (votação)</option>
@@ -425,7 +426,7 @@ export default function Forms() {
               </div>
 
               {['single_choice', 'multiple_choice', 'choice_with_text'].includes(formResponseType) && (
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Opções</label>
                   {formOptions.map((opt, idx) => (
                     <div key={idx} className="option-row">
@@ -446,7 +447,7 @@ export default function Forms() {
                 </div>
               )}
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Destinatários</label>
                 <select value={formTargetType} onChange={e => setFormTargetType(e.target.value)}>
                   <option value="all">Todos os Alunos</option>
@@ -457,7 +458,7 @@ export default function Forms() {
               </div>
 
               {formTargetType === 'modality' && (
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Modalidade</label>
                   <select value={formTargetModalityId || ''} onChange={e => setFormTargetModalityId(Number(e.target.value) || null)}>
                     <option value="">Selecione...</option>
@@ -467,7 +468,7 @@ export default function Forms() {
               )}
 
               {formTargetType === 'level' && (
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Nível</label>
                   <select value={formTargetLevel} onChange={e => setFormTargetLevel(e.target.value)}>
                     <option value="">Selecione...</option>
@@ -477,7 +478,7 @@ export default function Forms() {
               )}
 
               {formTargetType === 'specific' && (
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Alunos ({formTargetStudentIds.length} selecionados)</label>
                   <div className="student-search-box">
                     <input type="text" value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="Buscar aluno..." />
@@ -502,18 +503,18 @@ export default function Forms() {
                 </div>
               )}
 
-              <div className="form-row">
-                <div className="form-group">
+              <div className="mm-field-row">
+                <div className="mm-field">
                   <label>Data de Início *</label>
                   <input type="datetime-local" value={formStartsAt} onChange={e => setFormStartsAt(e.target.value)} />
                 </div>
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Data de Expiração</label>
                   <input type="datetime-local" value={formExpiresAt} onChange={e => setFormExpiresAt(e.target.value)} />
                 </div>
               </div>
 
-              <div className="form-row">
+              <div className="mm-field-row">
                 <label className="checkbox-label">
                   <input type="checkbox" checked={formIsRequired} onChange={e => setFormIsRequired(e.target.checked)} />
                   Obrigatório
@@ -524,9 +525,9 @@ export default function Forms() {
                 </label>
               </div>
             </div>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setShowFormModal(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleSaveForm} disabled={isSaving}>
+            <div className="mm-footer">
+              <button className="mm-btn mm-btn-secondary" onClick={() => setShowFormModal(false)}>Cancelar</button>
+              <button className="mm-btn mm-btn-primary" onClick={handleSaveForm} disabled={isSaving}>
                 {isSaving ? 'Salvando...' : editingForm ? 'Salvar' : 'Criar Formulário'}
               </button>
             </div>
@@ -536,13 +537,13 @@ export default function Forms() {
 
       {/* Responses Modal */}
       {showResponsesModal && selectedForm && (
-        <div className="modal-overlay" onClick={() => setShowResponsesModal(false)}>
-          <div className="forms-modal forms-modal-wide" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowResponsesModal(false)}>
+          <div className="mm-modal mm-modal-xl" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Respostas: {selectedForm.title}</h2>
-              <button className="modal-close" onClick={() => setShowResponsesModal(false)}>&times;</button>
+              <button className="mm-close" onClick={() => setShowResponsesModal(false)}>&times;</button>
             </div>
-            <div className="modal-body">
+            <div className="mm-content">
               {responsesLoading ? (
                 <div className="forms-loading">Carregando respostas...</div>
               ) : (
@@ -620,38 +621,40 @@ export default function Forms() {
 
       {/* Preview Modal */}
       {showPreviewModal && selectedForm && (
-        <div className="modal-overlay" onClick={() => setShowPreviewModal(false)}>
-          <div className="preview-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowPreviewModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Preview do Formulário</h2>
-              <button className="modal-close" onClick={() => setShowPreviewModal(false)}>&times;</button>
+              <button className="mm-close" onClick={() => setShowPreviewModal(false)}>&times;</button>
             </div>
-            <div className="preview-phone">
-              <div className="preview-phone-content">
-                {selectedForm.image_url && (
-                  <img src={selectedForm.image_url} alt="" className="preview-image" />
-                )}
-                <h3 className="preview-title">{selectedForm.title}</h3>
-                {selectedForm.description && <p className="preview-desc">{selectedForm.description}</p>}
-                {selectedForm.is_required && <span className="preview-required-badge">Obrigatório</span>}
+            <div className="mm-content">
+              <div className="preview-phone">
+                <div className="preview-phone-content">
+                  {selectedForm.image_url && (
+                    <img src={selectedForm.image_url} alt="" className="preview-image" />
+                  )}
+                  <h3 className="preview-title">{selectedForm.title}</h3>
+                  {selectedForm.description && <p className="preview-desc">{selectedForm.description}</p>}
+                  {selectedForm.is_required && <span className="preview-required-badge">Obrigatório</span>}
 
-                <div className="preview-options">
-                  {selectedForm.response_type === 'text_only' ? (
-                    <div className="preview-textarea">Resposta do aluno...</div>
-                  ) : (
-                    selectedForm.options?.map(opt => (
-                      <div key={opt.id} className="preview-option">
-                        <span className={`preview-radio ${selectedForm.response_type === 'multiple_choice' || selectedForm.response_type === 'choice_with_text' ? 'checkbox' : ''}`}></span>
-                        {opt.label}
-                      </div>
-                    ))
-                  )}
-                  {selectedForm.response_type === 'choice_with_text' && (
-                    <div className="preview-textarea">Comentário adicional...</div>
-                  )}
+                  <div className="preview-options">
+                    {selectedForm.response_type === 'text_only' ? (
+                      <div className="preview-textarea">Resposta do aluno...</div>
+                    ) : (
+                      selectedForm.options?.map(opt => (
+                        <div key={opt.id} className="preview-option">
+                          <span className={`preview-radio ${selectedForm.response_type === 'multiple_choice' || selectedForm.response_type === 'choice_with_text' ? 'checkbox' : ''}`}></span>
+                          {opt.label}
+                        </div>
+                      ))
+                    )}
+                    {selectedForm.response_type === 'choice_with_text' && (
+                      <div className="preview-textarea">Comentário adicional...</div>
+                    )}
+                  </div>
+
+                  <div className="preview-submit-btn">Enviar Resposta</div>
                 </div>
-
-                <div className="preview-submit-btn">Enviar Resposta</div>
               </div>
             </div>
           </div>

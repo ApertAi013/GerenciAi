@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { courtService } from '../services/courtService';
 import type { Court, CreateCourtData, UpdateCourtData, CourtStatus, OperatingHour } from '../types/courtTypes';
 import '../styles/Courts.css';
+import '../styles/ModernModal.css';
 
 const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
@@ -284,138 +285,143 @@ const Courts: React.FC = () => {
 
       {/* Create/Edit Court Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-            <h2>{editingCourt ? 'Editar Quadra' : 'Nova Quadra'}</h2>
+        <div className="mm-overlay" onClick={handleCloseModal}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
+              <h2>{editingCourt ? 'Editar Quadra' : 'Nova Quadra'}</h2>
+              <button type="button" className="mm-close" onClick={handleCloseModal}>×</button>
+            </div>
             <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="name">Nome *</label>
-                <input
-                  type="text"
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  placeholder="Ex: Quadra 1, Beach, FTV"
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="description">Descrição</label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Descrição opcional da quadra"
-                  rows={2}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="form-group">
-                  <label htmlFor="status">Status</label>
-                  <select
-                    id="status"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as CourtStatus })}
-                  >
-                    <option value="ativa">Ativa</option>
-                    <option value="inativa">Inativa</option>
-                    <option value="manutencao">Manutenção</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="price">Preço Padrão (R$)</label>
+              <div className="mm-content">
+                <div className="mm-field">
+                  <label htmlFor="name">Nome *</label>
                   <input
-                    type="number"
-                    id="price"
-                    step="0.01"
-                    min="0"
-                    value={formData.default_price_cents ? (formData.default_price_cents / 100).toFixed(2) : ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setFormData({
-                        ...formData,
-                        default_price_cents: value ? Math.round(parseFloat(value) * 100) : undefined,
-                      });
-                    }}
-                    placeholder="0.00"
+                    type="text"
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                    placeholder="Ex: Quadra 1, Beach, FTV"
                   />
                 </div>
-              </div>
 
-              {/* Cancellation Policy Section */}
-              <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginTop: '8px' }}>
-                <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', color: '#374151' }}>Política de Cancelamento</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Prazo Cancelamento (horas)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formData.cancellation_deadline_hours ?? 24}
-                      onChange={(e) => setFormData({ ...formData, cancellation_deadline_hours: parseInt(e.target.value) || 0 })}
-                    />
+                <div className="mm-field">
+                  <label htmlFor="description">Descrição</label>
+                  <textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Descrição opcional da quadra"
+                    rows={2}
+                  />
+                </div>
+
+                <div className="mm-field-row">
+                  <div className="mm-field">
+                    <label htmlFor="status">Status</label>
+                    <select
+                      id="status"
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as CourtStatus })}
+                    >
+                      <option value="ativa">Ativa</option>
+                      <option value="inativa">Inativa</option>
+                      <option value="manutencao">Manutenção</option>
+                    </select>
                   </div>
-                  <div className="form-group">
-                    <label>Taxa Cancelamento (R$)</label>
+
+                  <div className="mm-field">
+                    <label htmlFor="price">Preço Padrão (R$)</label>
                     <input
                       type="number"
+                      id="price"
                       step="0.01"
                       min="0"
-                      value={formData.cancellation_fee_cents ? (formData.cancellation_fee_cents / 100).toFixed(2) : ''}
+                      value={formData.default_price_cents ? (formData.default_price_cents / 100).toFixed(2) : ''}
                       onChange={(e) => {
-                        const v = e.target.value;
-                        setFormData({ ...formData, cancellation_fee_cents: v ? Math.round(parseFloat(v) * 100) : 0 });
+                        const value = e.target.value;
+                        setFormData({
+                          ...formData,
+                          default_price_cents: value ? Math.round(parseFloat(value) * 100) : undefined,
+                        });
                       }}
                       placeholder="0.00"
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* Booking Config */}
-              <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginTop: '8px' }}>
-                <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', color: '#374151' }}>Reserva Online</h4>
-                <div className="form-group" style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={formData.allow_public_booking !== false}
-                      onChange={(e) => setFormData({ ...formData, allow_public_booking: e.target.checked })}
-                      style={{ width: 'auto' }}
-                    />
-                    Permitir reserva pelo link público
-                  </label>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Antecedência mínima (horas)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formData.min_advance_booking_hours ?? 1}
-                      onChange={(e) => setFormData({ ...formData, min_advance_booking_hours: parseInt(e.target.value) || 0 })}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Antecedência máxima (dias)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={formData.max_advance_booking_days ?? 30}
-                      onChange={(e) => setFormData({ ...formData, max_advance_booking_days: parseInt(e.target.value) || 30 })}
-                    />
+                {/* Cancellation Policy Section */}
+                <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginTop: '8px' }}>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', color: '#374151' }}>Política de Cancelamento</h4>
+                  <div className="mm-field-row">
+                    <div className="mm-field">
+                      <label>Prazo Cancelamento (horas)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.cancellation_deadline_hours ?? 24}
+                        onChange={(e) => setFormData({ ...formData, cancellation_deadline_hours: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div className="mm-field">
+                      <label>Taxa Cancelamento (R$)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.cancellation_fee_cents ? (formData.cancellation_fee_cents / 100).toFixed(2) : ''}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setFormData({ ...formData, cancellation_fee_cents: v ? Math.round(parseFloat(v) * 100) : 0 });
+                        }}
+                        placeholder="0.00"
+                      />
+                    </div>
                   </div>
                 </div>
+
+                {/* Booking Config */}
+                <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '16px', marginTop: '8px' }}>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', color: '#374151' }}>Reserva Online</h4>
+                  <div className="mm-field" style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.allow_public_booking !== false}
+                        onChange={(e) => setFormData({ ...formData, allow_public_booking: e.target.checked })}
+                        style={{ width: 'auto' }}
+                      />
+                      Permitir reserva pelo link público
+                    </label>
+                  </div>
+                  <div className="mm-field-row">
+                    <div className="mm-field">
+                      <label>Antecedência mínima (horas)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.min_advance_booking_hours ?? 1}
+                        onChange={(e) => setFormData({ ...formData, min_advance_booking_hours: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div className="mm-field">
+                      <label>Antecedência máxima (dias)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.max_advance_booking_days ?? 30}
+                        onChange={(e) => setFormData({ ...formData, max_advance_booking_days: parseInt(e.target.value) || 30 })}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={handleCloseModal}>
+              <div className="mm-footer">
+                <button type="button" className="mm-btn mm-btn-secondary" onClick={handleCloseModal}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-submit">
+                <button type="submit" className="mm-btn mm-btn-primary">
                   {editingCourt ? 'Atualizar' : 'Criar'}
                 </button>
               </div>
@@ -426,91 +432,97 @@ const Courts: React.FC = () => {
 
       {/* Operating Hours Modal */}
       {showHoursModal && hoursCourt && (
-        <div className="modal-overlay" onClick={() => setShowHoursModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px' }}>
-            <h2>Horários de Funcionamento — {hoursCourt.name}</h2>
-            <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '16px' }}>
-              Configure os dias e horários em que esta quadra estará disponível para locação.
-            </p>
-
-            <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
-              {operatingHours.map((h) => (
-                <div
-                  key={h.day_of_week}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '10px 0',
-                    borderBottom: '1px solid #F3F4F6',
-                    opacity: h.is_active ? 1 : 0.5,
-                  }}
-                >
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '100px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={h.is_active}
-                      onChange={(e) => updateHour(h.day_of_week, 'is_active', e.target.checked)}
-                      style={{ width: 'auto' }}
-                    />
-                    <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{DAY_NAMES[h.day_of_week]}</span>
-                  </label>
-
-                  {h.is_active && (
-                    <>
-                      <input
-                        type="time"
-                        value={formatTime(h.open_time)}
-                        onChange={(e) => updateHour(h.day_of_week, 'open_time', e.target.value)}
-                        style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
-                      />
-                      <span style={{ color: '#9CA3AF' }}>às</span>
-                      <input
-                        type="time"
-                        value={formatTime(h.close_time)}
-                        onChange={(e) => updateHour(h.day_of_week, 'close_time', e.target.value)}
-                        style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
-                      />
-                      <select
-                        value={h.slot_duration_minutes}
-                        onChange={(e) => updateHour(h.day_of_week, 'slot_duration_minutes', parseInt(e.target.value))}
-                        style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
-                      >
-                        <option value={30}>30min</option>
-                        <option value={60}>1h</option>
-                        <option value={90}>1h30</option>
-                        <option value={120}>2h</option>
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => copyToAllDays(h.day_of_week)}
-                        title="Copiar para todos"
-                        style={{
-                          background: 'none',
-                          border: '1px solid #D1D5DB',
-                          borderRadius: '6px',
-                          padding: '6px 8px',
-                          cursor: 'pointer',
-                          fontSize: '0.75rem',
-                          color: '#6B7280',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        Copiar
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
+        <div className="mm-overlay" onClick={() => setShowHoursModal(false)}>
+          <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
+              <h2>Horários de Funcionamento — {hoursCourt.name}</h2>
+              <button type="button" className="mm-close" onClick={() => setShowHoursModal(false)}>×</button>
             </div>
 
-            <div className="modal-actions" style={{ marginTop: '16px' }}>
-              <button type="button" className="btn-cancel" onClick={() => setShowHoursModal(false)}>
+            <div className="mm-content">
+              <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '16px' }}>
+                Configure os dias e horários em que esta quadra estará disponível para locação.
+              </p>
+
+              <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+                {operatingHours.map((h) => (
+                  <div
+                    key={h.day_of_week}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 0',
+                      borderBottom: '1px solid #F3F4F6',
+                      opacity: h.is_active ? 1 : 0.5,
+                    }}
+                  >
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '100px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={h.is_active}
+                        onChange={(e) => updateHour(h.day_of_week, 'is_active', e.target.checked)}
+                        style={{ width: 'auto' }}
+                      />
+                      <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{DAY_NAMES[h.day_of_week]}</span>
+                    </label>
+
+                    {h.is_active && (
+                      <>
+                        <input
+                          type="time"
+                          value={formatTime(h.open_time)}
+                          onChange={(e) => updateHour(h.day_of_week, 'open_time', e.target.value)}
+                          style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                        />
+                        <span style={{ color: '#9CA3AF' }}>às</span>
+                        <input
+                          type="time"
+                          value={formatTime(h.close_time)}
+                          onChange={(e) => updateHour(h.day_of_week, 'close_time', e.target.value)}
+                          style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                        />
+                        <select
+                          value={h.slot_duration_minutes}
+                          onChange={(e) => updateHour(h.day_of_week, 'slot_duration_minutes', parseInt(e.target.value))}
+                          style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                        >
+                          <option value={30}>30min</option>
+                          <option value={60}>1h</option>
+                          <option value={90}>1h30</option>
+                          <option value={120}>2h</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => copyToAllDays(h.day_of_week)}
+                          title="Copiar para todos"
+                          style={{
+                            background: 'none',
+                            border: '1px solid #D1D5DB',
+                            borderRadius: '6px',
+                            padding: '6px 8px',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            color: '#6B7280',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Copiar
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowHoursModal(false)}>
                 Cancelar
               </button>
               <button
                 type="button"
-                className="btn-submit"
+                className="mm-btn mm-btn-primary"
                 onClick={handleSaveHours}
                 disabled={savingHours}
               >
@@ -523,16 +535,16 @@ const Courts: React.FC = () => {
 
       {/* Delete Confirmation */}
       {showDeleteConfirm && deletingCourt && (
-        <div className="modal-overlay" onClick={handleDeleteCancel}>
-          <div className="modal-content confirm-delete" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-overlay" onClick={handleDeleteCancel}>
+          <div className="mm-confirm" onClick={(e) => e.stopPropagation()}>
             <h2>Confirmar Exclusão</h2>
             <p>Tem certeza que deseja deletar a quadra <strong>"{deletingCourt.name}"</strong>?</p>
             <p className="warning-text">Esta ação não pode ser desfeita.</p>
-            <div className="modal-actions">
-              <button type="button" className="btn-cancel" onClick={handleDeleteCancel}>
+            <div className="mm-confirm-actions">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={handleDeleteCancel}>
                 Cancelar
               </button>
-              <button type="button" className="btn-delete" onClick={handleDeleteConfirm}>
+              <button type="button" className="mm-btn mm-btn-danger" onClick={handleDeleteConfirm}>
                 Deletar
               </button>
             </div>

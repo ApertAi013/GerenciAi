@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import type { ActionData, WhatsAppLink, ClassInfo, ScheduleConflict } from '../types/aiTypes';
 import '../styles/SuggestionActionModal.css';
+import '../styles/ModernModal.css';
 
 interface SuggestionActionModalProps {
   isOpen: boolean;
@@ -68,7 +69,7 @@ export default function SuggestionActionModal({
           </div>
           <div className="item-actions">
             <button
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               onClick={() => handleWhatsAppClick(link.whatsapp_link)}
             >
               Enviar no WhatsApp
@@ -112,7 +113,7 @@ export default function SuggestionActionModal({
           </div>
           <div className="item-actions">
             <button
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={() => handleClassNavigate(cls.id)}
             >
               Ver Turma
@@ -135,13 +136,13 @@ export default function SuggestionActionModal({
           </div>
           <div className="item-actions">
             <button
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={() => handleClassNavigate(conflict.class1.id)}
             >
               Ver Turma 1
             </button>
             <button
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={() => handleClassNavigate(conflict.class2.id)}
             >
               Ver Turma 2
@@ -203,19 +204,19 @@ export default function SuggestionActionModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>{getTitleByType()}</h2>
-          <button className="modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             &times;
           </button>
         </div>
 
-        <div className="modal-body">{renderContent()}</div>
+        <div className="mm-content">{renderContent()}</div>
 
-        <div className="modal-footer">
-          <button className="btn-cancel" onClick={onClose}>
+        <div className="mm-footer">
+          <button className="mm-btn mm-btn-secondary" onClick={onClose}>
             Fechar
           </button>
         </div>

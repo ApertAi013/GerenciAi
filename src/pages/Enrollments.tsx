@@ -13,6 +13,7 @@ import type { Enrollment, Plan, CreateEnrollmentRequest } from '../types/enrollm
 import type { Student } from '../types/studentTypes';
 import type { Class } from '../types/classTypes';
 import '../styles/Enrollments.css';
+import '../styles/ModernModal.css';
 import '../components/ComprehensiveEnrollmentForm.css';
 
 export default function Enrollments() {
@@ -529,12 +530,13 @@ export default function Enrollments() {
   // Modal de primeira fatura - renderizar antes do loading check
   if (showFirstInvoiceModal && createdEnrollmentData) {
     return (
-      <div className="modal-overlay" style={{ zIndex: 9999 }}>
-        <div className="modal-content" style={{ maxWidth: '500px' }}>
-          <div className="modal-header">
+      <div className="mm-overlay">
+        <div className="mm-modal mm-modal-md">
+          <div className="mm-header">
             <h2>Gerar Primeira Fatura</h2>
             <button
-              className="close-btn"
+              type="button"
+              className="mm-close"
               onClick={() => {
                 setShowFirstInvoiceModal(false);
                 setCreatedEnrollmentData(null);
@@ -545,7 +547,7 @@ export default function Enrollments() {
               ×
             </button>
           </div>
-          <div className="modal-body">
+          <div className="mm-content">
             <p style={{ marginBottom: '1rem' }}>
               <strong>{createdEnrollmentData.studentName}</strong> foi matriculado(a) com sucesso!
             </p>
@@ -554,8 +556,7 @@ export default function Enrollments() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
               <button
                 type="button"
-                className="btn-primary"
-                style={{ width: '100%' }}
+                className="mm-btn mm-btn-primary mm-btn-full"
                 onClick={async () => {
                   try {
                     const response = await enrollmentService.generateFirstInvoice({
@@ -579,8 +580,7 @@ export default function Enrollments() {
 
               <button
                 type="button"
-                className="btn-primary"
-                style={{ width: '100%' }}
+                className="mm-btn mm-btn-primary mm-btn-full"
                 onClick={async () => {
                   try {
                     const response = await enrollmentService.generateFirstInvoice({
@@ -604,8 +604,7 @@ export default function Enrollments() {
 
               <button
                 type="button"
-                className="btn-secondary"
-                style={{ width: '100%' }}
+                className="mm-btn mm-btn-secondary mm-btn-full"
                 onClick={() => {
                   toast('Fatura será gerada no fechamento mensal', { icon: '📝' });
                   setShowFirstInvoiceModal(false);
@@ -832,15 +831,16 @@ export default function Enrollments() {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowModal(false)}>
+          <div className="mm-modal mm-modal-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Nova Matrícula</h2>
-              <button type="button" className="modal-close" onClick={() => setShowModal(false)}>×</button>
+              <button type="button" className="mm-close" onClick={() => setShowModal(false)}>×</button>
             </div>
 
             <form onSubmit={handleSubmit} className="enrollment-form">
-              <div className="form-group">
+              <div className="mm-content">
+              <div className="mm-field">
                 <label htmlFor="student_search">Aluno *</label>
                 <div className="student-autocomplete">
                   <input
@@ -894,7 +894,7 @@ export default function Enrollments() {
                 )}
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label htmlFor="plan_id">Plano *</label>
                 <select
                   id="plan_id"
@@ -916,8 +916,8 @@ export default function Enrollments() {
                 )}
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
+              <div className="mm-field-row">
+                <div className="mm-field">
                   <label htmlFor="start_date">Data de Início *</label>
                   <input
                     type="date"
@@ -928,7 +928,7 @@ export default function Enrollments() {
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="mm-field">
                   <label htmlFor="due_day">Dia de Vencimento *</label>
                   <input
                     type="number"
@@ -943,7 +943,7 @@ export default function Enrollments() {
               </div>
 
               {/* Discount Section */}
-              <div className="form-group">
+              <div className="mm-field">
                 <label className="checkbox-label">
                   <input
                     type="checkbox"
@@ -961,8 +961,8 @@ export default function Enrollments() {
               </div>
 
               {hasDiscount && (
-                <div className="form-row">
-                  <div className="form-group">
+                <div className="mm-field-row">
+                  <div className="mm-field">
                     <label htmlFor="discount_type">Tipo de Desconto</label>
                     <select
                       id="discount_type"
@@ -974,7 +974,7 @@ export default function Enrollments() {
                     </select>
                   </div>
 
-                  <div className="form-group">
+                  <div className="mm-field">
                     <label htmlFor="discount_value">
                       Valor do Desconto {discountType === 'percentage' ? '(%)' : '(R$)'}
                     </label>
@@ -1002,7 +1002,7 @@ export default function Enrollments() {
                     )}
                   </div>
 
-                  <div className="form-group">
+                  <div className="mm-field">
                     <label htmlFor="discount_until">Válido até (opcional)</label>
                     <input
                       type="date"
@@ -1015,7 +1015,7 @@ export default function Enrollments() {
               )}
 
               {/* Payment Section */}
-              <div className="form-group">
+              <div className="mm-field">
                 <label className="checkbox-label">
                   <input
                     type="checkbox"
@@ -1027,7 +1027,7 @@ export default function Enrollments() {
               </div>
 
               {willPayNow && (
-                <div className="form-group">
+                <div className="mm-field">
                   <label htmlFor="payment_method">Forma de Pagamento</label>
                   <select
                     id="payment_method"
@@ -1044,7 +1044,7 @@ export default function Enrollments() {
                 </div>
               )}
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label>
                   Turmas *
                   {selectedPlan && (
@@ -1199,12 +1199,13 @@ export default function Enrollments() {
                   </div>
                 )}
               </div>
+              </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
+              <div className="mm-footer">
+                <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowModal(false)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary">
+                <button type="submit" className="mm-btn mm-btn-primary">
                   Criar Matrícula
                 </button>
               </div>
@@ -1725,25 +1726,26 @@ function EditEnrollmentModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>Editar Matrícula #{enrollment.id}</h2>
-          <button type="button" className="modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             ×
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="mm-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="enrollment-form">
-          <div className="form-info">
+          <div className="mm-content">
+          <div className="mm-info-card">
             <p>
               <strong>Aluno:</strong> {enrollment.student_name}
             </p>
           </div>
 
-          <div className="form-group">
+          <div className="mm-field">
             <label htmlFor="plan_id">Plano *</label>
             <select
               id="plan_id"
@@ -1765,8 +1767,8 @@ function EditEnrollmentModal({
             )}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
+          <div className="mm-field-row">
+            <div className="mm-field">
               <label htmlFor="contract_type">Tipo de Contrato</label>
               <select
                 id="contract_type"
@@ -1783,7 +1785,7 @@ function EditEnrollmentModal({
               </select>
             </div>
 
-            <div className="form-group">
+            <div className="mm-field">
               <label htmlFor="due_day">Dia de Vencimento *</label>
               <input
                 type="number"
@@ -1799,7 +1801,7 @@ function EditEnrollmentModal({
             </div>
           </div>
 
-          <div className="form-group">
+          <div className="mm-field">
             <label>
               Turmas *
               {selectedPlan && (
@@ -1963,7 +1965,7 @@ function EditEnrollmentModal({
             )}
           </div>
 
-          <div className="form-group">
+          <div className="mm-field">
             <label htmlFor="discount_type">Tipo de Desconto</label>
             <select
               id="discount_type"
@@ -1982,8 +1984,8 @@ function EditEnrollmentModal({
           </div>
 
           {formData.discount_type !== 'none' && (
-            <div className="form-row">
-              <div className="form-group">
+            <div className="mm-field-row">
+              <div className="mm-field">
                 <label htmlFor="discount_value">
                   Valor do Desconto{' '}
                   {formData.discount_type === 'percentage' ? '(%)' : '(R$)'}
@@ -2008,7 +2010,7 @@ function EditEnrollmentModal({
                 />
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label htmlFor="discount_until">Desconto até</label>
                 <input
                   type="date"
@@ -2024,7 +2026,7 @@ function EditEnrollmentModal({
 
           {/* Checkbox para aplicar desconto em faturas abertas */}
           {openInvoicesCount > 0 && (formData.discount_type !== enrollment.discount_type || formData.discount_value !== enrollment.discount_value) && (
-            <div className="form-group" style={{ marginTop: '12px', padding: '12px', backgroundColor: formData.discount_type === 'none' ? '#f8d7da' : '#fff3cd', borderRadius: '8px', border: `1px solid ${formData.discount_type === 'none' ? '#f5c6cb' : '#ffc107'}` }}>
+            <div className="mm-field" style={{ marginTop: '12px', padding: '12px', backgroundColor: formData.discount_type === 'none' ? '#f8d7da' : '#fff3cd', borderRadius: '8px', border: `1px solid ${formData.discount_type === 'none' ? '#f5c6cb' : '#ffc107'}` }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'normal' }}>
                 <input
                   type="checkbox"
@@ -2042,7 +2044,7 @@ function EditEnrollmentModal({
             </div>
           )}
 
-          <div className="form-group">
+          <div className="mm-field">
             <label htmlFor="status">Status</label>
             <select
               id="status"
@@ -2055,11 +2057,12 @@ function EditEnrollmentModal({
               <option value="concluida">Concluída</option>
             </select>
           </div>
+          </div>
 
-          <div className="modal-actions">
+          <div className="mm-footer">
             <button
               type="button"
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -2067,7 +2070,7 @@ function EditEnrollmentModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
@@ -2078,22 +2081,22 @@ function EditEnrollmentModal({
 
       {/* Plan Change Confirmation Modal */}
       {showPlanChangeConfirm && pendingPlanId && (
-        <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={(e) => e.stopPropagation()}>
-          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" style={{ zIndex: 1001 }} onClick={(e) => e.stopPropagation()}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Alterar Plano</h2>
-              <button type="button" className="modal-close" onClick={cancelPlanChange}>×</button>
+              <button type="button" className="mm-close" onClick={cancelPlanChange}>×</button>
             </div>
-            <div style={{ padding: '2rem' }}>
+            <div className="mm-content">
               <p style={{ marginBottom: '1.5rem', color: '#2c3e50' }}>
                 O plano desta matrícula será alterado. O que deseja fazer com as faturas em aberto?
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <button
                   type="button"
-                  className="btn-primary"
+                  className="mm-btn mm-btn-primary mm-btn-full"
                   onClick={() => confirmPlanChange(true)}
-                  style={{ width: '100%', textAlign: 'left', padding: '1rem' }}
+                  style={{ textAlign: 'left', padding: '1rem' }}
                 >
                   <strong>Atualizar faturas em aberto</strong>
                   <br />
@@ -2101,9 +2104,9 @@ function EditEnrollmentModal({
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="mm-btn mm-btn-secondary mm-btn-full"
                   onClick={() => confirmPlanChange(false)}
-                  style={{ width: '100%', textAlign: 'left', padding: '1rem' }}
+                  style={{ textAlign: 'left', padding: '1rem' }}
                 >
                   <strong>Manter faturas com valor antigo</strong>
                   <br />
@@ -2111,15 +2114,10 @@ function EditEnrollmentModal({
                 </button>
                 <button
                   type="button"
+                  className="mm-btn mm-btn-danger mm-btn-full"
                   style={{
-                    width: '100%',
                     textAlign: 'left',
-                    padding: '1rem',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer'
+                    padding: '1rem'
                   }}
                   onClick={() => confirmPlanChange(false, true)}
                 >
@@ -2129,9 +2127,8 @@ function EditEnrollmentModal({
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="mm-btn mm-btn-secondary mm-btn-full"
                   onClick={cancelPlanChange}
-                  style={{ width: '100%' }}
                 >
                   Cancelar
                 </button>
@@ -2143,22 +2140,22 @@ function EditEnrollmentModal({
 
       {/* Cancel Enrollment Confirmation Modal */}
       {showCancelConfirm && pendingStatus && (
-        <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={(e) => e.stopPropagation()}>
-          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" style={{ zIndex: 1001 }} onClick={(e) => e.stopPropagation()}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Cancelar Matrícula</h2>
-              <button type="button" className="modal-close" onClick={cancelStatusChange}>×</button>
+              <button type="button" className="mm-close" onClick={cancelStatusChange}>×</button>
             </div>
-            <div style={{ padding: '2rem' }}>
+            <div className="mm-content">
               <p style={{ marginBottom: '1.5rem', color: '#2c3e50' }}>
                 Você está cancelando esta matrícula. O que deseja fazer com as faturas em aberto?
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <button
                   type="button"
-                  className="btn-primary"
+                  className="mm-btn mm-btn-danger mm-btn-full"
                   onClick={() => confirmStatusChange(true)}
-                  style={{ width: '100%', textAlign: 'left', padding: '1rem', background: '#e74c3c', borderColor: '#e74c3c' }}
+                  style={{ textAlign: 'left', padding: '1rem' }}
                 >
                   <strong>Cancelar faturas em aberto</strong>
                   <br />
@@ -2166,9 +2163,9 @@ function EditEnrollmentModal({
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="mm-btn mm-btn-secondary mm-btn-full"
                   onClick={() => confirmStatusChange(false)}
-                  style={{ width: '100%', textAlign: 'left', padding: '1rem' }}
+                  style={{ textAlign: 'left', padding: '1rem' }}
                 >
                   <strong>Manter faturas em aberto</strong>
                   <br />
@@ -2176,9 +2173,8 @@ function EditEnrollmentModal({
                 </button>
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="mm-btn mm-btn-secondary mm-btn-full"
                   onClick={cancelStatusChange}
-                  style={{ width: '100%' }}
                 >
                   Voltar
                 </button>
@@ -2190,13 +2186,13 @@ function EditEnrollmentModal({
 
       {/* Reactivation Modal */}
       {showReactivationModal && (
-        <div className="modal-overlay" style={{ zIndex: 1001 }} onClick={(e) => e.stopPropagation()}>
-          <div className="modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" style={{ zIndex: 1001 }} onClick={(e) => e.stopPropagation()}>
+          <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Reativar Matrícula</h2>
-              <button type="button" className="modal-close" onClick={cancelReactivation}>×</button>
+              <button type="button" className="mm-close" onClick={cancelReactivation}>×</button>
             </div>
-            <div style={{ padding: '2rem' }}>
+            <div className="mm-content">
               {isCheckingAvailability ? (
                 <div style={{ textAlign: 'center', padding: '2rem' }}>
                   <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
@@ -2348,18 +2344,18 @@ function EditEnrollmentModal({
                     {classAvailability.originalClassesAvailable ? (
                       <button
                         type="button"
-                        className="btn-primary"
+                        className="mm-btn mm-btn-primary mm-btn-full"
                         onClick={() => confirmReactivation(true)}
-                        style={{ width: '100%', padding: '1rem' }}
+                        style={{ padding: '1rem' }}
                       >
                         <strong>Reativar nas turmas originais</strong>
                       </button>
                     ) : (
                       <button
                         type="button"
-                        className="btn-primary"
+                        className="mm-btn mm-btn-primary mm-btn-full"
                         onClick={() => confirmReactivation(false)}
-                        style={{ width: '100%', padding: '1rem' }}
+                        style={{ padding: '1rem' }}
                       >
                         <strong>Continuar e escolher novas turmas</strong>
                       </button>
@@ -2368,9 +2364,9 @@ function EditEnrollmentModal({
                     {classAvailability.originalClassesAvailable && (
                       <button
                         type="button"
-                        className="btn-secondary"
+                        className="mm-btn mm-btn-secondary mm-btn-full"
                         onClick={() => confirmReactivation(false)}
-                        style={{ width: '100%', padding: '1rem' }}
+                        style={{ padding: '1rem' }}
                       >
                         Escolher outras turmas
                       </button>
@@ -2378,9 +2374,8 @@ function EditEnrollmentModal({
 
                     <button
                       type="button"
-                      className="btn-secondary"
+                      className="mm-btn mm-btn-secondary mm-btn-full"
                       onClick={cancelReactivation}
-                      style={{ width: '100%' }}
                     >
                       Cancelar
                     </button>

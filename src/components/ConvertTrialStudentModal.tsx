@@ -8,6 +8,7 @@ import type { TrialStudent, UpgradeToRegularRequest } from '../types/trialStuden
 import type { Plan } from '../types/enrollmentTypes';
 import type { Class } from '../types/classTypes';
 import '../styles/TrialStudents.css';
+import '../styles/ModernModal.css';
 
 interface ConvertTrialStudentModalProps {
   trialStudent: TrialStudent;
@@ -195,7 +196,7 @@ export default function ConvertTrialStudentModal({
         Dados Pessoais Adicionais
       </h3>
 
-      <div className="trial-form-group">
+      <div className="mm-field">
         <label htmlFor="cpf" className="required">
           CPF
         </label>
@@ -213,8 +214,8 @@ export default function ConvertTrialStudentModal({
         <small>Obrigatório para criar a matrícula oficial</small>
       </div>
 
-      <div className="trial-form-row">
-        <div className="trial-form-group">
+      <div className="mm-field-row">
+        <div className="mm-field">
           <label htmlFor="birth_date">Data de Nascimento</label>
           <input
             id="birth_date"
@@ -226,7 +227,7 @@ export default function ConvertTrialStudentModal({
           />
         </div>
 
-        <div className="trial-form-group">
+        <div className="mm-field">
           <label htmlFor="sex">Sexo</label>
           <select
             id="sex"
@@ -273,8 +274,8 @@ export default function ConvertTrialStudentModal({
         Selecione o Plano
       </h3>
 
-      <div className="trial-form-row">
-        <div className="trial-form-group">
+      <div className="mm-field-row">
+        <div className="mm-field">
           <label htmlFor="start_date" className="required">
             <Calendar size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
             Data de Início
@@ -290,7 +291,7 @@ export default function ConvertTrialStudentModal({
           />
         </div>
 
-        <div className="trial-form-group">
+        <div className="mm-field">
           <label htmlFor="due_day">Dia de Vencimento</label>
           <select
             id="due_day"
@@ -311,7 +312,7 @@ export default function ConvertTrialStudentModal({
         </div>
       </div>
 
-      <div className="trial-form-group">
+      <div className="mm-field">
         <label htmlFor="contract_type">Tipo de Contrato</label>
         <select
           id="contract_type"
@@ -334,7 +335,7 @@ export default function ConvertTrialStudentModal({
         </select>
       </div>
 
-      <div className="trial-form-group">
+      <div className="mm-field">
         <label className="required">Plano</label>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {plans.map((plan) => (
@@ -642,22 +643,21 @@ export default function ConvertTrialStudentModal({
   );
 
   return (
-    <div className="trial-modal-overlay" onClick={onClose}>
+    <div className="mm-overlay" onClick={onClose}>
       <div
-        className="trial-modal"
+        className="mm-modal mm-modal-xl"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '800px' }}
       >
-        <div className="trial-modal-header">
+        <div className="mm-header">
           <h2>
             Converter para Aluno Regular
           </h2>
-          <button className="trial-modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             <X size={24} />
           </button>
         </div>
 
-        <div className="trial-modal-body">
+        <div className="mm-content">
           {renderStepIndicator()}
 
           <div style={{ marginTop: '2rem' }}>
@@ -668,11 +668,11 @@ export default function ConvertTrialStudentModal({
           </div>
         </div>
 
-        <div className="trial-modal-footer">
+        <div className="mm-footer">
           {currentStep !== 'personal' && (
             <button
               type="button"
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={handleBack}
               disabled={isSubmitting}
             >
@@ -681,7 +681,7 @@ export default function ConvertTrialStudentModal({
           )}
           <button
             type="button"
-            className="btn-secondary"
+            className="mm-btn mm-btn-secondary"
             onClick={onClose}
             disabled={isSubmitting}
           >
@@ -690,7 +690,7 @@ export default function ConvertTrialStudentModal({
           {currentStep !== 'review' ? (
             <button
               type="button"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               onClick={handleNext}
               disabled={!canProceedToNextStep()}
             >
@@ -699,7 +699,7 @@ export default function ConvertTrialStudentModal({
           ) : (
             <button
               type="button"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               onClick={handleSubmit}
               disabled={isSubmitting || !canProceedToNextStep()}
             >

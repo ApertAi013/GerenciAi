@@ -7,6 +7,7 @@ import type { Student } from '../types/studentTypes';
 import type { Class } from '../types/classTypes';
 import type { Plan } from '../types/enrollmentTypes';
 import '../styles/AddMultipleStudentsModal.css';
+import '../styles/ModernModal.css';
 
 interface AddMultipleStudentsModalProps {
   classData: Class;
@@ -330,168 +331,170 @@ export default function AddMultipleStudentsModal({
   );
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="mm-overlay" onClick={onClose}>
       <div
-        className="add-students-modal"
+        className="mm-modal mm-modal-lg add-students-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-header">
+        <div className="mm-header">
           <div>
             <h2>Adicionar Alunos à Turma</h2>
             <p className="class-info">
               {classData.name || classData.modality_name} - {classData.start_time?.substring(0, 5)}
             </p>
           </div>
-          <button type="button" className="modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             ✕
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        <div className="mm-content">
+          {error && <div className="mm-error">{error}</div>}
 
-        {isLoading ? (
-          <div className="loading-container">
-            <FontAwesomeIcon icon={faSpinner} spin size="2x" />
-            <p>Carregando alunos...</p>
-          </div>
-        ) : (
-          <div className="modal-body">
-            {/* Plan Selection */}
-            <div className="plan-selection">
-              <label htmlFor="plan-select">Plano para Matrícula *</label>
-              <select
-                id="plan-select"
-                value={selectedPlanId}
-                onChange={(e) => setSelectedPlanId(Number(e.target.value))}
-                required
-              >
-                <option value={0}>Selecione um plano...</option>
-                {plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name} - R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
-                  </option>
-                ))}
-              </select>
+          {isLoading ? (
+            <div className="loading-container">
+              <FontAwesomeIcon icon={faSpinner} spin size="2x" />
+              <p>Carregando alunos...</p>
             </div>
-
-            {/* Search Bar */}
-            <div className="search-bar">
-              <FontAwesomeIcon icon={faSearch} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Buscar por nome, email ou CPF..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-              {searchQuery && (
-                <button
-                  className="clear-btn"
-                  onClick={() => setSearchQuery('')}
+          ) : (
+            <>
+              {/* Plan Selection */}
+              <div className="plan-selection">
+                <label htmlFor="plan-select">Plano para Matrícula *</label>
+                <select
+                  id="plan-select"
+                  value={selectedPlanId}
+                  onChange={(e) => setSelectedPlanId(Number(e.target.value))}
+                  required
                 >
-                  ✕
+                  <option value={0}>Selecione um plano...</option>
+                  {plans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.name} - R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search Bar */}
+              <div className="search-bar">
+                <FontAwesomeIcon icon={faSearch} className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nome, email ou CPF..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+                {searchQuery && (
+                  <button
+                    className="clear-btn"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Select All */}
+              {availableStudents.length > 0 && (
+                <div className="select-all-row">
+                  <label className="student-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedStudentIds.length === availableStudents.length &&
+                        availableStudents.length > 0
+                      }
+                      onChange={handleSelectAll}
+                    />
+                    <span>
+                      Selecionar Todos ({availableStudents.length} disponíveis)
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {/* Students List */}
+              <div className="students-list">
+                {availableStudents.length === 0 ? (
+                  <div className="no-students">
+                    {searchQuery ? (
+                      <p>Nenhum aluno encontrado com "{searchQuery}"</p>
+                    ) : (
+                      <p>Nenhum aluno disponível para esta turma</p>
+                    )}
+                  </div>
+                ) : (
+                  availableStudents.map((student) => {
+                    const isSelected = selectedStudentIds.includes(student.id);
+
+                    return (
+                      <label
+                        key={student.id}
+                        className={`student-item ${isSelected ? 'selected' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleStudentToggle(student.id)}
+                        />
+                        <div className="student-info">
+                          <div className="student-name">{student.full_name}</div>
+                          <div className="add-multiple-students-details">
+                            <span>{student.email}</span>
+                            {(student.level_name || student.level) && <span className="level-badge">{student.level_name || student.level}</span>}
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <FontAwesomeIcon
+                            icon={faCheckCircle}
+                            className="check-icon"
+                          />
+                        )}
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Load More Button */}
+              {hasMoreStudents && !searchQuery && (
+                <button
+                  type="button"
+                  className="load-more-btn"
+                  onClick={loadMoreStudents}
+                  disabled={isLoadingMore}
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <FontAwesomeIcon icon={faSpinner} spin />
+                      <span>Carregando...</span>
+                    </>
+                  ) : (
+                    <span>Carregar Mais Alunos</span>
+                  )}
                 </button>
               )}
-            </div>
 
-            {/* Select All */}
-            {availableStudents.length > 0 && (
-              <div className="select-all-row">
-                <label className="student-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedStudentIds.length === availableStudents.length &&
-                      availableStudents.length > 0
-                    }
-                    onChange={handleSelectAll}
-                  />
-                  <span>
-                    Selecionar Todos ({availableStudents.length} disponíveis)
-                  </span>
-                </label>
-              </div>
-            )}
-
-            {/* Students List */}
-            <div className="students-list">
-              {availableStudents.length === 0 ? (
-                <div className="no-students">
-                  {searchQuery ? (
-                    <p>Nenhum aluno encontrado com "{searchQuery}"</p>
-                  ) : (
-                    <p>Nenhum aluno disponível para esta turma</p>
-                  )}
+              {/* Already Enrolled */}
+              {enrolledStudentIds.length > 0 && (
+                <div className="enrolled-info">
+                  <strong>Alunos já matriculados:</strong> {enrolledStudentIds.length}
                 </div>
-              ) : (
-                availableStudents.map((student) => {
-                  const isSelected = selectedStudentIds.includes(student.id);
-
-                  return (
-                    <label
-                      key={student.id}
-                      className={`student-item ${isSelected ? 'selected' : ''}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handleStudentToggle(student.id)}
-                      />
-                      <div className="student-info">
-                        <div className="student-name">{student.full_name}</div>
-                        <div className="add-multiple-students-details">
-                          <span>{student.email}</span>
-                          {(student.level_name || student.level) && <span className="level-badge">{student.level_name || student.level}</span>}
-                        </div>
-                      </div>
-                      {isSelected && (
-                        <FontAwesomeIcon
-                          icon={faCheckCircle}
-                          className="check-icon"
-                        />
-                      )}
-                    </label>
-                  );
-                })
               )}
-            </div>
+            </>
+          )}
+        </div>
 
-            {/* Load More Button */}
-            {hasMoreStudents && !searchQuery && (
-              <button
-                type="button"
-                className="load-more-btn"
-                onClick={loadMoreStudents}
-                disabled={isLoadingMore}
-              >
-                {isLoadingMore ? (
-                  <>
-                    <FontAwesomeIcon icon={faSpinner} spin />
-                    <span>Carregando...</span>
-                  </>
-                ) : (
-                  <span>Carregar Mais Alunos</span>
-                )}
-              </button>
-            )}
-
-            {/* Already Enrolled */}
-            {enrolledStudentIds.length > 0 && (
-              <div className="enrolled-info">
-                <strong>Alunos já matriculados:</strong> {enrolledStudentIds.length}
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="modal-footer">
+        <div className="mm-footer">
           <div className="selected-count">
             {selectedStudentIds.length} aluno(s) selecionado(s)
           </div>
-          <div className="modal-actions">
+          <div className="mm-footer">
             <button
               type="button"
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -499,7 +502,7 @@ export default function AddMultipleStudentsModal({
             </button>
             <button
               type="button"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               onClick={handleSubmit}
               disabled={isSubmitting || selectedStudentIds.length === 0}
             >
@@ -521,16 +524,16 @@ export default function AddMultipleStudentsModal({
 
       {/* Confirmation Modal for Students Without Enrollment */}
       {showConfirmation && (
-        <div className="confirmation-overlay">
-          <div className="confirmation-modal">
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowConfirmation(false)}>
+          <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>⚠️ Alunos sem Matrícula</h2>
-              <button type="button" className="modal-close" onClick={() => setShowConfirmation(false)}>
+              <button type="button" className="mm-close" onClick={() => setShowConfirmation(false)}>
                 ✕
               </button>
             </div>
 
-            <div className="modal-body">
+            <div className="mm-content">
               <p className="warning-message">
                 Os seguintes alunos <strong>NÃO possuem matrícula ativa</strong>.
                 Selecione um plano para criar a matrícula de cada um:
@@ -569,10 +572,10 @@ export default function AddMultipleStudentsModal({
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className="mm-footer">
               <button
                 type="button"
-                className="btn-secondary"
+                className="mm-btn mm-btn-secondary"
                 onClick={() => setShowConfirmation(false)}
                 disabled={isSubmitting}
               >
@@ -580,7 +583,7 @@ export default function AddMultipleStudentsModal({
               </button>
               <button
                 type="button"
-                className="btn-primary"
+                className="mm-btn mm-btn-primary"
                 onClick={handleConfirmEnrollments}
                 disabled={isSubmitting}
               >

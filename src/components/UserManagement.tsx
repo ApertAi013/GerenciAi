@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { monitoringService } from '../services/monitoringService';
 import type { User } from '../types/monitoringTypes';
 import '../styles/UserManagement.css';
+import '../styles/ModernModal.css';
 
 interface UsersListParams {
   page?: number;
@@ -373,73 +374,78 @@ export default function UserManagement() {
 
       {/* Modal de Criar Usuário */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Criar Novo Usuário</h3>
-
-            <div className="form-group">
-              <label>Nome Completo *</label>
-              <input
-                type="text"
-                value={newUserForm.full_name}
-                onChange={(e) => setNewUserForm({ ...newUserForm, full_name: e.target.value })}
-                placeholder="Nome completo do usuário"
-              />
+        <div className="mm-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
+              <h2>Criar Novo Usuário</h2>
+              <button type="button" className="mm-close" onClick={() => setShowCreateModal(false)}>✕</button>
             </div>
 
-            <div className="form-group">
-              <label>Email *</label>
-              <input
-                type="email"
-                value={newUserForm.email}
-                onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
-                placeholder="email@exemplo.com"
-              />
+            <div className="mm-content">
+              <div className="mm-field">
+                <label>Nome Completo *</label>
+                <input
+                  type="text"
+                  value={newUserForm.full_name}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, full_name: e.target.value })}
+                  placeholder="Nome completo do usuário"
+                />
+              </div>
+
+              <div className="mm-field">
+                <label>Email *</label>
+                <input
+                  type="email"
+                  value={newUserForm.email}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+
+              <div className="mm-field">
+                <label>Senha *</label>
+                <input
+                  type="password"
+                  value={newUserForm.password}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                  placeholder="Senha do usuário"
+                />
+              </div>
+
+              <div className="mm-field">
+                <label>Tipo de Usuário</label>
+                <select
+                  value={newUserForm.role}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as any })}
+                >
+                  <option value="gestor">Gestor</option>
+                  <option value="instrutor">Instrutor</option>
+                  <option value="financeiro">Financeiro</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div className="mm-field">
+                <label>Status</label>
+                <select
+                  value={newUserForm.status}
+                  onChange={(e) => setNewUserForm({ ...newUserForm, status: e.target.value as any })}
+                >
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>Senha *</label>
-              <input
-                type="password"
-                value={newUserForm.password}
-                onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
-                placeholder="Senha do usuário"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Tipo de Usuário</label>
-              <select
-                value={newUserForm.role}
-                onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as any })}
-              >
-                <option value="gestor">Gestor</option>
-                <option value="instrutor">Instrutor</option>
-                <option value="financeiro">Financeiro</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Status</label>
-              <select
-                value={newUserForm.status}
-                onChange={(e) => setNewUserForm({ ...newUserForm, status: e.target.value as any })}
-              >
-                <option value="active">Ativo</option>
-                <option value="inactive">Inativo</option>
-              </select>
-            </div>
-
-            <div className="modal-actions">
+            <div className="mm-footer">
               <button
-                className="btn-cancel"
+                className="mm-btn mm-btn-secondary"
                 onClick={() => setShowCreateModal(false)}
               >
                 Cancelar
               </button>
               <button
-                className="btn-primary"
+                className="mm-btn mm-btn-primary"
                 onClick={handleCreateUser}
                 disabled={!newUserForm.full_name || !newUserForm.email || !newUserForm.password}
               >
@@ -452,67 +458,72 @@ export default function UserManagement() {
 
       {/* Modal de Editar Usuário */}
       {showEditModal && selectedUser && (
-        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Editar Usuário: {selectedUser.full_name}</h3>
-
-            <div className="form-group">
-              <label>Nome Completo</label>
-              <input
-                type="text"
-                value={editUserForm.full_name}
-                onChange={(e) => setEditUserForm({ ...editUserForm, full_name: e.target.value })}
-              />
+        <div className="mm-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
+              <h2>Editar Usuário: {selectedUser.full_name}</h2>
+              <button type="button" className="mm-close" onClick={() => setShowEditModal(false)}>✕</button>
             </div>
 
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={editUserForm.email}
-                onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
-              />
+            <div className="mm-content">
+              <div className="mm-field">
+                <label>Nome Completo</label>
+                <input
+                  type="text"
+                  value={editUserForm.full_name}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, full_name: e.target.value })}
+                />
+              </div>
+
+              <div className="mm-field">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={editUserForm.email}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                />
+              </div>
+
+              <div className="mm-field">
+                <label>Nova Senha (deixe vazio para não alterar)</label>
+                <input
+                  type="password"
+                  value={editUserForm.password}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, password: e.target.value })}
+                  placeholder="Deixe vazio para manter a senha atual"
+                />
+              </div>
+
+              <div className="mm-field">
+                <label>Tipo de Usuário</label>
+                <select
+                  value={editUserForm.role}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, role: e.target.value as any })}
+                >
+                  <option value="gestor">Gestor</option>
+                  <option value="instrutor">Instrutor</option>
+                  <option value="financeiro">Financeiro</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div className="mm-field">
+                <label>Status</label>
+                <select
+                  value={editUserForm.status}
+                  onChange={(e) => setEditUserForm({ ...editUserForm, status: e.target.value as any })}
+                >
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>Nova Senha (deixe vazio para não alterar)</label>
-              <input
-                type="password"
-                value={editUserForm.password}
-                onChange={(e) => setEditUserForm({ ...editUserForm, password: e.target.value })}
-                placeholder="Deixe vazio para manter a senha atual"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Tipo de Usuário</label>
-              <select
-                value={editUserForm.role}
-                onChange={(e) => setEditUserForm({ ...editUserForm, role: e.target.value as any })}
-              >
-                <option value="gestor">Gestor</option>
-                <option value="instrutor">Instrutor</option>
-                <option value="financeiro">Financeiro</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Status</label>
-              <select
-                value={editUserForm.status}
-                onChange={(e) => setEditUserForm({ ...editUserForm, status: e.target.value as any })}
-              >
-                <option value="active">Ativo</option>
-                <option value="inactive">Inativo</option>
-              </select>
-            </div>
-
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setShowEditModal(false)}>
+            <div className="mm-footer">
+              <button className="mm-btn mm-btn-secondary" onClick={() => setShowEditModal(false)}>
                 Cancelar
               </button>
-              <button className="btn-primary" onClick={handleEditUser}>
+              <button className="mm-btn mm-btn-primary" onClick={handleEditUser}>
                 Salvar Alterações
               </button>
             </div>
@@ -522,22 +533,27 @@ export default function UserManagement() {
 
       {/* Modal de Deletar Usuário */}
       {showDeleteModal && selectedUser && (
-        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
-          <div className="modal-content modal-delete" onClick={(e) => e.stopPropagation()}>
-            <h3>⚠️ Confirmar Exclusão</h3>
+        <div className="mm-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
+              <h2>⚠️ Confirmar Exclusão</h2>
+              <button type="button" className="mm-close" onClick={() => setShowDeleteModal(false)}>✕</button>
+            </div>
 
-            <p>
-              Tem certeza que deseja deletar o usuário <strong>{selectedUser.full_name}</strong>?
-            </p>
-            <p className="warning-text">
-              Esta ação não pode ser desfeita. Todos os dados associados a este usuário serão permanentemente deletados.
-            </p>
+            <div className="mm-content">
+              <p>
+                Tem certeza que deseja deletar o usuário <strong>{selectedUser.full_name}</strong>?
+              </p>
+              <p className="warning-text">
+                Esta ação não pode ser desfeita. Todos os dados associados a este usuário serão permanentemente deletados.
+              </p>
+            </div>
 
-            <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setShowDeleteModal(false)}>
+            <div className="mm-footer">
+              <button className="mm-btn mm-btn-secondary" onClick={() => setShowDeleteModal(false)}>
                 Cancelar
               </button>
-              <button className="btn-danger" onClick={handleDeleteUser}>
+              <button className="mm-btn mm-btn-danger" onClick={handleDeleteUser}>
                 Deletar Usuário
               </button>
             </div>

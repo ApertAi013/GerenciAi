@@ -31,6 +31,7 @@ import MakeupCreditsManager from '../components/MakeupCreditsManager';
 import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
 import WhatsAppTemplatePicker from '../components/WhatsAppTemplatePicker';
 import '../styles/StudentDetails.css';
+import '../styles/ModernModal.css';
 
 const translatePaymentMethod = (method?: string): string => {
   const map: Record<string, string> = {
@@ -835,16 +836,16 @@ export default function StudentDetails() {
 
       {/* Register Payment Modal */}
       {payingInvoiceId && (
-        <div className="modal-overlay" onClick={() => setPayingInvoiceId(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setPayingInvoiceId(null)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Registrar Pagamento</h2>
-              <button type="button" className="modal-close" onClick={() => setPayingInvoiceId(null)}>
+              <button type="button" className="mm-close" onClick={() => setPayingInvoiceId(null)}>
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
+            <div className="mm-content">
+              <div className="mm-field">
                 <label>Valor (R$)</label>
                 <input
                   type="number"
@@ -856,7 +857,7 @@ export default function StudentDetails() {
                   }))}
                 />
               </div>
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Data do Pagamento</label>
                 <input
                   type="date"
@@ -864,7 +865,7 @@ export default function StudentDetails() {
                   onChange={(e) => setPaymentForm(prev => ({ ...prev, paid_at: e.target.value }))}
                 />
               </div>
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Método</label>
                 <select
                   value={paymentForm.method}
@@ -878,11 +879,11 @@ export default function StudentDetails() {
                 </select>
               </div>
             </div>
-            <div className="modal-footer">
-              <button type="button" className="btn-secondary" onClick={() => setPayingInvoiceId(null)}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setPayingInvoiceId(null)}>
                 Cancelar
               </button>
-              <button type="button" className="btn-primary" onClick={handleConfirmPayment} disabled={isSavingPayment}>
+              <button type="button" className="mm-btn mm-btn-primary" onClick={handleConfirmPayment} disabled={isSavingPayment}>
                 {isSavingPayment ? 'Salvando...' : 'Confirmar Pagamento'}
               </button>
             </div>
@@ -892,17 +893,17 @@ export default function StudentDetails() {
 
       {/* Advance Payment Modal */}
       {showAdvanceModal && (
-        <div className="modal-overlay" onClick={() => setShowAdvanceModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowAdvanceModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Adiantar Pagamento</h2>
-              <button type="button" className="modal-close" onClick={() => setShowAdvanceModal(false)}>
+              <button type="button" className="mm-close" onClick={() => setShowAdvanceModal(false)}>
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
-            <div className="modal-body">
+            <div className="mm-content">
               {activeEnrollments.length > 1 && (
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Matrícula</label>
                   <select
                     value={advanceEnrollmentId || ''}
@@ -928,7 +929,7 @@ export default function StudentDetails() {
                 <p><strong>Mês de referência:</strong> {getNextMonthLabel()}</p>
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Valor (R$)</label>
                 <input
                   type="number"
@@ -940,7 +941,7 @@ export default function StudentDetails() {
                   }))}
                 />
               </div>
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Data do Pagamento</label>
                 <input
                   type="date"
@@ -948,7 +949,7 @@ export default function StudentDetails() {
                   onChange={(e) => setAdvanceForm(prev => ({ ...prev, paid_at: e.target.value }))}
                 />
               </div>
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Método</label>
                 <select
                   value={advanceForm.method}
@@ -962,11 +963,11 @@ export default function StudentDetails() {
                 </select>
               </div>
             </div>
-            <div className="modal-footer">
-              <button type="button" className="btn-secondary" onClick={() => setShowAdvanceModal(false)}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowAdvanceModal(false)}>
                 Cancelar
               </button>
-              <button type="button" className="btn-primary" onClick={handleConfirmAdvance} disabled={isAdvancing}>
+              <button type="button" className="mm-btn mm-btn-primary" onClick={handleConfirmAdvance} disabled={isAdvancing}>
                 {isAdvancing ? 'Processando...' : 'Gerar e Registrar Pagamento'}
               </button>
             </div>
@@ -976,15 +977,15 @@ export default function StudentDetails() {
 
       {/* Add to Class Modal */}
       {showAddToClassModal && (
-        <div className="modal-overlay" onClick={() => setShowAddToClassModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowAddToClassModal(false)}>
+          <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Adicionar Aluno a Turmas</h2>
-              <button type="button" className="modal-close" onClick={() => setShowAddToClassModal(false)}>
+              <button type="button" className="mm-close" onClick={() => setShowAddToClassModal(false)}>
                 <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
-            <div className="modal-body">
+            <div className="mm-content">
               {isLoadingClasses ? (
                 <div style={{ textAlign: 'center', padding: '2rem' }}>
                   <div className="spinner"></div>
@@ -1054,10 +1055,10 @@ export default function StudentDetails() {
                 </div>
               )}
             </div>
-            <div className="modal-footer">
+            <div className="mm-footer">
               <button
                 type="button"
-                className="btn-secondary"
+                className="mm-btn mm-btn-secondary"
                 onClick={() => {
                   setShowAddToClassModal(false);
                   setSelectedClasses([]);
@@ -1067,7 +1068,7 @@ export default function StudentDetails() {
               </button>
               <button
                 type="button"
-                className="btn-primary"
+                className="mm-btn mm-btn-primary"
                 onClick={handleAddToClasses}
                 disabled={selectedClasses.length === 0 || isLoadingClasses}
               >

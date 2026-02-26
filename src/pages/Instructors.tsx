@@ -7,6 +7,7 @@ import type { Class } from '../types/classTypes';
 import type { Modality } from '../types/modalityTypes';
 import toast from 'react-hot-toast';
 import '../styles/Instructors.css';
+import '../styles/ModernModal.css';
 
 export default function Instructors() {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -339,13 +340,13 @@ export default function Instructors() {
 
       {/* Create Instructor Modal */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Novo Instrutor</h2>
               <button
                 type="button"
-                className="modal-close"
+                className="mm-close"
                 onClick={() => setShowCreateModal(false)}
               >
                 ×
@@ -353,48 +354,50 @@ export default function Instructors() {
             </div>
 
             <form onSubmit={handleCreateInstructor}>
-              <div className="form-group">
-                <label htmlFor="full_name">Nome Completo *</label>
-                <input
-                  id="full_name"
-                  type="text"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="email">Email *</label>
-                <input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>
+              <div className="mm-content">
+                <div className="mm-field">
+                  <label htmlFor="full_name">Nome Completo *</label>
                   <input
-                    type="checkbox"
-                    checked={formData.send_email}
-                    onChange={(e) => setFormData({ ...formData, send_email: e.target.checked })}
+                    id="full_name"
+                    type="text"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                    required
                   />
-                  <span style={{ marginLeft: '8px' }}>Enviar email de boas-vindas</span>
-                </label>
+                </div>
+
+                <div className="mm-field">
+                  <label htmlFor="email">Email *</label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="mm-checkbox-row">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={formData.send_email}
+                      onChange={(e) => setFormData({ ...formData, send_email: e.target.checked })}
+                    />
+                    <span style={{ marginLeft: '8px' }}>Enviar email de boas-vindas</span>
+                  </label>
+                </div>
               </div>
 
-              <div className="modal-actions">
+              <div className="mm-footer">
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="mm-btn mm-btn-secondary"
                   onClick={() => setShowCreateModal(false)}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary">
+                <button type="submit" className="mm-btn mm-btn-primary">
                   Criar Instrutor
                 </button>
               </div>
@@ -405,45 +408,47 @@ export default function Instructors() {
 
       {/* Permissions Modal */}
       {showPermissionsModal && selectedInstructor && (
-        <div className="modal-overlay" onClick={() => setShowPermissionsModal(false)}>
-          <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowPermissionsModal(false)}>
+          <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Permissões - {selectedInstructor.full_name}</h2>
               <button
                 type="button"
-                className="modal-close"
+                className="mm-close"
                 onClick={() => setShowPermissionsModal(false)}
               >
                 ×
               </button>
             </div>
 
-            <div className="permissions-list">
-              {Object.entries(availablePermissions).map(([key, label]) => (
-                <div key={key} className="permission-item">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={!!tempPermissions[key as keyof InstructorPermissions]}
-                      onChange={() => togglePermission(key)}
-                    />
-                    <span>{label}</span>
-                  </label>
-                </div>
-              ))}
+            <div className="mm-content">
+              <div className="permissions-list">
+                {Object.entries(availablePermissions).map(([key, label]) => (
+                  <div key={key} className="permission-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={!!tempPermissions[key as keyof InstructorPermissions]}
+                        onChange={() => togglePermission(key)}
+                      />
+                      <span>{label}</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="modal-actions">
+            <div className="mm-footer">
               <button
                 type="button"
-                className="btn-secondary"
+                className="mm-btn mm-btn-secondary"
                 onClick={() => setShowPermissionsModal(false)}
               >
                 Cancelar
               </button>
               <button
                 type="button"
-                className="btn-primary"
+                className="mm-btn mm-btn-primary"
                 onClick={handleUpdatePermissions}
               >
                 Salvar Permissões
@@ -455,25 +460,65 @@ export default function Instructors() {
 
       {/* Classes Modal */}
       {showClassesModal && selectedInstructor && (
-        <div className="modal-overlay" onClick={() => setShowClassesModal(false)}>
-          <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowClassesModal(false)}>
+          <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Turmas - {selectedInstructor.full_name}</h2>
               <button
                 type="button"
-                className="modal-close"
+                className="mm-close"
                 onClick={() => setShowClassesModal(false)}
               >
                 ×
               </button>
             </div>
 
-            <div className="classes-section">
-              <h3>Turmas Atribuídas ({selectedInstructor.classes?.length || 0})</h3>
-              <div className="classes-list">
-                {selectedInstructor.classes && selectedInstructor.classes.length > 0 ? (
-                  selectedInstructor.classes.map((classItem) => (
-                    <div key={classItem.id} className="class-item assigned">
+            <div className="mm-content">
+              <div className="classes-section">
+                <h3>Turmas Atribuídas ({selectedInstructor.classes?.length || 0})</h3>
+                <div className="classes-list">
+                  {selectedInstructor.classes && selectedInstructor.classes.length > 0 ? (
+                    selectedInstructor.classes.map((classItem) => (
+                      <div key={classItem.id} className="class-item assigned">
+                        <div className="class-info">
+                          <strong>{classItem.name || classItem.modality_name}</strong>
+                          <span>{getWeekdayLabel(classItem.weekday)} - {classItem.start_time}</span>
+                          {classItem.location && <span>{classItem.location}</span>}
+                        </div>
+                        <button
+                          type="button"
+                          className="mm-btn mm-btn-danger mm-btn-sm"
+                          onClick={() => handleUnassignClass(classItem.id)}
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="empty-message">Nenhuma turma atribuída ainda.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="classes-section">
+                <div className="classes-section-header">
+                  <h3>Atribuir Novas Turmas</h3>
+                  <select
+                    className="modality-filter"
+                    value={modalityFilter}
+                    onChange={(e) => setModalityFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  >
+                    <option value="all">Todas as modalidades</option>
+                    {modalities.map((modality) => (
+                      <option key={modality.id} value={modality.id}>
+                        {modality.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="classes-list">
+                  {filteredAvailableClasses.map((classItem) => (
+                    <div key={classItem.id} className="class-item available">
                       <div className="class-info">
                         <strong>{classItem.name || classItem.modality_name}</strong>
                         <span>{getWeekdayLabel(classItem.weekday)} - {classItem.start_time}</span>
@@ -481,66 +526,28 @@ export default function Instructors() {
                       </div>
                       <button
                         type="button"
-                        className="btn-danger btn-sm"
-                        onClick={() => handleUnassignClass(classItem.id)}
+                        className="mm-btn mm-btn-primary mm-btn-sm"
+                        onClick={() => handleAssignClass(classItem.id)}
                       >
-                        Remover
+                        Atribuir
                       </button>
                     </div>
-                  ))
-                ) : (
-                  <p className="empty-message">Nenhuma turma atribuída ainda.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="classes-section">
-              <div className="classes-section-header">
-                <h3>Atribuir Novas Turmas</h3>
-                <select
-                  className="modality-filter"
-                  value={modalityFilter}
-                  onChange={(e) => setModalityFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                >
-                  <option value="all">Todas as modalidades</option>
-                  {modalities.map((modality) => (
-                    <option key={modality.id} value={modality.id}>
-                      {modality.name}
-                    </option>
                   ))}
-                </select>
-              </div>
-              <div className="classes-list">
-                {filteredAvailableClasses.map((classItem) => (
-                  <div key={classItem.id} className="class-item available">
-                    <div className="class-info">
-                      <strong>{classItem.name || classItem.modality_name}</strong>
-                      <span>{getWeekdayLabel(classItem.weekday)} - {classItem.start_time}</span>
-                      {classItem.location && <span>{classItem.location}</span>}
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-primary btn-sm"
-                      onClick={() => handleAssignClass(classItem.id)}
-                    >
-                      Atribuir
-                    </button>
-                  </div>
-                ))}
-                {filteredAvailableClasses.length === 0 && (
-                  <p className="empty-message">
-                    {modalityFilter === 'all'
-                      ? 'Todas as turmas já foram atribuídas.'
-                      : 'Nenhuma turma disponível para esta modalidade.'}
-                  </p>
-                )}
+                  {filteredAvailableClasses.length === 0 && (
+                    <p className="empty-message">
+                      {modalityFilter === 'all'
+                        ? 'Todas as turmas já foram atribuídas.'
+                        : 'Nenhuma turma disponível para esta modalidade.'}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="modal-actions">
+            <div className="mm-footer">
               <button
                 type="button"
-                className="btn-secondary"
+                className="mm-btn mm-btn-secondary"
                 onClick={() => setShowClassesModal(false)}
               >
                 Fechar

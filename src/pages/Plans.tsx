@@ -7,6 +7,7 @@ import type { CreatePlanRequest, UpdatePlanRequest, BulkAdjustRequest, BulkAdjus
 import type { Plan } from '../types/enrollmentTypes';
 import type { Modality } from '../types/classTypes';
 import '../styles/Settings.css';
+import '../styles/ModernModal.css';
 
 const formatCurrency = (cents: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
@@ -401,115 +402,117 @@ function PlanModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>{isEditMode ? 'Editar Plano' : 'Criar Novo Plano'}</h2>
-          <button type="button" className="modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             ✕
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="mm-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="level-form">
-          <div className="form-group">
-            <label htmlFor="name">Nome do Plano *</label>
-            <input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="Ex: Plano 2x por semana"
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="sessions_per_week">Aulas por Semana *</label>
+          <div className="mm-content">
+            <div className="mm-field">
+              <label htmlFor="name">Nome do Plano *</label>
               <input
-                id="sessions_per_week"
-                type="number"
-                min="1"
-                max="7"
-                value={formData.sessions_per_week}
+                id="name"
+                type="text"
+                value={formData.name}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    sessions_per_week: parseInt(e.target.value),
-                  })
+                  setFormData({ ...formData, name: e.target.value })
                 }
+                placeholder="Ex: Plano 2x por semana"
                 required
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="price">Preço Mensal (R$) *</label>
-              <input
-                id="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={(formData.price_cents! / 100).toFixed(2)}
+            <div className="mm-field-row">
+              <div className="mm-field">
+                <label htmlFor="sessions_per_week">Aulas por Semana *</label>
+                <input
+                  id="sessions_per_week"
+                  type="number"
+                  min="1"
+                  max="7"
+                  value={formData.sessions_per_week}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      sessions_per_week: parseInt(e.target.value),
+                    })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="mm-field">
+                <label htmlFor="price">Preço Mensal (R$) *</label>
+                <input
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={(formData.price_cents! / 100).toFixed(2)}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      price_cents: Math.round(parseFloat(e.target.value) * 100),
+                    })
+                  }
+                  placeholder="150.00"
+                  required
+                />
+                <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
+                  Digite o valor desejado (ex: 150.00)
+                </small>
+              </div>
+            </div>
+
+            <div className="mm-field">
+              <label htmlFor="modality_id">Modalidade</label>
+              <select
+                id="modality_id"
+                value={formData.modality_id || ''}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    price_cents: Math.round(parseFloat(e.target.value) * 100),
+                    modality_id: e.target.value ? parseInt(e.target.value) : undefined,
                   })
                 }
-                placeholder="150.00"
-                required
-              />
+              >
+                <option value="">Todas as modalidades</option>
+                {modalities.map((modality) => (
+                  <option key={modality.id} value={modality.id}>
+                    {modality.name}
+                  </option>
+                ))}
+              </select>
               <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
-                Digite o valor desejado (ex: 150.00)
+                Se definir uma modalidade, só turmas dessa modalidade aparecerão na matrícula
               </small>
             </div>
+
+            <div className="mm-field">
+              <label htmlFor="description">Descrição</label>
+              <textarea
+                id="description"
+                value={formData.description || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                rows={3}
+                placeholder="Descrição opcional do plano"
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="modality_id">Modalidade</label>
-            <select
-              id="modality_id"
-              value={formData.modality_id || ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  modality_id: e.target.value ? parseInt(e.target.value) : undefined,
-                })
-              }
-            >
-              <option value="">Todas as modalidades</option>
-              {modalities.map((modality) => (
-                <option key={modality.id} value={modality.id}>
-                  {modality.name}
-                </option>
-              ))}
-            </select>
-            <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
-              Se definir uma modalidade, só turmas dessa modalidade aparecerão na matrícula
-            </small>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description">Descrição</label>
-            <textarea
-              id="description"
-              value={formData.description || ''}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              rows={3}
-              placeholder="Descrição opcional do plano"
-            />
-          </div>
-
-          <div className="modal-actions">
+          <div className="mm-footer">
             <button
               type="button"
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -517,7 +520,7 @@ function PlanModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               disabled={isSubmitting}
             >
               {isSubmitting
@@ -624,20 +627,20 @@ function BulkAdjustModal({
   // Show result screen after success
   if (result) {
     return (
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-          <div className="modal-header">
-            <h2>✅ Reajuste Aplicado</h2>
-            <button type="button" className="modal-close" onClick={onSuccess}>
+      <div className="mm-overlay" onClick={onClose}>
+        <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="mm-header">
+            <h2>Reajuste Aplicado</h2>
+            <button type="button" className="mm-close" onClick={onSuccess}>
               ✕
             </button>
           </div>
 
-          <div style={{ padding: '1rem' }}>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '1fr 1fr', 
-              gap: '1rem', 
+          <div className="mm-content">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '1rem',
               marginBottom: '1.5rem',
               background: '#f5f5f5',
               padding: '1rem',
@@ -678,8 +681,8 @@ function BulkAdjustModal({
             </div>
           </div>
 
-          <div className="modal-actions">
-            <button type="button" className="btn-primary" onClick={onSuccess}>
+          <div className="mm-footer">
+            <button type="button" className="mm-btn mm-btn-primary" onClick={onSuccess}>
               Fechar
             </button>
           </div>
@@ -689,21 +692,21 @@ function BulkAdjustModal({
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-        <div className="modal-header">
-          <h2>📊 Reajuste Global de Valores</h2>
-          <button type="button" className="modal-close" onClick={onClose}>
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
+          <h2>Reajuste Global de Valores</h2>
+          <button type="button" className="mm-close" onClick={onClose}>
             ✕
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="mm-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ padding: '1rem' }}>
+          <div className="mm-content">
             {/* Plan Selection */}
-            <div className="form-group">
+            <div className="mm-field">
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                 <input
                   type="checkbox"
@@ -712,21 +715,21 @@ function BulkAdjustModal({
                 />
                 <strong>Selecionar todos os planos ativos</strong>
               </label>
-              
-              <div style={{ 
-                maxHeight: '250px', 
-                overflowY: 'auto', 
-                border: '1px solid #ddd', 
+
+              <div style={{
+                maxHeight: '250px',
+                overflowY: 'auto',
+                border: '1px solid #ddd',
                 borderRadius: '8px',
                 padding: '0.5rem'
               }}>
                 {plans.map((plan) => (
-                  <label 
-                    key={plan.id} 
-                    style={{ 
+                  <label
+                    key={plan.id}
+                    style={{
                       display: 'grid',
                       gridTemplateColumns: 'auto 1fr auto auto',
-                      alignItems: 'center', 
+                      alignItems: 'center',
                       gap: '0.75rem',
                       padding: '0.75rem',
                       borderRadius: '6px',
@@ -752,7 +755,7 @@ function BulkAdjustModal({
                     </span>
                     {selectedPlanIds.includes(plan.id) && adjustmentValue ? (
                       <span style={{ color: '#4CAF50', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                        → R$ {(calculateNewPrice(plan.price_cents) / 100).toFixed(2).replace('.', ',')}
+                        -> R$ {(calculateNewPrice(plan.price_cents) / 100).toFixed(2).replace('.', ',')}
                       </span>
                     ) : (
                       <span style={{ minWidth: '100px' }}></span>
@@ -766,7 +769,7 @@ function BulkAdjustModal({
             </div>
 
             {/* Adjustment Type */}
-            <div className="form-group" style={{ marginTop: '1rem' }}>
+            <div className="mm-field" style={{ marginTop: '1rem' }}>
               <label><strong>Tipo de Ajuste</strong></label>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -791,7 +794,7 @@ function BulkAdjustModal({
             </div>
 
             {/* Adjustment Value */}
-            <div className="form-group" style={{ marginTop: '1rem' }}>
+            <div className="mm-field" style={{ marginTop: '1rem' }}>
               <label htmlFor="adjustmentValue">
                 <strong>Valor do Ajuste</strong>
                 <span style={{ color: '#666', fontWeight: 'normal' }}>
@@ -813,7 +816,7 @@ function BulkAdjustModal({
                 </span>
               </div>
               <small style={{ color: '#666' }}>
-                {adjustmentType === 'percentage' 
+                {adjustmentType === 'percentage'
                   ? 'Ex: 10 = aumento de 10%, -5 = redução de 5%'
                   : 'Ex: 20 = aumento de R$20, -10 = redução de R$10'
                 }
@@ -821,7 +824,7 @@ function BulkAdjustModal({
             </div>
 
             {/* Apply to Invoices */}
-            <div className="form-group" style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff3e0', borderRadius: '8px' }}>
+            <div className="mm-field" style={{ marginTop: '1.5rem', padding: '1rem', background: '#fff3e0', borderRadius: '8px' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
@@ -853,10 +856,10 @@ function BulkAdjustModal({
             </div>
           </div>
 
-          <div className="modal-actions">
+          <div className="mm-footer">
             <button
               type="button"
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -864,7 +867,7 @@ function BulkAdjustModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               disabled={isSubmitting || selectedPlanIds.length === 0}
             >
               {isSubmitting ? 'Aplicando...' : `Aplicar Reajuste (${selectedPlanIds.length} planos)`}

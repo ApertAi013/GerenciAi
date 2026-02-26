@@ -6,6 +6,7 @@ import { modalityService } from '../services/modalityService';
 import { levelService } from '../services/levelService';
 import { studentService } from '../services/studentService';
 import '../styles/Settings.css';
+import '../styles/ModernModal.css';
 
 const TYPE_OPTIONS = [
   { value: 'info', label: 'Informativo', color: '#2196f3' },
@@ -506,165 +507,167 @@ function AnnouncementModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>{isEditMode ? 'Editar Aviso' : 'Criar Novo Aviso'}</h2>
-          <button type="button" className="modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             &times;
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="mm-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="announcement-form">
-          <div className="form-group">
-            <label htmlFor="title">Título *</label>
-            <input
-              id="title"
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-              maxLength={200}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="content">Conteúdo *</label>
-            <textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              rows={5}
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="type">Tipo</label>
-              <select
-                id="type"
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-              >
-                {TYPE_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="target_type">Destinatários</label>
-              <select
-                id="target_type"
-                value={formData.target_type}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  target_type: e.target.value as any,
-                  target_modality_id: null,
-                  target_level: null
-                })}
-              >
-                {TARGET_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {formData.target_type === 'modality' && (
-            <div className="form-group">
-              <label htmlFor="target_modality_id">Modalidade</label>
-              <select
-                id="target_modality_id"
-                value={formData.target_modality_id || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  target_modality_id: e.target.value ? parseInt(e.target.value) : null
-                })}
-              >
-                <option value="">Selecione uma modalidade</option>
-                {modalities.map(m => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {formData.target_type === 'level' && (
-            <div className="form-group">
-              <label htmlFor="target_level">Nível</label>
-              <select
-                id="target_level"
-                value={formData.target_level || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  target_level: e.target.value || null
-                })}
-              >
-                <option value="">Selecione um nível</option>
-                {levels.map(l => (
-                  <option key={l.id} value={l.name}>{l.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {formData.target_type === 'specific' && (
-            <div className="form-group">
-              <label>Alunos ({selectedStudents.length} selecionados)</label>
+          <div className="mm-content">
+            <div className="mm-field">
+              <label htmlFor="title">Título *</label>
               <input
+                id="title"
                 type="text"
-                placeholder="Buscar alunos..."
-                value={studentSearch}
-                onChange={(e) => setStudentSearch(e.target.value)}
-                style={{ marginBottom: '0.5rem' }}
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+                maxLength={200}
               />
-              <div className="students-selector">
-                {filteredStudents.slice(0, 50).map(student => (
-                  <label key={student.id} className="student-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={selectedStudents.includes(student.id)}
-                      onChange={() => toggleStudent(student.id)}
-                    />
-                    <span>{student.full_name}</span>
-                    <small>{student.email}</small>
-                  </label>
-                ))}
-              </div>
             </div>
-          )}
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="starts_at">Data de Início *</label>
-              <input
-                id="starts_at"
-                type="datetime-local"
-                value={formData.starts_at}
-                onChange={(e) => setFormData({ ...formData, starts_at: e.target.value })}
+            <div className="mm-field">
+              <label htmlFor="content">Conteúdo *</label>
+              <textarea
+                id="content"
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                rows={5}
                 required
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="expires_at">Data de Expiração (opcional)</label>
-              <input
-                id="expires_at"
-                type="datetime-local"
-                value={formData.expires_at || ''}
-                onChange={(e) => setFormData({ ...formData, expires_at: e.target.value || null })}
-              />
+            <div className="mm-field-row">
+              <div className="mm-field">
+                <label htmlFor="type">Tipo</label>
+                <select
+                  id="type"
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                >
+                  {TYPE_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mm-field">
+                <label htmlFor="target_type">Destinatários</label>
+                <select
+                  id="target_type"
+                  value={formData.target_type}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    target_type: e.target.value as any,
+                    target_modality_id: null,
+                    target_level: null
+                  })}
+                >
+                  {TARGET_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {formData.target_type === 'modality' && (
+              <div className="mm-field">
+                <label htmlFor="target_modality_id">Modalidade</label>
+                <select
+                  id="target_modality_id"
+                  value={formData.target_modality_id || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    target_modality_id: e.target.value ? parseInt(e.target.value) : null
+                  })}
+                >
+                  <option value="">Selecione uma modalidade</option>
+                  {modalities.map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {formData.target_type === 'level' && (
+              <div className="mm-field">
+                <label htmlFor="target_level">Nível</label>
+                <select
+                  id="target_level"
+                  value={formData.target_level || ''}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    target_level: e.target.value || null
+                  })}
+                >
+                  <option value="">Selecione um nível</option>
+                  {levels.map(l => (
+                    <option key={l.id} value={l.name}>{l.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {formData.target_type === 'specific' && (
+              <div className="mm-field">
+                <label>Alunos ({selectedStudents.length} selecionados)</label>
+                <input
+                  type="text"
+                  placeholder="Buscar alunos..."
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                  style={{ marginBottom: '0.5rem' }}
+                />
+                <div className="students-selector">
+                  {filteredStudents.slice(0, 50).map(student => (
+                    <label key={student.id} className="student-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedStudents.includes(student.id)}
+                        onChange={() => toggleStudent(student.id)}
+                      />
+                      <span>{student.full_name}</span>
+                      <small>{student.email}</small>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mm-field-row">
+              <div className="mm-field">
+                <label htmlFor="starts_at">Data de Início *</label>
+                <input
+                  id="starts_at"
+                  type="datetime-local"
+                  value={formData.starts_at}
+                  onChange={(e) => setFormData({ ...formData, starts_at: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="mm-field">
+                <label htmlFor="expires_at">Data de Expiração (opcional)</label>
+                <input
+                  id="expires_at"
+                  type="datetime-local"
+                  value={formData.expires_at || ''}
+                  onChange={(e) => setFormData({ ...formData, expires_at: e.target.value || null })}
+                />
+              </div>
             </div>
           </div>
 
-          <div className="modal-actions">
+          <div className="mm-footer">
             <button
               type="button"
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -672,7 +675,7 @@ function AnnouncementModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               disabled={isSubmitting}
             >
               {isSubmitting

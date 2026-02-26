@@ -57,6 +57,7 @@ import type { Enrollment } from '../types/enrollmentTypes';
 import type { Level } from '../types/levelTypes';
 import type { CourtRental } from '../types/rentalTypes';
 import '../styles/Dashboard.css';
+import '../styles/ModernModal.css';
 
 const formatCurrency = (cents: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
@@ -743,18 +744,18 @@ export default function Dashboard() {
 
       {/* Class Students Popup */}
       {studentsPopup && (
-        <div className="modal-overlay" onClick={() => setStudentsPopup(null)}>
-          <div className="dash-students-popup" onClick={e => e.stopPropagation()}>
-            <div className="dash-students-popup-header">
+        <div className="mm-overlay" onClick={() => setStudentsPopup(null)}>
+          <div className="mm-modal mm-modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
               <div>
-                <h3>{studentsPopup.className}</h3>
+                <h2>{studentsPopup.className}</h2>
                 <span className="dash-students-popup-schedule">{studentsPopup.schedule}</span>
               </div>
-              <button className="dash-students-popup-close" onClick={() => setStudentsPopup(null)}>
+              <button type="button" className="mm-close" onClick={() => setStudentsPopup(null)}>
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
-            <div className="dash-students-popup-body">
+            <div className="mm-content">
               {studentsPopup.loading ? (
                 <div className="dash-students-popup-loading">
                   <div className="loading-spinner" />

@@ -30,6 +30,7 @@ import type {
   AsaasChargeStatus,
 } from '../types/appPaymentTypes';
 import '../styles/AppPayments.css';
+import '../styles/ModernModal.css';
 
 const PIX_KEY_TYPE_OPTIONS: { value: PixKeyType; label: string }[] = [
   { value: 'CPF', label: 'CPF' },
@@ -865,16 +866,16 @@ export default function AppPayments() {
 
       {/* Charge Detail Modal */}
       {selectedCharge && (
-        <div className="modal-overlay" onClick={() => setSelectedCharge(null)}>
-          <div className="modal-content charge-detail-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setSelectedCharge(null)}>
+          <div className="mm-modal mm-modal-md" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Detalhes da Cobrança</h2>
-              <button className="btn-close" onClick={() => setSelectedCharge(null)}>
+              <button className="mm-close" onClick={() => setSelectedCharge(null)}>
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
 
-            <div className="charge-detail-body">
+            <div className="mm-content charge-detail-body">
               <div className="detail-row">
                 <span>Aluno:</span>
                 <strong>{selectedCharge.student_name}</strong>

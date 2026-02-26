@@ -10,6 +10,7 @@ import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
 import WhatsAppTemplatePicker from '../components/WhatsAppTemplatePicker';
 import type { Invoice, RegisterPaymentRequest } from '../types/financialTypes';
 import '../styles/Financial.css';
+import '../styles/ModernModal.css';
 
 export default function Financial() {
   const navigate = useNavigate();
@@ -1409,79 +1410,81 @@ export default function Financial() {
       </div>
 
       {showPaymentModal && selectedInvoice && (
-        <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Registrar Pagamento</h2>
-              <button type="button" className="modal-close" onClick={() => setShowPaymentModal(false)}>×</button>
+              <button type="button" className="mm-close" onClick={() => setShowPaymentModal(false)}>×</button>
             </div>
 
-            <div className="invoice-details">
-              <h3>Detalhes da Fatura</h3>
-              <p><strong>Aluno:</strong> {selectedInvoice.student_name}</p>
-              <p><strong>Valor:</strong> {formatPrice(selectedInvoice.final_amount_cents)}</p>
-              <p><strong>Vencimento:</strong> {formatDate(selectedInvoice.due_date)}</p>
-            </div>
+            <form onSubmit={handleRegisterPayment}>
+              <div className="mm-content">
+                <div className="invoice-details">
+                  <h3>Detalhes da Fatura</h3>
+                  <p><strong>Aluno:</strong> {selectedInvoice.student_name}</p>
+                  <p><strong>Valor:</strong> {formatPrice(selectedInvoice.final_amount_cents)}</p>
+                  <p><strong>Vencimento:</strong> {formatDate(selectedInvoice.due_date)}</p>
+                </div>
 
-            <form onSubmit={handleRegisterPayment} className="payment-form">
-              <div className="form-group">
-                <label htmlFor="paid_at">Data do Pagamento *</label>
-                <input
-                  type="date"
-                  id="paid_at"
-                  value={paymentData.paid_at}
-                  onChange={(e) => setPaymentData({ ...paymentData, paid_at: e.target.value })}
-                  required
-                />
+                <div className="mm-field">
+                  <label htmlFor="paid_at">Data do Pagamento *</label>
+                  <input
+                    type="date"
+                    id="paid_at"
+                    value={paymentData.paid_at}
+                    onChange={(e) => setPaymentData({ ...paymentData, paid_at: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="mm-field">
+                  <label htmlFor="method">Método de Pagamento *</label>
+                  <select
+                    id="method"
+                    value={paymentData.method}
+                    onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value as any })}
+                    required
+                  >
+                    <option value="pix">PIX</option>
+                    <option value="cartao">Cartão</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="boleto">Boleto</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                </div>
+
+                <div className="mm-field">
+                  <label htmlFor="amount_cents">Valor Pago (R$) *</label>
+                  <input
+                    type="number"
+                    id="amount_cents"
+                    step="0.01"
+                    value={(paymentData.amount_cents / 100).toFixed(2)}
+                    onChange={(e) => setPaymentData({
+                      ...paymentData,
+                      amount_cents: Math.round(parseFloat(e.target.value) * 100)
+                    })}
+                    required
+                  />
+                </div>
+
+                <div className="mm-field">
+                  <label htmlFor="notes">Observações</label>
+                  <textarea
+                    id="notes"
+                    rows={3}
+                    value={paymentData.notes}
+                    onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
+                    placeholder="Adicione observações sobre o pagamento (opcional)"
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="method">Método de Pagamento *</label>
-                <select
-                  id="method"
-                  value={paymentData.method}
-                  onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value as any })}
-                  required
-                >
-                  <option value="pix">PIX</option>
-                  <option value="cartao">Cartão</option>
-                  <option value="dinheiro">Dinheiro</option>
-                  <option value="boleto">Boleto</option>
-                  <option value="outro">Outro</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="amount_cents">Valor Pago (R$) *</label>
-                <input
-                  type="number"
-                  id="amount_cents"
-                  step="0.01"
-                  value={(paymentData.amount_cents / 100).toFixed(2)}
-                  onChange={(e) => setPaymentData({
-                    ...paymentData,
-                    amount_cents: Math.round(parseFloat(e.target.value) * 100)
-                  })}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="notes">Observações</label>
-                <textarea
-                  id="notes"
-                  rows={3}
-                  value={paymentData.notes}
-                  onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
-                  placeholder="Adicione observações sobre o pagamento (opcional)"
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowPaymentModal(false)} disabled={submitting}>
+              <div className="mm-footer">
+                <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowPaymentModal(false)} disabled={submitting}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
+                <button type="submit" className="mm-btn mm-btn-primary" disabled={submitting}>
                   {submitting ? 'Processando...' : 'Confirmar Pagamento'}
                 </button>
               </div>
@@ -1492,134 +1495,110 @@ export default function Financial() {
 
       {/* Modal de Edição de Pagamento */}
       {showEditPaymentModal && editingInvoice && (
-        <div className="modal-overlay" onClick={() => setShowEditPaymentModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowEditPaymentModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Editar Pagamento</h2>
-              <button type="button" className="modal-close" onClick={() => setShowEditPaymentModal(false)}>×</button>
+              <button type="button" className="mm-close" onClick={() => setShowEditPaymentModal(false)}>×</button>
             </div>
 
-            <div className="invoice-details">
-              <h3>Detalhes da Fatura</h3>
-              <p><strong>Aluno:</strong> {editingInvoice.student_name}</p>
-              <p><strong>Valor da fatura:</strong> {formatPrice(editingInvoice.final_amount_cents)}</p>
-              <p><strong>Valor pago atual:</strong> {formatPrice(editingInvoice.paid_amount_cents || 0)}</p>
-              <p><strong>Pago em:</strong> {editingInvoice.paid_at ? formatDate(editingInvoice.paid_at) : '-'}</p>
-            </div>
+            <form onSubmit={handleEditPayment}>
+              <div className="mm-content">
+                <div className="invoice-details">
+                  <h3>Detalhes da Fatura</h3>
+                  <p><strong>Aluno:</strong> {editingInvoice.student_name}</p>
+                  <p><strong>Valor da fatura:</strong> {formatPrice(editingInvoice.final_amount_cents)}</p>
+                  <p><strong>Valor pago atual:</strong> {formatPrice(editingInvoice.paid_amount_cents || 0)}</p>
+                  <p><strong>Pago em:</strong> {editingInvoice.paid_at ? formatDate(editingInvoice.paid_at) : '-'}</p>
+                </div>
 
-            <div style={{
-              backgroundColor: '#fff3cd',
-              border: '1px solid #ffc107',
-              borderRadius: '8px',
-              padding: '12px',
-              marginBottom: '16px',
-              fontSize: '14px',
-              color: '#856404'
-            }}>
-              ⚠️ <strong>Atenção:</strong> Alterar o valor do pagamento irá afetar o balanço financeiro.
-            </div>
+                <div className="mm-error" style={{ background: '#fff3cd', color: '#856404', border: 'none' }}>
+                  ⚠️ <strong>Atenção:</strong> Alterar o valor do pagamento irá afetar o balanço financeiro.
+                </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-              <button
-                type="button"
-                onClick={handleCancelPayment}
-                disabled={submitting}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#ffc107',
-                  color: '#212529',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: submitting ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  opacity: submitting ? 0.6 : 1
-                }}
-              >
-                <FontAwesomeIcon icon={faXmark} /> Cancelar Recebimento
-              </button>
-              <button
-                type="button"
-                onClick={() => openRefundModal(editingInvoice)}
-                disabled={submitting}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: submitting ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  opacity: submitting ? 0.6 : 1
-                }}
-              >
-                <FontAwesomeIcon icon={faUndo} /> Estornar
-              </button>
-            </div>
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                  <button
+                    type="button"
+                    className="mm-btn mm-btn-warning"
+                    onClick={handleCancelPayment}
+                    disabled={submitting}
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#ffc107',
+                      color: '#212529',
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faXmark} /> Cancelar Recebimento
+                  </button>
+                  <button
+                    type="button"
+                    className="mm-btn mm-btn-danger"
+                    onClick={() => openRefundModal(editingInvoice)}
+                    disabled={submitting}
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faUndo} /> Estornar
+                  </button>
+                </div>
 
-            <form onSubmit={handleEditPayment} className="payment-form">
-              <div className="form-group">
-                <label htmlFor="edit_paid_at">Data do Pagamento *</label>
-                <input
-                  type="date"
-                  id="edit_paid_at"
-                  value={editPaymentData.paid_at}
-                  onChange={(e) => setEditPaymentData({
-                    ...editPaymentData,
-                    paid_at: e.target.value
-                  })}
-                  required
-                />
+                <div className="mm-field">
+                  <label htmlFor="edit_paid_at">Data do Pagamento *</label>
+                  <input
+                    type="date"
+                    id="edit_paid_at"
+                    value={editPaymentData.paid_at}
+                    onChange={(e) => setEditPaymentData({
+                      ...editPaymentData,
+                      paid_at: e.target.value
+                    })}
+                    required
+                  />
+                </div>
+
+                <div className="mm-field">
+                  <label htmlFor="edit_amount_cents">Valor Pago (R$) *</label>
+                  <input
+                    type="number"
+                    id="edit_amount_cents"
+                    step="0.01"
+                    value={(editPaymentData.amount_cents / 100).toFixed(2)}
+                    onChange={(e) => setEditPaymentData({
+                      ...editPaymentData,
+                      amount_cents: Math.round(parseFloat(e.target.value) * 100)
+                    })}
+                    required
+                  />
+                  {editPaymentData.amount_cents !== (editingInvoice.paid_amount_cents || 0) && (
+                    <small style={{
+                      color: editPaymentData.amount_cents > (editingInvoice.paid_amount_cents || 0) ? '#28a745' : '#dc3545',
+                      fontWeight: 'bold'
+                    }}>
+                      Diferença: {formatPrice(editPaymentData.amount_cents - (editingInvoice.paid_amount_cents || 0))}
+                    </small>
+                  )}
+                </div>
+
+                <div className="mm-field">
+                  <label htmlFor="edit_notes">Motivo da alteração</label>
+                  <textarea
+                    id="edit_notes"
+                    rows={3}
+                    value={editPaymentData.notes}
+                    onChange={(e) => setEditPaymentData({ ...editPaymentData, notes: e.target.value })}
+                    placeholder="Descreva o motivo da alteração (opcional)"
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="edit_amount_cents">Valor Pago (R$) *</label>
-                <input
-                  type="number"
-                  id="edit_amount_cents"
-                  step="0.01"
-                  value={(editPaymentData.amount_cents / 100).toFixed(2)}
-                  onChange={(e) => setEditPaymentData({
-                    ...editPaymentData,
-                    amount_cents: Math.round(parseFloat(e.target.value) * 100)
-                  })}
-                  required
-                />
-                {editPaymentData.amount_cents !== (editingInvoice.paid_amount_cents || 0) && (
-                  <small style={{
-                    color: editPaymentData.amount_cents > (editingInvoice.paid_amount_cents || 0) ? '#28a745' : '#dc3545',
-                    fontWeight: 'bold'
-                  }}>
-                    Diferença: {formatPrice(editPaymentData.amount_cents - (editingInvoice.paid_amount_cents || 0))}
-                  </small>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="edit_notes">Motivo da alteração</label>
-                <textarea
-                  id="edit_notes"
-                  rows={3}
-                  value={editPaymentData.notes}
-                  onChange={(e) => setEditPaymentData({ ...editPaymentData, notes: e.target.value })}
-                  placeholder="Descreva o motivo da alteração (opcional)"
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowEditPaymentModal(false)} disabled={submitting}>
+              <div className="mm-footer">
+                <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowEditPaymentModal(false)} disabled={submitting}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" disabled={submitting}>
+                <button type="submit" className="mm-btn mm-btn-primary" disabled={submitting}>
                   {submitting ? 'Processando...' : 'Confirmar Alteração'}
                 </button>
               </div>
@@ -1630,60 +1609,53 @@ export default function Financial() {
 
       {/* Modal de Estorno */}
       {showRefundModal && refundInvoice && (
-        <div className="modal-overlay" onClick={() => setShowRefundModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header" style={{ backgroundColor: '#dc3545', color: 'white' }}>
+        <div className="mm-overlay" onClick={() => setShowRefundModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2><FontAwesomeIcon icon={faUndo} /> Estornar Pagamento</h2>
-              <button type="button" className="modal-close" onClick={() => setShowRefundModal(false)} style={{ color: 'white' }}>×</button>
+              <button type="button" className="mm-close" onClick={() => setShowRefundModal(false)}>×</button>
             </div>
 
-            <div style={{
-              backgroundColor: '#f8d7da',
-              border: '1px solid #f5c6cb',
-              borderRadius: '8px',
-              padding: '16px',
-              marginBottom: '16px',
-              color: '#721c24'
-            }}>
-              <strong>⚠️ Atenção: Esta ação não pode ser desfeita!</strong>
-              <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
-                O pagamento será removido e a fatura será marcada como estornada (valor R$ 0,00).
-                O histórico do estorno ficará registrado nas observações da fatura.
-              </p>
+            <div className="mm-content">
+              <div className="mm-error" style={{ background: '#f8d7da', color: '#721c24', border: 'none' }}>
+                <strong>⚠️ Atenção: Esta ação não pode ser desfeita!</strong>
+                <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                  O pagamento será removido e a fatura será marcada como estornada (valor R$ 0,00).
+                  O histórico do estorno ficará registrado nas observações da fatura.
+                </p>
+              </div>
+
+              <div className="invoice-details">
+                <h3>Detalhes do Pagamento</h3>
+                <p><strong>Aluno:</strong> {refundInvoice.student_name}</p>
+                <p><strong>Valor da fatura:</strong> {formatPrice(refundInvoice.final_amount_cents)}</p>
+                <p><strong>Valor pago:</strong> {formatPrice(refundInvoice.paid_amount_cents || 0)}</p>
+                <p><strong>Método:</strong> {refundInvoice.payment_method || '-'}</p>
+                <p><strong>Pago em:</strong> {refundInvoice.paid_at ? formatDate(refundInvoice.paid_at) : '-'}</p>
+              </div>
+
+              <div className="mm-field">
+                <label htmlFor="refund_reason">Motivo do Estorno *</label>
+                <textarea
+                  id="refund_reason"
+                  rows={3}
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  placeholder="Descreva o motivo do estorno (ex: pagamento duplicado, mudança de plano, etc.)"
+                  required
+                />
+              </div>
             </div>
 
-            <div className="invoice-details">
-              <h3>Detalhes do Pagamento</h3>
-              <p><strong>Aluno:</strong> {refundInvoice.student_name}</p>
-              <p><strong>Valor da fatura:</strong> {formatPrice(refundInvoice.final_amount_cents)}</p>
-              <p><strong>Valor pago:</strong> {formatPrice(refundInvoice.paid_amount_cents || 0)}</p>
-              <p><strong>Método:</strong> {refundInvoice.payment_method || '-'}</p>
-              <p><strong>Pago em:</strong> {refundInvoice.paid_at ? formatDate(refundInvoice.paid_at) : '-'}</p>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="refund_reason">Motivo do Estorno *</label>
-              <textarea
-                id="refund_reason"
-                rows={3}
-                value={refundReason}
-                onChange={(e) => setRefundReason(e.target.value)}
-                placeholder="Descreva o motivo do estorno (ex: pagamento duplicado, mudança de plano, etc.)"
-                required
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-              />
-            </div>
-
-            <div className="modal-actions">
-              <button type="button" className="btn-secondary" onClick={() => setShowRefundModal(false)} disabled={submitting}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowRefundModal(false)} disabled={submitting}>
                 Cancelar
               </button>
               <button
                 type="button"
-                className="btn-primary"
+                className="mm-btn mm-btn-danger"
                 onClick={handleRefund}
                 disabled={submitting || !refundReason.trim()}
-                style={{ backgroundColor: '#dc3545', borderColor: '#dc3545' }}
               >
                 {submitting ? 'Processando...' : 'Confirmar Estorno'}
               </button>
@@ -1694,24 +1666,17 @@ export default function Financial() {
 
       {/* Modal de Edição de Vencimento */}
       {showDueDateModal && editingDueDateInvoice && (
-        <div className="modal-overlay" onClick={() => setShowDueDateModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowDueDateModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2><FontAwesomeIcon icon={faCalendarAlt} /> Alterar Vencimento</h2>
-              <button type="button" className="modal-close" onClick={() => setShowDueDateModal(false)}>×</button>
-            </div>
-
-            <div className="invoice-details">
-              <p><strong>Aluno:</strong> {editingDueDateInvoice.student_name}</p>
-              <p><strong>Plano:</strong> {editingDueDateInvoice.plan_name || '-'}</p>
-              <p><strong>Valor:</strong> {formatPrice(editingDueDateInvoice.final_amount_cents)}</p>
-              <p><strong>Vencimento atual:</strong> {formatDate(editingDueDateInvoice.due_date)}</p>
+              <button type="button" className="mm-close" onClick={() => setShowDueDateModal(false)}>×</button>
             </div>
 
             <form onSubmit={async (e) => {
               e.preventDefault();
               if (submitting) return;
-              
+
               try {
                 setSubmitting(true);
                 await financialService.updateInvoiceDueDate(editingDueDateInvoice.id, newDueDate);
@@ -1726,24 +1691,32 @@ export default function Financial() {
               } finally {
                 setSubmitting(false);
               }
-            }} className="payment-form">
-              <div className="form-group">
-                <label htmlFor="new_due_date">Novo Vencimento *</label>
-                <input
-                  type="date"
-                  id="new_due_date"
-                  value={newDueDate}
-                  onChange={(e) => setNewDueDate(e.target.value)}
-                  required
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-                />
+            }}>
+              <div className="mm-content">
+                <div className="invoice-details">
+                  <p><strong>Aluno:</strong> {editingDueDateInvoice.student_name}</p>
+                  <p><strong>Plano:</strong> {editingDueDateInvoice.plan_name || '-'}</p>
+                  <p><strong>Valor:</strong> {formatPrice(editingDueDateInvoice.final_amount_cents)}</p>
+                  <p><strong>Vencimento atual:</strong> {formatDate(editingDueDateInvoice.due_date)}</p>
+                </div>
+
+                <div className="mm-field">
+                  <label htmlFor="new_due_date">Novo Vencimento *</label>
+                  <input
+                    type="date"
+                    id="new_due_date"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowDueDateModal(false)} disabled={submitting}>
+              <div className="mm-footer">
+                <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowDueDateModal(false)} disabled={submitting}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" disabled={submitting || !newDueDate}>
+                <button type="submit" className="mm-btn mm-btn-primary" disabled={submitting || !newDueDate}>
                   {submitting ? 'Salvando...' : 'Salvar'}
                 </button>
               </div>
@@ -1754,35 +1727,34 @@ export default function Financial() {
 
       {/* Level Edit Modal */}
       {showLevelModal && levelEditInvoice && (
-        <div className="modal-overlay" onClick={() => setShowLevelModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowLevelModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Alterar Nível do Aluno</h2>
-              <button type="button" className="modal-close" onClick={() => setShowLevelModal(false)}>×</button>
+              <button type="button" className="mm-close" onClick={() => setShowLevelModal(false)}>×</button>
             </div>
 
-            <div className="invoice-details">
-              <p><strong>Aluno:</strong> {levelEditInvoice.student_name}</p>
-              <p><strong>Nível atual:</strong>{' '}
-                {levelEditInvoice.level_name ? (
-                  <span
-                    className="level-badge"
-                    style={{ background: levelEditInvoice.level_color || '#6b7280' }}
-                  >
-                    {levelEditInvoice.level_name}
-                  </span>
-                ) : 'Nenhum'}
-              </p>
-            </div>
+            <div className="mm-content">
+              <div className="invoice-details">
+                <p><strong>Aluno:</strong> {levelEditInvoice.student_name}</p>
+                <p><strong>Nível atual:</strong>{' '}
+                  {levelEditInvoice.level_name ? (
+                    <span
+                      className="level-badge"
+                      style={{ background: levelEditInvoice.level_color || '#6b7280' }}
+                    >
+                      {levelEditInvoice.level_name}
+                    </span>
+                  ) : 'Nenhum'}
+                </p>
+              </div>
 
-            <div className="payment-form">
-              <div className="form-group">
+              <div className="mm-field">
                 <label htmlFor="level-select">Novo Nível</label>
                 <select
                   id="level-select"
                   value={selectedLevelId || ''}
                   onChange={(e) => setSelectedLevelId(e.target.value ? parseInt(e.target.value) : null)}
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                 >
                   <option value="">Selecione um nível</option>
                   {levels.map((level) => (
@@ -1793,24 +1765,24 @@ export default function Financial() {
                 </select>
               </div>
               {selectedLevelId && selectedLevelId !== levelEditInvoice.level_id && (
-                <div style={{ padding: '10px 14px', backgroundColor: '#fffbeb', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '0.85rem', color: '#92400e', marginTop: '8px' }}>
+                <div className="mm-error" style={{ background: '#fffbeb', color: '#92400e', border: '1px solid #f59e0b' }}>
                   <strong>Atenção:</strong> Se o aluno estiver em turmas que não aceitam o novo nível, ele aparecerá como "fora do nível" na tela de Turmas.
                 </div>
               )}
+            </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowLevelModal(false)} disabled={submitting}>
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleUpdateLevel}
-                  disabled={submitting || !selectedLevelId || selectedLevelId === levelEditInvoice.level_id}
-                >
-                  {submitting ? 'Salvando...' : 'Salvar'}
-                </button>
-              </div>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowLevelModal(false)} disabled={submitting}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="mm-btn mm-btn-primary"
+                onClick={handleUpdateLevel}
+                disabled={submitting || !selectedLevelId || selectedLevelId === levelEditInvoice.level_id}
+              >
+                {submitting ? 'Salvando...' : 'Salvar'}
+              </button>
             </div>
           </div>
         </div>

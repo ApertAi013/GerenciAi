@@ -8,6 +8,7 @@ import type { CourtRental, CreateRentalData, RentalFilters, PaymentMethod } from
 import type { Student } from '../types/studentTypes';
 import type { Court, OperatingHour } from '../types/courtTypes';
 import '../styles/Rentals.css';
+import '../styles/ModernModal.css';
 
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -862,17 +863,17 @@ export default function Rentals() {
 
       {/* Create Rental Modal */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Nova Locação</h2>
-              <button type="button" className="modal-close" onClick={() => setShowCreateModal(false)}>
+              <button type="button" className="mm-close" onClick={() => setShowCreateModal(false)}>
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleCreateRental}>
-              <div className="modal-body">
+              <div className="mm-content">
                 {/* Rental Type */}
                 <div className="radio-group">
                   <div className="radio-option">
@@ -913,7 +914,7 @@ export default function Rentals() {
 
                 {/* Student Selection */}
                 {rentalType === 'student' && (
-                  <div className="form-group">
+                  <div className="mm-field">
                     <label>Aluno *</label>
                     <div className="student-autocomplete">
                       <input
@@ -922,7 +923,6 @@ export default function Rentals() {
                         placeholder="Digite o nome, telefone ou email do aluno..."
                         value={formData.student_id ? formData.renter_name : studentSearch}
                         onChange={(e) => {
-                          // Se já tem aluno selecionado, limpa a seleção ao começar a digitar
                           if (formData.student_id) {
                             setFormData({
                               ...formData,
@@ -937,7 +937,6 @@ export default function Rentals() {
                         }}
                         onFocus={() => setShowStudentDropdown(true)}
                         onBlur={() => {
-                          // Delay para permitir clique no dropdown
                           setTimeout(() => setShowStudentDropdown(false), 200);
                         }}
                       />
@@ -988,7 +987,7 @@ export default function Rentals() {
                 )}
 
                 {/* Renter Info */}
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Nome do Locatário *</label>
                   <input
                     type="text"
@@ -1000,7 +999,7 @@ export default function Rentals() {
                 </div>
 
                 <div className="form-group-inline">
-                  <div className="form-group">
+                  <div className="mm-field">
                     <label>Telefone *</label>
                     <input
                       type="tel"
@@ -1012,7 +1011,7 @@ export default function Rentals() {
                   </div>
 
                   {rentalType === 'guest' && (
-                    <div className="form-group">
+                    <div className="mm-field">
                       <label>CPF</label>
                       <input
                         type="text"
@@ -1024,7 +1023,7 @@ export default function Rentals() {
                   )}
                 </div>
 
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Email</label>
                   <input
                     type="email"
@@ -1035,7 +1034,7 @@ export default function Rentals() {
                 </div>
 
                 {/* Rental Details */}
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Quadra *</label>
                   <select
                     required
@@ -1051,7 +1050,7 @@ export default function Rentals() {
                   </select>
                 </div>
 
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Data *</label>
                   <input
                     type="date"
@@ -1062,7 +1061,7 @@ export default function Rentals() {
                 </div>
 
                 <div className="form-group-inline">
-                  <div className="form-group">
+                  <div className="mm-field">
                     <label>Hora Início *</label>
                     <input
                       type="time"
@@ -1072,7 +1071,7 @@ export default function Rentals() {
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="mm-field">
                     <label>Hora Fim *</label>
                     <input
                       type="time"
@@ -1083,7 +1082,7 @@ export default function Rentals() {
                   </div>
                 </div>
 
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Valor (R$)</label>
                   <input
                     type="number"
@@ -1096,7 +1095,7 @@ export default function Rentals() {
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="mm-field">
                   <label>Observações</label>
                   <textarea
                     value={formData.notes}
@@ -1106,11 +1105,11 @@ export default function Rentals() {
                 </div>
               </div>
 
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setShowCreateModal(false)}>
+              <div className="mm-footer">
+                <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowCreateModal(false)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary">
+                <button type="submit" className="mm-btn mm-btn-primary">
                   Criar Locação
                 </button>
               </div>
@@ -1121,16 +1120,16 @@ export default function Rentals() {
 
       {/* Payment Modal */}
       {showPaymentModal && selectedRental && (
-        <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Registrar Pagamento</h2>
-              <button type="button" className="modal-close" onClick={() => setShowPaymentModal(false)}>
+              <button type="button" className="mm-close" onClick={() => setShowPaymentModal(false)}>
                 ✕
               </button>
             </div>
 
-            <div className="modal-body">
+            <div className="mm-content">
               <div style={{ marginBottom: '20px' }}>
                 <p style={{ margin: '0 0 8px 0', color: '#737373' }}>
                   <strong>Locatário:</strong> {selectedRental.renter_name}
@@ -1144,7 +1143,7 @@ export default function Rentals() {
                 </p>
               </div>
 
-              <div className="form-group">
+              <div className="mm-field">
                 <label>Método de Pagamento *</label>
                 <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}>
                   <option value="pix">PIX</option>
@@ -1157,11 +1156,11 @@ export default function Rentals() {
               </div>
             </div>
 
-            <div className="modal-footer">
-              <button type="button" className="btn-secondary" onClick={() => setShowPaymentModal(false)}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowPaymentModal(false)}>
                 Cancelar
               </button>
-              <button type="button" className="btn-success" onClick={handleRegisterPayment}>
+              <button type="button" className="mm-btn mm-btn-primary" onClick={handleRegisterPayment}>
                 Confirmar Pagamento
               </button>
             </div>
@@ -1171,76 +1170,78 @@ export default function Rentals() {
 
       {/* Operating Hours Modal */}
       {showHoursModal && hoursCourt && (
-        <div className="modal-overlay" onClick={() => setShowHoursModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px' }}>
-            <div className="modal-header">
+        <div className="mm-overlay" onClick={() => setShowHoursModal(false)}>
+          <div className="mm-modal mm-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
               <h2>Horários — {hoursCourt.name}</h2>
-              <button type="button" className="modal-close" onClick={() => setShowHoursModal(false)}>✕</button>
+              <button type="button" className="mm-close" onClick={() => setShowHoursModal(false)}>✕</button>
             </div>
-            <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '16px' }}>
-              Configure os dias e horários disponíveis para locação pública.
-            </p>
-            <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
-              {operatingHours.map((h) => (
-                <div
-                  key={h.day_of_week}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '10px',
-                    padding: '10px 0', borderBottom: '1px solid #F3F4F6',
-                    opacity: h.is_active ? 1 : 0.5, flexWrap: 'wrap',
-                  }}
-                >
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '90px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={h.is_active}
-                      onChange={(e) => updateHour(h.day_of_week, 'is_active', e.target.checked)}
-                      style={{ width: 'auto' }}
-                    />
-                    <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{DAY_NAMES[h.day_of_week]}</span>
-                  </label>
-                  {h.is_active && (
-                    <>
+            <div className="mm-content">
+              <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '16px' }}>
+                Configure os dias e horários disponíveis para locação pública.
+              </p>
+              <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+                {operatingHours.map((h) => (
+                  <div
+                    key={h.day_of_week}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      padding: '10px 0', borderBottom: '1px solid #F3F4F6',
+                      opacity: h.is_active ? 1 : 0.5, flexWrap: 'wrap',
+                    }}
+                  >
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '90px', cursor: 'pointer' }}>
                       <input
-                        type="time" value={formatTimeHour(h.open_time)}
-                        onChange={(e) => updateHour(h.day_of_week, 'open_time', e.target.value)}
-                        style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                        type="checkbox"
+                        checked={h.is_active}
+                        onChange={(e) => updateHour(h.day_of_week, 'is_active', e.target.checked)}
+                        style={{ width: 'auto' }}
                       />
-                      <span style={{ color: '#9CA3AF' }}>às</span>
-                      <input
-                        type="time" value={formatTimeHour(h.close_time)}
-                        onChange={(e) => updateHour(h.day_of_week, 'close_time', e.target.value)}
-                        style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
-                      />
-                      <select
-                        value={h.slot_duration_minutes}
-                        onChange={(e) => updateHour(h.day_of_week, 'slot_duration_minutes', parseInt(e.target.value))}
-                        style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
-                      >
-                        <option value={30}>30min</option>
-                        <option value={60}>1h</option>
-                        <option value={90}>1h30</option>
-                        <option value={120}>2h</option>
-                      </select>
-                      <button
-                        type="button" onClick={() => copyToAllDays(h.day_of_week)}
-                        title="Copiar para todos"
-                        style={{
-                          background: 'none', border: '1px solid #D1D5DB', borderRadius: '6px',
-                          padding: '6px 8px', cursor: 'pointer', fontSize: '0.75rem',
-                          color: '#6B7280', whiteSpace: 'nowrap',
-                        }}
-                      >
-                        Copiar
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
+                      <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>{DAY_NAMES[h.day_of_week]}</span>
+                    </label>
+                    {h.is_active && (
+                      <>
+                        <input
+                          type="time" value={formatTimeHour(h.open_time)}
+                          onChange={(e) => updateHour(h.day_of_week, 'open_time', e.target.value)}
+                          style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                        />
+                        <span style={{ color: '#9CA3AF' }}>às</span>
+                        <input
+                          type="time" value={formatTimeHour(h.close_time)}
+                          onChange={(e) => updateHour(h.day_of_week, 'close_time', e.target.value)}
+                          style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                        />
+                        <select
+                          value={h.slot_duration_minutes}
+                          onChange={(e) => updateHour(h.day_of_week, 'slot_duration_minutes', parseInt(e.target.value))}
+                          style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem' }}
+                        >
+                          <option value={30}>30min</option>
+                          <option value={60}>1h</option>
+                          <option value={90}>1h30</option>
+                          <option value={120}>2h</option>
+                        </select>
+                        <button
+                          type="button" onClick={() => copyToAllDays(h.day_of_week)}
+                          title="Copiar para todos"
+                          style={{
+                            background: 'none', border: '1px solid #D1D5DB', borderRadius: '6px',
+                            padding: '6px 8px', cursor: 'pointer', fontSize: '0.75rem',
+                            color: '#6B7280', whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Copiar
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="modal-footer" style={{ marginTop: '16px' }}>
-              <button type="button" className="btn-secondary" onClick={() => setShowHoursModal(false)}>Cancelar</button>
-              <button type="button" className="btn-primary" onClick={handleSaveHours} disabled={savingHours}>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowHoursModal(false)}>Cancelar</button>
+              <button type="button" className="mm-btn mm-btn-primary" onClick={handleSaveHours} disabled={savingHours}>
                 {savingHours ? 'Salvando...' : 'Salvar Horários'}
               </button>
             </div>
@@ -1250,48 +1251,50 @@ export default function Rentals() {
 
       {/* Share Link Modal */}
       {showShareModal && (
-        <div className="modal-overlay" onClick={() => setShowShareModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <h2 style={{ marginBottom: '8px' }}>Link de Reserva Online</h2>
-            <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '20px' }}>
-              Compartilhe este link para que seus clientes possam reservar horários diretamente.
-            </p>
-            <div style={{
-              display: 'flex', gap: '8px', padding: '12px', background: '#F3F4F6',
-              borderRadius: '8px', alignItems: 'center',
-            }}>
-              <input
-                type="text"
-                readOnly
-                value={bookingLink}
-                style={{
-                  flex: 1, border: 'none', background: 'transparent',
-                  fontSize: '0.85rem', color: '#1F2937', outline: 'none',
-                }}
-              />
-              <button
-                type="button"
-                onClick={copyLink}
-                style={{
-                  padding: '8px 16px', background: '#22C55E', color: 'white',
-                  border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Copiar
-              </button>
+        <div className="mm-overlay" onClick={() => setShowShareModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
+              <h2>Link de Reserva Online</h2>
+              <button type="button" className="mm-close" onClick={() => setShowShareModal(false)}>✕</button>
             </div>
-            <p style={{ color: '#9CA3AF', fontSize: '0.8rem', marginTop: '12px' }}>
-              Envie via WhatsApp, redes sociais ou onde preferir. Qualquer pessoa pode reservar sem precisar de cadastro.
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+            <div className="mm-content">
+              <p style={{ color: '#6B7280', fontSize: '0.9rem', marginBottom: '20px' }}>
+                Compartilhe este link para que seus clientes possam reservar horários diretamente.
+              </p>
+              <div style={{
+                display: 'flex', gap: '8px', padding: '12px', background: '#F3F4F6',
+                borderRadius: '8px', alignItems: 'center',
+              }}>
+                <input
+                  type="text"
+                  readOnly
+                  value={bookingLink}
+                  style={{
+                    flex: 1, border: 'none', background: 'transparent',
+                    fontSize: '0.85rem', color: '#1F2937', outline: 'none',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={copyLink}
+                  style={{
+                    padding: '8px 16px', background: '#22C55E', color: 'white',
+                    border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Copiar
+                </button>
+              </div>
+              <p style={{ color: '#9CA3AF', fontSize: '0.8rem', marginTop: '12px' }}>
+                Envie via WhatsApp, redes sociais ou onde preferir. Qualquer pessoa pode reservar sem precisar de cadastro.
+              </p>
+            </div>
+            <div className="mm-footer">
               <button
                 type="button"
+                className="mm-btn mm-btn-secondary"
                 onClick={() => setShowShareModal(false)}
-                style={{
-                  padding: '8px 20px', background: '#E5E7EB', color: '#374151',
-                  border: 'none', borderRadius: '6px', cursor: 'pointer',
-                }}
               >
                 Fechar
               </button>

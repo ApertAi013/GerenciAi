@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { modalityService } from '../services/modalityService';
 import type { Modality, CreateModalityRequest, UpdateModalityRequest } from '../types/levelTypes';
 import '../styles/Settings.css';
+import '../styles/ModernModal.css';
 
 export default function Modalities() {
   const [modalities, setModalities] = useState<Modality[]>([]);
@@ -195,75 +196,77 @@ function ModalityModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-md" onClick={(e) => e.stopPropagation()}>
+        <div className="mm-header">
           <h2>{isEditMode ? 'Editar Modalidade' : 'Criar Nova Modalidade'}</h2>
-          <button type="button" className="modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             ✕
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="mm-error">{error}</div>}
 
         <form onSubmit={handleSubmit} className="modality-form">
-          <div className="form-group">
-            <label htmlFor="name">Nome *</label>
-            <input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description">Descrição</label>
-            <textarea
-              id="description"
-              value={formData.description || ''}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              rows={3}
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="icon">Ícone (Emoji)</label>
+          <div className="mm-content">
+            <div className="mm-field">
+              <label htmlFor="name">Nome *</label>
               <input
-                id="icon"
+                id="name"
                 type="text"
-                value={formData.icon || ''}
+                value={formData.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, icon: e.target.value })
+                  setFormData({ ...formData, name: e.target.value })
                 }
-                placeholder="⚽"
-                maxLength={2}
+                required
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="color">Cor</label>
-              <input
-                id="color"
-                type="color"
-                value={formData.color || '#2196f3'}
+            <div className="mm-field">
+              <label htmlFor="description">Descrição</label>
+              <textarea
+                id="description"
+                value={formData.description || ''}
                 onChange={(e) =>
-                  setFormData({ ...formData, color: e.target.value })
+                  setFormData({ ...formData, description: e.target.value })
                 }
+                rows={3}
               />
+            </div>
+
+            <div className="mm-field-row">
+              <div className="mm-field">
+                <label htmlFor="icon">Ícone (Emoji)</label>
+                <input
+                  id="icon"
+                  type="text"
+                  value={formData.icon || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, icon: e.target.value })
+                  }
+                  placeholder="⚽"
+                  maxLength={2}
+                />
+              </div>
+
+              <div className="mm-field">
+                <label htmlFor="color">Cor</label>
+                <input
+                  id="color"
+                  type="color"
+                  value={formData.color || '#2196f3'}
+                  onChange={(e) =>
+                    setFormData({ ...formData, color: e.target.value })
+                  }
+                />
+              </div>
             </div>
           </div>
 
-          <div className="modal-actions">
+          <div className="mm-footer">
             <button
               type="button"
-              className="btn-secondary"
+              className="mm-btn mm-btn-secondary"
               onClick={onClose}
               disabled={isSubmitting}
             >
@@ -271,7 +274,7 @@ function ModalityModal({
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="mm-btn mm-btn-primary"
               disabled={isSubmitting}
             >
               {isSubmitting

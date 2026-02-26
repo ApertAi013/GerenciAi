@@ -14,6 +14,7 @@ import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { referralService } from '../services/referralService';
 import type { ReferralCode, Referral } from '../types/referralTypes';
 import '../styles/ReferralModal.css';
+import '../styles/ModernModal.css';
 
 interface ReferralModalProps {
   isOpen: boolean;
@@ -79,10 +80,10 @@ export default function ReferralModal({ isOpen, onClose }: ReferralModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="ref-modal-overlay" onClick={onClose}>
-      <div className="ref-modal-container" onClick={e => e.stopPropagation()}>
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-md ref-modal-container" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="ref-modal-header">
+        <div className="mm-header ref-modal-header">
           <div className="ref-modal-header-icon">
             <FontAwesomeIcon icon={faGift} />
           </div>
@@ -90,12 +91,12 @@ export default function ReferralModal({ isOpen, onClose }: ReferralModalProps) {
             <h2>Indique e Ganhe!</h2>
             <p>Ganhe 1 mês grátis por cada indicação convertida</p>
           </div>
-          <button className="ref-modal-close" onClick={onClose}>
+          <button type="button" className="mm-close" onClick={onClose}>
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
 
-        <div className="ref-modal-body">
+        <div className="mm-content ref-modal-body">
           {loading ? (
             <div className="ref-modal-loading">Carregando...</div>
           ) : (
