@@ -127,3 +127,194 @@
   animation: none;
   transform: scale(1.1);
 }
+
+/* ── Customize button (bottom of sidebar) ── */
+.sidebar-customize-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.sidebar-customize-btn:hover {
+  background: var(--border-light);
+  color: var(--color-orange);
+}
+
+/* ── Edit mode header ── */
+.sidebar-edit-header {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-orange);
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* ── Edit mode item ── */
+.sidebar-edit-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 6px var(--spacing-sm);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-base);
+}
+
+.sidebar-edit-item:hover {
+  background: var(--bg-secondary);
+}
+
+.sidebar-edit-item-hidden {
+  opacity: 0.4;
+}
+
+.sidebar-edit-item-hidden .sidebar-edit-label {
+  text-decoration: line-through;
+}
+
+/* Visibility toggle */
+.sidebar-edit-vis {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.sidebar-edit-vis:hover:not(:disabled) {
+  background: var(--border-light);
+  color: var(--color-orange);
+}
+
+.sidebar-edit-vis:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Icon in edit mode */
+.sidebar-edit-icon {
+  font-size: 14px;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Label in edit mode */
+.sidebar-edit-label {
+  flex: 1;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Arrow buttons container */
+.sidebar-edit-arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.sidebar-move-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  font-size: 10px;
+  width: 22px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: all var(--transition-base);
+}
+
+.sidebar-move-btn:hover:not(:disabled) {
+  background: var(--border-light);
+  color: var(--color-orange);
+}
+
+.sidebar-move-btn:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+/* ── Edit bar (Concluir / Restaurar) ── */
+.sidebar-edit-bar {
+  display: flex;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+  border-top: 1px solid var(--border-light);
+}
+
+.sidebar-edit-done {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: 8px;
+  background: var(--color-orange);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.sidebar-edit-done:hover {
+  filter: brightness(0.9);
+}
+
+.sidebar-edit-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: 8px 12px;
+  background: none;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.sidebar-edit-reset:hover {
+  background: var(--bg-secondary);
+  color: #dc3545;
+  border-color: #dc3545;
+}

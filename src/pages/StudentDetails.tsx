@@ -3,7 +3,19 @@ import { useParams, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
-import { faCreditCard, faCoins, faCalendarDays, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCreditCard,
+  faCoins,
+  faCalendarDays,
+  faPenToSquare,
+  faArrowLeft,
+  faXmark,
+  faCheckCircle,
+  faBan,
+  faEye,
+  faUserPlus,
+  faArrowUpRightFromSquare,
+} from '@fortawesome/free-solid-svg-icons';
 import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
 import { financialService } from '../services/financialService';
@@ -483,7 +495,7 @@ export default function StudentDetails() {
       {/* Header */}
       <div className="student-header">
         <button type="button" className="btn-back" onClick={() => navigate('/alunos')}>
-          ← Voltar
+          <FontAwesomeIcon icon={faArrowLeft} /> Voltar
         </button>
 
         <div className="student-header-content">
@@ -589,22 +601,22 @@ export default function StudentDetails() {
         <div className="content-card">
           <div className="content-card-header">
             <h3>Matrículas</h3>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 type="button"
-                className="btn-icon"
+                className="btn-sm btn-card-action"
                 onClick={handleOpenAddToClassModal}
                 title="Adicionar aluno a uma turma"
               >
-                + Turma
+                <FontAwesomeIcon icon={faUserPlus} /> Turma
               </button>
               <button
                 type="button"
-                className="btn-icon"
+                className="btn-sm btn-card-action"
                 onClick={() => navigate('/matriculas')}
                 title="Ver todas as matrículas"
               >
-                Ver todas
+                <FontAwesomeIcon icon={faArrowUpRightFromSquare} /> Ver todas
               </button>
             </div>
           </div>
@@ -785,15 +797,17 @@ export default function StudentDetails() {
                                   type="button"
                                   className="btn-sm btn-success"
                                   onClick={() => handleStartPayment(invoice)}
+                                  title="Registrar pagamento"
                                 >
-                                  Pagar
+                                  <FontAwesomeIcon icon={faCheckCircle} /> Pagar
                                 </button>
                                 <button
                                   type="button"
                                   className="btn-sm btn-danger"
                                   onClick={() => handleCancelInvoice(invoice.id)}
+                                  title="Cancelar fatura"
                                 >
-                                  Cancelar
+                                  <FontAwesomeIcon icon={faBan} /> Cancelar
                                 </button>
                               </>
                             )}
@@ -802,8 +816,9 @@ export default function StudentDetails() {
                                 type="button"
                                 className="btn-sm btn-primary"
                                 onClick={() => navigate(`/financeiro?student_id=${student.id}`)}
+                                title="Ver no financeiro"
                               >
-                                Ver
+                                <FontAwesomeIcon icon={faEye} /> Ver
                               </button>
                             )}
                           </div>
@@ -825,7 +840,7 @@ export default function StudentDetails() {
             <div className="modal-header">
               <h2>Registrar Pagamento</h2>
               <button type="button" className="modal-close" onClick={() => setPayingInvoiceId(null)}>
-                ✕
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <div className="modal-body">
@@ -882,7 +897,7 @@ export default function StudentDetails() {
             <div className="modal-header">
               <h2>Adiantar Pagamento</h2>
               <button type="button" className="modal-close" onClick={() => setShowAdvanceModal(false)}>
-                ✕
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <div className="modal-body">
@@ -966,7 +981,7 @@ export default function StudentDetails() {
             <div className="modal-header">
               <h2>Adicionar Aluno a Turmas</h2>
               <button type="button" className="modal-close" onClick={() => setShowAddToClassModal(false)}>
-                ✕
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <div className="modal-body">

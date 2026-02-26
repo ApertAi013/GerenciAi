@@ -1,5 +1,20 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faTicket,
+  faPlus,
+  faMinus,
+  faClockRotateLeft,
+  faKey,
+  faCircleCheck,
+  faCalendarCheck,
+  faHandHoldingDollar,
+  faTriangleExclamation,
+  faMobileScreenButton,
+  faXmark,
+} from '@fortawesome/free-solid-svg-icons';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { courtReservationService } from '../services/courtReservationService';
 import type { CreditHistoryItem } from '../services/courtReservationService';
 import '../styles/MakeupCreditsManager.css';
@@ -136,14 +151,14 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
     return labels[reason] || reason;
   };
 
-  const getReasonIcon = (reason: string): string => {
-    const icons: Record<string, string> = {
-      cancel_8h: '✅',
-      use_reservation: '🎫',
-      manual_add: '➕',
-      manual_remove: '➖',
+  const getReasonIcon = (reason: string): IconDefinition => {
+    const icons: Record<string, IconDefinition> = {
+      cancel_8h: faCircleCheck,
+      use_reservation: faCalendarCheck,
+      manual_add: faPlus,
+      manual_remove: faMinus,
     };
-    return icons[reason] || '📋';
+    return icons[reason] || faClockRotateLeft;
   };
 
   if (isLoading) {
@@ -159,7 +174,9 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
       <div className="makeup-credits-card">
         <div className="makeup-credits-header">
           <div className="makeup-credits-title">
-            <span className="makeup-credits-icon">🎫</span>
+            <span className="makeup-credits-icon">
+              <FontAwesomeIcon icon={faTicket} />
+            </span>
             <h3>Créditos de Remarcação</h3>
           </div>
           <div className="makeup-credits-balance">
@@ -181,7 +198,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
             className="btn btn-success btn-sm"
             onClick={() => setShowAddModal(true)}
           >
-            ➕ Adicionar Créditos
+            <FontAwesomeIcon icon={faPlus} /> Adicionar Créditos
           </button>
           <button
             type="button"
@@ -189,21 +206,21 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
             onClick={() => setShowRemoveModal(true)}
             disabled={credits === 0}
           >
-            ➖ Remover Créditos
+            <FontAwesomeIcon icon={faMinus} /> Remover Créditos
           </button>
           <button
             type="button"
             className="btn btn-info btn-sm"
             onClick={() => setShowHistoryModal(true)}
           >
-            📋 Ver Histórico
+            <FontAwesomeIcon icon={faClockRotateLeft} /> Ver Histórico
           </button>
           <button
             type="button"
             className="btn btn-primary btn-sm"
             onClick={() => setShowPasswordModal(true)}
           >
-            🔑 Definir Senha App
+            <FontAwesomeIcon icon={faKey} /> Definir Senha App
           </button>
         </div>
       </div>
@@ -215,7 +232,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
             <div className="modal-header">
               <h2>Adicionar Créditos</h2>
               <button className="modal-close" onClick={() => setShowAddModal(false)}>
-                ✕
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <div className="modal-body">
@@ -263,7 +280,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
             <div className="modal-header">
               <h2>Remover Créditos</h2>
               <button className="modal-close" onClick={() => setShowRemoveModal(false)}>
-                ✕
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <div className="modal-body">
@@ -290,7 +307,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
                 />
               </div>
               <div className="preview-box warning">
-                <strong>⚠️ Atenção:</strong>
+                <strong><FontAwesomeIcon icon={faTriangleExclamation} /> Atenção:</strong>
                 <p>Aluno ficará com {credits - creditsToRemove} créditos após esta operação</p>
               </div>
             </div>
@@ -313,13 +330,13 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
             <div className="modal-header">
               <h2>Definir Senha do App Mobile</h2>
               <button className="modal-close" onClick={() => setShowPasswordModal(false)}>
-                ✕
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <div className="modal-body">
               <div className="alert alert-info">
                 <p>
-                  <strong>📱 Informação:</strong> Esta senha permitirá que <strong>{studentName}</strong> faça
+                  <strong><FontAwesomeIcon icon={faMobileScreenButton} /> Informação:</strong> Esta senha permitirá que <strong>{studentName}</strong> faça
                   login no aplicativo mobile para gerenciar suas reservas e créditos.
                 </p>
               </div>
@@ -373,7 +390,7 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
             <div className="modal-header">
               <h2>Histórico de Créditos</h2>
               <button className="modal-close" onClick={() => setShowHistoryModal(false)}>
-                ✕
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <div className="modal-body">
@@ -383,7 +400,9 @@ export default function MakeupCreditsManager({ studentId, studentName }: MakeupC
                 <div className="history-list">
                   {history.map((item) => (
                     <div key={item.id} className={`history-item ${item.credit_change > 0 ? 'gain' : 'use'}`}>
-                      <div className="history-icon">{getReasonIcon(item.reason)}</div>
+                      <div className="history-icon">
+                        <FontAwesomeIcon icon={getReasonIcon(item.reason)} />
+                      </div>
                       <div className="history-content">
                         <div className="history-header">
                           <strong>{getReasonLabel(item.reason)}</strong>

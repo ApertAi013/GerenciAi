@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -23,7 +24,15 @@ import {
   faBullhorn,
   faMobileAlt,
   faClipboardCheck,
-  faBuilding
+  faBuilding,
+  faGripVertical,
+  faEye,
+  faEyeSlash,
+  faChevronUp,
+  faChevronDown,
+  faRotateLeft,
+  faCheck,
+  faPen,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -35,10 +44,15 @@ interface MenuItem {
   path: string;
   label: string;
   icon: IconDefinition;
-  featureCode?: string; // Feature flag opcional
-  isPremium?: boolean; // Badge PRO
-  adminOnly?: boolean; // Apenas para admin
-  gestorOnly?: boolean; // Apenas para admin/gestor
+  featureCode?: string;
+  isPremium?: boolean;
+  adminOnly?: boolean;
+  gestorOnly?: boolean;
+}
+
+interface SidebarConfig {
+  order: string[];
+  hidden: string[];
 }
 
 const menuItems: MenuItem[] = [
@@ -69,35 +83,80 @@ const menuItems: MenuItem[] = [
   { path: '/migracao', label: 'Migração', icon: faDatabase, featureCode: 'data_migration' },
 ];
 
+const PROTECTED_PATHS = ['/dashboard'];
+
 export default function Sidebar() {
   const location = useLocation();
   const { user } = useAuthStore();
   const { hasAccess: hasMigrationAccess, isLoading: isMigrationLoading } = useFeatureAccess('data_migration');
 
-  // Filtra os itens do menu baseado em feature flags e roles
+  const [sidebarConfig, setSidebarConfig] = useState<SidebarConfig>(() => {
+    const saved = localStorage.getItem('sidebar_config');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { /* fallback */ }
+    }
+    return { order: [], hidden: [] };
+  });
+  const [isCustomizing, setIsCustomizing] = useState(false);
+
+  // Role/feature based filter
   const visibleMenuItems = menuItems.filter((item) => {
-    // Verificar se é admin-only
-    if (item.adminOnly) {
-      return user?.role === 'admin';
-    }
-
-    // Verificar se é gestor-only (admin + gestor)
-    if (item.gestorOnly) {
-      return user?.role === 'admin' || user?.role === 'gestor';
-    }
-
-    // Se não tem feature flag, sempre exibe
-    if (!item.featureCode) {
-      return true;
-    }
-
-    // Para migração, verifica o acesso
-    if (item.featureCode === 'data_migration') {
-      return !isMigrationLoading && hasMigrationAccess;
-    }
-
+    if (item.adminOnly) return user?.role === 'admin';
+    if (item.gestorOnly) return user?.role === 'admin' || user?.role === 'gestor';
+    if (!item.featureCode) return true;
+    if (item.featureCode === 'data_migration') return !isMigrationLoading && hasMigrationAccess;
     return true;
   });
+
+  // Apply user ordering + hiding
+  const orderedMenuItems = useMemo(() => {
+    const items = isCustomizing
+      ? [...visibleMenuItems] // show all in edit mode
+      : visibleMenuItems.filter(i => !sidebarConfig.hidden.includes(i.path));
+
+    if (sidebarConfig.order.length > 0) {
+      items.sort((a, b) => {
+        const ai = sidebarConfig.order.indexOf(a.path);
+        const bi = sidebarConfig.order.indexOf(b.path);
+        if (ai === -1 && bi === -1) return 0;
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+    }
+    return items;
+  }, [visibleMenuItems, sidebarConfig, isCustomizing]);
+
+  const saveConfig = (config: SidebarConfig) => {
+    setSidebarConfig(config);
+    localStorage.setItem('sidebar_config', JSON.stringify(config));
+  };
+
+  const handleToggleVisibility = (path: string) => {
+    if (PROTECTED_PATHS.includes(path)) return;
+    const hidden = sidebarConfig.hidden.includes(path)
+      ? sidebarConfig.hidden.filter(p => p !== path)
+      : [...sidebarConfig.hidden, path];
+    saveConfig({ ...sidebarConfig, hidden });
+  };
+
+  const handleMoveItem = (path: string, direction: 'up' | 'down') => {
+    const currentOrder = sidebarConfig.order.length > 0
+      ? [...sidebarConfig.order]
+      : visibleMenuItems.map(i => i.path);
+    const idx = currentOrder.indexOf(path);
+    if (idx === -1) return;
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= currentOrder.length) return;
+    [currentOrder[idx], currentOrder[swapIdx]] = [currentOrder[swapIdx], currentOrder[idx]];
+    saveConfig({ ...sidebarConfig, order: currentOrder });
+  };
+
+  const handleResetConfig = () => {
+    localStorage.removeItem('sidebar_config');
+    setSidebarConfig({ order: [], hidden: [] });
+    setIsCustomizing(false);
+  };
 
   return (
     <div className="sidebar">
@@ -106,30 +165,108 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {visibleMenuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`sidebar-item ${isActive ? 'active' : ''}`}
-            >
-              <span className="sidebar-icon">
-                <FontAwesomeIcon icon={item.icon} />
-              </span>
-              <span className="sidebar-label">
-                {item.label}
-                {item.isPremium && (
-                  <span className="sidebar-pro-badge">
-                    <FontAwesomeIcon icon={faCrown} />
+        {isCustomizing ? (
+          /* ── Edit mode ── */
+          <>
+            <div className="sidebar-edit-header">
+              <span>Personalizar menu</span>
+            </div>
+            {orderedMenuItems.map((item, index) => {
+              const isHidden = sidebarConfig.hidden.includes(item.path);
+              const isProtected = PROTECTED_PATHS.includes(item.path);
+              return (
+                <div
+                  key={item.path}
+                  className={`sidebar-edit-item ${isHidden ? 'sidebar-edit-item-hidden' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className="sidebar-edit-vis"
+                    onClick={() => handleToggleVisibility(item.path)}
+                    disabled={isProtected}
+                    title={isProtected ? 'Sempre visível' : isHidden ? 'Mostrar' : 'Esconder'}
+                  >
+                    <FontAwesomeIcon icon={isHidden ? faEyeSlash : faEye} />
+                  </button>
+                  <span className="sidebar-edit-icon">
+                    <FontAwesomeIcon icon={item.icon} />
                   </span>
-                )}
-              </span>
-            </Link>
-          );
-        })}
+                  <span className="sidebar-edit-label">{item.label}</span>
+                  <div className="sidebar-edit-arrows">
+                    <button
+                      type="button"
+                      className="sidebar-move-btn"
+                      onClick={() => handleMoveItem(item.path, 'up')}
+                      disabled={index === 0}
+                    >
+                      <FontAwesomeIcon icon={faChevronUp} />
+                    </button>
+                    <button
+                      type="button"
+                      className="sidebar-move-btn"
+                      onClick={() => handleMoveItem(item.path, 'down')}
+                      disabled={index === orderedMenuItems.length - 1}
+                    >
+                      <FontAwesomeIcon icon={faChevronDown} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            <div className="sidebar-edit-bar">
+              <button
+                type="button"
+                className="sidebar-edit-done"
+                onClick={() => setIsCustomizing(false)}
+              >
+                <FontAwesomeIcon icon={faCheck} /> Concluir
+              </button>
+              <button
+                type="button"
+                className="sidebar-edit-reset"
+                onClick={handleResetConfig}
+              >
+                <FontAwesomeIcon icon={faRotateLeft} /> Restaurar
+              </button>
+            </div>
+          </>
+        ) : (
+          /* ── Normal mode ── */
+          orderedMenuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`sidebar-item ${isActive ? 'active' : ''}`}
+              >
+                <span className="sidebar-icon">
+                  <FontAwesomeIcon icon={item.icon} />
+                </span>
+                <span className="sidebar-label">
+                  {item.label}
+                  {item.isPremium && (
+                    <span className="sidebar-pro-badge">
+                      <FontAwesomeIcon icon={faCrown} />
+                    </span>
+                  )}
+                </span>
+              </Link>
+            );
+          })
+        )}
       </nav>
+
+      {/* Customize button */}
+      <button
+        type="button"
+        className="sidebar-customize-btn"
+        onClick={() => setIsCustomizing(!isCustomizing)}
+        title="Personalizar menu"
+      >
+        <FontAwesomeIcon icon={isCustomizing ? faCheck : faPen} />
+        <span>{isCustomizing ? 'Concluir' : 'Editar menu'}</span>
+      </button>
     </div>
   );
 }
