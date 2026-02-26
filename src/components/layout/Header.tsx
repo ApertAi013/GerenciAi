@@ -31,6 +31,7 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const arenaRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { openQuickEdit } = useQuickEditStore();
 
@@ -59,6 +60,9 @@ export default function Header() {
       }
       if (arenaRef.current && !arenaRef.current.contains(event.target as Node)) {
         setShowArenaMenu(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
       }
     };
 
@@ -319,7 +323,7 @@ export default function Header() {
         </div>
 
         {/* Menu do Usuário */}
-        <div className="header-user">
+        <div className="header-user" ref={userMenuRef}>
           <button
             className="user-button"
             onClick={() => setShowMenu(!showMenu)}
