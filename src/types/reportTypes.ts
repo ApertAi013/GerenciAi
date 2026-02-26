@@ -177,6 +177,23 @@ export interface NewEnrollment {
   plan_name: string;
 }
 
+// Payment Curve (accumulated daily payments per month)
+export interface PaymentCurvePoint {
+  day: number;
+  accumulated_cents: number;
+}
+
+export interface PaymentCurveMonth {
+  month: string;
+  label: string;
+  is_current: boolean;
+  points: PaymentCurvePoint[];
+}
+
+export interface PaymentCurveResponse {
+  curves: PaymentCurveMonth[];
+}
+
 export interface ReportsResponse<T> {
   success: boolean;
   message: string;

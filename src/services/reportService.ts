@@ -8,6 +8,7 @@ import type {
   EnrollmentStatsResponse,
   FinancialMonthlyResponse,
   CancelledEnrollment,
+  PaymentCurveResponse,
 } from '../types/reportTypes';
 
 export const reportService = {
@@ -93,6 +94,15 @@ export const reportService = {
     modality_id?: number;
   }): Promise<ReportsResponse<FinancialMonthlyResponse>> {
     const response = await api.get<ReportsResponse<FinancialMonthlyResponse>>('/api/reports/financial/monthly', { params });
+    return response.data;
+  },
+
+  // Curva de recebimento (pagamentos acumulados por dia do mês)
+  async getPaymentCurve(params?: {
+    compare_months?: number;
+    modality_id?: number;
+  }): Promise<ReportsResponse<PaymentCurveResponse>> {
+    const response = await api.get<ReportsResponse<PaymentCurveResponse>>('/api/reports/revenue/payment-curve', { params });
     return response.data;
   },
 

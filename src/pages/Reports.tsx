@@ -30,6 +30,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Area,
 } from 'recharts';
 import { useAuthStore } from '../store/authStore';
 import { reportService } from '../services/reportService';
@@ -39,7 +40,7 @@ import type { Modality } from '../types/levelTypes';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import WhatsAppTemplatePicker from '../components/WhatsAppTemplatePicker';
 import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
-import type { EnrollmentMonthlyData, FinancialMonthlyData, PlanBreakdown, ModalityBreakdown, CancelledEnrollment, NewEnrollment } from '../types/reportTypes';
+import type { EnrollmentMonthlyData, FinancialMonthlyData, PlanBreakdown, ModalityBreakdown, CancelledEnrollment, NewEnrollment, PaymentCurveMonth } from '../types/reportTypes';
 import '../styles/Reports.css';
 
 const formatCurrency = (cents: number) =>
@@ -83,6 +84,10 @@ export default function Reports() {
 
   // WhatsApp template picker
   const [showWppPicker, setShowWppPicker] = useState<number | null>(null);
+
+  // Payment curve
+  const [paymentCurve, setPaymentCurve] = useState<PaymentCurveMonth[]>([]);
+  const [compareMonths, setCompareMonths] = useState(1);
 
   // Period control
   type PeriodType = 'current' | 'previous' | '3m' | '6m' | '12m' | 'custom';
@@ -166,6 +171,23 @@ export default function Reports() {
     };
     fetchReports();
   }, [user, months, selectedModality]);
+
+  // Fetch payment curve separately (has its own compareMonths dependency)
+  useEffect(() => {
+    const fetchCurve = async () => {
+      if (!user) return;
+      try {
+        const curveParams: { compare_months: number; modality_id?: number } = { compare_months: compareMonths };
+        if (selectedModality) curveParams.modality_id = selectedModality;
+        const curveRes = await reportService.getPaymentCurve(curveParams);
+        setPaymentCurve(curveRes.data?.curves || []);
+      } catch (err) {
+        console.error('Erro ao buscar curva de recebimento:', err);
+        setPaymentCurve([]);
+      }
+    };
+    fetchCurve();
+  }, [user, compareMonths, selectedModality]);
 
   // WhatsApp helper for popups
   const handlePopupWhatsApp = (phone: string | undefined, studentName: string, itemId: number) => {
@@ -459,6 +481,112 @@ export default function Reports() {
           <div className="rpt-kpi-accent red" />
         </div>
       </div>
+
+      {/* Payment Curve */}
+      {paymentCurve.length > 0 && (() => {
+        const CURVE_COLORS = ['#10B981', '#3B82F6', '#9CA3AF', '#D1D5DB'];
+        const CURVE_WIDTHS = [3, 2, 1.5, 1.5];
+        const CURVE_DASHES = ['', '6 3', '4 3', '4 3'];
+
+        // Transform curves into recharts-compatible data: [{ day: 1, "Fev/26": 500, "Jan/26": 800 }, ...]
+        const maxDay = Math.max(...paymentCurve.flatMap(c => c.points.map(p => p.day)));
+        const curveChartData: Record<string, number | null>[] = [];
+        for (let day = 1; day <= maxDay; day++) {
+          const point: Record<string, number | null> = { day };
+          for (const curve of paymentCurve) {
+            const found = curve.points.find(p => p.day === day);
+            point[curve.label] = found ? found.accumulated_cents / 100 : null;
+          }
+          curveChartData.push(point);
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const CurveTooltipContent = ({ active, payload, label }: any) => {
+          if (!active || !payload?.length) return null;
+          const currentVal = payload[0]?.value;
+          return (
+            <div className="rpt-tooltip">
+              <p className="rpt-tooltip-label">Dia {label}</p>
+              {payload.map((entry: any, i: number) => {
+                const diff = i > 0 && currentVal != null && entry.value != null
+                  ? ((currentVal - entry.value) / entry.value) * 100
+                  : null;
+                return (
+                  <p key={i} className="rpt-tooltip-row" style={{ color: entry.color }}>
+                    <span className="rpt-tooltip-dot" style={{ background: entry.color }} />
+                    {entry.name}:{' '}
+                    <strong>
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(entry.value)}
+                    </strong>
+                    {diff != null && (
+                      <span style={{ marginLeft: 6, fontSize: '0.75rem', color: diff >= 0 ? '#10B981' : '#EF4444' }}>
+                        {diff >= 0 ? '+' : ''}{diff.toFixed(1)}%
+                      </span>
+                    )}
+                  </p>
+                );
+              })}
+            </div>
+          );
+        };
+
+        return (
+          <section className="rpt-panel">
+            <div className="rpt-panel-top">
+              <h3 className="rpt-panel-title">
+                <FontAwesomeIcon icon={faChartLine} /> Curva de Recebimento
+              </h3>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {[1, 2, 3].map(n => (
+                  <button
+                    key={n}
+                    className={`rpt-period-tab ${compareMonths === n ? 'active' : ''}`}
+                    onClick={() => setCompareMonths(n)}
+                    style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                  >
+                    {n === 1 ? '1 mês' : `${n} meses`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rpt-chart-wrap">
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={curveChartData} margin={{ top: 5, right: 20, left: -5, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fontSize: 11, fill: '#6B7280' }}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickLine={false}
+                    tickFormatter={(v: number) => `${v}`}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: '#9CA3AF' }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
+                  />
+                  <Tooltip content={<CurveTooltipContent />} />
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
+                  {paymentCurve.map((curve, idx) => (
+                    <Line
+                      key={curve.month}
+                      type="monotone"
+                      dataKey={curve.label}
+                      stroke={CURVE_COLORS[idx] || '#D1D5DB'}
+                      strokeWidth={CURVE_WIDTHS[idx] || 1.5}
+                      strokeDasharray={CURVE_DASHES[idx] || '4 3'}
+                      dot={false}
+                      activeDot={idx === 0 ? { r: 5, strokeWidth: 2, stroke: '#fff', fill: CURVE_COLORS[0] } : { r: 3 }}
+                      connectNulls={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Row 1: Receita Mensal + Ticket Médio */}
       <div className="rpt-grid-2">
