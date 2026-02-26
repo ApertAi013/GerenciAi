@@ -755,7 +755,7 @@ function BulkAdjustModal({
                     </span>
                     {selectedPlanIds.includes(plan.id) && adjustmentValue ? (
                       <span style={{ color: '#4CAF50', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                        -> R$ {(calculateNewPrice(plan.price_cents) / 100).toFixed(2).replace('.', ',')}
+                        {'→'} R$ {(calculateNewPrice(plan.price_cents) / 100).toFixed(2).replace('.', ',')}
                       </span>
                     ) : (
                       <span style={{ minWidth: '100px' }}></span>
