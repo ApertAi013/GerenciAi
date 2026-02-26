@@ -72,7 +72,7 @@ export const arenaService = {
     return response.data;
   },
 
-  async getDashboard(params?: { months?: number }): Promise<ArenaDashboardResponse> {
+  async getDashboard(params?: { months?: number; startMonth?: string; endMonth?: string; modalityId?: number }): Promise<ArenaDashboardResponse> {
     const response = await api.get<ArenaDashboardResponse>('/api/arenas/dashboard', { params });
     return response.data;
   },

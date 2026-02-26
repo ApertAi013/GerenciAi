@@ -4,6 +4,7 @@ import { faBuilding, faUsers, faUserGroup, faPen, faPowerOff, faArrowRightToBrac
 import { ComposedChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { arenaService } from '../services/arenaService';
 import type { ArenaDashboardData } from '../services/arenaService';
+import { modalityService } from '../services/modalityService';
 import { useAuthStore } from '../store/authStore';
 import type { Arena } from '../types/authTypes';
 
@@ -37,23 +38,51 @@ export default function Arenas() {
   const [dashboard, setDashboard] = useState<ArenaDashboardData | null>(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState('');
-  const [monthsFilter, setMonthsFilter] = useState(6);
+  const [filterMode, setFilterMode] = useState<'current' | '3m' | '6m' | '12m' | 'custom'>('6m');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const [selectedModalityId, setSelectedModalityId] = useState<number | null>(null);
+  const [modalities, setModalities] = useState<{ id: number; name: string }[]>([]);
 
   useEffect(() => {
     fetchArenas();
+    // Load modalities for filter
+    modalityService.getModalities().then(res => {
+      if (res.status === 'success' && res.data) {
+        setModalities(res.data.map((m: any) => ({ id: m.id, name: m.name })));
+      }
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (arenas.length > 0) {
+      // Don't fetch if custom mode without both dates
+      if (filterMode === 'custom' && (!customStart || !customEnd)) return;
       fetchDashboard();
     }
-  }, [arenas.length, monthsFilter]);
+  }, [arenas.length, filterMode, customStart, customEnd, selectedModalityId]);
 
   const fetchDashboard = async () => {
     try {
       setDashboardLoading(true);
       setDashboardError('');
-      const response = await arenaService.getDashboard({ months: monthsFilter });
+      const params: { months?: number; startMonth?: string; endMonth?: string; modalityId?: number } = {};
+
+      if (filterMode === 'current') {
+        const now = new Date();
+        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        params.startMonth = month;
+        params.endMonth = month;
+      } else if (filterMode === 'custom' && customStart && customEnd) {
+        params.startMonth = customStart;
+        params.endMonth = customEnd;
+      } else {
+        params.months = filterMode === '3m' ? 3 : filterMode === '12m' ? 12 : 6;
+      }
+
+      if (selectedModalityId) params.modalityId = selectedModalityId;
+
+      const response = await arenaService.getDashboard(params);
       if (response.status === 'success' && response.data) {
         setDashboard(response.data);
       }
@@ -234,26 +263,59 @@ export default function Arenas() {
       {/* Cross-Arena Dashboard */}
       {arenas.length > 0 && dashboard && (
         <div style={{ marginBottom: '40px' }}>
-          {/* Period filter */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+          {/* Filters */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
             <FontAwesomeIcon icon={faChartBar} style={{ color: '#FF9900', fontSize: '16px' }} />
             <span style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a1a' }}>Visao Geral</span>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
-              {[
-                { label: '3m', value: 3 },
-                { label: '6m', value: 6 },
-                { label: '12m', value: 12 },
-              ].map(p => (
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Modality filter */}
+              {modalities.length > 0 && (
+                <select
+                  value={selectedModalityId || ''}
+                  onChange={(e) => setSelectedModalityId(e.target.value ? Number(e.target.value) : null)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '20px',
+                    border: selectedModalityId ? '1px solid #FF9900' : '1px solid #E5E5E5',
+                    background: selectedModalityId ? '#FFF3E0' : 'white',
+                    color: selectedModalityId ? '#FF9900' : '#737373',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    marginRight: '8px',
+                    appearance: 'none' as const,
+                    paddingRight: '24px',
+                    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'6\'%3E%3Cpath d=\'M0 0l5 6 5-6z\' fill=\'%23737373\'/%3E%3C/svg%3E")',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 8px center',
+                  }}
+                >
+                  <option value="">Todas Modalidades</option>
+                  {modalities.map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Period filter buttons */}
+              {([
+                { label: 'Mes Atual', value: 'current' as const },
+                { label: '3m', value: '3m' as const },
+                { label: '6m', value: '6m' as const },
+                { label: '12m', value: '12m' as const },
+                { label: 'Personalizado', value: 'custom' as const },
+              ]).map(p => (
                 <button
                   key={p.value}
                   type="button"
-                  onClick={() => setMonthsFilter(p.value)}
+                  onClick={() => setFilterMode(p.value)}
                   style={{
                     padding: '6px 14px',
                     borderRadius: '20px',
-                    border: monthsFilter === p.value ? '1px solid #FF9900' : '1px solid #E5E5E5',
-                    background: monthsFilter === p.value ? '#FFF3E0' : 'white',
-                    color: monthsFilter === p.value ? '#FF9900' : '#737373',
+                    border: filterMode === p.value ? '1px solid #FF9900' : '1px solid #E5E5E5',
+                    background: filterMode === p.value ? '#FFF3E0' : 'white',
+                    color: filterMode === p.value ? '#FF9900' : '#737373',
                     fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -265,6 +327,39 @@ export default function Arenas() {
               ))}
             </div>
           </div>
+
+          {/* Custom date range */}
+          {filterMode === 'custom' && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '20px' }}>
+              <input
+                type="month"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #E5E5E5',
+                  fontSize: '13px',
+                  fontFamily: 'inherit',
+                  color: '#404040',
+                }}
+              />
+              <span style={{ color: '#A3A3A3', fontSize: '13px' }}>ate</span>
+              <input
+                type="month"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #E5E5E5',
+                  fontSize: '13px',
+                  fontFamily: 'inherit',
+                  color: '#404040',
+                }}
+              />
+            </div>
+          )}
 
           {/* KPI Cards */}
           <div style={{
