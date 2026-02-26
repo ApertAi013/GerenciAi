@@ -1182,11 +1182,37 @@
 }
 
 .vagas-level-turmas {
-  padding: 10px 12px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   background: #fafafa;
+}
+
+.vagas-item-clickable {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+
+.vagas-item-clickable:hover {
+  background: white;
+  border-color: var(--border-light);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.vagas-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.vagas-mod-schedule {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 /* ===== ALUNOS POR NÍVEL ===== */

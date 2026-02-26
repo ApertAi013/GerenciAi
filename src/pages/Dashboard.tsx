@@ -51,6 +51,7 @@ import { announcementService } from '../services/announcementService';
 import type { Announcement } from '../services/announcementService';
 import { referralService } from '../services/referralService';
 import ReferralModal from '../components/ReferralModal';
+import CreateClassModal from '../components/CreateClassModal';
 import type { Invoice } from '../types/financialTypes';
 import type { Class, Modality } from '../types/classTypes';
 import type { Enrollment } from '../types/enrollmentTypes';
@@ -106,6 +107,10 @@ const getTodayKey = () => {
 const getTodayWeekday = () => {
   const days = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
   return days[new Date().getDay()];
+};
+
+const weekdayShort: Record<string, string> = {
+  dom: 'Dom', seg: 'Seg', ter: 'Ter', qua: 'Qua', qui: 'Qui', sex: 'Sex', sab: 'Sáb',
 };
 
 interface StudentData {
@@ -190,6 +195,10 @@ export default function Dashboard() {
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
   const [announceSent, setAnnounceSent] = useState(false);
   const [announceError, setAnnounceError] = useState('');
+
+  // Class edit modal
+  const [editingClass, setEditingClass] = useState<Class | undefined>(undefined);
+  const [showClassModal, setShowClassModal] = useState(false);
 
   // Referral carousel
   const [carouselSlide, setCarouselSlide] = useState(0);
@@ -385,6 +394,7 @@ export default function Dashboard() {
   const vagasData = useMemo(() => {
     const activeClasses = classes
       .filter(c => c.status === 'ativa' && (c.capacity || 0) > 0)
+      .filter(c => !selectedModality || c.modality_id === selectedModality)
       .map(c => ({
         id: c.id,
         name: c.name || c.modality_name || 'Turma',
@@ -395,6 +405,9 @@ export default function Dashboard() {
           : 0,
         allowedLevels: c.allowed_levels || [],
         color: c.color,
+        weekday: c.weekday,
+        startTime: c.start_time?.substring(0, 5) || '',
+        endTime: c.end_time?.substring(0, 5) || '',
       }))
       .sort((a, b) => b.pct - a.pct);
 
@@ -431,11 +444,27 @@ export default function Dashboard() {
       .sort((a, b) => a.order - b.order);
 
     return { turmas: activeClasses, groups, totalCap, totalEnr, totalPct };
-  }, [classes, levels]);
+  }, [classes, levels, selectedModality]);
 
   // ── Alunos por Nível ──
   const levelsData = useMemo(() => {
-    const activeStudents = students.filter((s: any) => s.status === 'ativo');
+    // When modality is filtered, only count students with active enrollments in that modality
+    let relevantStudentIds: Set<number> | null = null;
+    if (selectedModality && modalityClassIds) {
+      relevantStudentIds = new Set<number>();
+      filteredEnrollments
+        .filter(e => e.status === 'ativa')
+        .forEach(e => {
+          if ((e as any).student_id) relevantStudentIds!.add((e as any).student_id);
+        });
+    }
+
+    const activeStudents = students.filter((s: any) => {
+      if (s.status !== 'ativo') return false;
+      if (relevantStudentIds) return relevantStudentIds.has(s.id);
+      return true;
+    });
+
     const countByLevel = new Map<string, { count: number; color?: string }>();
 
     levels.forEach(lvl => {
@@ -463,7 +492,7 @@ export default function Dashboard() {
         };
       })
       .sort((a, b) => a.order - b.order);
-  }, [students, levels]);
+  }, [students, levels, selectedModality, modalityClassIds, filteredEnrollments]);
 
   // ── Mini Agenda (today) ──
   const todaySchedule = useMemo(() => {
@@ -471,6 +500,7 @@ export default function Dashboard() {
 
     const todayClasses = classes
       .filter(c => c.weekday === weekday && c.status === 'ativa')
+      .filter(c => !selectedModality || c.modality_id === selectedModality)
       .map(c => ({
         id: `class-${c.id}`,
         time: c.start_time.substring(0, 5),
@@ -496,7 +526,7 @@ export default function Dashboard() {
       .sort((a, b) => a.time.localeCompare(b.time));
 
     return [...todayClasses, ...todayRentals].sort((a, b) => a.time.localeCompare(b.time));
-  }, [classes, rentals]);
+  }, [classes, rentals, selectedModality]);
 
   // ── Overdue Invoices ──
   const overdueInvoices = useMemo(() =>
@@ -707,6 +737,23 @@ export default function Dashboard() {
 
       {/* Referral Modal */}
       <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} />
+
+      {/* Class Edit Modal */}
+      {showClassModal && (
+        <CreateClassModal
+          modalities={modalities}
+          editClass={editingClass}
+          onClose={() => {
+            setShowClassModal(false);
+            setEditingClass(undefined);
+          }}
+          onSuccess={() => {
+            setShowClassModal(false);
+            setEditingClass(undefined);
+            fetchData();
+          }}
+        />
+      )}
 
       {/* ── Filtros ── */}
       <div className="dash-filter-bar">
@@ -951,9 +998,24 @@ export default function Dashboard() {
                   {expandedLevels.has(group.levelName) && (
                     <div className="vagas-level-turmas">
                       {group.turmas.map(turma => (
-                        <div key={turma.id} className="vagas-item">
+                        <div
+                          key={turma.id}
+                          className="vagas-item vagas-item-clickable"
+                          onClick={() => {
+                            const cls = classes.find(c => c.id === turma.id);
+                            if (cls) {
+                              setEditingClass(cls);
+                              setShowClassModal(true);
+                            }
+                          }}
+                        >
                           <div className="vagas-item-row">
-                            <span className="vagas-mod-name">{turma.name}</span>
+                            <div className="vagas-item-info">
+                              <span className="vagas-mod-name">{turma.name}</span>
+                              <span className="vagas-mod-schedule">
+                                {weekdayShort[turma.weekday] || turma.weekday} {turma.startTime}{turma.endTime ? `-${turma.endTime}` : ''}
+                              </span>
+                            </div>
                             <span className="vagas-mod-nums">{turma.enrolled}/{turma.capacity}</span>
                           </div>
                           <div className="progress-track">
@@ -1000,7 +1062,7 @@ export default function Dashboard() {
 
             <div className="levels-total">
               <span>Total de alunos ativos</span>
-              <strong>{students.filter((s: any) => s.status === 'ativo').length}</strong>
+              <strong>{levelsData.reduce((sum, lvl) => sum + lvl.count, 0)}</strong>
             </div>
 
             {levelsData.length > LEVELS_COLLAPSED_COUNT && (
