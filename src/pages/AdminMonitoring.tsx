@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faServer,
@@ -13,6 +14,7 @@ import {
   faGauge,
   faFileInvoiceDollar,
   faArrowUp,
+  faPlay,
 } from '@fortawesome/free-solid-svg-icons';
 import toast from 'react-hot-toast';
 import {
@@ -53,6 +55,7 @@ const COLORS = {
 };
 
 export default function AdminMonitoring() {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   type MainTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades' | 'metricas' | 'usuarios';
   const [mainTab, setMainTab] = useState<MainTab>('dashboard');
@@ -238,12 +241,21 @@ export default function AdminMonitoring() {
           <h1>Gerenciador</h1>
           <p>Gerenciamento de sistema e usuários</p>
         </div>
-        {mainTab === 'metricas' && (
-          <button className="btn-refresh" onClick={handleRefresh} disabled={refreshing}>
-            <FontAwesomeIcon icon={faRefresh} spin={refreshing} />
-            {refreshing ? 'Atualizando...' : 'Atualizar'}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            className="btn-refresh"
+            onClick={() => navigate('/onboarding')}
+            style={{ background: 'linear-gradient(135deg, #f04f28, #ff6b35)', borderColor: 'transparent' }}
+          >
+            <FontAwesomeIcon icon={faPlay} /> Testar Onboarding
           </button>
-        )}
+          {mainTab === 'metricas' && (
+            <button className="btn-refresh" onClick={handleRefresh} disabled={refreshing}>
+              <FontAwesomeIcon icon={faRefresh} spin={refreshing} />
+              {refreshing ? 'Atualizando...' : 'Atualizar'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Tabs — single level */}

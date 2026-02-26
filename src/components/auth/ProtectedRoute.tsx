@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router';
+import { Outlet, useNavigate, useLocation } from 'react-router';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import '../../styles/Loading.css';
 
 export default function ProtectedRoute() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, setAuth, setLoading, isLoading, user } = useAuthStore();
 
   useEffect(() => {
@@ -17,10 +18,12 @@ export default function ProtectedRoute() {
         return;
       }
 
-      // Se já tem usuário carregado, verificar billing_status
+      // Se já tem usuário carregado, verificar billing_status e onboarding
       if (user) {
         if (user.billing_status === 'blocked') {
           navigate('/billing-blocked');
+        } else if (user.role === 'gestor' && !user.onboarding_completed && location.pathname !== '/onboarding') {
+          navigate('/onboarding');
         }
         return;
       }
@@ -42,6 +45,12 @@ export default function ProtectedRoute() {
             navigate('/billing-blocked');
             return;
           }
+
+          // Redirect new gestors to onboarding
+          if (userData.role === 'gestor' && !userData.onboarding_completed && location.pathname !== '/onboarding') {
+            navigate('/onboarding');
+            return;
+          }
         } else {
           throw new Error('Falha na autenticação');
         }
@@ -55,7 +64,7 @@ export default function ProtectedRoute() {
     };
 
     verifyAuth();
-  }, [navigate, setAuth, setLoading, user]);
+  }, [navigate, setAuth, setLoading, user, location.pathname]);
 
   if (isLoading) {
     return (

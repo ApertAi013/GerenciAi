@@ -50,6 +50,7 @@ import ResetPassword from './pages/ResetPassword'
 import Arenas from './pages/Arenas'
 import SystemGuide from './pages/SystemGuide'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import Onboarding from './pages/Onboarding'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import FeatureProtectedRoute from './components/auth/FeatureProtectedRoute'
 import Layout from './components/layout/Layout'
@@ -112,6 +113,7 @@ export default function App() {
         <Route path="/billing-blocked" element={<BillingBlocked />} />
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/agenda" element={<Schedule />} />

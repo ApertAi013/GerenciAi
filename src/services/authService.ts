@@ -42,6 +42,12 @@ export const authService = {
     return response.data;
   },
 
+  // Completar onboarding
+  async completeOnboarding(): Promise<{ status: string; message: string }> {
+    const response = await api.put('/api/auth/complete-onboarding');
+    return response.data;
+  },
+
   // Trocar senha
   async changePassword(data: { current_password: string; new_password: string }): Promise<{ status: string; message: string }> {
     const response = await api.put('/api/auth/change-password', data);
