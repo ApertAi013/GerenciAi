@@ -885,7 +885,8 @@ export default function Onboarding() {
         )}
       </div>
 
-      {/* Create Court */}
+      {/* Create Court — only after creating a modality */}
+      {createdModalities.length > 0 && (
       <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '4px', color: '#FF9900' }}>
           <FontAwesomeIcon icon={faBuilding} style={{ marginRight: '8px' }} />
@@ -923,9 +924,10 @@ export default function Onboarding() {
           </div>
         )}
       </div>
+      )}
 
-      {/* Create Class */}
-      {createdModalities.length > 0 && (
+      {/* Create Class — only after creating a modality AND a court */}
+      {createdModalities.length > 0 && createdCourts.length > 0 && (
         <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '12px', color: '#FF9900' }}>
             <FontAwesomeIcon icon={faClock} style={{ marginRight: '8px' }} />
@@ -1107,7 +1109,11 @@ export default function Onboarding() {
         <button style={styles.secondaryBtn} onClick={prev}>
           <FontAwesomeIcon icon={faArrowLeft} /> Voltar
         </button>
-        <button style={styles.primaryBtn} onClick={next}>
+        <button
+          style={{ ...styles.primaryBtn, opacity: createdModalities.length > 0 && createdCourts.length > 0 && createdClasses.length > 0 ? 1 : 0.5 }}
+          onClick={next}
+          disabled={createdModalities.length === 0 || createdCourts.length === 0 || createdClasses.length === 0}
+        >
           Próximo <FontAwesomeIcon icon={faArrowRight} />
         </button>
       </div>
