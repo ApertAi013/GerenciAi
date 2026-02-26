@@ -29,6 +29,7 @@ interface DashboardData {
   gestores: { total: number; active: number; trial: number; blocked: number; past_due: number };
   mrr_cents: number;
   mrr_reais: number;
+  active_paid_subscriptions: number;
   overdue_total_cents: number;
   pending_upgrade_requests: number;
 }
@@ -100,7 +101,12 @@ interface Addon {
   is_bundle: boolean;
 }
 
-type SubTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades';
+export type BillingSubTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades';
+
+interface AdminBillingProps {
+  forcedTab?: BillingSubTab;
+  hideTabBar?: boolean;
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -334,8 +340,9 @@ const styles = {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export default function AdminBilling() {
-  const [activeTab, setActiveTab] = useState<SubTab>('dashboard');
+export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProps = {}) {
+  const [internalTab, setInternalTab] = useState<BillingSubTab>('dashboard');
+  const activeTab = forcedTab ?? internalTab;
   const [loading, setLoading] = useState(false);
 
   // Dashboard
@@ -631,10 +638,11 @@ export default function AdminBilling() {
 
     const g = dashboardData.gestores;
     const cards = [
-      { label: 'MRR', value: formatBRL(dashboardData.mrr_cents), icon: faDollarSign, accent: '#10B981' },
-      { label: 'Gestores Ativos', value: g.active, icon: faUsers, accent: '#3B82F6' },
+      { label: 'MRR', value: formatBRL(dashboardData.mrr_cents), sublabel: `${dashboardData.active_paid_subscriptions || 0} assinaturas pagas`, icon: faDollarSign, accent: '#10B981' },
+      { label: 'Gestores Total', value: g.total, sublabel: `${g.active} ativos`, icon: faUsers, accent: '#3B82F6' },
       { label: 'Trial', value: g.trial, icon: faClock, accent: '#8B5CF6' },
       { label: 'Inadimplentes', value: g.past_due + g.blocked, icon: faExclamationTriangle, accent: '#EF4444' },
+      { label: 'Inadimplência', value: formatBRL(dashboardData.overdue_total_cents), icon: faExclamationTriangle, accent: '#DC2626' },
       { label: 'Requests Pendentes', value: dashboardData.pending_upgrade_requests, icon: faArrowUp, accent: '#F59E0B' },
     ];
 
@@ -648,6 +656,9 @@ export default function AdminBilling() {
             <div>
               <p style={styles.statValue}>{c.value}</p>
               <p style={styles.statLabel}>{c.label}</p>
+              {'sublabel' in c && c.sublabel && (
+                <p style={{ ...styles.statLabel, fontSize: '0.72rem', marginTop: '0.15rem' }}>{c.sublabel}</p>
+              )}
             </div>
           </div>
         ))}
@@ -1200,21 +1211,23 @@ export default function AdminBilling() {
 
   return (
     <div style={styles.container}>
-      {/* Sub-tabs */}
-      <div style={styles.subtabs}>
-        <button style={styles.subtab(activeTab === 'dashboard')} onClick={() => setActiveTab('dashboard')}>
-          <FontAwesomeIcon icon={faDollarSign} /> Dashboard
-        </button>
-        <button style={styles.subtab(activeTab === 'gestores')} onClick={() => setActiveTab('gestores')}>
-          <FontAwesomeIcon icon={faUsers} /> Gestores
-        </button>
-        <button style={styles.subtab(activeTab === 'faturas')} onClick={() => setActiveTab('faturas')}>
-          <FontAwesomeIcon icon={faFileInvoiceDollar} /> Faturas
-        </button>
-        <button style={styles.subtab(activeTab === 'upgrades')} onClick={() => setActiveTab('upgrades')}>
-          <FontAwesomeIcon icon={faArrowUp} /> Upgrade Requests
-        </button>
-      </div>
+      {/* Sub-tabs (hidden when controlled externally) */}
+      {!hideTabBar && (
+        <div style={styles.subtabs}>
+          <button style={styles.subtab(activeTab === 'dashboard')} onClick={() => setInternalTab('dashboard')}>
+            <FontAwesomeIcon icon={faDollarSign} /> Dashboard
+          </button>
+          <button style={styles.subtab(activeTab === 'gestores')} onClick={() => setInternalTab('gestores')}>
+            <FontAwesomeIcon icon={faUsers} /> Gestores
+          </button>
+          <button style={styles.subtab(activeTab === 'faturas')} onClick={() => setInternalTab('faturas')}>
+            <FontAwesomeIcon icon={faFileInvoiceDollar} /> Faturas
+          </button>
+          <button style={styles.subtab(activeTab === 'upgrades')} onClick={() => setInternalTab('upgrades')}>
+            <FontAwesomeIcon icon={faArrowUp} /> Upgrade Requests
+          </button>
+        </div>
+      )}
 
       {/* Tab content */}
       {activeTab === 'dashboard' && renderDashboard()}

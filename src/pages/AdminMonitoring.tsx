@@ -11,6 +11,8 @@ import {
   faExclamationTriangle,
   faCog,
   faGauge,
+  faFileInvoiceDollar,
+  faArrowUp,
 } from '@fortawesome/free-solid-svg-icons';
 import toast from 'react-hot-toast';
 import {
@@ -33,6 +35,7 @@ import { useAuthStore } from '../store/authStore';
 import { monitoringService } from '../services/monitoringService';
 import UserManagement from '../components/UserManagement';
 import AdminBilling from '../components/AdminBilling';
+import type { BillingSubTab } from '../components/AdminBilling';
 import type {
   DashboardMetrics,
   GCPMetrics,
@@ -51,7 +54,8 @@ const COLORS = {
 
 export default function AdminMonitoring() {
   const { user } = useAuthStore();
-  const [mainTab, setMainTab] = useState<'billing' | 'metricas' | 'features'>('billing');
+  type MainTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades' | 'metricas' | 'usuarios';
+  const [mainTab, setMainTab] = useState<MainTab>('dashboard');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'gcp' | 'health'>('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -242,23 +246,41 @@ export default function AdminMonitoring() {
         )}
       </div>
 
-      {/* Main Tabs */}
+      {/* Main Tabs — single level */}
       <div className="monitoring-tabs main-tabs">
         <button
-          className={`tab ${mainTab === 'billing' ? 'active' : ''}`}
-          onClick={() => setMainTab('billing')}
+          className={`tab ${mainTab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setMainTab('dashboard')}
         >
-          <FontAwesomeIcon icon={faChartLine} /> Billing
+          <FontAwesomeIcon icon={faChartLine} /> Dashboard
+        </button>
+        <button
+          className={`tab ${mainTab === 'gestores' ? 'active' : ''}`}
+          onClick={() => setMainTab('gestores')}
+        >
+          <FontAwesomeIcon icon={faUsers} /> Gestores
+        </button>
+        <button
+          className={`tab ${mainTab === 'faturas' ? 'active' : ''}`}
+          onClick={() => setMainTab('faturas')}
+        >
+          <FontAwesomeIcon icon={faFileInvoiceDollar} /> Faturas
+        </button>
+        <button
+          className={`tab ${mainTab === 'upgrades' ? 'active' : ''}`}
+          onClick={() => setMainTab('upgrades')}
+        >
+          <FontAwesomeIcon icon={faArrowUp} /> Upgrades
         </button>
         <button
           className={`tab ${mainTab === 'metricas' ? 'active' : ''}`}
           onClick={() => setMainTab('metricas')}
         >
-          <FontAwesomeIcon icon={faGauge} /> Metricas
+          <FontAwesomeIcon icon={faGauge} /> Métricas
         </button>
         <button
-          className={`tab ${mainTab === 'features' ? 'active' : ''}`}
-          onClick={() => setMainTab('features')}
+          className={`tab ${mainTab === 'usuarios' ? 'active' : ''}`}
+          onClick={() => setMainTab('usuarios')}
         >
           <FontAwesomeIcon icon={faCog} /> Usuários
         </button>
@@ -266,9 +288,9 @@ export default function AdminMonitoring() {
 
       {/* Content */}
       <div className="monitoring-content">
-        {/* Billing Tab */}
-        {mainTab === 'billing' && (
-          <AdminBilling />
+        {/* Billing tabs — controlled externally */}
+        {(mainTab === 'dashboard' || mainTab === 'gestores' || mainTab === 'faturas' || mainTab === 'upgrades') && (
+          <AdminBilling forcedTab={mainTab as BillingSubTab} hideTabBar />
         )}
 
         {/* Metricas Tab */}
@@ -707,8 +729,8 @@ export default function AdminMonitoring() {
           </>
         )}
 
-        {/* Features Tab - User Management */}
-        {mainTab === 'features' && (
+        {/* Usuarios Tab - User Management */}
+        {mainTab === 'usuarios' && (
           <UserManagement />
         )}
       </div>
