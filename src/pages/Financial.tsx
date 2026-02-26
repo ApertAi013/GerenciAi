@@ -71,10 +71,11 @@ export default function Financial() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Personalização de colunas
-  type ColumnKey = 'id' | 'student_name' | 'plan_name' | 'level' | 'reference_month' | 'due_date' | 'final_amount_cents' | 'paid' | 'paid_at' | 'payment_method' | 'status' | 'actions';
+  type ColumnKey = 'id' | 'student_name' | 'phone' | 'plan_name' | 'level' | 'reference_month' | 'due_date' | 'final_amount_cents' | 'paid' | 'paid_at' | 'payment_method' | 'status' | 'actions';
   const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
     { key: 'id', label: 'ID' },
     { key: 'student_name', label: 'Aluno' },
+    { key: 'phone', label: 'Telefone' },
     { key: 'plan_name', label: 'Plano' },
     { key: 'level', label: 'Nível' },
     { key: 'reference_month', label: 'Referência' },
@@ -88,14 +89,17 @@ export default function Financial() {
   ];
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(() => {
     const saved = localStorage.getItem('financial_visible_columns');
+    const savedKnown = localStorage.getItem('financial_known_columns');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Ensure new columns are included if not present
         const allKeys = ALL_COLUMNS.map(c => c.key);
         const validKeys = parsed.filter((k: string) => allKeys.includes(k as ColumnKey));
-        // Add any new columns that weren't in the saved config
-        allKeys.forEach(k => { if (!validKeys.includes(k)) validKeys.push(k); });
+        // Only auto-add columns that are truly new (not known at last save time)
+        const knownKeys: string[] = savedKnown ? JSON.parse(savedKnown) : [];
+        allKeys.forEach(k => {
+          if (!validKeys.includes(k) && !knownKeys.includes(k)) validKeys.push(k);
+        });
         return validKeys;
       } catch { return ALL_COLUMNS.map(c => c.key); }
     }
@@ -107,6 +111,7 @@ export default function Financial() {
     setVisibleColumns(prev => {
       const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
       localStorage.setItem('financial_visible_columns', JSON.stringify(next));
+      localStorage.setItem('financial_known_columns', JSON.stringify(ALL_COLUMNS.map(c => c.key)));
       return next;
     });
   };
@@ -1031,6 +1036,7 @@ export default function Financial() {
                   Aluno {renderSortIndicator('student_name')}
                 </th>
               )}
+              {isColumnVisible('phone') && <th>Telefone</th>}
               {isColumnVisible('plan_name') && <th>Plano</th>}
               {isColumnVisible('level') && (
                 <th onClick={() => handleSort('level_name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
@@ -1147,6 +1153,9 @@ export default function Financial() {
                         <FontAwesomeIcon icon={faExternalLinkAlt} style={{ fontSize: '10px', opacity: 0.5 }} />
                       </span>
                     </td>
+                    )}
+                    {isColumnVisible('phone') && (
+                    <td>{invoice.student_phone || '-'}</td>
                     )}
                     {isColumnVisible('plan_name') && (
                     <td>
