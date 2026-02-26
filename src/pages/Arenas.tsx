@@ -43,7 +43,7 @@ export default function Arenas() {
   }, []);
 
   useEffect(() => {
-    if (arenas.length >= 2) {
+    if (arenas.length > 0) {
       fetchDashboard();
     }
   }, [arenas.length, monthsFilter]);
@@ -214,7 +214,7 @@ export default function Arenas() {
       {error && <div className="error-message">{error}</div>}
 
       {/* Cross-Arena Dashboard */}
-      {arenas.length >= 2 && dashboard && (
+      {arenas.length > 0 && dashboard && (
         <div style={{ marginBottom: '40px' }}>
           {/* Period filter */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
