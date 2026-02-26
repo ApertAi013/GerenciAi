@@ -1073,6 +1073,14 @@ export default function QuickEditStudentModal() {
                               <span className="qe-invoice-amount">{formatCurrency(invoice.final_amount_cents)}</span>
                               <span className={`qe-badge qe-badge-${invoice.status}`}>{invoice.status}</span>
                             </div>
+                            {invoice.status === 'paga' && (
+                              <div style={{ fontSize: '11px', color: '#10b981', marginTop: '2px', paddingLeft: '2px' }}>
+                                {invoice.paid_at ? `Pago em ${formatDate(invoice.paid_at)}` : 'Pago'}
+                                {invoice.payment_method ? ` · ${
+                                  ({ pix: 'PIX', cartao: 'Cartão', dinheiro: 'Dinheiro', boleto: 'Boleto', outro: 'Outro' } as Record<string, string>)[invoice.payment_method] || invoice.payment_method
+                                }` : ''}
+                              </div>
+                            )}
                             {(invoice.status === 'aberta' || invoice.status === 'vencida') && payingInvoiceId !== invoice.id && (
                               <button
                                 className="qe-btn qe-btn-success qe-btn-sm"

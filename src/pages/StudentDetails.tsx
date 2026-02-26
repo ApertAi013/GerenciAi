@@ -755,6 +755,7 @@ export default function StudentDetails() {
                       <th>Valor Final</th>
                       <th>Pago</th>
                       <th>Método</th>
+                      <th>Pago em</th>
                       <th>Status</th>
                       <th>Ações</th>
                     </tr>
@@ -770,6 +771,7 @@ export default function StudentDetails() {
                         <td><strong>{formatCurrency(invoice.final_amount_cents)}</strong></td>
                         <td>{invoice.paid_amount_cents ? formatCurrency(invoice.paid_amount_cents) : '--'}</td>
                         <td>{translatePaymentMethod(invoice.payment_method)}</td>
+                        <td>{invoice.paid_at ? new Date(invoice.paid_at.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR') : '--'}</td>
                         <td>
                           <span className={`status-badge status-${invoice.status}`}>
                             {translateStatus(invoice.status)}

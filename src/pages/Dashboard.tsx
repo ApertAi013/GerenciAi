@@ -132,6 +132,50 @@ export default function Dashboard() {
 
   // Filter state
   const [selectedModality, setSelectedModality] = useState<number | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('current');
+  const [customRange, setCustomRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
+
+  // Period filter helper
+  const selectedMonths = useMemo(() => {
+    const now = new Date();
+    switch (selectedPeriod) {
+      case 'previous': {
+        const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return [`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`];
+      }
+      case '3m': return getLastMonths(3).map(m => m.key);
+      case '6m': return getLastMonths(6).map(m => m.key);
+      case '12m': return getLastMonths(12).map(m => m.key);
+      case 'custom': {
+        if (!customRange.start || !customRange.end) return [getCurrentMonth()];
+        const months: string[] = [];
+        const [sy, sm] = customRange.start.split('-').map(Number);
+        const [ey, em] = customRange.end.split('-').map(Number);
+        let d = new Date(sy, sm - 1, 1);
+        const end = new Date(ey, em - 1, 1);
+        while (d <= end) {
+          months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+          d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+        }
+        return months.length > 0 ? months : [getCurrentMonth()];
+      }
+      default: return [getCurrentMonth()]; // 'current'
+    }
+  }, [selectedPeriod, customRange]);
+
+  const periodLabel = useMemo(() => {
+    switch (selectedPeriod) {
+      case 'previous': return 'Mês anterior';
+      case '3m': return 'Últimos 3 meses';
+      case '6m': return 'Últimos 6 meses';
+      case '12m': return 'Últimos 12 meses';
+      case 'custom': return customRange.start && customRange.end ? `${customRange.start} a ${customRange.end}` : 'Personalizado';
+      default: {
+        const now = new Date();
+        return now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      }
+    }
+  }, [selectedPeriod, customRange]);
 
   // Expand/collapse states
   const [vagasExpanded, setVagasExpanded] = useState(false);
@@ -264,25 +308,23 @@ export default function Dashboard() {
 
   // ── Enrollment Stats ──
   const enrollmentStats = useMemo(() => {
-    const currentMonth = getCurrentMonth();
     const ativas = filteredEnrollments.filter(e => e.status === 'ativa').length;
     const canceladas = filteredEnrollments.filter(e => {
       if (e.status !== 'cancelada') return false;
       const date = (e as any).updated_at || e.created_at || e.start_date;
-      return date && date.substring(0, 7) === currentMonth;
+      return date && selectedMonths.includes(date.substring(0, 7));
     }).length;
     const novas = filteredEnrollments.filter(e => {
       const date = e.created_at || e.start_date;
-      return date && date.substring(0, 7) === currentMonth;
+      return date && selectedMonths.includes(date.substring(0, 7));
     }).length;
     return { ativas, canceladas, novas };
-  }, [filteredEnrollments]);
+  }, [filteredEnrollments, selectedMonths]);
 
-  // ── Financial Stats (current month) ──
+  // ── Financial Stats (selected period) ──
   const financialStats = useMemo(() => {
-    const currentMonth = getCurrentMonth();
     const srcInvoices = selectedModality ? filteredInvoices : invoices;
-    const monthInvoices = srcInvoices.filter(inv => inv.reference_month === currentMonth && inv.status !== 'cancelada' && inv.status !== 'estornada');
+    const monthInvoices = srcInvoices.filter(inv => selectedMonths.includes(inv.reference_month) && inv.status !== 'cancelada' && inv.status !== 'estornada');
 
     const total = monthInvoices.reduce((s, inv) => {
       if (inv.status === 'paga') return s + Number(inv.paid_amount_cents || 0);
@@ -310,7 +352,7 @@ export default function Dashboard() {
       toReceive: pendingTotal + overdueTotal,
       toReceiveCount: pendingCount + overdueCount,
     };
-  }, [invoices, filteredInvoices, selectedModality]);
+  }, [invoices, filteredInvoices, selectedModality, selectedMonths]);
 
   // ── Chart Data (last 6 months) ──
   const chartData = useMemo(() => {
@@ -666,9 +708,17 @@ export default function Dashboard() {
       {/* Referral Modal */}
       <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} />
 
-      {/* ── Filtro de Modalidade ── */}
+      {/* ── Filtros ── */}
       <div className="dash-filter-bar">
         <div className="dash-filter-chips">
+          {selectedPeriod !== 'current' && (
+            <span className="dash-filter-chip active">
+              {periodLabel}
+              <button className="dash-filter-chip-x" onClick={() => setSelectedPeriod('current')}>
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </span>
+          )}
           {selectedModality && (
             <span className="dash-filter-chip active">
               {modalities.find(m => m.id === selectedModality)?.icon}{' '}
@@ -678,26 +728,63 @@ export default function Dashboard() {
               </button>
             </span>
           )}
-          {!selectedModality && (
-            <span className="dash-filter-chip muted">Todos os dados</span>
+          {!selectedModality && selectedPeriod === 'current' && (
+            <span className="dash-filter-chip muted">Todos os dados — {periodLabel}</span>
           )}
         </div>
-        <div className="dash-filter-select-wrap">
-          <FontAwesomeIcon icon={faFilter} className="dash-filter-icon" />
-          <select
-            className="dash-filter-select"
-            value={selectedModality || ''}
-            onChange={e => setSelectedModality(e.target.value ? parseInt(e.target.value) : null)}
-          >
-            <option value="">Filtrar por modalidade</option>
-            {modalities.map(m => (
-              <option key={m.id} value={m.id}>
-                {m.icon ? `${m.icon} ` : ''}{m.name}
-              </option>
-            ))}
-          </select>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <div className="dash-filter-select-wrap">
+            <FontAwesomeIcon icon={faCalendarDay} className="dash-filter-icon" />
+            <select
+              className="dash-filter-select"
+              value={selectedPeriod}
+              onChange={e => setSelectedPeriod(e.target.value)}
+            >
+              <option value="current">Mês atual</option>
+              <option value="previous">Mês anterior</option>
+              <option value="3m">Últimos 3 meses</option>
+              <option value="6m">Últimos 6 meses</option>
+              <option value="12m">Últimos 12 meses</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </div>
+          <div className="dash-filter-select-wrap">
+            <FontAwesomeIcon icon={faFilter} className="dash-filter-icon" />
+            <select
+              className="dash-filter-select"
+              value={selectedModality || ''}
+              onChange={e => setSelectedModality(e.target.value ? parseInt(e.target.value) : null)}
+            >
+              <option value="">Filtrar por modalidade</option>
+              {modalities.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.icon ? `${m.icon} ` : ''}{m.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
+      {selectedPeriod === 'custom' && (
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', marginTop: '-0.75rem' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>De:</span>
+          <input
+            type="month"
+            className="dash-filter-select"
+            value={customRange.start}
+            onChange={e => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
+            style={{ minWidth: '160px' }}
+          />
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Até:</span>
+          <input
+            type="month"
+            className="dash-filter-select"
+            value={customRange.end}
+            onChange={e => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
+            style={{ minWidth: '160px' }}
+          />
+        </div>
+      )}
 
       {/* ── Matrículas ── */}
       <section className="dash-section">

@@ -71,7 +71,7 @@ export default function Financial() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Personalização de colunas
-  type ColumnKey = 'id' | 'student_name' | 'plan_name' | 'level' | 'reference_month' | 'due_date' | 'final_amount_cents' | 'paid' | 'status' | 'actions';
+  type ColumnKey = 'id' | 'student_name' | 'plan_name' | 'level' | 'reference_month' | 'due_date' | 'final_amount_cents' | 'paid' | 'paid_at' | 'payment_method' | 'status' | 'actions';
   const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
     { key: 'id', label: 'ID' },
     { key: 'student_name', label: 'Aluno' },
@@ -81,6 +81,8 @@ export default function Financial() {
     { key: 'due_date', label: 'Vencimento' },
     { key: 'final_amount_cents', label: 'Valor' },
     { key: 'paid', label: 'Pago' },
+    { key: 'paid_at', label: 'Data Pagamento' },
+    { key: 'payment_method', label: 'Forma Pgto' },
     { key: 'status', label: 'Status' },
     { key: 'actions', label: 'Ações' },
   ];
@@ -214,7 +216,12 @@ export default function Financial() {
   // Exportar para Excel (CSV)
   const exportToExcel = () => {
     // Cabeçalho
-    const headers = ['ID', 'Aluno', 'Plano', 'Nível', 'Referência', 'Vencimento', 'Valor Bruto', 'Desconto', 'Valor Final', 'Valor Pago', 'Status'];
+    const headers = ['ID', 'Aluno', 'Plano', 'Nível', 'Referência', 'Vencimento', 'Valor Bruto', 'Desconto', 'Valor Final', 'Valor Pago', 'Data Pagamento', 'Forma Pgto', 'Status'];
+
+    const translateMethod = (m?: string) => {
+      const map: Record<string, string> = { pix: 'PIX', cartao: 'Cartão', dinheiro: 'Dinheiro', boleto: 'Boleto', outro: 'Outro' };
+      return m ? map[m] || m : '';
+    };
 
     // Dados
     const rows = invoices.map(inv => [
@@ -228,6 +235,8 @@ export default function Financial() {
       (inv.discount_cents / 100).toFixed(2).replace('.', ','),
       (inv.final_amount_cents / 100).toFixed(2).replace('.', ','),
       ((inv.paid_amount_cents || 0) / 100).toFixed(2).replace('.', ','),
+      inv.paid_at ? formatDate(inv.paid_at) : '',
+      translateMethod(inv.payment_method),
       inv.status
     ]);
 
@@ -1044,6 +1053,8 @@ export default function Financial() {
                 </th>
               )}
               {isColumnVisible('paid') && <th>Pago</th>}
+              {isColumnVisible('paid_at') && <th>Data Pagamento</th>}
+              {isColumnVisible('payment_method') && <th>Forma Pgto</th>}
               {isColumnVisible('status') && (
                 <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   Status {renderSortIndicator('status')}
@@ -1274,6 +1285,18 @@ export default function Financial() {
                       ) : (
                         <span style={{ color: '#999' }}>-</span>
                       )}
+                    </td>
+                    )}
+                    {isColumnVisible('paid_at') && (
+                    <td style={{ fontSize: '13px', color: '#555' }}>
+                      {invoice.paid_at ? formatDate(invoice.paid_at) : <span style={{ color: '#999' }}>-</span>}
+                    </td>
+                    )}
+                    {isColumnVisible('payment_method') && (
+                    <td style={{ fontSize: '13px', color: '#555' }}>
+                      {invoice.payment_method ? (
+                        { pix: 'PIX', cartao: 'Cartão', dinheiro: 'Dinheiro', boleto: 'Boleto', outro: 'Outro' }[invoice.payment_method] || invoice.payment_method
+                      ) : <span style={{ color: '#999' }}>-</span>}
                     </td>
                     )}
                     {isColumnVisible('status') && (
