@@ -282,7 +282,7 @@ export default function Dashboard() {
   const financialStats = useMemo(() => {
     const currentMonth = getCurrentMonth();
     const srcInvoices = selectedModality ? filteredInvoices : invoices;
-    const monthInvoices = srcInvoices.filter(inv => inv.reference_month === currentMonth);
+    const monthInvoices = srcInvoices.filter(inv => inv.reference_month === currentMonth && inv.status !== 'cancelada' && inv.status !== 'estornada');
 
     const total = monthInvoices.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0);
     const totalCount = monthInvoices.length;
@@ -315,7 +315,7 @@ export default function Dashboard() {
     const srcInvoices = selectedModality ? filteredInvoices : invoices;
     const srcEnrollments = selectedModality ? filteredEnrollments : enrollments;
     return months.map(({ key, label }) => {
-      const mi = srcInvoices.filter(inv => inv.reference_month === key);
+      const mi = srcInvoices.filter(inv => inv.reference_month === key && inv.status !== 'cancelada' && inv.status !== 'estornada');
       const faturado = mi.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0) / 100;
       const recebido = mi
         .filter(inv => inv.status === 'paga')
