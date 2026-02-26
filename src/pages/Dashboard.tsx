@@ -284,7 +284,10 @@ export default function Dashboard() {
     const srcInvoices = selectedModality ? filteredInvoices : invoices;
     const monthInvoices = srcInvoices.filter(inv => inv.reference_month === currentMonth && inv.status !== 'cancelada' && inv.status !== 'estornada');
 
-    const total = monthInvoices.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0);
+    const total = monthInvoices.reduce((s, inv) => {
+      if (inv.status === 'paga') return s + Number(inv.paid_amount_cents || 0);
+      return s + Number(inv.final_amount_cents || 0);
+    }, 0);
     const totalCount = monthInvoices.length;
 
     const paid = monthInvoices.filter(inv => inv.status === 'paga');
@@ -316,7 +319,10 @@ export default function Dashboard() {
     const srcEnrollments = selectedModality ? filteredEnrollments : enrollments;
     return months.map(({ key, label }) => {
       const mi = srcInvoices.filter(inv => inv.reference_month === key && inv.status !== 'cancelada' && inv.status !== 'estornada');
-      const faturado = mi.reduce((s, inv) => s + Number(inv.final_amount_cents || 0), 0) / 100;
+      const faturado = mi.reduce((s, inv) => {
+        if (inv.status === 'paga') return s + Number(inv.paid_amount_cents || 0);
+        return s + Number(inv.final_amount_cents || 0);
+      }, 0) / 100;
       const recebido = mi
         .filter(inv => inv.status === 'paga')
         .reduce((s, inv) => s + Number(inv.paid_amount_cents || inv.final_amount_cents || 0), 0) / 100;
