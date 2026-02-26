@@ -506,6 +506,7 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
     birth_date: '',
     sex: '' as 'Masculino' | 'Feminino' | 'Outro' | 'N/I' | '',
     level: '',
+    level_id: undefined as number | undefined,
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -552,7 +553,8 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
       if (formData.phone) payload.phone = formData.phone.replace(/\D/g, '');
       if (formData.birth_date) payload.birth_date = formData.birth_date;
       if (formData.sex) payload.sex = formData.sex;
-      if (formData.level) payload.level = formData.level;
+      if (formData.level_id) payload.level_id = formData.level_id;
+      else if (formData.level) payload.level = formData.level;
 
       // Enviar senha padrão se configurada nas preferências
       const savedDefaultPassword = localStorage.getItem('default_student_password');
@@ -660,12 +662,15 @@ function CreateStudentModal({ onClose, onSuccess }: { onClose: () => void; onSuc
             <label htmlFor="level">Nível</label>
             <select
               id="level"
-              value={formData.level}
-              onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+              value={formData.level_id || ''}
+              onChange={(e) => {
+                const sel = levels.find(l => l.id === Number(e.target.value));
+                setFormData({ ...formData, level_id: sel?.id, level: sel?.name || '' });
+              }}
             >
               <option value="">Selecione...</option>
               {levels.map((level) => (
-                <option key={level.id} value={level.name}>
+                <option key={level.id} value={level.id}>
                   {level.name}
                 </option>
               ))}

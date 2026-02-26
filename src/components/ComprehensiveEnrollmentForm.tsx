@@ -174,7 +174,7 @@ export default function ComprehensiveEnrollmentForm({
       return;
     }
 
-    if (!studentData.level) {
+    if (!studentData.level_id) {
       setError('Selecione o nível do aluno');
       return;
     }
@@ -482,15 +482,20 @@ export default function ComprehensiveEnrollmentForm({
                 <label htmlFor="level">Nível *</label>
                 <select
                   id="level"
-                  value={studentData.level}
-                  onChange={(e) =>
-                    setStudentData({ ...studentData, level: e.target.value })
-                  }
+                  value={studentData.level_id || ''}
+                  onChange={(e) => {
+                    const selectedLevel = levels.find(l => l.id === Number(e.target.value));
+                    setStudentData({
+                      ...studentData,
+                      level_id: selectedLevel ? selectedLevel.id : undefined,
+                      level: selectedLevel ? selectedLevel.name : '',
+                    });
+                  }}
                   required
                 >
                   <option value="">Selecione...</option>
                   {levels.map((level) => (
-                    <option key={level.id} value={level.name}>
+                    <option key={level.id} value={level.id}>
                       {level.name}
                     </option>
                   ))}
