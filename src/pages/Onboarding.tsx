@@ -434,9 +434,15 @@ export default function Onboarding() {
   const [studentLevel, setStudentLevel] = useState('');
   const [createdStudent, setCreatedStudent] = useState<{ id: number; name: string } | null>(null);
 
-  // Step 6 & 7 — Booking links
+  // Step 6 — Trial class config
   const [trialBookingToken, setTrialBookingToken] = useState<string | null>(null);
+  const [trialEnabledClassIds, setTrialEnabledClassIds] = useState<Set<number>>(new Set());
+
+  // Step 7 — Court operating hours config
   const [courtBookingToken, setCourtBookingToken] = useState<string | null>(null);
+  const [courtHoursConfigured, setCourtHoursConfigured] = useState<Set<number>>(new Set());
+  const [editingCourtHours, setEditingCourtHours] = useState<number | null>(null);
+  const [courtHoursForm, setCourtHoursForm] = useState<{ open: string; close: string; price: string; slot: number }>({ open: '08:00', close: '22:00', price: '', slot: 60 });
 
   // ─── Fetch booking tokens when reaching relevant steps ───
   useEffect(() => {
@@ -667,17 +673,20 @@ export default function Onboarding() {
     }
     setLoading(true);
     try {
+      const selectedLevel = createdLevels.find(l => l.name === studentLevel);
       const res = await studentService.createStudent({
         full_name: studentName.trim(),
         email: studentEmail.trim(),
         cpf: studentCpf.replace(/\D/g, ''),
-        phone: studentPhone.trim() || undefined,
+        phone: studentPhone.replace(/\D/g, '') || undefined,
+        level_id: selectedLevel?.id,
         level: studentLevel || undefined,
       });
       setCreatedStudent({ id: res.data.id, name: res.data.full_name });
       toast.success(`Aluno "${res.data.full_name}" cadastrado!`);
-    } catch {
-      toast.error('Erro ao cadastrar aluno');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.errors?.[0]?.message || 'Erro ao cadastrar aluno';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -687,6 +696,58 @@ export default function Onboarding() {
     setClassAllowedLevels(prev =>
       prev.includes(levelName) ? prev.filter(l => l !== levelName) : [...prev, levelName]
     );
+  };
+
+  const handleToggleTrialClass = async (classId: number) => {
+    const isEnabled = trialEnabledClassIds.has(classId);
+    setLoading(true);
+    try {
+      await trialStudentService.upsertTrialClassConfig({
+        class_id: classId,
+        is_enabled: !isEnabled,
+        allow_overbooking: false,
+        max_trial_per_day: 3,
+      });
+      setTrialEnabledClassIds(prev => {
+        const next = new Set(prev);
+        if (isEnabled) next.delete(classId);
+        else next.add(classId);
+        return next;
+      });
+      toast.success(!isEnabled ? 'Turma habilitada para experimental' : 'Turma removida do experimental');
+    } catch {
+      toast.error('Erro ao configurar turma');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveCourtHours = async (courtId: number) => {
+    if (!courtHoursForm.open || !courtHoursForm.close) {
+      toast.error('Preencha os horários');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Create operating hours for all weekdays (0=dom to 6=sab)
+      const hours = Array.from({ length: 7 }, (_, day) => ({
+        court_id: courtId,
+        day_of_week: day,
+        open_time: courtHoursForm.open,
+        close_time: courtHoursForm.close,
+        slot_duration_minutes: courtHoursForm.slot,
+        price_cents: courtHoursForm.price ? Math.round(parseFloat(courtHoursForm.price) * 100) : null,
+        is_active: true,
+      }));
+      await courtService.setOperatingHours(courtId, hours);
+      setCourtHoursConfigured(prev => new Set(prev).add(courtId));
+      setEditingCourtHours(null);
+      toast.success('Horários salvos!');
+    } catch {
+      toast.error('Erro ao salvar horários');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const next = () => setCurrentStep(s => Math.min(s + 1, TOTAL_STEPS));
@@ -1463,8 +1524,68 @@ export default function Onboarding() {
         de aulas experimentais. Compartilhe com prospects e deixe-os agendar sozinhos!
       </p>
 
-      {/* CTA: Test the link */}
-      {trialBookingToken && (
+      {/* Step 1: Select which classes accept trial students */}
+      <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '4px', color: '#FF9900' }}>
+          <FontAwesomeIcon icon={faCalendarCheck} style={{ marginRight: '8px' }} />
+          Selecione as turmas que aceitam aula experimental
+        </h3>
+        <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginBottom: '12px', lineHeight: 1.5 }}>
+          Marque as turmas onde prospects podem agendar uma aula experimental. Somente turmas habilitadas aparecerão no link público.
+        </p>
+        {createdClasses.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {createdClasses.map(c => {
+              const isEnabled = trialEnabledClassIds.has(c.id);
+              return (
+                <div
+                  key={c.id}
+                  onClick={() => !loading && handleToggleTrialClass(c.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    padding: '12px 14px', borderRadius: '8px', cursor: 'pointer',
+                    background: isEnabled ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${isEnabled ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <div style={{
+                    width: '22px', height: '22px', borderRadius: '6px',
+                    border: `2px solid ${isEnabled ? '#3b82f6' : 'rgba(255,255,255,0.2)'}`,
+                    background: isEnabled ? '#3b82f6' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.2s', flexShrink: 0,
+                  }}>
+                    {isEnabled && <FontAwesomeIcon icon={faCheck} style={{ color: 'white', fontSize: '0.65rem' }} />}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                      {c.modality_name}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                      {WEEKDAYS.find(w => w.key === c.weekday)?.label} {c.start_time}
+                    </div>
+                  </div>
+                  <span style={{
+                    padding: '2px 10px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 600,
+                    background: isEnabled ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.06)',
+                    color: isEnabled ? '#10b981' : 'rgba(255,255,255,0.3)',
+                  }}>
+                    {isEnabled ? 'Habilitada' : 'Desabilitada'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ padding: '16px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+            Nenhuma turma criada. Volte à etapa 3 para criar turmas.
+          </div>
+        )}
+      </div>
+
+      {/* CTA: Test the link — only show after enabling at least one class */}
+      {trialBookingToken && trialEnabledClassIds.size > 0 && (
         <div
           className="onb-link-pulse"
           style={{
@@ -1639,8 +1760,104 @@ export default function Onboarding() {
         data e horário — tudo online, sem precisar te ligar.
       </p>
 
-      {/* CTA: Test the link */}
-      {courtBookingToken && (
+      {/* Step 1: Configure operating hours for each court */}
+      <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '4px', color: '#FF9900' }}>
+          <FontAwesomeIcon icon={faClock} style={{ marginRight: '8px' }} />
+          Configure os horários de cada quadra
+        </h3>
+        <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginBottom: '12px', lineHeight: 1.5 }}>
+          Defina os horários de funcionamento e preço por hora de cada quadra. Esses horários aparecerão no link de reserva.
+        </p>
+        {createdCourts.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {createdCourts.map(court => {
+              const isConfigured = courtHoursConfigured.has(court.id);
+              const isEditing = editingCourtHours === court.id;
+              return (
+                <div key={court.id} style={{
+                  padding: '14px', borderRadius: '8px',
+                  background: isConfigured ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${isConfigured ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                  transition: 'all 0.2s',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <FontAwesomeIcon icon={faBuilding} style={{ color: isConfigured ? '#8b5cf6' : 'rgba(255,255,255,0.3)', fontSize: '0.9rem' }} />
+                      <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{court.name}</span>
+                      {isConfigured && (
+                        <span style={{ padding: '2px 10px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 600, background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                          Configurada
+                        </span>
+                      )}
+                    </div>
+                    {!isEditing && (
+                      <button
+                        style={{ ...styles.createBtn, padding: '6px 14px', fontSize: '0.78rem' }}
+                        onClick={() => { setEditingCourtHours(court.id); setCourtHoursForm({ open: '08:00', close: '22:00', price: '', slot: 60 }); }}
+                      >
+                        <FontAwesomeIcon icon={faClock} /> {isConfigured ? 'Editar' : 'Definir Horários'}
+                      </button>
+                    )}
+                  </div>
+                  {isEditing && (
+                    <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <div style={{ flex: 1, ...styles.formGroup }}>
+                          <label style={styles.label}>Abertura</label>
+                          <input type="time" style={styles.input} value={courtHoursForm.open}
+                            onChange={e => setCourtHoursForm(p => ({ ...p, open: e.target.value }))} />
+                        </div>
+                        <div style={{ flex: 1, ...styles.formGroup }}>
+                          <label style={styles.label}>Fechamento</label>
+                          <input type="time" style={styles.input} value={courtHoursForm.close}
+                            onChange={e => setCourtHoursForm(p => ({ ...p, close: e.target.value }))} />
+                        </div>
+                        <div style={{ flex: 1, ...styles.formGroup }}>
+                          <label style={styles.label}>Preço/hora (R$)</label>
+                          <input type="number" style={styles.input} value={courtHoursForm.price} placeholder="80"
+                            onChange={e => setCourtHoursForm(p => ({ ...p, price: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Duração do slot</label>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          {[30, 60, 90, 120].map(d => (
+                            <div key={d}
+                              style={{ ...styles.weekdayChip(courtHoursForm.slot === d), flex: 1, textAlign: 'center' as const }}
+                              onClick={() => setCourtHoursForm(p => ({ ...p, slot: d }))}
+                            >
+                              {d >= 60 ? `${d / 60}h` : `${d}min`}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button style={{ ...styles.createBtn, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)' }}
+                          onClick={() => setEditingCourtHours(null)}>
+                          Cancelar
+                        </button>
+                        <button style={{ ...styles.createBtn, opacity: loading ? 0.6 : 1 }}
+                          onClick={() => handleSaveCourtHours(court.id)} disabled={loading}>
+                          {loading ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faCheck} />}
+                          Salvar Horários
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ padding: '16px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+            Nenhuma quadra criada. Volte à etapa 3 para criar quadras.
+          </div>
+        )}
+      </div>
+
+      {/* CTA: Test the link — only show after configuring at least one court */}
+      {courtBookingToken && courtHoursConfigured.size > 0 && (
         <div
           className="onb-link-pulse"
           style={{
