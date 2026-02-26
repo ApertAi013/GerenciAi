@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -55,6 +55,8 @@ import { levelService } from '../services/levelService';
 import { modalityService } from '../services/modalityService';
 import { classService } from '../services/classService';
 import { planService } from '../services/planService';
+import { courtService } from '../services/courtService';
+import { trialStudentService } from '../services/trialStudentService';
 import { studentService } from '../services/studentService';
 import { api } from '../services/api';
 
@@ -66,6 +68,11 @@ interface CreatedLevel {
 }
 
 interface CreatedModality {
+  id: number;
+  name: string;
+}
+
+interface CreatedCourt {
   id: number;
   name: string;
 }
@@ -365,6 +372,16 @@ const fadeInCSS = `
   to { opacity: 1; transform: translateY(0); }
 }
 .onb-fade { animation: fadeSlideIn 0.35s ease-out; }
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 8px rgba(255,153,0,0.3), 0 0 24px rgba(255,153,0,0.1); }
+  50% { box-shadow: 0 0 16px rgba(255,153,0,0.5), 0 0 40px rgba(255,153,0,0.2); }
+}
+.onb-link-pulse { animation: pulseGlow 2s ease-in-out infinite; }
+@keyframes pointBounce {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(6px); }
+}
+.onb-point-bounce { animation: pointBounce 1s ease-in-out infinite; }
 `;
 
 export default function Onboarding() {
@@ -385,9 +402,11 @@ export default function Onboarding() {
   const [levelColor, setLevelColor] = useState(LEVEL_COLORS[0]);
   const [createdLevels, setCreatedLevels] = useState<CreatedLevel[]>([]);
 
-  // Step 3 — Modalities + Classes
+  // Step 3 — Modalities + Courts + Classes
   const [modalityName, setModalityName] = useState('');
   const [createdModalities, setCreatedModalities] = useState<CreatedModality[]>([]);
+  const [courtName, setCourtName] = useState('');
+  const [createdCourts, setCreatedCourts] = useState<CreatedCourt[]>([]);
   const [classModalityId, setClassModalityId] = useState<number | null>(null);
   const [className, setClassName] = useState('');
   const [classWeekday, setClassWeekday] = useState('');
@@ -414,6 +433,36 @@ export default function Onboarding() {
   const [studentPhone, setStudentPhone] = useState('');
   const [studentLevel, setStudentLevel] = useState('');
   const [createdStudent, setCreatedStudent] = useState<{ id: number; name: string } | null>(null);
+
+  // Step 6 & 7 — Booking links
+  const [trialBookingToken, setTrialBookingToken] = useState<string | null>(null);
+  const [courtBookingToken, setCourtBookingToken] = useState<string | null>(null);
+
+  // ─── Fetch booking tokens when reaching relevant steps ───
+  useEffect(() => {
+    if (currentStep === 6 && trialBookingToken === null) {
+      trialStudentService.getBookingToken().then(res => {
+        const token = res.data?.booking_token;
+        if (token) setTrialBookingToken(token);
+        else {
+          trialStudentService.generateBookingToken().then(genRes => {
+            setTrialBookingToken(genRes.data?.booking_token || null);
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+    }
+    if (currentStep === 7 && courtBookingToken === null) {
+      courtService.getBookingToken().then(res => {
+        const token = res.data?.booking_token;
+        if (token) setCourtBookingToken(token);
+        else {
+          courtService.generateBookingToken().then(genRes => {
+            setCourtBookingToken(genRes.data?.booking_token || null);
+          }).catch(() => {});
+        }
+      }).catch(() => {});
+    }
+  }, [currentStep]);
 
   // ─── Handlers ───
 
@@ -513,6 +562,22 @@ export default function Onboarding() {
       toast.success(`Modalidade "${res.data.name}" criada!`);
     } catch {
       toast.error('Erro ao criar modalidade');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateCourt = async () => {
+    if (!courtName.trim()) return;
+    setLoading(true);
+    try {
+      const res = await courtService.createCourt({ name: courtName.trim(), status: 'ativa' });
+      setCreatedCourts(prev => [...prev, { id: res.data.id, name: res.data.name }]);
+      if (!classLocation) setClassLocation(res.data.name);
+      setCourtName('');
+      toast.success(`Quadra "${res.data.name}" criada!`);
+    } catch {
+      toast.error('Erro ao criar quadra');
     } finally {
       setLoading(false);
     }
@@ -778,10 +843,10 @@ export default function Onboarding() {
   const renderStep3 = () => (
     <div className="onb-fade" key="step3">
       <div style={styles.stepIndicator}>ETAPA 3 DE 8</div>
-      <h1 style={styles.stepTitle}>Modalidades e Turmas</h1>
+      <h1 style={styles.stepTitle}>Modalidades, Quadras e Turmas</h1>
       <p style={styles.stepSubtitle}>
-        Modalidades representam os esportes/atividades que você oferece (ex: FTV, Society, Beach Tennis, Vôlei).
-        Cada turma pertence a uma modalidade.
+        Crie as modalidades (esportes/atividades), suas quadras e depois monte as turmas.
+        Cada turma pertence a uma modalidade e acontece em uma quadra.
       </p>
 
       {/* Create Modality */}
@@ -814,6 +879,45 @@ export default function Onboarding() {
             {createdModalities.map(m => (
               <span key={m.id} style={styles.chip}>
                 <FontAwesomeIcon icon={faCheck} style={{ fontSize: '0.7rem' }} /> {m.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Create Court */}
+      <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '4px', color: '#FF9900' }}>
+          <FontAwesomeIcon icon={faBuilding} style={{ marginRight: '8px' }} />
+          Nova Quadra
+        </h3>
+        <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginBottom: '12px', lineHeight: 1.5 }}>
+          Crie suas quadras para vincular às turmas. Cada turma acontece em uma quadra específica.
+        </p>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <input
+            style={{ ...styles.input, flex: 1 }}
+            value={courtName}
+            onChange={e => setCourtName(e.target.value)}
+            placeholder="Ex: Quadra 1, Quadra Coberta, Arena Principal"
+            onKeyDown={e => e.key === 'Enter' && handleCreateCourt()}
+            onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
+            onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+          />
+          <button
+            style={{ ...styles.createBtn, opacity: loading || !courtName.trim() ? 0.6 : 1 }}
+            onClick={handleCreateCourt}
+            disabled={loading || !courtName.trim()}
+          >
+            {loading ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faPlus} />}
+            Criar
+          </button>
+        </div>
+        {createdCourts.length > 0 && (
+          <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {createdCourts.map(c => (
+              <span key={c.id} style={styles.chip}>
+                <FontAwesomeIcon icon={faCheck} style={{ fontSize: '0.7rem' }} /> {c.name}
               </span>
             ))}
           </div>
@@ -910,15 +1014,26 @@ export default function Onboarding() {
 
           <div style={{ display: 'flex', gap: '12px' }}>
             <div style={{ flex: 1, ...styles.formGroup }}>
-              <label style={styles.label}>Local (opcional)</label>
-              <input
-                style={styles.input}
-                value={classLocation}
-                onChange={e => setClassLocation(e.target.value)}
-                placeholder="Ex: Quadra 1"
-                onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
-                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
-              />
+              <label style={styles.label}>Quadra</label>
+              {createdCourts.length > 0 ? (
+                <select
+                  style={{ ...styles.input, cursor: 'pointer' }}
+                  value={classLocation}
+                  onChange={e => setClassLocation(e.target.value)}
+                >
+                  <option value="" style={{ background: '#1a1a1a' }}>Selecione a quadra</option>
+                  {createdCourts.map(c => (
+                    <option key={c.id} value={c.name} style={{ background: '#1a1a1a' }}>{c.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  style={{ ...styles.input, opacity: 0.5 }}
+                  value=""
+                  readOnly
+                  placeholder="Crie uma quadra acima primeiro"
+                />
+              )}
             </div>
             <div style={{ width: '120px', ...styles.formGroup }}>
               <label style={styles.label}>Capacidade</label>
@@ -985,7 +1100,7 @@ export default function Onboarding() {
       )}
 
       <div style={styles.infoBox}>
-        Gerencie modalidades e turmas a qualquer momento em <strong>Turmas</strong> no menu lateral.
+        Gerencie modalidades e turmas em <strong>Turmas</strong>, e quadras em <strong>Quadras</strong> no menu lateral.
       </div>
 
       <div style={styles.navRow}>
@@ -1342,6 +1457,49 @@ export default function Onboarding() {
         de aulas experimentais. Compartilhe com prospects e deixe-os agendar sozinhos!
       </p>
 
+      {/* CTA: Test the link */}
+      {trialBookingToken && (
+        <div
+          className="onb-link-pulse"
+          style={{
+            background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1))',
+            border: '1px solid rgba(59,130,246,0.3)',
+            borderRadius: '16px', padding: '24px', marginBottom: '28px', cursor: 'pointer',
+            transition: 'transform 0.2s',
+          }}
+          onClick={() => window.open(`${window.location.origin}/aula-experimental/${trialBookingToken}`, '_blank')}
+          onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.01)')}
+          onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '12px',
+              background: 'rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <FontAwesomeIcon icon={faExternalLinkAlt} style={{ color: '#3b82f6', fontSize: '1.3rem' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '2px' }}>
+                <span className="onb-point-bounce" style={{ display: 'inline-block', marginRight: '8px' }}>{'👉'}</span>
+                Clique aqui para testar seu link!
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>
+                Veja como seus prospects vão agendar uma aula experimental
+              </div>
+            </div>
+            <FontAwesomeIcon icon={faArrowRight} style={{ color: '#3b82f6', fontSize: '1.2rem' }} />
+          </div>
+          <div style={{
+            padding: '10px 16px', borderRadius: '8px',
+            background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)',
+            fontFamily: 'monospace', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+          }}>
+            {window.location.origin}/aula-experimental/{trialBookingToken}
+          </div>
+        </div>
+      )}
+
       {/* Section: How it works - Flow */}
       <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '16px', color: '#3b82f6' }}>
         Como funciona o fluxo
@@ -1474,6 +1632,49 @@ export default function Onboarding() {
         Ofereça locação de quadras com <strong>link público de reserva</strong>. Seus clientes escolhem quadra,
         data e horário — tudo online, sem precisar te ligar.
       </p>
+
+      {/* CTA: Test the link */}
+      {courtBookingToken && (
+        <div
+          className="onb-link-pulse"
+          style={{
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.1), rgba(236,72,153,0.1))',
+            border: '1px solid rgba(139,92,246,0.3)',
+            borderRadius: '16px', padding: '24px', marginBottom: '28px', cursor: 'pointer',
+            transition: 'transform 0.2s',
+          }}
+          onClick={() => window.open(`${window.location.origin}/reservar/${courtBookingToken}`, '_blank')}
+          onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.01)')}
+          onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
+            <div style={{
+              width: '48px', height: '48px', borderRadius: '12px',
+              background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <FontAwesomeIcon icon={faExternalLinkAlt} style={{ color: '#8b5cf6', fontSize: '1.3rem' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '2px' }}>
+                <span className="onb-point-bounce" style={{ display: 'inline-block', marginRight: '8px' }}>{'👉'}</span>
+                Clique aqui para testar seu link de reserva!
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>
+                Veja como seus clientes vão reservar uma quadra online
+              </div>
+            </div>
+            <FontAwesomeIcon icon={faArrowRight} style={{ color: '#8b5cf6', fontSize: '1.2rem' }} />
+          </div>
+          <div style={{
+            padding: '10px 16px', borderRadius: '8px',
+            background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)',
+            fontFamily: 'monospace', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+          }}>
+            {window.location.origin}/reservar/{courtBookingToken}
+          </div>
+        </div>
+      )}
 
       {/* Flow */}
       <h3 style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '16px', color: '#8b5cf6' }}>
