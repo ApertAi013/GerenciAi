@@ -215,7 +215,6 @@ export default function Students() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <span className="search-icon">🔍</span>
           </div>
 
           {selectedStudentIds.size > 0 && (
