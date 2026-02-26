@@ -35,7 +35,11 @@ import {
   faCopy,
   faEye,
   faFilter,
+  faSearch,
+  faCommentDots,
+  faPen,
 } from '@fortawesome/free-solid-svg-icons';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
@@ -1051,6 +1055,39 @@ export default function Onboarding() {
         </div>
       </div>
 
+      {/* Search bar highlight */}
+      <div style={{
+        marginTop: '24px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)',
+        borderRadius: '12px', padding: '18px 20px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '8px',
+            background: 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <FontAwesomeIcon icon={faSearch} style={{ color: '#3b82f6' }} />
+          </div>
+          <span style={{ fontWeight: 700, fontSize: '1rem' }}>Busca rápida de alunos</span>
+        </div>
+        <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, margin: 0 }}>
+          A qualquer momento, use a <strong style={{ color: '#3b82f6' }}>barra de pesquisa no topo</strong> da tela para
+          encontrar qualquer aluno pelo nome. Clique no resultado para abrir a ficha completa e
+          editar rapidamente todas as informações — dados pessoais, nível, turmas, matrículas e faturas.
+        </p>
+        <div style={{
+          marginTop: '12px', padding: '10px 16px', borderRadius: '8px',
+          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+          display: 'flex', alignItems: 'center', gap: '10px',
+        }}>
+          <FontAwesomeIcon icon={faSearch} style={{ color: 'rgba(255,255,255,0.25)' }} />
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.88rem' }}>Buscar aluno por nome...</span>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+            <FontAwesomeIcon icon={faPen} style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }} />
+            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.72rem' }}>Edição rápida</span>
+          </div>
+        </div>
+      </div>
+
       <div style={styles.infoBox}>
         Vá para <strong>Alunos</strong> no menu para cadastrar, depois crie matrículas em <strong>Matrículas</strong>.
         As faturas aparecem em <strong>Financeiro</strong>.
@@ -1332,6 +1369,73 @@ export default function Onboarding() {
       <p style={styles.stepSubtitle}>
         O ArenaAi oferece um ecossistema completo para conectar você com seus alunos.
       </p>
+
+      {/* WhatsApp highlight section */}
+      <div style={{
+        background: 'rgba(37,211,102,0.06)', border: '1px solid rgba(37,211,102,0.2)',
+        borderRadius: '14px', padding: '22px', marginBottom: '24px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+          <div style={{
+            width: '42px', height: '42px', borderRadius: '10px',
+            background: 'rgba(37,211,102,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <FontAwesomeIcon icon={faWhatsapp} style={{ color: '#25D366', fontSize: '1.3rem' }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>WhatsApp Gratuito</div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)' }}>Incluso em todos os planos, sem custo adicional</div>
+          </div>
+        </div>
+
+        <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, margin: '0 0 16px 0' }}>
+          Envie mensagens de WhatsApp para seus alunos com <strong style={{ color: '#25D366' }}>um clique</strong>.
+          Basta clicar no ícone do WhatsApp na tela do aluno ou no financeiro para abrir uma conversa
+          com a mensagem já pronta.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faCommentDots} style={{ color: '#25D366', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Templates personalizados</strong> — Configure vários modelos de mensagem
+              em <strong>Preferências</strong>: cobrança, boas-vindas, lembrete de aula, aniversário...
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faUsers} style={{ color: '#25D366', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Na tela do aluno</strong> — Clique no botão WhatsApp e escolha
+              o template. A mensagem abre já com nome e dados do aluno preenchidos.
+            </span>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+            background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <FontAwesomeIcon icon={faFileInvoiceDollar} style={{ color: '#25D366', width: '16px' }} />
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+              <strong style={{ color: 'rgba(255,255,255,0.8)' }}>No financeiro</strong> — Envie cobrança via WhatsApp direto
+              da lista de faturas com valor e vencimento já preenchidos no template.
+            </span>
+          </div>
+        </div>
+
+        <div style={{
+          marginTop: '14px', padding: '10px 14px', borderRadius: '8px',
+          background: 'rgba(37,211,102,0.08)', border: '1px solid rgba(37,211,102,0.15)',
+          fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5,
+        }}>
+          Configure seus templates em <strong>Preferências {'>'} Templates WhatsApp</strong>. Você pode criar
+          quantos quiser e selecionar na hora de enviar.
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px' }}>
         <div style={styles.featureCard}>
