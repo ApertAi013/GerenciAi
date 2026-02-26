@@ -54,7 +54,7 @@ export default function QuickEditStudentModal() {
 
   // UI state
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dados' | 'matricula' | 'financeiro'>('dados');
+  const [activeTab, setActiveTab] = useState<'dados' | 'matricula' | 'turmas' | 'financeiro'>('dados');
   const [isSaving, setIsSaving] = useState(false);
 
   // Student edit
@@ -81,6 +81,11 @@ export default function QuickEditStudentModal() {
     method: 'pix',
     amount_cents: 0,
   });
+
+  // Turmas tab
+  const [turmasEditingId, setTurmasEditingId] = useState<number | null>(null);
+  const [turmasClassIds, setTurmasClassIds] = useState<number[]>([]);
+  const [isSavingTurmas, setIsSavingTurmas] = useState(false);
 
   // Financial stats
   const [showFullHistory, setShowFullHistory] = useState(false);
@@ -354,6 +359,79 @@ export default function QuickEditStudentModal() {
     await executeSaveEnrollment(pendingSavePayload, invoiceOption === 'next_month' ? 'next_month' : 'now');
   };
 
+  // -- Turmas tab handlers --
+
+  const handleOpenTurmasEdit = async (enrollment: Enrollment) => {
+    setTurmasEditingId(enrollment.id);
+    setTurmasClassIds(enrollment.class_ids || []);
+    // Lazy load classes + plans
+    if (!classesLoaded) {
+      try {
+        const res = await classService.getClasses({ status: 'ativa', limit: 1000 });
+        if (res.data) setAllClasses(Array.isArray(res.data) ? res.data : res.data.classes || []);
+        setClassesLoaded(true);
+      } catch { /* ignore */ }
+    }
+    if (plans.length === 0) {
+      try {
+        const res = await planService.getPlans();
+        if (res.data) setPlans(res.data);
+      } catch { /* ignore */ }
+    }
+  };
+
+  const handleTurmasClassToggle = (classId: number, sessionsPerWeek: number) => {
+    if (turmasClassIds.includes(classId)) {
+      setTurmasClassIds(prev => prev.filter(id => id !== classId));
+    } else {
+      if (turmasClassIds.length >= sessionsPerWeek) {
+        toast.error(`O plano permite apenas ${sessionsPerWeek} turma(s)`);
+        return;
+      }
+      setTurmasClassIds(prev => [...prev, classId]);
+    }
+  };
+
+  const handleSaveTurmas = async () => {
+    if (!turmasEditingId) return;
+    setIsSavingTurmas(true);
+    try {
+      const res = await enrollmentService.updateEnrollmentClasses(turmasEditingId, { class_ids: turmasClassIds });
+      if ((res as any).status === 'success' || (res as any).success === true) {
+        toast.success('Turmas atualizadas!');
+        setTurmasEditingId(null);
+        await fetchData();
+      } else {
+        toast.error((res as any).message || 'Erro ao atualizar turmas');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao atualizar turmas');
+    } finally {
+      setIsSavingTurmas(false);
+    }
+  };
+
+  const getFilteredClassesForEnrollment = (enrollment: Enrollment) => {
+    const plan = plans.find(p => p.id === enrollment.plan_id);
+    let filtered = allClasses.filter(c => c.status === 'ativa');
+    if (plan?.modality_id) {
+      filtered = filtered.filter(c => c.modality_id === plan.modality_id);
+    }
+    const studentLevel = student?.level_name || (student as any)?.level;
+    if (studentLevel) {
+      filtered = filtered.filter(c => {
+        let lvls = c.allowed_levels;
+        if (!lvls || lvls.length === 0) return true;
+        if (typeof lvls === 'string') {
+          try { lvls = JSON.parse(lvls as any); } catch { return true; }
+        }
+        if (!Array.isArray(lvls) || lvls.length === 0) return true;
+        return lvls.includes(studentLevel);
+      });
+    }
+    return filtered;
+  };
+
   const handleStartPayment = (invoice: Invoice) => {
     setPayingInvoiceId(invoice.id);
     setPaymentForm({
@@ -573,6 +651,12 @@ export default function QuickEditStudentModal() {
                 Matrícula {enrollments.filter((e) => e.status === 'ativa').length > 0 && (
                   <span className="qe-tab-count">{enrollments.filter((e) => e.status === 'ativa').length}</span>
                 )}
+              </button>
+              <button
+                className={`qe-tab ${activeTab === 'turmas' ? 'qe-tab-active' : ''}`}
+                onClick={() => setActiveTab('turmas')}
+              >
+                Turmas
               </button>
               <button
                 className={`qe-tab ${activeTab === 'financeiro' ? 'qe-tab-active' : ''}`}
@@ -825,6 +909,131 @@ export default function QuickEditStudentModal() {
                           )}
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB: TURMAS */}
+              {activeTab === 'turmas' && (
+                <div className="qe-tab-content">
+                  {enrollments.filter(e => e.status === 'ativa').length === 0 ? (
+                    <div className="qe-empty">Nenhuma matrícula ativa para trocar turmas</div>
+                  ) : (
+                    <div className="qe-enrollment-list">
+                      {enrollments.filter(e => e.status === 'ativa').map((enrollment) => {
+                        const isEditing = turmasEditingId === enrollment.id;
+                        const plan = plans.find(p => p.id === enrollment.plan_id);
+                        const sessionsPerWeek = plan?.sessions_per_week || enrollment.sessions_per_week || 1;
+
+                        return (
+                          <div key={enrollment.id} className="qe-enrollment-card">
+                            <div className="qe-enrollment-header">
+                              <div>
+                                <h4 className="qe-enrollment-plan">{enrollment.plan_name || 'Plano'}</h4>
+                                <span style={{ fontSize: '12px', color: '#737373' }}>
+                                  {sessionsPerWeek}x/semana
+                                </span>
+                              </div>
+                              {!isEditing && (
+                                <button
+                                  className="qe-btn qe-btn-primary qe-btn-sm"
+                                  onClick={() => handleOpenTurmasEdit(enrollment)}
+                                >
+                                  <FontAwesomeIcon icon={faPenToSquare} /> Trocar Turmas
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Current classes */}
+                            {!isEditing && enrollment.class_details && enrollment.class_details.length > 0 && (
+                              <div className="qe-class-badges" style={{ marginTop: '10px' }}>
+                                {enrollment.class_details.map((c: any) => (
+                                  <span key={c.id} className="qe-class-badge">
+                                    {c.name ? `${c.name} · ` : ''}{c.weekday} {c.time}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Edit mode */}
+                            {isEditing && (() => {
+                              const filtered = getFilteredClassesForEnrollment(enrollment);
+                              const grouped = filtered.reduce((acc, cls) => {
+                                if (!acc[cls.weekday]) acc[cls.weekday] = [];
+                                acc[cls.weekday].push(cls);
+                                return acc;
+                              }, {} as Record<string, Class[]>);
+                              const weekdays = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
+
+                              return (
+                                <div style={{ marginTop: '12px' }}>
+                                  <div className="qe-class-selector">
+                                    <label>
+                                      Selecionar Turmas
+                                      <span className="qe-class-count">
+                                        {' '}({turmasClassIds.length}/{sessionsPerWeek})
+                                      </span>
+                                    </label>
+                                    <div className="qe-class-list">
+                                      {weekdays.map(day => {
+                                        const dayClasses = grouped[day];
+                                        if (!dayClasses || dayClasses.length === 0) return null;
+                                        return (
+                                          <div key={day} className="qe-class-group">
+                                            <div className="qe-class-day">{weekdayFull[day]}</div>
+                                            {dayClasses.map(cls => {
+                                              const isSelected = turmasClassIds.includes(cls.id);
+                                              const isFull = (cls.enrolled_count || 0) >= cls.capacity;
+                                              return (
+                                                <div
+                                                  key={cls.id}
+                                                  className={`qe-class-item ${isSelected ? 'qe-class-item-selected' : ''} ${isFull && !isSelected ? 'qe-class-item-full' : ''}`}
+                                                  onClick={() => !isFull || isSelected ? handleTurmasClassToggle(cls.id, sessionsPerWeek) : null}
+                                                >
+                                                  <div className="qe-class-item-info">
+                                                    <span className="qe-class-item-name">{cls.name || cls.modality_name}</span>
+                                                    <span className="qe-class-item-time">
+                                                      {cls.start_time?.slice(0, 5)}{cls.end_time ? ` - ${cls.end_time.slice(0, 5)}` : ''}
+                                                      {cls.location ? ` · ${cls.location}` : ''}
+                                                      {' · '}{cls.enrolled_count || 0}/{cls.capacity}
+                                                    </span>
+                                                  </div>
+                                                  <span className={`qe-class-check ${isSelected ? 'checked' : ''}`}>
+                                                    {isSelected ? '✓' : isFull ? 'Lotada' : ''}
+                                                  </span>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        );
+                                      })}
+                                      {filtered.length === 0 && (
+                                        <div className="qe-empty" style={{ padding: '16px' }}>Nenhuma turma disponível</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="qe-enrollment-actions" style={{ marginTop: '12px' }}>
+                                    <button
+                                      className="qe-btn qe-btn-primary qe-btn-sm"
+                                      onClick={handleSaveTurmas}
+                                      disabled={isSavingTurmas || turmasClassIds.length !== sessionsPerWeek}
+                                    >
+                                      <FontAwesomeIcon icon={faFloppyDisk} /> {isSavingTurmas ? 'Salvando...' : 'Salvar Turmas'}
+                                    </button>
+                                    <button
+                                      className="qe-btn qe-btn-secondary qe-btn-sm"
+                                      onClick={() => setTurmasEditingId(null)}
+                                    >
+                                      <FontAwesomeIcon icon={faBan} /> Cancelar
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
