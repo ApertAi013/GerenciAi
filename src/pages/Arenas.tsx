@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBuilding, faUsers, faUserGroup, faPen, faPowerOff, faArrowRightToBracket, faPlus, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBuilding, faUsers, faUserGroup, faPen, faPowerOff, faArrowRightToBracket, faPlus, faCheckCircle, faChartBar, faMoneyBillWave, faExclamationTriangle, faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import { ComposedChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { arenaService } from '../services/arenaService';
+import type { ArenaDashboardData } from '../services/arenaService';
 import { useAuthStore } from '../store/authStore';
 import type { Arena } from '../types/authTypes';
+
+const ARENA_COLORS = ['#FF9900', '#3B82F6', '#10B981', '#8B5CF6', '#EC4899', '#F59E0B', '#06B6D4'];
 
 interface ArenaWithCounts extends Arena {
   student_count?: number;
@@ -11,6 +15,15 @@ interface ArenaWithCounts extends Arena {
   description?: string;
   created_at?: string;
 }
+
+const formatCurrency = (cents: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
+
+const formatMonth = (monthStr: string) => {
+  const [y, m] = monthStr.split('-');
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  return `${months[parseInt(m) - 1]}/${y.slice(2)}`;
+};
 
 export default function Arenas() {
   const [arenas, setArenas] = useState<ArenaWithCounts[]>([]);
@@ -20,9 +33,84 @@ export default function Arenas() {
   const [error, setError] = useState('');
   const { currentArenaId, setCurrentArena, user, setUser } = useAuthStore();
 
+  // Dashboard state
+  const [dashboard, setDashboard] = useState<ArenaDashboardData | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [monthsFilter, setMonthsFilter] = useState(6);
+
   useEffect(() => {
     fetchArenas();
   }, []);
+
+  useEffect(() => {
+    if (arenas.length >= 2) {
+      fetchDashboard();
+    }
+  }, [arenas.length, monthsFilter]);
+
+  const fetchDashboard = async () => {
+    try {
+      setDashboardLoading(true);
+      const response = await arenaService.getDashboard({ months: monthsFilter });
+      if (response.status === 'success' && response.data) {
+        setDashboard(response.data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar dashboard:', err);
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
+
+  // Build chart data from dashboard.monthly
+  const chartData = useMemo(() => {
+    if (!dashboard?.monthly) return [];
+    return dashboard.monthly.map(m => {
+      const row: any = { month: formatMonth(m.month) };
+      for (const a of m.arenas) {
+        row[`faturado_${a.arena_id}`] = a.faturado_cents / 100;
+        row[`recebido_${a.arena_id}`] = a.recebido_cents / 100;
+      }
+      // Add totals
+      row.faturado_total = m.arenas.reduce((s, a) => s + a.faturado_cents, 0) / 100;
+      row.recebido_total = m.arenas.reduce((s, a) => s + a.recebido_cents, 0) / 100;
+      return row;
+    });
+  }, [dashboard]);
+
+  // Financial totals for the selected period
+  const financialTotals = useMemo(() => {
+    if (!dashboard?.monthly) return { faturado: 0, recebido: 0, overdue: 0, pending: 0 };
+    let faturado = 0, recebido = 0, overdue = 0, pending = 0;
+    for (const m of dashboard.monthly) {
+      for (const a of m.arenas) {
+        faturado += a.faturado_cents;
+        recebido += a.recebido_cents;
+        overdue += a.overdue_cents;
+        pending += a.pending_cents;
+      }
+    }
+    return { faturado, recebido, overdue, pending };
+  }, [dashboard]);
+
+  // Per-arena financial totals for table
+  const arenaFinancials = useMemo(() => {
+    if (!dashboard) return [];
+    const map = new Map<number, { faturado: number; recebido: number }>();
+    for (const m of dashboard.monthly) {
+      for (const a of m.arenas) {
+        const curr = map.get(a.arena_id) || { faturado: 0, recebido: 0 };
+        curr.faturado += a.faturado_cents;
+        curr.recebido += a.recebido_cents;
+        map.set(a.arena_id, curr);
+      }
+    }
+    return dashboard.arenas.map(a => ({
+      ...a,
+      faturado: map.get(a.arena_id)?.faturado || 0,
+      recebido: map.get(a.arena_id)?.recebido || 0,
+    }));
+  }, [dashboard]);
 
   const fetchArenas = async () => {
     try {
@@ -125,6 +213,192 @@ export default function Arenas() {
 
       {error && <div className="error-message">{error}</div>}
 
+      {/* Cross-Arena Dashboard */}
+      {arenas.length >= 2 && dashboard && (
+        <div style={{ marginBottom: '40px' }}>
+          {/* Period filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+            <FontAwesomeIcon icon={faChartBar} style={{ color: '#FF9900', fontSize: '16px' }} />
+            <span style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a1a' }}>Visao Geral</span>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
+              {[
+                { label: '3m', value: 3 },
+                { label: '6m', value: 6 },
+                { label: '12m', value: 12 },
+              ].map(p => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setMonthsFilter(p.value)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: monthsFilter === p.value ? '1px solid #FF9900' : '1px solid #E5E5E5',
+                    background: monthsFilter === p.value ? '#FFF3E0' : 'white',
+                    color: monthsFilter === p.value ? '#FF9900' : '#737373',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* KPI Cards */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+            gap: '12px',
+            marginBottom: '24px',
+          }}>
+            {[
+              { label: 'Alunos', value: String(dashboard.totals.student_count), icon: faUsers, color: '#3B82F6' },
+              { label: 'Matriculas Ativas', value: String(dashboard.totals.active_enrollments), icon: faClipboardList, color: '#10B981' },
+              { label: 'Faturado', value: formatCurrency(financialTotals.faturado), icon: faMoneyBillWave, color: '#FF9900' },
+              { label: 'Recebido', value: formatCurrency(financialTotals.recebido), icon: faMoneyBillWave, color: '#10B981' },
+              { label: 'Inadimplencia', value: formatCurrency(dashboard.totals.total_overdue_cents), icon: faExclamationTriangle, color: '#EF4444' },
+            ].map((kpi) => (
+              <div key={kpi.label} style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '16px 20px',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                borderLeft: `3px solid ${kpi.color}`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <FontAwesomeIcon icon={kpi.icon} style={{ color: kpi.color, fontSize: '13px' }} />
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#A3A3A3', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{kpi.label}</span>
+                </div>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: '#1a1a1a' }}>{kpi.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Chart */}
+          {chartData.length > 0 && (
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '20px',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              marginBottom: '24px',
+            }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600, color: '#404040' }}>
+                Receita por Arena
+              </h3>
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={chartData} barGap={2} barCategoryGap="20%">
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#A3A3A3' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#A3A3A3' }} axisLine={false} tickLine={false}
+                    tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
+                  <Tooltip
+                    formatter={(value: number, name: string) => [
+                      formatCurrency(value * 100),
+                      name,
+                    ]}
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #E5E5E5', fontSize: '12px' }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                  {dashboard.arenas.map((arena, idx) => (
+                    <Bar
+                      key={`fat_${arena.arena_id}`}
+                      dataKey={`faturado_${arena.arena_id}`}
+                      name={`${arena.arena_name} (Faturado)`}
+                      fill={ARENA_COLORS[idx % ARENA_COLORS.length]}
+                      radius={[3, 3, 0, 0]}
+                      opacity={0.85}
+                    />
+                  ))}
+                  {dashboard.arenas.map((arena, idx) => (
+                    <Bar
+                      key={`rec_${arena.arena_id}`}
+                      dataKey={`recebido_${arena.arena_id}`}
+                      name={`${arena.arena_name} (Recebido)`}
+                      fill={ARENA_COLORS[idx % ARENA_COLORS.length]}
+                      radius={[3, 3, 0, 0]}
+                      opacity={0.45}
+                    />
+                  ))}
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Comparison Table */}
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '20px',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            marginBottom: '8px',
+            overflowX: 'auto',
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600, color: '#404040' }}>
+              Comparativo por Arena
+            </h3>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #F0F0F0' }}>
+                  {['Arena', 'Alunos', 'Matriculas', 'Turmas', 'Faturado', 'Recebido', 'Inadimplencia'].map(h => (
+                    <th key={h} style={{
+                      padding: '10px 12px',
+                      textAlign: h === 'Arena' ? 'left' : 'right',
+                      fontWeight: 600,
+                      color: '#737373',
+                      fontSize: '11px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {arenaFinancials.map((a, idx) => (
+                  <tr key={a.arena_id} style={{ borderBottom: '1px solid #F5F5F5' }}>
+                    <td style={{ padding: '12px', fontWeight: 600, color: '#1a1a1a' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '3px',
+                        background: ARENA_COLORS[idx % ARENA_COLORS.length],
+                        marginRight: '8px',
+                      }} />
+                      {a.arena_name}
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: '#404040' }}>{a.student_count}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: '#404040' }}>{a.active_enrollments}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: '#404040' }}>{a.class_count}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: '#404040', fontWeight: 500 }}>{formatCurrency(a.faturado)}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: '#10B981', fontWeight: 500 }}>{formatCurrency(a.recebido)}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: a.total_overdue_cents > 0 ? '#EF4444' : '#404040', fontWeight: 500 }}>
+                      {formatCurrency(a.total_overdue_cents)}
+                    </td>
+                  </tr>
+                ))}
+                {/* Total row */}
+                <tr style={{ borderTop: '2px solid #E5E5E5', background: '#FAFAFA' }}>
+                  <td style={{ padding: '12px', fontWeight: 700, color: '#1a1a1a' }}>Total</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>{dashboard.totals.student_count}</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>{dashboard.totals.active_enrollments}</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>{dashboard.totals.class_count}</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>{formatCurrency(financialTotals.faturado)}</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#10B981' }}>{formatCurrency(financialTotals.recebido)}</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: dashboard.totals.total_overdue_cents > 0 ? '#EF4444' : '#1a1a1a' }}>
+                    {formatCurrency(dashboard.totals.total_overdue_cents)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Arena Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',

@@ -16,6 +16,41 @@ interface ArenaMessageResponse {
   message: string;
 }
 
+export interface ArenaKpi {
+  arena_id: number;
+  arena_name: string;
+  student_count: number;
+  active_enrollments: number;
+  class_count: number;
+  total_overdue_cents: number;
+  overdue_students: number;
+}
+
+export interface ArenaMonthlyEntry {
+  arena_id: number;
+  arena_name: string;
+  faturado_cents: number;
+  recebido_cents: number;
+  overdue_cents: number;
+  pending_cents: number;
+}
+
+export interface ArenaDashboardData {
+  arenas: ArenaKpi[];
+  totals: {
+    student_count: number;
+    active_enrollments: number;
+    class_count: number;
+    total_overdue_cents: number;
+  };
+  monthly: { month: string; arenas: ArenaMonthlyEntry[] }[];
+}
+
+interface ArenaDashboardResponse {
+  status: string;
+  data: ArenaDashboardData;
+}
+
 export const arenaService = {
   async getArenas(): Promise<ArenasResponse> {
     const response = await api.get<ArenasResponse>('/api/arenas');
@@ -34,6 +69,11 @@ export const arenaService = {
 
   async deleteArena(id: number): Promise<ArenaMessageResponse> {
     const response = await api.delete<ArenaMessageResponse>(`/api/arenas/${id}`);
+    return response.data;
+  },
+
+  async getDashboard(params?: { months?: number }): Promise<ArenaDashboardResponse> {
+    const response = await api.get<ArenaDashboardResponse>('/api/arenas/dashboard', { params });
     return response.data;
   },
 };
