@@ -51,7 +51,6 @@ import { announcementService } from '../services/announcementService';
 import type { Announcement } from '../services/announcementService';
 import { referralService } from '../services/referralService';
 import ReferralModal from '../components/ReferralModal';
-import CreateClassModal from '../components/CreateClassModal';
 import type { Invoice } from '../types/financialTypes';
 import type { Class, Modality } from '../types/classTypes';
 import type { Enrollment } from '../types/enrollmentTypes';
@@ -196,9 +195,13 @@ export default function Dashboard() {
   const [announceSent, setAnnounceSent] = useState(false);
   const [announceError, setAnnounceError] = useState('');
 
-  // Class edit modal
-  const [editingClass, setEditingClass] = useState<Class | undefined>(undefined);
-  const [showClassModal, setShowClassModal] = useState(false);
+  // Class students popup
+  const [studentsPopup, setStudentsPopup] = useState<{
+    className: string;
+    schedule: string;
+    students: { student_id: number; student_name: string; level_name?: string }[];
+    loading: boolean;
+  } | null>(null);
 
   // Referral carousel
   const [carouselSlide, setCarouselSlide] = useState(0);
@@ -738,21 +741,53 @@ export default function Dashboard() {
       {/* Referral Modal */}
       <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} />
 
-      {/* Class Edit Modal */}
-      {showClassModal && (
-        <CreateClassModal
-          modalities={modalities}
-          editClass={editingClass}
-          onClose={() => {
-            setShowClassModal(false);
-            setEditingClass(undefined);
-          }}
-          onSuccess={() => {
-            setShowClassModal(false);
-            setEditingClass(undefined);
-            fetchData();
-          }}
-        />
+      {/* Class Students Popup */}
+      {studentsPopup && (
+        <div className="modal-overlay" onClick={() => setStudentsPopup(null)}>
+          <div className="dash-students-popup" onClick={e => e.stopPropagation()}>
+            <div className="dash-students-popup-header">
+              <div>
+                <h3>{studentsPopup.className}</h3>
+                <span className="dash-students-popup-schedule">{studentsPopup.schedule}</span>
+              </div>
+              <button className="dash-students-popup-close" onClick={() => setStudentsPopup(null)}>
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            <div className="dash-students-popup-body">
+              {studentsPopup.loading ? (
+                <div className="dash-students-popup-loading">
+                  <div className="loading-spinner" />
+                </div>
+              ) : studentsPopup.students.length === 0 ? (
+                <p className="dash-students-popup-empty">Nenhum aluno matriculado</p>
+              ) : (
+                <>
+                  <div className="dash-students-popup-count">
+                    {studentsPopup.students.length} aluno{studentsPopup.students.length !== 1 ? 's' : ''}
+                  </div>
+                  <div className="dash-students-popup-list">
+                    {studentsPopup.students.map((s, i) => (
+                      <div
+                        key={s.student_id}
+                        className="dash-students-popup-item"
+                        onClick={() => { setStudentsPopup(null); navigate(`/alunos/${s.student_id}`); }}
+                      >
+                        <div className="dash-students-popup-avatar">
+                          {s.student_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="dash-students-popup-info">
+                          <span className="dash-students-popup-name">{s.student_name}</span>
+                          {s.level_name && <span className="dash-students-popup-level">{s.level_name}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Filtros ── */}
@@ -1001,11 +1036,18 @@ export default function Dashboard() {
                         <div
                           key={turma.id}
                           className="vagas-item vagas-item-clickable"
-                          onClick={() => {
-                            const cls = classes.find(c => c.id === turma.id);
-                            if (cls) {
-                              setEditingClass(cls);
-                              setShowClassModal(true);
+                          onClick={async () => {
+                            const schedule = `${weekdayShort[turma.weekday] || turma.weekday} ${turma.startTime}${turma.endTime ? `-${turma.endTime}` : ''}`;
+                            setStudentsPopup({ className: turma.name, schedule, students: [], loading: true });
+                            try {
+                              const res = await classService.getClassById(turma.id);
+                              if (res.data?.students) {
+                                setStudentsPopup(prev => prev ? { ...prev, students: res.data.students || [], loading: false } : null);
+                              } else {
+                                setStudentsPopup(prev => prev ? { ...prev, loading: false } : null);
+                              }
+                            } catch {
+                              setStudentsPopup(prev => prev ? { ...prev, loading: false } : null);
                             }
                           }}
                         >
