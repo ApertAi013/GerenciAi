@@ -381,9 +381,13 @@ export default function Onboarding() {
   const [modalityName, setModalityName] = useState('');
   const [createdModalities, setCreatedModalities] = useState<CreatedModality[]>([]);
   const [classModalityId, setClassModalityId] = useState<number | null>(null);
+  const [className, setClassName] = useState('');
   const [classWeekday, setClassWeekday] = useState('');
   const [classStartTime, setClassStartTime] = useState('');
-  const [classEndTime, setClassEndTime] = useState('');
+  const [classDuration, setClassDuration] = useState(60);
+  const [classColor, setClassColor] = useState(LEVEL_COLORS[1]);
+  const [classLocation, setClassLocation] = useState('');
+  const [classCapacity, setClassCapacity] = useState('20');
   const [classAllowedLevels, setClassAllowedLevels] = useState<string[]>([]);
   const [createdClasses, setCreatedClasses] = useState<CreatedClass[]>([]);
 
@@ -496,6 +500,15 @@ export default function Onboarding() {
     }
   };
 
+  const calcEndTime = (start: string, durationMin: number) => {
+    if (!start) return '';
+    const [h, m] = start.split(':').map(Number);
+    const totalMin = h * 60 + m + durationMin;
+    const eh = Math.floor(totalMin / 60) % 24;
+    const em = totalMin % 60;
+    return `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
+  };
+
   const handleCreateClass = async () => {
     if (!classModalityId || !classWeekday || !classStartTime) {
       toast.error('Preencha modalidade, dia e horário de início');
@@ -503,19 +516,26 @@ export default function Onboarding() {
     }
     setLoading(true);
     try {
+      const endTime = calcEndTime(classStartTime, classDuration);
       const res = await classService.createClass({
         modality_id: classModalityId,
+        name: className.trim() || undefined,
         weekday: classWeekday as any,
         start_time: classStartTime,
-        end_time: classEndTime || undefined,
+        end_time: endTime || undefined,
         allowed_levels: classAllowedLevels.length > 0 ? classAllowedLevels : undefined,
+        color: classColor,
+        location: classLocation.trim() || undefined,
+        capacity: classCapacity ? parseInt(classCapacity) : undefined,
       });
       const modName = createdModalities.find(m => m.id === classModalityId)?.name || '';
       setCreatedClasses(prev => [...prev, { id: res.data.id, modality_name: modName, weekday: classWeekday, start_time: classStartTime }]);
+      setClassName('');
       setClassWeekday('');
       setClassStartTime('');
-      setClassEndTime('');
       setClassAllowedLevels([]);
+      setClassLocation('');
+      setClassCapacity('20');
       toast.success('Turma criada!');
     } catch {
       toast.error('Erro ao criar turma');
@@ -763,17 +783,30 @@ export default function Onboarding() {
             Nova Turma
           </h3>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Modalidade</label>
-            <select
-              style={{ ...styles.input, cursor: 'pointer' }}
-              value={classModalityId || ''}
-              onChange={e => setClassModalityId(Number(e.target.value))}
-            >
-              {createdModalities.map(m => (
-                <option key={m.id} value={m.id} style={{ background: '#1a1a1a' }}>{m.name}</option>
-              ))}
-            </select>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ flex: 1, ...styles.formGroup }}>
+              <label style={styles.label}>Modalidade</label>
+              <select
+                style={{ ...styles.input, cursor: 'pointer' }}
+                value={classModalityId || ''}
+                onChange={e => setClassModalityId(Number(e.target.value))}
+              >
+                {createdModalities.map(m => (
+                  <option key={m.id} value={m.id} style={{ background: '#1a1a1a' }}>{m.name}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ flex: 1, ...styles.formGroup }}>
+              <label style={styles.label}>Nome da Turma (opcional)</label>
+              <input
+                style={styles.input}
+                value={className}
+                onChange={e => setClassName(e.target.value)}
+                placeholder="Ex: Turma Iniciantes Manhã"
+                onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
+            </div>
           </div>
 
           <div style={styles.formGroup}>
@@ -793,7 +826,7 @@ export default function Onboarding() {
 
           <div style={{ display: 'flex', gap: '12px' }}>
             <div style={{ flex: 1, ...styles.formGroup }}>
-              <label style={styles.label}>Início</label>
+              <label style={styles.label}>Horário Início</label>
               <input
                 type="time"
                 style={styles.input}
@@ -802,13 +835,68 @@ export default function Onboarding() {
               />
             </div>
             <div style={{ flex: 1, ...styles.formGroup }}>
-              <label style={styles.label}>Fim (opcional)</label>
+              <label style={styles.label}>Duração da Aula</label>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {[30, 60, 90].map(d => (
+                  <div
+                    key={d}
+                    style={{
+                      ...styles.weekdayChip(classDuration === d),
+                      flex: 1,
+                      textAlign: 'center' as const,
+                    }}
+                    onClick={() => setClassDuration(d)}
+                  >
+                    {d} min
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ flex: 1, ...styles.formGroup }}>
+              <label style={styles.label}>Horário Fim</label>
               <input
                 type="time"
-                style={styles.input}
-                value={classEndTime}
-                onChange={e => setClassEndTime(e.target.value)}
+                style={{ ...styles.input, opacity: 0.6 }}
+                value={calcEndTime(classStartTime, classDuration)}
+                readOnly
               />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ flex: 1, ...styles.formGroup }}>
+              <label style={styles.label}>Local (opcional)</label>
+              <input
+                style={styles.input}
+                value={classLocation}
+                onChange={e => setClassLocation(e.target.value)}
+                placeholder="Ex: Quadra 1"
+                onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
+            </div>
+            <div style={{ width: '120px', ...styles.formGroup }}>
+              <label style={styles.label}>Capacidade</label>
+              <input
+                type="number"
+                style={styles.input}
+                value={classCapacity}
+                onChange={e => setClassCapacity(e.target.value)}
+                min="1"
+              />
+            </div>
+          </div>
+
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Cor da Turma</label>
+            <div style={styles.colorGrid}>
+              {LEVEL_COLORS.map(c => (
+                <div
+                  key={c}
+                  style={styles.colorSwatch(c, c === classColor)}
+                  onClick={() => setClassColor(c)}
+                />
+              ))}
             </div>
           </div>
 
