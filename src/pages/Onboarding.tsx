@@ -395,6 +395,8 @@ export default function Onboarding() {
   const [planName, setPlanName] = useState('');
   const [planSessions, setPlanSessions] = useState(2);
   const [planPrice, setPlanPrice] = useState('');
+  const [planModalityId, setPlanModalityId] = useState<number | undefined>(undefined);
+  const [planDescription, setPlanDescription] = useState('');
   const [createdPlans, setCreatedPlans] = useState<CreatedPlan[]>([]);
 
   // ─── Handlers ───
@@ -560,11 +562,15 @@ export default function Onboarding() {
         name: planName.trim(),
         sessions_per_week: planSessions,
         price_cents: priceCents,
+        modality_id: planModalityId || undefined,
+        description: planDescription.trim() || undefined,
       });
       setCreatedPlans(prev => [...prev, { id: res.data.id, name: res.data.name, sessions_per_week: planSessions, price_cents: priceCents }]);
       setPlanName('');
       setPlanPrice('');
       setPlanSessions(2);
+      setPlanModalityId(undefined);
+      setPlanDescription('');
       toast.success(`Plano "${res.data.name}" criado!`);
     } catch {
       toast.error('Erro ao criar plano');
@@ -964,21 +970,41 @@ export default function Onboarding() {
       </p>
 
       <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Nome do Plano</label>
-          <input
-            style={styles.input}
-            value={planName}
-            onChange={e => setPlanName(e.target.value)}
-            placeholder="Ex: Plano 2x semana"
-            onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
-            onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
-          />
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 1, ...styles.formGroup }}>
+            <label style={styles.label}>Nome do Plano *</label>
+            <input
+              style={styles.input}
+              value={planName}
+              onChange={e => setPlanName(e.target.value)}
+              placeholder="Ex: Plano 2x por semana"
+              onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
+              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+            />
+          </div>
+          {createdModalities.length > 0 && (
+            <div style={{ flex: 1, ...styles.formGroup }}>
+              <label style={styles.label}>Modalidade</label>
+              <select
+                style={{ ...styles.input, cursor: 'pointer' }}
+                value={planModalityId || ''}
+                onChange={e => setPlanModalityId(e.target.value ? Number(e.target.value) : undefined)}
+              >
+                <option value="" style={{ background: '#1a1a1a' }}>Todas as modalidades</option>
+                {createdModalities.map(m => (
+                  <option key={m.id} value={m.id} style={{ background: '#1a1a1a' }}>{m.name}</option>
+                ))}
+              </select>
+              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginTop: '4px', display: 'block' }}>
+                Se definir, só turmas dessa modalidade aparecerão na matrícula
+              </span>
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: '16px' }}>
           <div style={{ flex: 1, ...styles.formGroup }}>
-            <label style={styles.label}>Aulas / semana</label>
+            <label style={styles.label}>Aulas por Semana *</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button
                 style={{ ...styles.secondaryBtn, padding: '8px 14px', fontSize: '1.1rem' }}
@@ -997,7 +1023,7 @@ export default function Onboarding() {
           </div>
 
           <div style={{ flex: 1, ...styles.formGroup }}>
-            <label style={styles.label}>Preço mensal (R$)</label>
+            <label style={styles.label}>Preço Mensal (R$) *</label>
             <input
               style={styles.input}
               value={planPrice}
@@ -1007,6 +1033,19 @@ export default function Onboarding() {
               onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
             />
           </div>
+        </div>
+
+        <div style={styles.formGroup}>
+          <label style={styles.label}>Descrição (opcional)</label>
+          <textarea
+            style={{ ...styles.input, resize: 'vertical' as const, minHeight: '70px' }}
+            value={planDescription}
+            onChange={e => setPlanDescription(e.target.value)}
+            placeholder="Descrição opcional do plano"
+            rows={3}
+            onFocus={e => Object.assign(e.target.style, styles.inputFocus)}
+            onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+          />
         </div>
 
         <button
