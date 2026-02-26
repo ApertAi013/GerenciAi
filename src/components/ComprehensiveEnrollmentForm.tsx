@@ -285,7 +285,7 @@ export default function ComprehensiveEnrollmentForm({
           // Get invoices for this enrollment
           const invoicesResponse = await financialService.getInvoices({
             student_id: createdStudent.id,
-            status: 'pendente',
+            status: 'aberta',
           });
 
           // Find the first invoice (should be the one just created)
