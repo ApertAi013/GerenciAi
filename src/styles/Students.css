@@ -27,17 +27,18 @@
 
 .search-box {
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
 .search-box input {
-  padding: 0.75rem 3rem 0.75rem 1rem;
+  padding: 8px 36px 8px 12px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  font-size: 0.95rem;
-  width: 300px;
+  font-size: 14px;
+  width: 220px;
+  height: 38px;
   background: white;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 .search-box input:focus {
@@ -47,11 +48,23 @@
 
 .search-icon {
   position: absolute;
-  right: 0.75rem;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
+  padding: 0;
+  margin: 0;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 14px;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a3a3a3;
+  pointer-events: none;
 }
 
 .btn-primary {

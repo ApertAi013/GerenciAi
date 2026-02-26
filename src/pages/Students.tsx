@@ -211,11 +211,11 @@ export default function Students() {
           <div className="search-box">
             <input
               type="text"
-              placeholder="Pesquisar"
+              placeholder="Pesquisar alunos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <button type="button" className="search-icon">🔍</button>
+            <span className="search-icon">🔍</span>
           </div>
 
           {selectedStudentIds.size > 0 && (
