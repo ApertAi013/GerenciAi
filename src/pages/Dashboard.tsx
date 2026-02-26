@@ -415,14 +415,14 @@ export default function Dashboard() {
     const totalEnr = activeClasses.reduce((s, c) => s + c.enrolled, 0);
     const totalPct = totalCap > 0 ? Math.round((totalEnr / totalCap) * 100) : 0;
 
-    // Group by level
+    // Group by primary level (each class in one group only)
     const groupMap = new Map<string, typeof activeClasses>();
     activeClasses.forEach(c => {
       const lvls = c.allowedLevels.length > 0 ? c.allowedLevels : ['Sem nível'];
-      lvls.forEach(lvl => {
-        if (!groupMap.has(lvl)) groupMap.set(lvl, []);
-        groupMap.get(lvl)!.push(c);
-      });
+      // Primary level: match class name to a level, or use first allowed level
+      const primaryLevel = lvls.find(lvl => c.name.toLowerCase().includes(lvl.toLowerCase())) || lvls[0];
+      if (!groupMap.has(primaryLevel)) groupMap.set(primaryLevel, []);
+      groupMap.get(primaryLevel)!.push(c);
     });
 
     // Sort groups by level order
