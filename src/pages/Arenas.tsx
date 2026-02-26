@@ -36,6 +36,7 @@ export default function Arenas() {
   // Dashboard state
   const [dashboard, setDashboard] = useState<ArenaDashboardData | null>(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState('');
   const [monthsFilter, setMonthsFilter] = useState(6);
 
   useEffect(() => {
@@ -51,12 +52,14 @@ export default function Arenas() {
   const fetchDashboard = async () => {
     try {
       setDashboardLoading(true);
+      setDashboardError('');
       const response = await arenaService.getDashboard({ months: monthsFilter });
       if (response.status === 'success' && response.data) {
         setDashboard(response.data);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao buscar dashboard:', err);
+      setDashboardError(err.response?.data?.message || 'Erro ao carregar dashboard');
     } finally {
       setDashboardLoading(false);
     }
@@ -212,6 +215,21 @@ export default function Arenas() {
       </div>
 
       {error && <div className="error-message">{error}</div>}
+
+      {/* Dashboard loading / error */}
+      {arenas.length > 0 && !dashboard && (dashboardLoading || dashboardError) && (
+        <div style={{
+          background: dashboardError ? '#fef2f2' : 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '24px',
+          textAlign: 'center',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+        }}>
+          {dashboardLoading && <span style={{ color: '#737373' }}>Carregando dashboard...</span>}
+          {dashboardError && <span style={{ color: '#ef4444' }}>{dashboardError}</span>}
+        </div>
+      )}
 
       {/* Cross-Arena Dashboard */}
       {arenas.length > 0 && dashboard && (
@@ -419,6 +437,9 @@ export default function Arenas() {
                 transition: 'box-shadow 0.2s, transform 0.2s',
                 position: 'relative',
                 overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column' as const,
+                opacity: arena.status === 'inativa' ? 0.6 : 1,
               }}
             >
               {/* Top accent bar */}
@@ -428,7 +449,7 @@ export default function Arenas() {
                 left: 0,
                 right: 0,
                 height: '4px',
-                background: isActive ? '#FF9900' : '#E5E5E5',
+                background: arena.status === 'inativa' ? '#ef4444' : isActive ? '#FF9900' : '#E5E5E5',
               }} />
 
               {/* Header */}
@@ -487,6 +508,16 @@ export default function Arenas() {
                         Selecionada
                       </span>
                     )}
+                    {arena.status === 'inativa' && (
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#ef4444',
+                        background: '#fef2f2',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                      }}>Inativa</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -544,8 +575,8 @@ export default function Arenas() {
               </div>
 
               {/* Actions */}
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {!isActive && (
+              <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                {!isActive && arena.status !== 'inativa' && (
                   <button
                     type="button"
                     onClick={() => handleSwitchToArena(arena.id)}
@@ -598,7 +629,7 @@ export default function Arenas() {
                   <FontAwesomeIcon icon={faPen} style={{ fontSize: '11px' }} />
                   Editar
                 </button>
-                {!arena.is_default && (
+                {!arena.is_default && arena.status !== 'inativa' && (
                   <button
                     type="button"
                     onClick={() => handleDeactivate(arena.id)}
