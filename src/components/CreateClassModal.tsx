@@ -7,10 +7,20 @@ import '../styles/Classes.css';
 import '../styles/ModernModal.css';
 
 interface ScheduleSlot {
-  weekday: '' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom';
+  weekdays: string[];
   start_time: string;
   end_time: string;
 }
+
+const WEEKDAY_OPTIONS = [
+  { key: 'seg', label: 'Seg' },
+  { key: 'ter', label: 'Ter' },
+  { key: 'qua', label: 'Qua' },
+  { key: 'qui', label: 'Qui' },
+  { key: 'sex', label: 'Sex' },
+  { key: 'sab', label: 'Sáb' },
+  { key: 'dom', label: 'Dom' },
+];
 
 interface CreateClassModalProps {
   modalities: Modality[];
@@ -40,7 +50,7 @@ export default function CreateClassModal({
 
   // Múltiplos horários
   const [schedules, setSchedules] = useState<ScheduleSlot[]>([{
-    weekday: '' as '' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom',
+    weekdays: [],
     start_time: '',
     end_time: ''
   }]);
@@ -75,7 +85,7 @@ export default function CreateClassModal({
   useEffect(() => {
     if (prefilledData && !isEditMode) {
       setSchedules([{
-        weekday: prefilledData.weekday as any,
+        weekdays: [prefilledData.weekday],
         start_time: prefilledData.start_time,
         end_time: calculateEndTime(prefilledData.start_time, duration)
       }]);
@@ -96,7 +106,7 @@ export default function CreateClassModal({
 
       // Em modo de edição, apenas um horário
       setSchedules([{
-        weekday: editClass.weekday,
+        weekdays: [editClass.weekday],
         start_time: editClass.start_time.substring(0, 5),
         end_time: editClass.end_time ? editClass.end_time.substring(0, 5) : '',
       }]);
@@ -143,7 +153,7 @@ export default function CreateClassModal({
   };
 
   const addSchedule = () => {
-    setSchedules([...schedules, { weekday: '', start_time: '', end_time: '' }]);
+    setSchedules([...schedules, { weekdays: [], start_time: '', end_time: '' }]);
   };
 
   const removeSchedule = (index: number) => {
@@ -175,18 +185,18 @@ export default function CreateClassModal({
 
       // Validar horários
       for (const schedule of schedules) {
-        if (!schedule.weekday || !schedule.start_time) {
-          setError('Todos os horários devem ter dia da semana e horário de início');
+        if (schedule.weekdays.length === 0 || !schedule.start_time) {
+          setError('Todos os horários devem ter dia(s) da semana e horário de início');
           setIsSubmitting(false);
           return;
         }
       }
 
       if (isEditMode && editClass) {
-        // Modo de edição - apenas um horário
+        // Modo de edição - apenas um horário/dia
         const payload: any = {
           modality_id: parseInt(formData.modality_id),
-          weekday: schedules[0].weekday,
+          weekday: schedules[0].weekdays[0],
           start_time: schedules[0].start_time,
           capacity: parseInt(formData.capacity),
         };
@@ -194,40 +204,40 @@ export default function CreateClassModal({
         if (formData.name) payload.name = formData.name;
         if (schedules[0].end_time) payload.end_time = schedules[0].end_time;
         if (formData.location) payload.location = formData.location;
-        payload.level = 'todos'; // backward compat fallback
+        payload.level = 'todos';
         if (formData.color) payload.color = formData.color;
         payload.allowed_levels = selectedLevels.length > 0 ? selectedLevels : null;
 
         const response = await classService.updateClass(editClass.id, payload);
 
-        // Verificar resposta (suporta ambos formatos: success e status)
         const isSuccess = (response as any).status === 'success' || (response as any).success === true;
         if (!isSuccess) {
           throw new Error((response as any).message || 'Erro ao atualizar turma');
         }
       } else {
-        // Modo de criação - criar uma turma para cada horário
+        // Modo de criação - criar uma turma para cada dia selecionado em cada horário
         for (const schedule of schedules) {
-          const payload: any = {
-            modality_id: parseInt(formData.modality_id),
-            weekday: schedule.weekday,
-            start_time: schedule.start_time,
-            capacity: parseInt(formData.capacity),
-          };
+          for (const weekday of schedule.weekdays) {
+            const payload: any = {
+              modality_id: parseInt(formData.modality_id),
+              weekday,
+              start_time: schedule.start_time,
+              capacity: parseInt(formData.capacity),
+            };
 
-          if (formData.name) payload.name = formData.name;
-          if (schedule.end_time) payload.end_time = schedule.end_time;
-          if (formData.location) payload.location = formData.location;
-          payload.level = 'todos'; // backward compat fallback
-          if (formData.color) payload.color = formData.color;
-          payload.allowed_levels = selectedLevels.length > 0 ? selectedLevels : null;
+            if (formData.name) payload.name = formData.name;
+            if (schedule.end_time) payload.end_time = schedule.end_time;
+            if (formData.location) payload.location = formData.location;
+            payload.level = 'todos';
+            if (formData.color) payload.color = formData.color;
+            payload.allowed_levels = selectedLevels.length > 0 ? selectedLevels : null;
 
-          const response = await classService.createClass(payload);
+            const response = await classService.createClass(payload);
 
-          // Verificar resposta (suporta ambos formatos: success e status)
-          const isSuccess = (response as any).status === 'success' || (response as any).success === true;
-          if (!isSuccess) {
-            throw new Error((response as any).message || 'Erro ao criar turma');
+            const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+            if (!isSuccess) {
+              throw new Error((response as any).message || 'Erro ao criar turma');
+            }
           }
         }
       }
@@ -343,29 +353,41 @@ export default function CreateClassModal({
                   )}
                 </div>
 
-                <div className="mm-field-row">
-                  <div className="mm-field" style={{ margin: 0 }}>
-                    <label>Dia da Semana *</label>
-                    <select
-                      value={schedule.weekday}
-                      onChange={(e) => {
-                        const newSchedules = [...schedules];
-                        newSchedules[index].weekday = e.target.value as any;
-                        setSchedules(newSchedules);
-                      }}
-                      required
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="seg">Segunda-feira</option>
-                      <option value="ter">Terça-feira</option>
-                      <option value="qua">Quarta-feira</option>
-                      <option value="qui">Quinta-feira</option>
-                      <option value="sex">Sexta-feira</option>
-                      <option value="sab">Sábado</option>
-                      <option value="dom">Domingo</option>
-                    </select>
+                <div className="mm-field" style={{ margin: '0 0 0.75rem' }}>
+                  <label>{isEditMode ? 'Dia da Semana *' : 'Dias da Semana * (selecione um ou mais)'}</label>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                    {WEEKDAY_OPTIONS.map(w => (
+                      <div
+                        key={w.key}
+                        onClick={() => {
+                          if (isEditMode) {
+                            const newSchedules = [...schedules];
+                            newSchedules[index].weekdays = [w.key];
+                            setSchedules(newSchedules);
+                          } else {
+                            const newSchedules = [...schedules];
+                            const days = newSchedules[index].weekdays;
+                            newSchedules[index].weekdays = days.includes(w.key)
+                              ? days.filter(d => d !== w.key)
+                              : [...days, w.key];
+                            setSchedules(newSchedules);
+                          }
+                        }}
+                        style={{
+                          padding: '6px 12px', borderRadius: '6px', cursor: 'pointer',
+                          fontSize: '0.85rem', fontWeight: 500, transition: 'all 0.15s',
+                          background: schedule.weekdays.includes(w.key) ? '#22C55E' : '#F3F4F6',
+                          color: schedule.weekdays.includes(w.key) ? 'white' : '#374151',
+                          border: `1.5px solid ${schedule.weekdays.includes(w.key) ? '#16A34A' : '#D1D5DB'}`,
+                        }}
+                      >
+                        {w.label}
+                      </div>
+                    ))}
                   </div>
+                </div>
 
+                <div className="mm-field-row">
                   <div className="mm-field" style={{ margin: 0 }}>
                     <label>Horário Início *</label>
                     <input

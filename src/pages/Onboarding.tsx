@@ -409,7 +409,7 @@ export default function Onboarding() {
   const [createdCourts, setCreatedCourts] = useState<CreatedCourt[]>([]);
   const [classModalityId, setClassModalityId] = useState<number | null>(null);
   const [className, setClassName] = useState('');
-  const [classWeekday, setClassWeekday] = useState('');
+  const [classWeekdays, setClassWeekdays] = useState<string[]>([]);
   const [classStartTime, setClassStartTime] = useState('');
   const [classDuration, setClassDuration] = useState(60);
   const [classColor, setClassColor] = useState(LEVEL_COLORS[1]);
@@ -599,33 +599,37 @@ export default function Onboarding() {
   };
 
   const handleCreateClass = async () => {
-    if (!classModalityId || !classWeekday || !classStartTime) {
-      toast.error('Preencha modalidade, dia e horário de início');
+    if (!classModalityId || classWeekdays.length === 0 || !classStartTime) {
+      toast.error('Preencha modalidade, dia(s) e horário de início');
       return;
     }
     setLoading(true);
     try {
       const endTime = calcEndTime(classStartTime, classDuration);
-      const res = await classService.createClass({
-        modality_id: classModalityId,
-        name: className.trim() || undefined,
-        weekday: classWeekday as any,
-        start_time: classStartTime,
-        end_time: endTime || undefined,
-        allowed_levels: classAllowedLevels.length > 0 ? classAllowedLevels : undefined,
-        color: classColor,
-        location: classLocation.trim() || undefined,
-        capacity: classCapacity ? parseInt(classCapacity) : undefined,
-      });
       const modName = createdModalities.find(m => m.id === classModalityId)?.name || '';
-      setCreatedClasses(prev => [...prev, { id: res.data.id, modality_name: modName, weekday: classWeekday, start_time: classStartTime }]);
+
+      for (const day of classWeekdays) {
+        const res = await classService.createClass({
+          modality_id: classModalityId,
+          name: className.trim() || undefined,
+          weekday: day as any,
+          start_time: classStartTime,
+          end_time: endTime || undefined,
+          allowed_levels: classAllowedLevels.length > 0 ? classAllowedLevels : undefined,
+          color: classColor,
+          location: classLocation.trim() || undefined,
+          capacity: classCapacity ? parseInt(classCapacity) : undefined,
+        });
+        setCreatedClasses(prev => [...prev, { id: res.data.id, modality_name: modName, weekday: day, start_time: classStartTime }]);
+      }
+
       setClassName('');
-      setClassWeekday('');
+      setClassWeekdays([]);
       setClassStartTime('');
       setClassAllowedLevels([]);
       setClassLocation('');
       setClassCapacity('20');
-      toast.success('Turma criada!');
+      toast.success(classWeekdays.length > 1 ? `${classWeekdays.length} turmas criadas!` : 'Turma criada!');
     } catch {
       toast.error('Erro ao criar turma');
     } finally {
@@ -1022,13 +1026,15 @@ export default function Onboarding() {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Dia da Semana</label>
+            <label style={styles.label}>Dias da Semana <span style={{ fontWeight: 400, fontSize: '0.8em', color: '#888' }}>(selecione um ou mais)</span></label>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {WEEKDAYS.map(w => (
                 <div
                   key={w.key}
-                  style={styles.weekdayChip(classWeekday === w.key)}
-                  onClick={() => setClassWeekday(w.key)}
+                  style={styles.weekdayChip(classWeekdays.includes(w.key))}
+                  onClick={() => setClassWeekdays(prev =>
+                    prev.includes(w.key) ? prev.filter(d => d !== w.key) : [...prev, w.key]
+                  )}
                 >
                   {w.label}
                 </div>
@@ -1141,9 +1147,9 @@ export default function Onboarding() {
           )}
 
           <button
-            style={{ ...styles.createBtn, opacity: loading || !classWeekday || !classStartTime ? 0.6 : 1 }}
+            style={{ ...styles.createBtn, opacity: loading || classWeekdays.length === 0 || !classStartTime ? 0.6 : 1 }}
             onClick={handleCreateClass}
-            disabled={loading || !classWeekday || !classStartTime}
+            disabled={loading || classWeekdays.length === 0 || !classStartTime}
           >
             {loading ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faPlus} />}
             Criar Turma
