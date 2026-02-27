@@ -734,6 +734,90 @@ export default function TrialStudents() {
         )}
       </div>
 
+      {/* Price visibility settings - own section */}
+      <div className="trial-config-section">
+        <div className="trial-config-header" style={{ cursor: 'default' }}>
+          <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <DollarSign size={20} />
+            Exibição de Preços nos Links
+          </h2>
+          <button
+            type="button"
+            onClick={() => handleToggleTrialPrices(!showTrialPrices)}
+            disabled={loadingPriceSettings}
+            style={{
+              width: '52px', height: '28px', borderRadius: '14px', border: 'none',
+              background: showTrialPrices ? '#22C55E' : '#D1D5DB',
+              cursor: loadingPriceSettings ? 'wait' : 'pointer',
+              position: 'relative', transition: 'background 0.2s ease', flexShrink: 0,
+            }}
+          >
+            <div style={{
+              width: '22px', height: '22px', borderRadius: '50%',
+              background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              position: 'absolute', top: '3px',
+              left: showTrialPrices ? '27px' : '3px',
+              transition: 'left 0.2s ease',
+            }} />
+          </button>
+        </div>
+
+        <div className="trial-config-body">
+          <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: showTrialPrices ? '1rem' : 0 }}>
+            {showTrialPrices
+              ? 'Os preços dos planos selecionados serão exibidos no link global e nos links personalizados que tiverem preços habilitados.'
+              : 'Os preços dos planos estão ocultos em todos os links de aula experimental.'}
+          </p>
+
+          {showTrialPrices && (
+            <>
+              <div style={{ fontSize: '0.85rem', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>
+                Planos a exibir no link global:
+              </div>
+              {allPlans.length === 0 ? (
+                <p style={{ fontSize: '0.8rem', color: '#999' }}>
+                  Nenhum plano ativo encontrado. Crie planos na seção de Planos.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {allPlans.map((plan) => (
+                    <label
+                      key={plan.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '8px 10px', borderRadius: '8px', cursor: 'pointer',
+                        background: visiblePlanIds.includes(plan.id) ? '#ECFDF5' : 'white',
+                        border: `1px solid ${visiblePlanIds.includes(plan.id) ? '#86EFAC' : '#E5E7EB'}`,
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visiblePlanIds.includes(plan.id)}
+                        onChange={() => handleTogglePlanVisibility(plan.id)}
+                        style={{ accentColor: '#22C55E' }}
+                      />
+                      <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500, color: '#1F2937' }}>
+                        {plan.name}
+                        {plan.sessions_per_week > 0 && (
+                          <span style={{ color: '#6B7280', fontWeight: 400 }}> · {plan.sessions_per_week}x/sem</span>
+                        )}
+                      </span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#059669' }}>
+                        R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '8px' }}>
+                Links personalizados podem ter seus próprios planos selecionados ao criar/editar.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Custom Booking Links Section */}
       <div className="trial-config-section">
         <div
@@ -756,93 +840,6 @@ export default function TrialStudents() {
             <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '1rem' }}>
               Crie links de agendamento que mostram apenas turmas específicas. Ideal para divulgar modalidades separadamente.
             </p>
-
-            {/* Price visibility settings */}
-            <div style={{
-              padding: '16px', background: showTrialPrices ? '#F0FDF4' : '#F9FAFB',
-              borderRadius: '10px', border: `1.5px solid ${showTrialPrices ? '#22C55E' : '#E5E7EB'}`,
-              marginBottom: '1.5rem', transition: 'all 0.2s ease',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: showTrialPrices ? '12px' : 0 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#1F2937', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <DollarSign size={18} />
-                    Exibir preços dos planos nos links
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#6B7280' }}>
-                    {showTrialPrices
-                      ? 'Os preços dos planos selecionados serão visíveis nos links de aula experimental.'
-                      : 'Os preços dos planos estão ocultos nos links de aula experimental.'}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleToggleTrialPrices(!showTrialPrices)}
-                  disabled={loadingPriceSettings}
-                  style={{
-                    width: '52px', height: '28px', borderRadius: '14px', border: 'none',
-                    background: showTrialPrices ? '#22C55E' : '#D1D5DB',
-                    cursor: loadingPriceSettings ? 'wait' : 'pointer',
-                    position: 'relative', transition: 'background 0.2s ease', flexShrink: 0,
-                  }}
-                >
-                  <div style={{
-                    width: '22px', height: '22px', borderRadius: '50%',
-                    background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                    position: 'absolute', top: '3px',
-                    left: showTrialPrices ? '27px' : '3px',
-                    transition: 'left 0.2s ease',
-                  }} />
-                </button>
-              </div>
-
-              {showTrialPrices && (
-                <div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>
-                    Planos a exibir no link global:
-                  </div>
-                  {allPlans.length === 0 ? (
-                    <p style={{ fontSize: '0.8rem', color: '#999' }}>
-                      Nenhum plano ativo encontrado. Crie planos na seção de Planos.
-                    </p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {allPlans.map((plan) => (
-                        <label
-                          key={plan.id}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: '8px',
-                            padding: '8px 10px', borderRadius: '8px', cursor: 'pointer',
-                            background: visiblePlanIds.includes(plan.id) ? '#ECFDF5' : 'white',
-                            border: `1px solid ${visiblePlanIds.includes(plan.id) ? '#86EFAC' : '#E5E7EB'}`,
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={visiblePlanIds.includes(plan.id)}
-                            onChange={() => handleTogglePlanVisibility(plan.id)}
-                            style={{ accentColor: '#22C55E' }}
-                          />
-                          <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500, color: '#1F2937' }}>
-                            {plan.name}
-                            {plan.sessions_per_week > 0 && (
-                              <span style={{ color: '#6B7280', fontWeight: 400 }}> · {plan.sessions_per_week}x/sem</span>
-                            )}
-                          </span>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#059669' }}>
-                            R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                  <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '8px' }}>
-                    Links personalizados podem ter seus próprios planos selecionados ao criar/editar.
-                  </p>
-                </div>
-              )}
-            </div>
 
             <button
               className="btn-primary"
