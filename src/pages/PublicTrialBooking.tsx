@@ -44,6 +44,10 @@ export default function PublicTrialBooking() {
   const [submitting, setSubmitting] = useState(false);
   const [bookingResult, setBookingResult] = useState<any>(null);
 
+  // Plans/prices
+  const [showPrices, setShowPrices] = useState(false);
+  const [plans, setPlans] = useState<Array<{ id: number; name: string; sessions_per_week: number; price_cents: number }>>([]);
+
   useEffect(() => {
     if (!bookingToken) return;
     loadInfo();
@@ -59,6 +63,15 @@ export default function PublicTrialBooking() {
 
       const modResponse = await publicTrialBookingService.getAvailableModalities(bookingToken!);
       setModalities(modResponse.data || []);
+
+      // Load plans/prices
+      try {
+        const plansRes = await publicTrialBookingService.getPlans(bookingToken!);
+        if (plansRes.data?.show_prices && plansRes.data?.plans?.length > 0) {
+          setShowPrices(true);
+          setPlans(plansRes.data.plans);
+        }
+      } catch { /* plans not available, no-op */ }
     } catch {
       setError('Link de agendamento inválido ou expirado.');
     } finally {
@@ -206,6 +219,45 @@ export default function PublicTrialBooking() {
           <div className="ptb-error-inline">
             {error}
             <button onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991B1B', fontWeight: 700 }}>✕</button>
+          </div>
+        )}
+
+        {/* Plans/Prices info */}
+        {showPrices && plans.length > 0 && step < 5 && (
+          <div style={{
+            background: 'linear-gradient(135deg, #F0FDF4, #ECFDF5)',
+            border: '1px solid #BBF7D0',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+          }}>
+            <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#166534', marginBottom: '10px' }}>
+              Nossos Planos
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {plans.map((plan) => (
+                <div
+                  key={plan.id}
+                  style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '8px 12px', background: 'white', borderRadius: '8px',
+                    border: '1px solid #D1FAE5',
+                  }}
+                >
+                  <span style={{ fontSize: '0.9rem', color: '#1F2937', fontWeight: 500 }}>
+                    {plan.name}
+                    {plan.sessions_per_week > 0 && (
+                      <span style={{ color: '#6B7280', fontWeight: 400, fontSize: '0.8rem' }}>
+                        {' '}· {plan.sessions_per_week}x/semana
+                      </span>
+                    )}
+                  </span>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#059669' }}>
+                    R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

@@ -62,6 +62,8 @@ export default function Rentals() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [bookingLink, setBookingLink] = useState('');
   const [loadingLink, setLoadingLink] = useState(false);
+  const [showRentalPrices, setShowRentalPrices] = useState(true);
+  const [loadingPriceSettings, setLoadingPriceSettings] = useState(false);
 
   // Operating hours modal
   const [showHoursModal, setShowHoursModal] = useState(false);
@@ -341,11 +343,31 @@ export default function Rentals() {
       }
       const baseUrl = window.location.origin;
       setBookingLink(`${baseUrl}/reservar/${token}`);
+
+      // Load price settings
+      try {
+        const priceRes = await courtService.getRentalPriceSettings();
+        setShowRentalPrices(priceRes.data?.show_rental_prices ?? true);
+      } catch { /* default to true */ }
+
       setShowShareModal(true);
     } catch {
       toast.error('Erro ao gerar link de reserva');
     } finally {
       setLoadingLink(false);
+    }
+  };
+
+  const handleToggleRentalPrices = async (value: boolean) => {
+    setLoadingPriceSettings(true);
+    try {
+      await courtService.updateRentalPriceSettings(value);
+      setShowRentalPrices(value);
+      toast.success(value ? 'Preços visíveis no link' : 'Preços ocultos no link');
+    } catch {
+      toast.error('Erro ao atualizar configuração');
+    } finally {
+      setLoadingPriceSettings(false);
     }
   };
 
@@ -1286,6 +1308,45 @@ export default function Rentals() {
                   Copiar
                 </button>
               </div>
+              {/* Price toggle */}
+              <div style={{
+                marginTop: '20px', padding: '16px', background: showRentalPrices ? '#F0FDF4' : '#F9FAFB',
+                borderRadius: '10px', border: `1.5px solid ${showRentalPrices ? '#22C55E' : '#E5E7EB'}`,
+                transition: 'all 0.2s ease',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#1F2937', marginBottom: '4px' }}>
+                      Exibir preços no link
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#6B7280' }}>
+                      {showRentalPrices
+                        ? 'Os valores dos horários estão visíveis para quem acessar o link.'
+                        : 'Os valores dos horários estão ocultos no link de reserva.'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleRentalPrices(!showRentalPrices)}
+                    disabled={loadingPriceSettings}
+                    style={{
+                      width: '52px', height: '28px', borderRadius: '14px', border: 'none',
+                      background: showRentalPrices ? '#22C55E' : '#D1D5DB',
+                      cursor: loadingPriceSettings ? 'wait' : 'pointer',
+                      position: 'relative', transition: 'background 0.2s ease', flexShrink: 0,
+                    }}
+                  >
+                    <div style={{
+                      width: '22px', height: '22px', borderRadius: '50%',
+                      background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      position: 'absolute', top: '3px',
+                      left: showRentalPrices ? '27px' : '3px',
+                      transition: 'left 0.2s ease',
+                    }} />
+                  </button>
+                </div>
+              </div>
+
               <p style={{ color: '#9CA3AF', fontSize: '0.8rem', marginTop: '12px' }}>
                 Envie via WhatsApp, redes sociais ou onde preferir. Qualquer pessoa pode reservar sem precisar de cadastro.
               </p>
