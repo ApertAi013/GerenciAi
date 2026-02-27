@@ -120,6 +120,20 @@
   background: var(--color-orange);
 }
 
+/* Period tabs inside panels (white background) need dark text */
+.rpt-panel .rpt-period-tab {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+.rpt-panel .rpt-period-tab:hover {
+  background: #E5E7EB;
+  color: #374151;
+}
+.rpt-panel .rpt-period-tab.active {
+  background: var(--color-orange);
+  color: #fff;
+}
+
 /* Custom Period Picker */
 .rpt-custom-period {
   display: flex;
