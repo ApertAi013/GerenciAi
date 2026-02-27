@@ -173,9 +173,11 @@ export default function Reports() {
   }, [user, months, selectedModality]);
 
   // Fetch payment curve separately (has its own compareMonths dependency)
+  // Payment curve endpoint is restricted to admin/gestor/financeiro
+  const canViewPaymentCurve = user?.role !== 'instrutor';
   useEffect(() => {
     const fetchCurve = async () => {
-      if (!user) return;
+      if (!user || !canViewPaymentCurve) { setPaymentCurve([]); return; }
       try {
         const curveParams: { compare_months: number; modality_id?: number } = { compare_months: compareMonths };
         if (selectedModality) curveParams.modality_id = selectedModality;
@@ -187,7 +189,7 @@ export default function Reports() {
       }
     };
     fetchCurve();
-  }, [user, compareMonths, selectedModality]);
+  }, [user, compareMonths, selectedModality, canViewPaymentCurve]);
 
   // WhatsApp helper for popups
   const handlePopupWhatsApp = (phone: string | undefined, studentName: string, itemId: number) => {
@@ -396,6 +398,13 @@ export default function Reports() {
           </div>
         )}
       </header>
+
+      {/* Instructor context notice */}
+      {user?.role === 'instrutor' && (
+        <div className="rpt-instructor-notice">
+          <FontAwesomeIcon icon={faFilter} /> Exibindo relatórios das suas turmas atribuídas
+        </div>
+      )}
 
       {/* Active Filters */}
       <div className="rpt-filters">

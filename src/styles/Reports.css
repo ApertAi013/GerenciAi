@@ -217,6 +217,20 @@
   text-align: center;
 }
 
+/* ===== INSTRUCTOR NOTICE ===== */
+.rpt-instructor-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #1E40AF;
+}
+
 /* ===== FILTERS ===== */
 .rpt-filters {
   display: flex;
