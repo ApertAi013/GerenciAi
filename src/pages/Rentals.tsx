@@ -70,6 +70,7 @@ export default function Rentals() {
   const [hoursCourt, setHoursCourt] = useState<Court | null>(null);
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]);
   const [savingHours, setSavingHours] = useState(false);
+  const [priceTexts, setPriceTexts] = useState<Record<number, string>>({});
   const [showCourtsSection, setShowCourtsSection] = useState(true);
 
   useEffect(() => {
@@ -376,12 +377,21 @@ export default function Rentals() {
     toast.success('Link copiado!');
   };
 
+  const initPriceTexts = (hours: OperatingHour[]) => {
+    const texts: Record<number, string> = {};
+    hours.forEach((h) => {
+      texts[h.day_of_week] = h.price_cents ? (h.price_cents / 100).toFixed(2).replace('.', ',') : '';
+    });
+    setPriceTexts(texts);
+  };
+
   const handleOpenHoursModal = async (court: Court) => {
     setHoursCourt(court);
     try {
       const response = await courtService.getOperatingHours(court.id);
       if (response.data) {
         setOperatingHours(response.data);
+        initPriceTexts(response.data);
       }
     } catch {
       const defaults: OperatingHour[] = [];
@@ -397,6 +407,7 @@ export default function Rentals() {
         });
       }
       setOperatingHours(defaults);
+      initPriceTexts(defaults);
     }
     setShowHoursModal(true);
   };
@@ -434,6 +445,12 @@ export default function Rentals() {
         is_active: source.is_active,
       }))
     );
+    const sourceText = priceTexts[sourceDayOfWeek] || '';
+    setPriceTexts(prev => {
+      const next = { ...prev };
+      for (let i = 0; i < 7; i++) next[i] = sourceText;
+      return next;
+    });
     toast.success('Horário copiado para todos os dias');
   };
 
@@ -1250,11 +1267,17 @@ export default function Rentals() {
                             type="text"
                             inputMode="decimal"
                             placeholder="0,00"
-                            value={h.price_cents ? (h.price_cents / 100).toFixed(2).replace('.', ',') : ''}
+                            value={priceTexts[h.day_of_week] ?? ''}
                             onChange={(e) => {
-                              const raw = e.target.value.replace(/[^\d,]/g, '').replace(',', '.');
+                              const val = e.target.value.replace(/[^\d,.]/, '');
+                              setPriceTexts(prev => ({ ...prev, [h.day_of_week]: val }));
+                            }}
+                            onBlur={() => {
+                              const raw = (priceTexts[h.day_of_week] || '').replace(',', '.');
                               const parsed = parseFloat(raw);
-                              updateHour(h.day_of_week, 'price_cents', !isNaN(parsed) && parsed > 0 ? Math.round(parsed * 100) : null);
+                              const cents = !isNaN(parsed) && parsed > 0 ? Math.round(parsed * 100) : null;
+                              updateHour(h.day_of_week, 'price_cents', cents);
+                              setPriceTexts(prev => ({ ...prev, [h.day_of_week]: cents ? (cents / 100).toFixed(2).replace('.', ',') : '' }));
                             }}
                             style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem', width: '80px' }}
                           />
