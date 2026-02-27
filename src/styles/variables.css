@@ -86,3 +86,38 @@
   --transition-base: 250ms ease-in-out;
   --transition-slow: 350ms ease-in-out;
 }
+
+/* ===== Dark Theme Overrides ===== */
+[data-theme="dark"] {
+  /* Grayscale (inverted semantic) */
+  --color-black: #E4E4E7;
+  --color-grey-light: #A1A1AA;
+  --color-grey-lighter: #71717A;
+  --color-grey-soft: #2D2D4A;
+  --color-off-white: #16213E;
+  --color-pure-white: #1A1A2E;
+
+  /* Text Colors */
+  --text-primary: #E4E4E7;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+  --text-inverse: #1A1A2E;
+
+  /* Background Colors */
+  --bg-primary: #1A1A2E;
+  --bg-secondary: #16213E;
+  --bg-tertiary: #0F3460;
+  --bg-dark: #E4E4E7;
+  --bg-dark-lighter: #A1A1AA;
+
+  /* Border Colors */
+  --border-light: #2D2D4A;
+  --border-medium: #3D3D5C;
+  --border-dark: #4D4D6A;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.5);
+}

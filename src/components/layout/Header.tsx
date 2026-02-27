@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faCalendarCheck, faBuilding, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faCalendarCheck, faBuilding, faExchangeAlt, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import { studentService } from '../../services/studentService';
@@ -9,6 +9,7 @@ import { classService } from '../../services/classService';
 import { enrollmentService } from '../../services/enrollmentService';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useQuickEditStore } from '../../store/quickEditStore';
+import { useThemeStore } from '../../store/themeStore';
 import '../../styles/Header.css';
 
 interface SearchResult {
@@ -34,6 +35,7 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { openQuickEdit } = useQuickEditStore();
+  const { theme, toggleTheme } = useThemeStore();
 
   const arenas = user?.arenas || [];
   const currentArena = arenas.find(a => a.id === currentArenaId) || arenas[0];
@@ -263,6 +265,16 @@ export default function Header() {
             )}
           </div>
         )}
+
+        {/* Theme Toggle */}
+        <button
+          type="button"
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          title={theme === 'light' ? 'Modo escuro' : 'Modo claro'}
+        >
+          <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} />
+        </button>
 
         {/* Notificações */}
         <div className="header-notification-container" ref={notificationsRef}>

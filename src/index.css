@@ -15,6 +15,7 @@ body {
   line-height: 1.5;
   color: var(--text-primary);
   background-color: var(--bg-secondary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -46,7 +47,7 @@ button {
 }
 
 .btn-secondary {
-  background: white;
+  background: var(--bg-primary);
   color: var(--text-primary);
   padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--radius-md);
@@ -91,4 +92,20 @@ button {
 
 .animate-shake {
   animation: shake 0.5s ease-in-out;
+}
+
+/* ===== Dark Mode Global Overrides ===== */
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #71717A;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #1A1A2E;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #2D2D4A;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #3D3D5C;
 }

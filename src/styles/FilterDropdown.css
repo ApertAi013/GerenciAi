@@ -205,6 +205,30 @@
   background: #9ca3af;
 }
 
+/* ===== Dark Mode Overrides ===== */
+[data-theme="dark"] .filter-dropdown {
+  background: #1E1E3A;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .filter-dropdown-header { border-bottom-color: #2D2D4A; }
+[data-theme="dark"] .filter-dropdown-header h3 { color: #E4E4E7; }
+[data-theme="dark"] .filter-close-btn { background: #16213E; color: #A1A1AA; }
+[data-theme="dark"] .filter-close-btn:hover { background: #0F3460; color: #E4E4E7; }
+[data-theme="dark"] .filter-section h4 { color: #71717A; }
+[data-theme="dark"] .filter-checkbox:hover { background: #16213E; }
+[data-theme="dark"] .filter-checkbox span { color: #E4E4E7; }
+[data-theme="dark"] .filter-checkbox-all { background: #16213E; }
+[data-theme="dark"] .filter-dropdown-footer { border-top-color: #2D2D4A; }
+[data-theme="dark"] .filter-btn-clear {
+  background: #16213E;
+  color: #A1A1AA;
+  border-color: #2D2D4A;
+}
+[data-theme="dark"] .filter-btn-clear:hover:not(:disabled) {
+  background: #0F3460;
+  color: #E4E4E7;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .filter-dropdown-overlay {
