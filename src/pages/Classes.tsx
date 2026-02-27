@@ -121,6 +121,28 @@ export default function Classes() {
     );
   }, [classes, searchTerm]);
 
+  const WEEKDAY_ORDER = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'];
+  const WEEKDAY_FULL: Record<string, string> = {
+    seg: 'Segunda-feira', ter: 'Terça-feira', qua: 'Quarta-feira',
+    qui: 'Quinta-feira', sex: 'Sexta-feira', sab: 'Sábado', dom: 'Domingo',
+  };
+
+  const classesGroupedByDay = useMemo(() => {
+    const groups: Record<string, Class[]> = {};
+    for (const cls of filteredClasses) {
+      const day = cls.weekday || 'sem_dia';
+      if (!groups[day]) groups[day] = [];
+      groups[day].push(cls);
+    }
+    // Sort classes within each group by start_time
+    for (const day of Object.keys(groups)) {
+      groups[day].sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+    }
+    return WEEKDAY_ORDER
+      .filter(day => groups[day]?.length > 0)
+      .map(day => ({ day, label: WEEKDAY_FULL[day] || day, classes: groups[day] }));
+  }, [filteredClasses]);
+
   const handleEditClass = (classData: Class) => {
     setEditingClass(classData);
     setShowCreateModal(true);
@@ -192,9 +214,25 @@ export default function Classes() {
         </div>
       </div>
 
-      {/* Classes Grid */}
-      <div className="classes-grid-modern">
-        {filteredClasses.map((cls) => {
+      {/* Classes Grid - Grouped by Weekday */}
+      <div>
+        {classesGroupedByDay.map(({ day, label, classes: dayClasses }) => (
+          <div key={day} style={{ marginBottom: '2rem' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              marginBottom: '1rem', paddingBottom: '0.5rem',
+              borderBottom: '2px solid #E5E7EB',
+            }}>
+              <FontAwesomeIcon icon={faCalendarDays} style={{ color: '#6B7280' }} />
+              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#1F2937' }}>
+                {label}
+              </h2>
+              <span style={{ fontSize: '0.8rem', color: '#9CA3AF', fontWeight: 400 }}>
+                ({dayClasses.length} turma{dayClasses.length !== 1 ? 's' : ''})
+              </span>
+            </div>
+            <div className="classes-grid-modern">
+        {dayClasses.map((cls) => {
           const statusColor = cls.status === 'ativa' ? '#10b981' : cls.status === 'suspensa' ? '#f59e0b' : '#ef4444';
           const statusLabel = cls.status === 'ativa' ? 'OPERANDO' : cls.status === 'suspensa' ? 'SUSPENSA' : 'CANCELADA';
           const enrolledCount = cls.enrolled_count || cls.students?.length || 0;
@@ -365,6 +403,10 @@ export default function Classes() {
             </div>
           );
         })}
+
+            </div>
+          </div>
+        ))}
 
         {filteredClasses.length === 0 && (
           <div className="empty-state">
