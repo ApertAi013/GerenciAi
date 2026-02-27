@@ -1200,7 +1200,7 @@ export default function Rentals() {
             </div>
             <div className="mm-content">
               <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '16px' }}>
-                Configure os dias e horários disponíveis para locação pública.
+                Configure os dias, horários e preços disponíveis para locação pública. O valor definido em cada dia será exibido no link de reserva para os clientes.
               </p>
               <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
                 {operatingHours.map((h) => (
@@ -1247,12 +1247,15 @@ export default function Rentals() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span style={{ color: '#9CA3AF', fontSize: '0.8rem' }}>R$</span>
                           <input
-                            type="number"
-                            step="0.01"
-                            min="0"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="0,00"
-                            value={h.price_cents ? (h.price_cents / 100).toFixed(2) : ''}
-                            onChange={(e) => updateHour(h.day_of_week, 'price_cents', e.target.value ? Math.round(parseFloat(e.target.value) * 100) : null)}
+                            value={h.price_cents ? (h.price_cents / 100).toFixed(2).replace('.', ',') : ''}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/[^\d,]/g, '').replace(',', '.');
+                              const parsed = parseFloat(raw);
+                              updateHour(h.day_of_week, 'price_cents', !isNaN(parsed) && parsed > 0 ? Math.round(parsed * 100) : null);
+                            }}
                             style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem', width: '80px' }}
                           />
                         </div>
