@@ -1244,6 +1244,18 @@ export default function Rentals() {
                           <option value={90}>1h30</option>
                           <option value={120}>2h</option>
                         </select>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ color: '#9CA3AF', fontSize: '0.8rem' }}>R$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0,00"
+                            value={h.price_cents ? (h.price_cents / 100).toFixed(2) : ''}
+                            onChange={(e) => updateHour(h.day_of_week, 'price_cents', e.target.value ? Math.round(parseFloat(e.target.value) * 100) : null)}
+                            style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem', width: '80px' }}
+                          />
+                        </div>
                         <button
                           type="button" onClick={() => copyToAllDays(h.day_of_week)}
                           title="Copiar para todos"
