@@ -23,15 +23,17 @@ import { levelService } from '../services/levelService';
 import { classService } from '../services/classService';
 import { useQuickEditStore } from '../store/quickEditStore';
 import type { Student } from '../types/studentTypes';
-import type { Enrollment } from '../types/enrollmentTypes';
+import type { Enrollment, Plan } from '../types/enrollmentTypes';
 import type { Invoice } from '../types/financialTypes';
 import type { Level } from '../types/levelTypes';
 import type { Class } from '../types/classTypes';
 import MakeupCreditsManager from '../components/MakeupCreditsManager';
+import { EditEnrollmentModal } from './Enrollments';
 import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
 import WhatsAppTemplatePicker from '../components/WhatsAppTemplatePicker';
 import '../styles/StudentDetails.css';
 import '../styles/ModernModal.css';
+import '../components/ComprehensiveEnrollmentForm.css';
 
 const translatePaymentMethod = (method?: string): string => {
   const map: Record<string, string> = {
@@ -65,6 +67,12 @@ export default function StudentDetails() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [levels, setLevels] = useState<Level[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Edit enrollment modal
+  const [showEditEnrollmentModal, setShowEditEnrollmentModal] = useState(false);
+  const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
+  const [editPlans, setEditPlans] = useState<Plan[]>([]);
+  const [editClasses, setEditClasses] = useState<Class[]>([]);
 
   // Estados para adicionar aluno a turma
   const [showAddToClassModal, setShowAddToClassModal] = useState(false);
@@ -192,6 +200,24 @@ export default function StudentDetails() {
       proximo_vencimento: upcoming ? new Date(upcoming.due_date) : null,
       valor_proximo_vencimento: upcoming?.final_amount_cents || 0,
     });
+  };
+
+  // --- Edit enrollment handler ---
+
+  const handleOpenEditEnrollment = async (enrollment: Enrollment) => {
+    try {
+      const [plansRes, classesRes] = await Promise.all([
+        enrollmentService.getPlans(),
+        classService.getClasses({ status: 'ativa' }),
+      ]);
+      if (plansRes.status === 'success') setEditPlans(plansRes.data);
+      if (classesRes.status === 'success') setEditClasses(classesRes.data);
+      setEditingEnrollment(enrollment);
+      setShowEditEnrollmentModal(true);
+    } catch (error) {
+      console.error('Erro ao carregar dados para edição:', error);
+      toast.error('Erro ao abrir edição de matrícula');
+    }
   };
 
   // --- Add to class handlers ---
@@ -672,7 +698,7 @@ export default function StudentDetails() {
                     <button
                       type="button"
                       className="btn-sm btn-secondary"
-                      onClick={() => navigate(`/matriculas?student=${student.id}`)}
+                      onClick={() => handleOpenEditEnrollment(enrollment)}
                     >
                       Editar matrícula
                     </button>
@@ -1077,6 +1103,24 @@ export default function StudentDetails() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Enrollment Modal */}
+      {showEditEnrollmentModal && editingEnrollment && (
+        <EditEnrollmentModal
+          enrollment={editingEnrollment}
+          plans={editPlans}
+          classes={editClasses}
+          onClose={() => {
+            setShowEditEnrollmentModal(false);
+            setEditingEnrollment(null);
+          }}
+          onSuccess={() => {
+            setShowEditEnrollmentModal(false);
+            setEditingEnrollment(null);
+            fetchStudentData();
+          }}
+        />
       )}
     </div>
   );
