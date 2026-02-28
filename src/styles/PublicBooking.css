@@ -496,6 +496,42 @@
   to { transform: scale(1); }
 }
 
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .pb-page {
+    padding: 16px;
+  }
+
+  .pb-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .pb-step {
+    padding: 24px;
+    border-radius: 12px;
+  }
+
+  .pb-step h2 {
+    font-size: 1.15rem;
+  }
+
+  .pb-progress {
+    gap: 28px;
+  }
+
+  .pb-slots-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .pb-confirm-card {
+    padding: 16px;
+  }
+
+  .pb-error-card {
+    padding: 28px 20px;
+  }
+}
+
 @media (max-width: 480px) {
   .pb-page {
     padding: 12px;

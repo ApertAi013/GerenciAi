@@ -489,3 +489,60 @@
 [data-theme="dark"] .login-footer strong {
   color: #a0a0a0;
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 32px 24px;
+  }
+
+  .login-logo {
+    max-width: 220px;
+    margin-bottom: 24px;
+  }
+
+  .login-header {
+    margin-bottom: 24px;
+  }
+
+  .login-header h2 {
+    font-size: 20px;
+  }
+
+  .login-form {
+    gap: 16px;
+  }
+
+  .form-group input {
+    padding: 10px 14px;
+  }
+
+  .login-button {
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+
+  .saved-account-item {
+    padding: 8px 10px;
+  }
+
+  .saved-account-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .login-footer {
+    margin-top: 20px;
+    padding-top: 20px;
+  }
+
+  .back-to-login {
+    margin-top: 20px;
+    padding-top: 20px;
+  }
+}

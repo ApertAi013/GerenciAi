@@ -377,6 +377,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
               <button type="button" className="menu-item" onClick={() => { navigate('/configuracoes'); setShowMenu(false); }}>
                 <FontAwesomeIcon icon={faGear} /> Configurações
               </button>
+              <button type="button" className="menu-item menu-theme-toggle" onClick={() => { toggleTheme(); setShowMenu(false); }}>
+                <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} /> {theme === 'light' ? 'Modo escuro' : 'Modo claro'}
+              </button>
               <button type="button" className="menu-item logout" onClick={handleLogout}>
                 <FontAwesomeIcon icon={faRightFromBracket} /> Sair
               </button>

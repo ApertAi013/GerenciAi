@@ -629,4 +629,34 @@
   .section-actions button {
     width: 100%;
   }
+
+  .preferences-page .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .password-field {
+    flex-direction: column;
+  }
+
+  .password-input-wrapper {
+    max-width: 100%;
+  }
+
+  .template-name-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .template-name-input {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .template-tab-add-form {
+    flex-wrap: wrap;
+  }
+
+  .template-tab-add-form input {
+    width: 100%;
+  }
 }

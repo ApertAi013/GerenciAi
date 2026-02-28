@@ -458,6 +458,61 @@
 [data-theme="dark"] .mm-badge-warning { background: rgba(217, 119, 6, 0.15); color: #fbbf24; }
 [data-theme="dark"] .mm-badge-info { background: rgba(37, 99, 235, 0.15); color: #60a5fa; }
 
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .mm-overlay {
+    padding: 0.5rem;
+  }
+
+  .mm-modal {
+    max-width: 100%;
+    margin: 0.5rem;
+    border-radius: 14px;
+  }
+
+  .mm-modal-lg,
+  .mm-modal-xl {
+    max-width: 100%;
+  }
+
+  .mm-field-row,
+  .mm-field-row-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .mm-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .mm-header h2,
+  .mm-header h3 {
+    font-size: 1rem;
+  }
+
+  .mm-content {
+    padding: 1.25rem;
+  }
+
+  .mm-footer {
+    padding: 0.875rem 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .mm-confirm {
+    max-width: 100%;
+    margin: 0 0.5rem;
+  }
+
+  .mm-confirm-actions {
+    flex-direction: column;
+  }
+
+  .mm-confirm-actions .mm-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .mm-modal {

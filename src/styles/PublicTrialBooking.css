@@ -587,6 +587,56 @@
   padding: 20px 0;
 }
 
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .ptb-page {
+    padding: 14px;
+  }
+
+  .ptb-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .ptb-step {
+    padding: 22px;
+    border-radius: 12px;
+  }
+
+  .ptb-step h2 {
+    font-size: 1.1rem;
+  }
+
+  .ptb-progress {
+    gap: 24px;
+  }
+
+  .ptb-btn-row {
+    flex-direction: column-reverse;
+  }
+
+  .ptb-btn-row .ptb-btn-secondary,
+  .ptb-btn-row .ptb-btn-primary {
+    width: 100%;
+    flex: unset;
+  }
+
+  .ptb-class-card {
+    padding: 10px 14px;
+  }
+
+  .ptb-confirm-card {
+    padding: 16px;
+  }
+
+  .ptb-error-card {
+    padding: 28px 20px;
+  }
+
+  .ptb-booking-card {
+    padding: 10px 14px;
+  }
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .ptb-page {

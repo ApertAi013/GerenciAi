@@ -970,3 +970,90 @@
   .forms-grid { grid-template-columns: 1fr; }
   .form-row { flex-direction: column; }
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .forms-container {
+    padding: 1rem;
+  }
+
+  .forms-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .forms-page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .btn-create-form {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .forms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .forms-modal {
+    max-width: 100%;
+    margin: 0.5rem;
+  }
+
+  .forms-modal-wide {
+    max-width: 100%;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal-footer button {
+    width: 100%;
+  }
+
+  .preview-modal {
+    max-width: 100%;
+    margin: 0.5rem;
+  }
+
+  .option-stat {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .option-stat-label {
+    min-width: auto;
+  }
+
+  .option-stat-bar {
+    width: 100%;
+  }
+
+  .option-stat-count {
+    min-width: auto;
+    text-align: left;
+  }
+
+  .responses-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .responses-table {
+    min-width: 500px;
+  }
+
+  .form-card-dates {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .image-dropzone-preview img {
+    max-width: 100%;
+  }
+}

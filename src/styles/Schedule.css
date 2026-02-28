@@ -1185,3 +1185,117 @@
   background: rgba(0, 0, 0, 0.22);
   color: rgba(255, 255, 255, 0.9);
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .schedule-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .schedule-title h1 {
+    font-size: 1.1rem;
+  }
+
+  .schedule-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .action-buttons {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+
+  .schedule-search-input {
+    width: 100%;
+  }
+
+  .schedule-search-input:focus {
+    width: 100%;
+  }
+
+  .schedule-grid-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .schedule-grid {
+    min-width: 800px;
+  }
+
+  .time-cell {
+    font-size: 0.6rem;
+  }
+
+  .day-name {
+    font-size: 0.55rem;
+  }
+
+  .day-number {
+    font-size: 0.95rem;
+  }
+
+  .schedule-grid .class-card {
+    font-size: 0.6rem;
+    padding: 4px 6px;
+  }
+
+  .schedule-grid .class-name {
+    font-size: 0.68rem;
+  }
+
+  .student-chip {
+    font-size: 0.55rem;
+    padding: 2px 6px;
+  }
+
+  .month-view {
+    padding: 0.5rem;
+  }
+
+  .month-day-cell {
+    min-height: 80px;
+    padding: 0.25rem;
+  }
+
+  .month-class-item {
+    font-size: 0.55rem;
+    padding: 2px 4px;
+  }
+
+  .day-view {
+    padding: 0.5rem;
+  }
+
+  .day-view-grid {
+    grid-template-columns: 50px 1fr;
+  }
+
+  .day-class-card {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .day-class-name {
+    font-size: 0.85rem;
+  }
+
+  .day-student-chip {
+    font-size: 0.55rem;
+  }
+
+  .view-toggle button {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+
+  .nav-button,
+  .today-button {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+
+  .month-year {
+    font-size: 0.85rem;
+  }
+}

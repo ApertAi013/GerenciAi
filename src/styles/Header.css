@@ -743,4 +743,31 @@
     left: 8px;
     right: 8px;
   }
+
+  .user-menu {
+    position: fixed;
+    top: 56px;
+    right: 8px;
+    left: auto;
+    width: auto;
+    min-width: 200px;
+  }
+
+  .arena-dropdown {
+    position: fixed;
+    top: 56px;
+    right: 8px;
+    left: auto;
+  }
+}
+
+/* Theme toggle in user menu (visible only on mobile since header toggle hidden) */
+.menu-theme-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .menu-theme-toggle {
+    display: flex;
+  }
 }

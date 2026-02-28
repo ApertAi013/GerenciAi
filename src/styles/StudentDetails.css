@@ -1022,3 +1022,129 @@
   color: #f0f0f0;
 }
 
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .student-details {
+    padding: 0.5rem 0.75rem 1rem 0.75rem;
+  }
+
+  .student-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .student-avatar-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .student-avatar-large {
+    width: 64px;
+    height: 64px;
+    font-size: 1.5rem;
+  }
+
+  .student-info h1 {
+    font-size: 1.15rem;
+  }
+
+  .student-meta {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .student-header-actions {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .financial-cards {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .financial-card {
+    padding: 1rem;
+  }
+
+  .financial-card-value {
+    font-size: 1.15rem;
+  }
+
+  .student-content-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .content-card-header {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .content-card-body {
+    padding: 1rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .enrollment-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .invoices-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .invoices-table th,
+  .invoices-table td {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .invoice-actions {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .financial-header-actions {
+    flex-wrap: wrap;
+  }
+
+  .btn-whatsapp,
+  .student-details .btn-secondary,
+  .student-details .btn-primary {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .student-details .modal-content {
+    width: 95%;
+    max-height: 85vh;
+  }
+
+  .student-details .modal-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .student-details .modal-body {
+    padding: 1rem 1.25rem;
+  }
+
+  .student-details .modal-footer {
+    padding: 0.75rem 1.25rem;
+  }
+}
+

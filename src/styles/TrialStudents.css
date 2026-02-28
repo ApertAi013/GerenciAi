@@ -1576,3 +1576,104 @@
     opacity: 1;
   }
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .trial-students-page {
+    padding: 1rem;
+  }
+
+  .trial-students-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .trial-students-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .trial-students-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .trial-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trial-filters {
+    padding: 1rem;
+  }
+
+  .trial-filters-row {
+    flex-direction: column;
+  }
+
+  .trial-filter-item {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .trial-students-table-container {
+    overflow-x: auto;
+  }
+
+  .trial-students-table {
+    min-width: 600px;
+  }
+
+  .trial-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .trial-modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .trial-modal {
+    width: 100%;
+    max-width: 100%;
+    margin: 0.5rem;
+    border-radius: 12px;
+  }
+
+  .trial-modal-header {
+    padding: 1.25rem;
+  }
+
+  .trial-modal-body {
+    padding: 1.25rem;
+  }
+
+  .trial-modal-footer {
+    padding: 1rem 1.25rem;
+  }
+
+  .trial-conversion-steps {
+    overflow-x: auto;
+    gap: 0.5rem;
+  }
+
+  .trial-config-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .trial-config-classes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trial-email-config {
+    padding: 1rem;
+  }
+
+  .booking-link-top {
+    flex-direction: column;
+  }
+
+  .booking-link-actions {
+    align-self: flex-end;
+  }
+}

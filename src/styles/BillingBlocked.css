@@ -261,6 +261,39 @@
   color: #a0a0a0;
 }
 
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .billing-blocked-page {
+    padding: 16px;
+  }
+
+  .billing-blocked-card {
+    padding: 32px 24px;
+    border-radius: 14px;
+  }
+
+  .billing-blocked-card h1 {
+    font-size: 20px;
+  }
+
+  .billing-blocked-subtitle {
+    font-size: 13px;
+  }
+
+  .billing-blocked-invoice-details {
+    padding: 12px;
+  }
+
+  .billing-blocked-detail-row {
+    font-size: 13px;
+  }
+
+  .billing-blocked-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 520px) {
   .billing-blocked-card {
     padding: 28px 20px;

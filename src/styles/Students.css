@@ -722,3 +722,22 @@
 [data-theme="dark"] .profile-value {
   color: #f0f0f0;
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .students-page { padding: 1rem; }
+  .students-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .students-header h1 { font-size: 1.5rem; }
+  .students-actions { width: 100%; flex-wrap: wrap; }
+  .search-box input { width: 100%; }
+  .students-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .students-table { min-width: 700px; }
+  .form-row { grid-template-columns: 1fr; }
+  .filter-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .filter-tab { white-space: nowrap; padding: 0.75rem 1rem; }
+  .pagination { flex-direction: column; gap: 0.75rem; align-items: stretch; text-align: center; }
+  .pagination-per-page { justify-content: center; }
+  .pagination-controls { justify-content: center; }
+  .profile-info-grid { grid-template-columns: 1fr; }
+  .modal-content { max-width: 100%; margin: 0.5rem; }
+}
