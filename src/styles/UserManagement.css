@@ -377,6 +377,182 @@
   margin: 0;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .user-management-header h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .user-management-header p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .loading-state {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .empty-state {
+  color: #a0a0a0;
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .search-box {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .search-box:focus-within {
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.1);
+}
+
+[data-theme="dark"] .search-box svg {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .search-box input {
+  color: #f0f0f0;
+  background: transparent;
+}
+
+[data-theme="dark"] .search-box input::placeholder {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .clear-search {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .clear-search:hover {
+  color: #EF4444;
+}
+
+[data-theme="dark"] .filter-group select {
+  background: #1a1a1a;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .filter-group select:hover {
+  border-color: #F58A25;
+}
+
+[data-theme="dark"] .filter-group select:focus {
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.1);
+}
+
+[data-theme="dark"] .user-card {
+  background: #1a1a1a;
+  border-color: #262626;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .user-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-color: #F58A25;
+}
+
+[data-theme="dark"] .user-info-management {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .user-header h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .role-badge.gestor {
+  background: rgba(30, 64, 175, 0.15);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .role-badge.professor {
+  background: rgba(67, 56, 202, 0.15);
+  color: #818CF8;
+}
+
+[data-theme="dark"] .role-badge.aluno {
+  background: #262626;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .role-badge.admin {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+[data-theme="dark"] .status-badge.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+[data-theme="dark"] .status-badge.inactive {
+  background: #262626;
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .user-has-premium-badge {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+}
+
+[data-theme="dark"] .user-email {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .user-date {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .features-section h4 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .feature-checkbox-item {
+  background: #141414;
+}
+
+[data-theme="dark"] .feature-checkbox-item:hover {
+  background: #262626;
+}
+
+[data-theme="dark"] .checkbox-custom {
+  border-color: #333333;
+  background: #141414;
+}
+
+[data-theme="dark"] .feature-name {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .feature-desc {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .pagination {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .pagination button {
+  background: #1a1a1a;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .pagination button:hover:not(:disabled) {
+  border-color: #F58A25;
+  color: #F58A25;
+}
+
+[data-theme="dark"] .pagination span {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .summary-footer {
+  color: #6b6b6b;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .filters-section {
@@ -575,4 +751,45 @@
   color: #dc2626;
   font-size: 14px;
   margin-top: 12px;
+}
+
+[data-theme="dark"] .edit-btn:hover {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .delete-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .modal-content {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .modal-content h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus {
+  border-color: #F58A25;
+}
+
+[data-theme="dark"] .btn-cancel {
+  background: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .btn-cancel:hover {
+  background: #333333;
 }

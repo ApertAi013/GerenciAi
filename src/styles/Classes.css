@@ -725,3 +725,106 @@
     flex-direction: column;
   }
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .classes-search-icon {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .classes-search-input {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .classes-search-input:focus {
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.15);
+}
+
+[data-theme="dark"] .classes-search-input::placeholder {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .classes-search-clear {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .class-card-modern {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .class-info-grid {
+  background: #141414;
+}
+
+[data-theme="dark"] .info-label {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .info-value {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .info-item.highlight {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .students-section {
+  background: #1a1a1a;
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .students-toggle {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .student-chip {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .student-name {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .student-plan {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .class-card-actions-modern {
+  background: #1a1a1a;
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .btn-action.edit {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .btn-action.delete {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .btn-action.add-students {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .create-modality-form {
+  background: rgba(245, 138, 37, 0.08);
+}
+
+[data-theme="dark"] .btn-icon {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus {
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.15);
+}
+
+[data-theme="dark"] .form-group textarea:focus {
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.15);
+}

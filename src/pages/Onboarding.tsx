@@ -50,6 +50,7 @@ import {
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import { authService } from '../services/authService';
 import { arenaService } from '../services/arenaService';
 import { levelService } from '../services/levelService';
@@ -390,10 +391,15 @@ const fadeInCSS = `
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user, setAuth } = useAuthStore();
+  const { setTheme } = useThemeStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  // Theme selection modal
+  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark'>('light');
 
   // Step 1 — Arena
   const [arenaName, setArenaName] = useState(user?.arenas?.[0]?.name || '');
@@ -494,7 +500,13 @@ export default function Onboarding() {
     }
   };
 
-  const handleComplete = async () => {
+  const handleShowThemeModal = () => {
+    setShowThemeModal(true);
+  };
+
+  const handleThemeConfirm = async () => {
+    setTheme(selectedTheme);
+    setShowThemeModal(false);
     setLoading(true);
     try {
       await authService.completeOnboarding();
@@ -2587,7 +2599,7 @@ export default function Onboarding() {
         </p>
         <button
           style={{ ...styles.primaryBtn, padding: '16px 40px', fontSize: '1.1rem', opacity: loading ? 0.7 : 1 }}
-          onClick={handleComplete}
+          onClick={handleShowThemeModal}
           disabled={loading}
         >
           {loading ? <FontAwesomeIcon icon={faSpinner} spin /> : null}
@@ -2670,6 +2682,156 @@ export default function Onboarding() {
           cropShape="round"
           aspect={1}
         />
+      )}
+
+      {/* ── Theme Selection Modal ── */}
+      {showThemeModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '24px', animation: 'fadeSlideIn 0.35s ease-out',
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎨</div>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#fff', margin: '0 0 8px' }}>
+              Escolha seu tema
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem', margin: 0 }}>
+              Como você prefere usar o ArenaAi? Você pode mudar a qualquer momento.
+            </p>
+          </div>
+
+          <div style={{
+            display: 'flex', gap: '24px', maxWidth: '780px', width: '100%',
+            justifyContent: 'center', flexWrap: 'wrap',
+          }}>
+            {/* Light theme card */}
+            <div
+              onClick={() => setSelectedTheme('light')}
+              style={{
+                flex: 1, minWidth: '280px', maxWidth: '360px', borderRadius: '16px',
+                overflow: 'hidden', cursor: 'pointer',
+                border: selectedTheme === 'light' ? '3px solid #F58A25' : '3px solid rgba(255,255,255,0.15)',
+                transition: 'all 0.3s ease',
+                transform: selectedTheme === 'light' ? 'scale(1.03)' : 'scale(1)',
+                boxShadow: selectedTheme === 'light' ? '0 8px 32px rgba(245,138,37,0.3)' : 'none',
+              }}
+            >
+              <div style={{ display: 'flex', height: '200px' }}>
+                <div style={{
+                  width: '50px', background: '#ffffff', borderRight: '1px solid #e5e7eb',
+                  padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center',
+                }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#f3f4f6', border: '1px solid #e5e7eb' }} />
+                  <div style={{ width: '26px', height: '4px', borderRadius: '2px', background: '#F58A25' }} />
+                  <div style={{ width: '26px', height: '4px', borderRadius: '2px', background: '#e5e7eb' }} />
+                  <div style={{ width: '26px', height: '4px', borderRadius: '2px', background: '#e5e7eb' }} />
+                  <div style={{ width: '26px', height: '4px', borderRadius: '2px', background: '#e5e7eb' }} />
+                </div>
+                <div style={{ flex: 1, background: '#f9fafb', padding: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div style={{ width: '50%', height: '10px', borderRadius: '4px', background: '#d1d5db' }} />
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#e5e7eb' }} />
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#e5e7eb' }} />
+                    </div>
+                  </div>
+                  <div style={{ width: '35%', height: '8px', borderRadius: '4px', background: '#e5e7eb', marginBottom: '16px' }} />
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                    <div style={{ flex: 1, height: '55px', borderRadius: '10px', background: '#ffffff', border: '1px solid #e5e7eb', padding: '8px', boxSizing: 'border-box' }}>
+                      <div style={{ width: '60%', height: '6px', borderRadius: '3px', background: '#d1d5db', marginBottom: '6px' }} />
+                      <div style={{ width: '80%', height: '10px', borderRadius: '3px', background: '#374151' }} />
+                    </div>
+                    <div style={{ flex: 1, height: '55px', borderRadius: '10px', background: '#ffffff', border: '1px solid #e5e7eb', padding: '8px', boxSizing: 'border-box' }}>
+                      <div style={{ width: '60%', height: '6px', borderRadius: '3px', background: '#d1d5db', marginBottom: '6px' }} />
+                      <div style={{ width: '80%', height: '10px', borderRadius: '3px', background: '#10b981' }} />
+                    </div>
+                  </div>
+                  <div style={{ height: '50px', borderRadius: '10px', background: '#ffffff', border: '1px solid #e5e7eb' }} />
+                </div>
+              </div>
+              <div style={{
+                padding: '16px', textAlign: 'center', background: '#ffffff',
+                borderTop: '1px solid #e5e7eb',
+              }}>
+                <span style={{ fontWeight: 700, color: '#1f2937', fontSize: '1rem' }}>
+                  ☀️ Modo Claro
+                </span>
+              </div>
+            </div>
+
+            {/* Dark theme card */}
+            <div
+              onClick={() => setSelectedTheme('dark')}
+              style={{
+                flex: 1, minWidth: '280px', maxWidth: '360px', borderRadius: '16px',
+                overflow: 'hidden', cursor: 'pointer',
+                border: selectedTheme === 'dark' ? '3px solid #F58A25' : '3px solid rgba(255,255,255,0.15)',
+                transition: 'all 0.3s ease',
+                transform: selectedTheme === 'dark' ? 'scale(1.03)' : 'scale(1)',
+                boxShadow: selectedTheme === 'dark' ? '0 8px 32px rgba(245,138,37,0.3)' : 'none',
+              }}
+            >
+              <div style={{ display: 'flex', height: '200px' }}>
+                <div style={{
+                  width: '50px', background: '#0f0f0f', borderRight: '1px solid #262626',
+                  padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center',
+                }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#1a1a1a', border: '1px solid #262626' }} />
+                  <div style={{ width: '26px', height: '4px', borderRadius: '2px', background: '#F58A25' }} />
+                  <div style={{ width: '26px', height: '4px', borderRadius: '2px', background: '#262626' }} />
+                  <div style={{ width: '26px', height: '4px', borderRadius: '2px', background: '#262626' }} />
+                  <div style={{ width: '26px', height: '4px', borderRadius: '2px', background: '#262626' }} />
+                </div>
+                <div style={{ flex: 1, background: '#0f0f0f', padding: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div style={{ width: '50%', height: '10px', borderRadius: '4px', background: '#333' }} />
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#262626' }} />
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#262626' }} />
+                    </div>
+                  </div>
+                  <div style={{ width: '35%', height: '8px', borderRadius: '4px', background: '#1a1a1a', marginBottom: '16px' }} />
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                    <div style={{ flex: 1, height: '55px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #262626', padding: '8px', boxSizing: 'border-box' }}>
+                      <div style={{ width: '60%', height: '6px', borderRadius: '3px', background: '#333', marginBottom: '6px' }} />
+                      <div style={{ width: '80%', height: '10px', borderRadius: '3px', background: '#f0f0f0' }} />
+                    </div>
+                    <div style={{ flex: 1, height: '55px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #262626', padding: '8px', boxSizing: 'border-box' }}>
+                      <div style={{ width: '60%', height: '6px', borderRadius: '3px', background: '#333', marginBottom: '6px' }} />
+                      <div style={{ width: '80%', height: '10px', borderRadius: '3px', background: '#10b981' }} />
+                    </div>
+                  </div>
+                  <div style={{ height: '50px', borderRadius: '10px', background: '#1a1a1a', border: '1px solid #262626' }} />
+                </div>
+              </div>
+              <div style={{
+                padding: '16px', textAlign: 'center', background: '#0f0f0f',
+                borderTop: '1px solid #262626',
+              }}>
+                <span style={{ fontWeight: 700, color: '#f0f0f0', fontSize: '1rem' }}>
+                  🌙 Modo Escuro
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleThemeConfirm}
+            disabled={loading}
+            style={{
+              marginTop: '32px', padding: '16px 48px', fontSize: '1.1rem', fontWeight: 700,
+              background: 'linear-gradient(135deg, #f04f28, #ff6b35)', color: '#fff',
+              border: 'none', borderRadius: '12px', cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1, transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', gap: '8px',
+            }}
+          >
+            {loading && <FontAwesomeIcon icon={faSpinner} spin />}
+            Continuar <FontAwesomeIcon icon={faArrowRight} />
+          </button>
+        </div>
       )}
     </div>
   );

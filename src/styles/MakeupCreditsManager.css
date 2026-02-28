@@ -349,6 +349,118 @@
   margin-top: 0.5rem;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .makeup-credits-header {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .makeup-credits-title h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .makeup-credits-description {
+  background: #141414;
+}
+
+[data-theme="dark"] .makeup-credits-description p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .makeup-credits-card .btn-secondary {
+  background: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-control {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-control:focus {
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.1);
+}
+
+[data-theme="dark"] .preview-box {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+[data-theme="dark"] .preview-box.warning {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+[data-theme="dark"] .preview-box strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .preview-box p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .alert-info {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .history-item {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .history-item:hover {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .history-icon {
+  background: #262626;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .history-item.gain .history-icon {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+[data-theme="dark"] .history-item.use .history-icon {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+
+[data-theme="dark"] .history-header strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .badge-success {
+  background: rgba(5, 150, 105, 0.1);
+}
+
+[data-theme="dark"] .badge-warning {
+  background: rgba(217, 119, 6, 0.1);
+}
+
+[data-theme="dark"] .history-notes {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .history-details {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .history-date {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .empty-state {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .loading-spinner {
+  color: #6b6b6b;
+}
+
 /* ========== Responsive ========== */
 @media (max-width: 768px) {
   .makeup-credits-header {

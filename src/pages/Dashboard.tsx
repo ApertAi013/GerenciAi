@@ -56,8 +56,11 @@ import type { Class, Modality } from '../types/classTypes';
 import type { Enrollment } from '../types/enrollmentTypes';
 import type { Level } from '../types/levelTypes';
 import type { CourtRental } from '../types/rentalTypes';
+import DashboardOnboardingTour from '../components/dashboard/DashboardOnboardingTour';
 import '../styles/Dashboard.css';
 import '../styles/ModernModal.css';
+
+const DASHBOARD_ONBOARDING_KEY = 'dashboard_onboarding_completed';
 
 const formatCurrency = (cents: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
@@ -134,6 +137,9 @@ export default function Dashboard() {
   const [levels, setLevels] = useState<Level[]>([]);
   const [rentals, setRentals] = useState<CourtRental[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+  // Onboarding tour
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Filter state
   const [selectedModality, setSelectedModality] = useState<number | null>(null);
@@ -275,6 +281,22 @@ export default function Dashboard() {
     }, delay);
     return () => clearTimeout(timeout);
   }, [carouselHovered, carouselSlide]);
+
+  // ── Dashboard onboarding tour (first visit after onboarding) ──
+  useEffect(() => {
+    if (!isLoading) {
+      const hasSeenOnboarding = localStorage.getItem(DASHBOARD_ONBOARDING_KEY);
+      if (!hasSeenOnboarding) {
+        const timer = setTimeout(() => setShowOnboarding(true), 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isLoading]);
+
+  const handleOnboardingFinish = () => {
+    localStorage.setItem(DASHBOARD_ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
 
   // ── Class IDs for selected modality ──
   const modalityClassIds = useMemo(() => {
@@ -624,6 +646,7 @@ export default function Dashboard() {
 
   return (
     <div className="dash">
+      <DashboardOnboardingTour run={showOnboarding} onFinish={handleOnboardingFinish} />
       {/* ── Header Carousel ── */}
       <header
         className="dash-header"

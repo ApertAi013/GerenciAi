@@ -637,3 +637,105 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .mini-calendar-modern {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .day-header-modern {
+  background: #262626;
+  color: #f0f0f0;
+  border-bottom-color: #F58A25;
+}
+
+[data-theme="dark"] .no-classes-modern {
+  background: #1f1f1f;
+  border-color: #333333;
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .class-card-modern {
+  background: #1f1f1f;
+  border-color: #333333;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .class-card-modern:hover {
+  border-color: #F58A25;
+  box-shadow: 0 2px 8px rgba(245, 138, 37, 0.15);
+}
+
+[data-theme="dark"] .class-card-modern.selected {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+}
+
+[data-theme="dark"] .class-card-modern.full {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="dark"] .class-modality-name {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .class-custom-name,
+[data-theme="dark"] .class-location {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .availability-badge.available {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+[data-theme="dark"] .availability-badge.low {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+[data-theme="dark"] .availability-badge.full {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+[data-theme="dark"] .no-results {
+  background: #1a1a1a;
+  border-color: #333333;
+}
+
+[data-theme="dark"] .no-results p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .selected-count-modern {
+  background: rgba(59, 130, 246, 0.1);
+  border-left-color: #3b82f6;
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .selected-count-modern strong {
+  color: #bfdbfe;
+}
+
+[data-theme="dark"] .class-card {
+  background-color: #1f1f1f;
+  border-color: #333333;
+}
+
+[data-theme="dark"] .class-card:hover {
+  border-color: #F58A25;
+}
+
+[data-theme="dark"] .day-header {
+  color: #f0f0f0;
+  border-bottom-color: #333333;
+}
+
+[data-theme="dark"] .no-classes {
+  color: #6b6b6b;
+}

@@ -273,7 +273,8 @@ export default function Header() {
           onClick={toggleTheme}
           title={theme === 'light' ? 'Modo escuro' : 'Modo claro'}
         >
-          <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} />
+          <FontAwesomeIcon icon={faMoon} className="theme-icon-moon" />
+          <FontAwesomeIcon icon={faSun} className="theme-icon-sun" />
         </button>
 
         {/* Notificações */}

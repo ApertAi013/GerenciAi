@@ -10,7 +10,7 @@
 
 .app-payments-page .page-header h1 {
   font-size: 1.75rem;
-  color: #1a1a2e;
+  color: #0f0f0f;
   margin: 0 0 0.25rem;
   display: flex;
   align-items: center;
@@ -129,7 +129,7 @@
 
 .tab-panel h2 {
   font-size: 1.3rem;
-  color: #1a1a2e;
+  color: #0f0f0f;
   margin: 0 0 0.5rem;
 }
 
@@ -213,7 +213,7 @@
 .config-summary h3 {
   margin: 0 0 1rem;
   font-size: 1rem;
-  color: #1a1a2e;
+  color: #0f0f0f;
 }
 
 .summary-row {
@@ -240,7 +240,7 @@
 .fees-card h3 {
   margin: 0 0 1rem;
   font-size: 1.05rem;
-  color: #1a1a2e;
+  color: #0f0f0f;
 }
 
 .fee-row {
@@ -261,7 +261,7 @@
 }
 
 .fee-row strong {
-  color: #1a1a2e;
+  color: #0f0f0f;
 }
 
 .fee-row.total {
@@ -284,7 +284,7 @@
 .fees-example h3 {
   margin: 0 0 1rem;
   font-size: 1.05rem;
-  color: #1a1a2e;
+  color: #0f0f0f;
 }
 
 .example-flow {
@@ -316,7 +316,7 @@
   font-weight: 700;
 }
 
-.flow-value.gross { color: #1a1a2e; }
+.flow-value.gross { color: #0f0f0f; }
 .flow-value.fee { color: #ef4444; }
 .flow-value.net { color: #10b981; }
 
@@ -333,7 +333,7 @@
 .terms-section h3 {
   margin: 0 0 1rem;
   font-size: 1.05rem;
-  color: #1a1a2e;
+  color: #0f0f0f;
 }
 
 .terms-accepted {
@@ -387,7 +387,7 @@
 }
 
 .scope-option strong {
-  color: #1a1a2e;
+  color: #0f0f0f;
   font-size: 0.95rem;
 }
 
@@ -405,7 +405,7 @@
 .entity-selector h3 {
   margin: 0 0 0.75rem;
   font-size: 1rem;
-  color: #1a1a2e;
+  color: #0f0f0f;
 }
 
 .entity-search {
@@ -638,7 +638,7 @@
 .modal-header h2 {
   margin: 0;
   font-size: 1.15rem;
-  color: #1a1a2e;
+  color: #0f0f0f;
 }
 
 .btn-close {
@@ -696,7 +696,7 @@
 .pix-section h3 {
   margin: 0 0 1rem;
   font-size: 1rem;
-  color: #1a1a2e;
+  color: #0f0f0f;
 }
 
 .pix-qr-image {
@@ -763,6 +763,278 @@
   .entity-list {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .app-payments-page .page-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .page-subtitle {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .app-payments-loading {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .app-payments-status-banner.enabled {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+[data-theme="dark"] .app-payments-status-banner.disabled {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+[data-theme="dark"] .app-payments-tabs {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .tab-btn {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .tab-btn:hover {
+  color: #F58A25;
+}
+
+[data-theme="dark"] .tab-btn.active {
+  color: #F58A25;
+  border-bottom-color: #F58A25;
+}
+
+[data-theme="dark"] .app-payments-content {
+  background: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .tab-panel h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .tab-description {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .form-group label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus {
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.1);
+}
+
+[data-theme="dark"] .config-summary {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .config-summary h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .summary-row span {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .fees-card {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .fees-card h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .fee-row {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .fee-row span {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .fee-row strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .fee-row.total {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .fees-example h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .flow-item {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .flow-label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .flow-value.gross {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .flow-arrow {
+  color: #333333;
+}
+
+[data-theme="dark"] .terms-section h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .terms-pending p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .scope-option {
+  border-color: #262626;
+}
+
+[data-theme="dark"] .scope-option.selected {
+  border-color: #F58A25;
+  background: rgba(245, 138, 37, 0.08);
+}
+
+[data-theme="dark"] .scope-option strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .scope-option span {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .entity-selector h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .entity-search {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .entity-search:focus {
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.1);
+}
+
+[data-theme="dark"] .entity-list {
+  border-color: #262626;
+}
+
+[data-theme="dark"] .entity-item:hover {
+  background: #262626;
+}
+
+[data-theme="dark"] .entity-item.selected {
+  background: rgba(245, 138, 37, 0.1);
+}
+
+[data-theme="dark"] .empty-msg {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .charges-filters select,
+[data-theme="dark"] .charges-filters input {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .charges-filters select:focus,
+[data-theme="dark"] .charges-filters input:focus {
+  border-color: #F58A25;
+}
+
+[data-theme="dark"] .empty-state {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .empty-state p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .charges-table th {
+  color: #a0a0a0;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .charges-table td {
+  color: #f0f0f0;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .charges-table tr:hover {
+  background: #262626;
+}
+
+[data-theme="dark"] .btn-icon {
+  background: #262626;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .btn-icon:hover {
+  background: #333333;
+  color: #F58A25;
+}
+
+[data-theme="dark"] .modal-content {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .modal-header {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .modal-header h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .btn-close {
+  background: #262626;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .btn-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+[data-theme="dark"] .detail-row {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .detail-row span:first-child {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .pix-section {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .pix-section h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .pix-code {
+  background: #141414;
+  color: #a0a0a0;
 }
 
 /* Credit Card Configuration */
@@ -913,4 +1185,72 @@
 
 .fees-card.card-fees h3 {
   color: #7c3aed;
+}
+
+[data-theme="dark"] .credit-card-config {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .credit-card-config h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .credit-card-toggle {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .toggle-label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .toggle-description {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .fee-mode-selector > label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .fee-mode-option {
+  border-color: #262626;
+}
+
+[data-theme="dark"] .fee-mode-option:hover {
+  border-color: #F58A25;
+  background: rgba(245, 138, 37, 0.05);
+}
+
+[data-theme="dark"] .fee-mode-option.selected {
+  border-color: #F58A25;
+  background: rgba(245, 138, 37, 0.08);
+}
+
+[data-theme="dark"] .fee-mode-option strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .fee-mode-option span {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .card-fees-summary {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .card-fees-summary h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .card-fees-summary .fee-row {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .card-fees-summary .fee-row.total {
+  border-top-color: #333333;
+}
+
+[data-theme="dark"] .card-fees-summary .fee-note {
+  color: #6b6b6b;
 }

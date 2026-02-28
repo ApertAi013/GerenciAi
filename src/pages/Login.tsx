@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import { authService } from '../services/authService';
 import '../styles/Login.css';
 
@@ -41,7 +42,9 @@ function removeAccount(email: string) {
 export default function Login() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
+  const { theme } = useThemeStore();
   const passwordRef = useRef<HTMLInputElement>(null);
+  const logoSrc = theme === 'dark' ? '/arenai-logo-white.svg' : '/arenai-logo.svg';
 
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
   const [email, setEmail] = useState('');
@@ -163,7 +166,7 @@ export default function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <img src="/arenai-logo.svg" alt="ArenaAi" className="login-logo" />
+          <img src={logoSrc} alt="ArenaAi" className="login-logo" />
           <h2>Bem-vindo de volta</h2>
           <p>Faça login para acessar o sistema</p>
         </div>

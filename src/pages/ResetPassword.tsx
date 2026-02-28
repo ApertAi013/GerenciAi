@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import toast from 'react-hot-toast';
+import { useThemeStore } from '../store/themeStore';
 import { authService } from '../services/authService';
 import '../styles/Login.css';
 
 export default function ResetPassword() {
+  const { theme } = useThemeStore();
+  const logoSrc = theme === 'dark' ? '/arenai-logo-white.svg' : '/arenai-logo.svg';
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
@@ -53,7 +56,7 @@ export default function ResetPassword() {
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
-            <img src="/arenai-logo.svg" alt="ArenaAi" className="login-logo" />
+            <img src={logoSrc} alt="ArenaAi" className="login-logo" />
             <h2>Link inválido</h2>
             <p>Este link de redefinição é inválido ou já foi utilizado.</p>
           </div>
@@ -69,7 +72,7 @@ export default function ResetPassword() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <img src="/arenai-logo.svg" alt="ArenaAi" className="login-logo" />
+          <img src={logoSrc} alt="ArenaAi" className="login-logo" />
           <h2>Redefinir senha</h2>
           <p>Digite sua nova senha</p>
         </div>

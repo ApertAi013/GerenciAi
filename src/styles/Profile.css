@@ -269,3 +269,84 @@
     text-align: center;
   }
 }
+
+/* ===== Dark Mode ===== */
+
+[data-theme="dark"] .profile-loading {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .profile-header-section h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .profile-role-badge {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .profile-card {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .profile-card h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .profile-form-group label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .profile-form-group input {
+  border-color: #262626;
+  background: #141414;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .profile-form-group input:focus {
+  border-color: #F58A25;
+}
+
+[data-theme="dark"] .profile-readonly-group {
+  background: #141414;
+}
+
+[data-theme="dark"] .readonly-item {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .readonly-label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .profile-logo-circle {
+  border-color: #333333;
+  background: #141414;
+}
+
+[data-theme="dark"] .profile-logo-placeholder {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .profile-logo-spinner {
+  border-color: #262626;
+  border-top-color: #FF9900;
+}
+
+[data-theme="dark"] .profile-field-hint {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .profile-business-hint {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .profile-form-group textarea {
+  border-color: #262626;
+  background: #141414;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .profile-form-group textarea:focus {
+  border-color: #F58A25;
+}

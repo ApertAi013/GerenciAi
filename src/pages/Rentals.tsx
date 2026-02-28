@@ -508,65 +508,39 @@ export default function Rentals() {
       </div>
 
       {/* Courts Quick Config */}
-      <div style={{
-        background: 'white', borderRadius: '12px', border: '1px solid #E5E7EB',
-        overflow: 'hidden',
-      }}>
+      <div className="courts-config-section">
         <div
+          className="courts-config-header"
           onClick={() => setShowCourtsSection(!showCourtsSection)}
-          style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            cursor: 'pointer', padding: '14px 20px',
-            borderBottom: showCourtsSection ? '1px solid #E5E7EB' : 'none',
-            background: '#F8FAFC',
-          }}
+          style={{ borderBottom: showCourtsSection ? undefined : 'none' }}
         >
-          <h3 style={{ margin: 0, fontSize: '1rem', color: '#1F2937', fontWeight: 600 }}>
-            Quadras e Horários de Funcionamento
-          </h3>
-          <span style={{
-            color: '#6B7280', fontSize: '0.75rem', fontWeight: 500,
-            display: 'flex', alignItems: 'center', gap: '6px',
-          }}>
+          <h3>Quadras e Horários de Funcionamento</h3>
+          <span className="courts-config-toggle">
             {showCourtsSection ? 'Recolher' : 'Expandir'} {showCourtsSection ? '▲' : '▼'}
           </span>
         </div>
         {showCourtsSection && (
-          <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+          <div className="courts-config-grid">
             {courts.length === 0 ? (
-              <p style={{ color: '#9CA3AF', fontSize: '0.9rem' }}>Nenhuma quadra cadastrada. Acesse "Quadras" para criar.</p>
+              <p className="courts-config-empty">Nenhuma quadra cadastrada. Acesse "Quadras" para criar.</p>
             ) : (
               courts.map((court) => (
-                <div
-                  key={court.id}
-                  style={{
-                    border: '1px solid #E5E7EB', borderRadius: '12px', padding: '16px',
-                    background: '#FAFAFA',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#1F2937' }}>{court.name}</h4>
-                    <span style={{
-                      fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px',
-                      background: court.status === 'ativa' ? '#D1FAE5' : '#FEE2E2',
-                      color: court.status === 'ativa' ? '#065F46' : '#991B1B',
-                    }}>
+                <div key={court.id} className="courts-config-card">
+                  <div className="courts-config-card-header">
+                    <h4>{court.name}</h4>
+                    <span className={`courts-config-status ${court.status === 'ativa' ? 'active' : 'inactive'}`}>
                       {court.status === 'ativa' ? 'Ativa' : court.status}
                     </span>
                   </div>
                   {court.default_price_cents != null && court.default_price_cents > 0 && (
-                    <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '0 0 8px 0' }}>
+                    <p className="courts-config-price">
                       R$ {(court.default_price_cents / 100).toFixed(2)}/hora
                     </p>
                   )}
                   <button
                     type="button"
                     onClick={() => handleOpenHoursModal(court)}
-                    style={{
-                      width: '100%', padding: '8px 12px', background: '#22C55E', color: 'white',
-                      border: 'none', borderRadius: '8px', cursor: 'pointer',
-                      fontSize: '0.85rem', fontWeight: 600,
-                    }}
+                    className="courts-config-btn"
                   >
                     Configurar Horários
                   </button>

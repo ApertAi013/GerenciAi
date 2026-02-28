@@ -163,3 +163,43 @@
     transform: translateY(-10px);
   }
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .modal-content {
+  background: #1a1a1a;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .modal-title {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .modal-description {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .modal-reset {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .modal-benefits {
+  background: #141414;
+}
+
+[data-theme="dark"] .modal-benefits h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .modal-benefits li {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .btn-modal-close {
+  color: #a0a0a0;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .btn-modal-close:hover {
+  background: #262626;
+  border-color: #333333;
+}

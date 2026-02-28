@@ -6,6 +6,7 @@ import { modalityService } from '../services/modalityService';
 import type { CreatePlanRequest, UpdatePlanRequest, BulkAdjustRequest, BulkAdjustResponse } from '../services/planService';
 import type { Plan } from '../types/enrollmentTypes';
 import type { Modality } from '../types/classTypes';
+import { useThemeStore } from '../store/themeStore';
 import '../styles/Settings.css';
 import '../styles/ModernModal.css';
 
@@ -13,6 +14,8 @@ const formatCurrency = (cents: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
 
 export default function Plans() {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [plans, setPlans] = useState<Plan[]>([]);
   const [modalities, setModalities] = useState<Modality[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,8 +101,8 @@ export default function Plans() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px',
       }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1a1a1a' }}>Planos</h1>
-          <p style={{ color: '#737373', fontSize: '14px', marginTop: '6px', margin: '6px 0 0 0' }}>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>Planos</h1>
+          <p style={{ color: isDark ? '#a0a0a0' : '#737373', fontSize: '14px', marginTop: '6px', margin: '6px 0 0 0' }}>
             Gerencie os planos de matrícula. Defina preço, frequência semanal e modalidade.
           </p>
         </div>
@@ -109,13 +112,13 @@ export default function Plans() {
             onClick={() => setShowBulkAdjustModal(true)}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 20px', background: '#F5F5F5', color: '#404040',
+              padding: '10px 20px', background: isDark ? '#262626' : '#F5F5F5', color: isDark ? '#d0d0d0' : '#404040',
               border: 'none', borderRadius: '10px', fontSize: '14px',
               fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
               transition: 'background 0.2s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#EBEBEB')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#F5F5F5')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? '#333' : '#EBEBEB')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = isDark ? '#262626' : '#F5F5F5')}
           >
             <FontAwesomeIcon icon={faChartLine} />
             Reajuste Global
@@ -150,8 +153,8 @@ export default function Plans() {
             <div
               key={plan.id}
               style={{
-                background: 'white', borderRadius: '16px', padding: '24px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                background: isDark ? '#1a1a1a' : 'white', borderRadius: '16px', padding: '24px',
+                boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.06)',
                 transition: 'box-shadow 0.2s, transform 0.2s',
                 position: 'relative', overflow: 'hidden',
                 opacity: isActive ? 1 : 0.65,
@@ -167,7 +170,7 @@ export default function Plans() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
                 <div style={{
                   width: '48px', height: '48px', borderRadius: '12px',
-                  background: isActive ? '#FFF3E0' : '#F5F5F5',
+                  background: isActive ? (isDark ? 'rgba(255, 153, 0, 0.15)' : '#FFF3E0') : (isDark ? '#262626' : '#F5F5F5'),
                   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                 }}>
                   <FontAwesomeIcon
@@ -177,7 +180,7 @@ export default function Plans() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h3 style={{
-                    margin: 0, fontSize: '18px', fontWeight: 700, color: '#1a1a1a',
+                    margin: 0, fontSize: '18px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{plan.name}</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
@@ -210,27 +213,27 @@ export default function Plans() {
                 display: 'flex', gap: '12px', marginBottom: '16px',
               }}>
                 <div style={{
-                  flex: 1, background: '#FAFAFA', borderRadius: '10px', padding: '12px 16px',
+                  flex: 1, background: isDark ? '#141414' : '#FAFAFA', borderRadius: '10px', padding: '12px 16px',
                   display: 'flex', alignItems: 'center', gap: '10px',
                 }}>
                   <FontAwesomeIcon icon={faDollarSign} style={{ color: '#FF9900', fontSize: '16px' }} />
                   <div>
-                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#1a1a1a' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>
                       {formatCurrency(plan.price_cents)}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#A3A3A3', fontWeight: 500 }}>por mês</div>
+                    <div style={{ fontSize: '11px', color: isDark ? '#6b6b6b' : '#A3A3A3', fontWeight: 500 }}>por mês</div>
                   </div>
                 </div>
                 <div style={{
-                  flex: 1, background: '#FAFAFA', borderRadius: '10px', padding: '12px 16px',
+                  flex: 1, background: isDark ? '#141414' : '#FAFAFA', borderRadius: '10px', padding: '12px 16px',
                   display: 'flex', alignItems: 'center', gap: '10px',
                 }}>
                   <FontAwesomeIcon icon={faCalendarWeek} style={{ color: '#3B82F6', fontSize: '16px' }} />
                   <div>
-                    <div style={{ fontSize: '20px', fontWeight: 700, color: '#1a1a1a' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>
                       {plan.sessions_per_week}x
                     </div>
-                    <div style={{ fontSize: '11px', color: '#A3A3A3', fontWeight: 500 }}>por semana</div>
+                    <div style={{ fontSize: '11px', color: isDark ? '#6b6b6b' : '#A3A3A3', fontWeight: 500 }}>por semana</div>
                   </div>
                 </div>
               </div>
@@ -238,7 +241,7 @@ export default function Plans() {
               {/* Description */}
               {plan.description && (
                 <p style={{
-                  margin: '0 0 16px 0', fontSize: '13px', color: '#737373', lineHeight: '1.5',
+                  margin: '0 0 16px 0', fontSize: '13px', color: isDark ? '#a0a0a0' : '#737373', lineHeight: '1.5',
                 }}>{plan.description}</p>
               )}
 
@@ -249,13 +252,13 @@ export default function Plans() {
                   onClick={() => { setEditingPlan(plan); setShowCreateModal(true); }}
                   style={{
                     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                    padding: '10px 16px', background: '#F5F5F5', color: '#404040',
+                    padding: '10px 16px', background: isDark ? '#262626' : '#F5F5F5', color: isDark ? '#d0d0d0' : '#404040',
                     border: 'none', borderRadius: '10px', fontSize: '13px',
                     fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                     transition: 'background 0.2s',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#EBEBEB')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#F5F5F5')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? '#333' : '#EBEBEB')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = isDark ? '#262626' : '#F5F5F5')}
                 >
                   <FontAwesomeIcon icon={faPen} style={{ fontSize: '12px' }} />
                   Editar
@@ -283,13 +286,13 @@ export default function Plans() {
                   onClick={() => handleDelete(plan.id)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                    padding: '10px 16px', background: '#FEF2F2', color: '#EF4444',
+                    padding: '10px 16px', background: isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2', color: '#EF4444',
                     border: 'none', borderRadius: '10px', fontSize: '13px',
                     fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                     transition: 'background 0.2s',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FEE2E2')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#FEF2F2')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2')}
                 >
                   <FontAwesomeIcon icon={faTrash} style={{ fontSize: '12px' }} />
                   Excluir
@@ -302,11 +305,11 @@ export default function Plans() {
         {plans.length === 0 && (
           <div style={{
             gridColumn: '1 / -1', textAlign: 'center', padding: '48px 24px',
-            background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+            background: isDark ? '#1a1a1a' : 'white', borderRadius: '16px', boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.06)',
           }}>
-            <FontAwesomeIcon icon={faDollarSign} style={{ fontSize: '40px', color: '#E5E5E5', marginBottom: '16px' }} />
-            <p style={{ color: '#737373', fontSize: '15px', margin: '0 0 8px 0' }}>Nenhum plano cadastrado ainda.</p>
-            <p style={{ color: '#A3A3A3', fontSize: '13px', margin: 0 }}>Clique em "Novo Plano" para começar.</p>
+            <FontAwesomeIcon icon={faDollarSign} style={{ fontSize: '40px', color: isDark ? '#333' : '#E5E5E5', marginBottom: '16px' }} />
+            <p style={{ color: isDark ? '#a0a0a0' : '#737373', fontSize: '15px', margin: '0 0 8px 0' }}>Nenhum plano cadastrado ainda.</p>
+            <p style={{ color: isDark ? '#6b6b6b' : '#A3A3A3', fontSize: '13px', margin: 0 }}>Clique em "Novo Plano" para começar.</p>
           </div>
         )}
       </div>

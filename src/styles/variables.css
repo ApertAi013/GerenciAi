@@ -88,32 +88,33 @@
 }
 
 /* ===== Dark Theme Overrides ===== */
+/* Follows the Onboarding design: #0f0f0f base, neutral blacks, white-alpha overlays */
 [data-theme="dark"] {
   /* Grayscale (inverted semantic) */
-  --color-black: #E4E4E7;
-  --color-grey-light: #A1A1AA;
-  --color-grey-lighter: #71717A;
-  --color-grey-soft: #2D2D4A;
-  --color-off-white: #16213E;
-  --color-pure-white: #1A1A2E;
+  --color-black: #f0f0f0;
+  --color-grey-light: #a0a0a0;
+  --color-grey-lighter: #6b6b6b;
+  --color-grey-soft: #262626;
+  --color-off-white: #141414;
+  --color-pure-white: #0f0f0f;
 
   /* Text Colors */
-  --text-primary: #E4E4E7;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
-  --text-inverse: #1A1A2E;
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0a0;
+  --text-muted: #6b6b6b;
+  --text-inverse: #0f0f0f;
 
   /* Background Colors */
-  --bg-primary: #1A1A2E;
-  --bg-secondary: #16213E;
-  --bg-tertiary: #0F3460;
-  --bg-dark: #E4E4E7;
-  --bg-dark-lighter: #A1A1AA;
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #141414;
+  --bg-tertiary: #1f1f1f;
+  --bg-dark: #f0f0f0;
+  --bg-dark-lighter: #a0a0a0;
 
   /* Border Colors */
-  --border-light: #2D2D4A;
-  --border-medium: #3D3D5C;
-  --border-dark: #4D4D6A;
+  --border-light: #262626;
+  --border-medium: #333333;
+  --border-dark: #404040;
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);

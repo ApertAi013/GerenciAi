@@ -47,7 +47,7 @@
 .filter-dropdown-header h3 {
   font-size: 1rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #0f0f0f;
   margin: 0;
 }
 
@@ -70,7 +70,7 @@
 
 .filter-close-btn:hover {
   background: #e5e7eb;
-  color: #1a1a2e;
+  color: #0f0f0f;
   transform: none;
 }
 
@@ -207,26 +207,44 @@
 
 /* ===== Dark Mode Overrides ===== */
 [data-theme="dark"] .filter-dropdown {
-  background: #1E1E3A;
+  background: #1a1a1a;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
-[data-theme="dark"] .filter-dropdown-header { border-bottom-color: #2D2D4A; }
-[data-theme="dark"] .filter-dropdown-header h3 { color: #E4E4E7; }
-[data-theme="dark"] .filter-close-btn { background: #16213E; color: #A1A1AA; }
-[data-theme="dark"] .filter-close-btn:hover { background: #0F3460; color: #E4E4E7; }
-[data-theme="dark"] .filter-section h4 { color: #71717A; }
-[data-theme="dark"] .filter-checkbox:hover { background: #16213E; }
-[data-theme="dark"] .filter-checkbox span { color: #E4E4E7; }
-[data-theme="dark"] .filter-checkbox-all { background: #16213E; }
-[data-theme="dark"] .filter-dropdown-footer { border-top-color: #2D2D4A; }
+[data-theme="dark"] .filter-dropdown-header { border-bottom-color: #262626; }
+[data-theme="dark"] .filter-dropdown-header h3 { color: #f0f0f0; }
+[data-theme="dark"] .filter-close-btn { background: #141414; color: #a0a0a0; }
+[data-theme="dark"] .filter-close-btn:hover { background: #1f1f1f; color: #f0f0f0; }
+[data-theme="dark"] .filter-section h4 { color: #6b6b6b; }
+[data-theme="dark"] .filter-checkbox:hover { background: #141414; }
+[data-theme="dark"] .filter-checkbox span { color: #f0f0f0; }
+[data-theme="dark"] .filter-checkbox-all { background: #141414; }
+[data-theme="dark"] .filter-dropdown-footer { border-top-color: #262626; }
 [data-theme="dark"] .filter-btn-clear {
-  background: #16213E;
-  color: #A1A1AA;
-  border-color: #2D2D4A;
+  background: #141414;
+  color: #a0a0a0;
+  border-color: #262626;
 }
 [data-theme="dark"] .filter-btn-clear:hover:not(:disabled) {
-  background: #0F3460;
-  color: #E4E4E7;
+  background: #1f1f1f;
+  color: #f0f0f0;
+}
+[data-theme="dark"] .filter-dropdown-overlay {
+  background: rgba(0, 0, 0, 0.45);
+}
+[data-theme="dark"] .filter-checkbox-all:hover {
+  background: #1f1f1f;
+}
+[data-theme="dark"] .filter-btn-apply {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+[data-theme="dark"] .filter-btn-apply:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .filter-dropdown-body::-webkit-scrollbar-thumb {
+  background: #333333;
+}
+[data-theme="dark"] .filter-dropdown-body::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
 }
 
 /* Responsive */

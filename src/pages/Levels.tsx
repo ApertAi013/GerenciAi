@@ -3,10 +3,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPen, faTrash, faLayerGroup, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
 import { levelService } from '../services/levelService';
 import type { Level, CreateLevelRequest, UpdateLevelRequest } from '../types/levelTypes';
+import { useThemeStore } from '../store/themeStore';
 import '../styles/Settings.css';
 import '../styles/ModernModal.css';
 
 export default function Levels() {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [levels, setLevels] = useState<Level[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -68,8 +71,8 @@ export default function Levels() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px',
       }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1a1a1a' }}>Níveis</h1>
-          <p style={{ color: '#737373', fontSize: '14px', marginTop: '6px', margin: '6px 0 0 0' }}>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>Níveis</h1>
+          <p style={{ color: isDark ? '#a0a0a0' : '#737373', fontSize: '14px', marginTop: '6px', margin: '6px 0 0 0' }}>
             Gerencie os níveis dos seus alunos. Cada nível pode ter uma cor e ser usado para filtrar turmas.
           </p>
         </div>
@@ -100,8 +103,8 @@ export default function Levels() {
           <div
             key={level.id}
             style={{
-              background: 'white', borderRadius: '16px', padding: '24px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+              background: isDark ? '#1a1a1a' : 'white', borderRadius: '16px', padding: '24px',
+              boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.06)',
               transition: 'box-shadow 0.2s, transform 0.2s',
               position: 'relative', overflow: 'hidden',
             }}
@@ -109,33 +112,33 @@ export default function Levels() {
             {/* Top accent bar */}
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: '4px',
-              background: level.color || '#E5E5E5',
+              background: level.color || (isDark ? '#333' : '#E5E5E5'),
             }} />
 
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
               <div style={{
                 width: '48px', height: '48px', borderRadius: '12px',
-                background: level.color ? `${level.color}18` : '#F5F5F5',
+                background: level.color ? `${level.color}18` : (isDark ? '#262626' : '#F5F5F5'),
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
                 <FontAwesomeIcon
                   icon={faLayerGroup}
-                  style={{ fontSize: '20px', color: level.color || '#A3A3A3' }}
+                  style={{ fontSize: '20px', color: level.color || (isDark ? '#6b6b6b' : '#A3A3A3') }}
                 />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <h3 style={{
-                    margin: 0, fontSize: '18px', fontWeight: 700, color: '#1a1a1a',
+                    margin: 0, fontSize: '18px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{level.name}</h3>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                   {level.is_default && (
                     <span style={{
-                      fontSize: '11px', fontWeight: 600, color: '#737373',
-                      background: '#F0F0F0', padding: '2px 8px', borderRadius: '4px',
+                      fontSize: '11px', fontWeight: 600, color: isDark ? '#a0a0a0' : '#737373',
+                      background: isDark ? '#262626' : '#F0F0F0', padding: '2px 8px', borderRadius: '4px',
                       display: 'flex', alignItems: 'center', gap: '4px',
                     }}>
                       <FontAwesomeIcon icon={faShieldAlt} style={{ fontSize: '9px' }} />
@@ -148,7 +151,7 @@ export default function Levels() {
                         width: '14px', height: '14px', borderRadius: '4px',
                         backgroundColor: level.color, border: '1px solid rgba(0,0,0,0.08)',
                       }} />
-                      <span style={{ fontSize: '11px', color: '#A3A3A3', fontFamily: 'monospace' }}>
+                      <span style={{ fontSize: '11px', color: isDark ? '#6b6b6b' : '#A3A3A3', fontFamily: 'monospace' }}>
                         {level.color}
                       </span>
                     </div>
@@ -160,17 +163,17 @@ export default function Levels() {
             {/* Description */}
             {level.description && (
               <p style={{
-                margin: '0 0 16px 0', fontSize: '13px', color: '#737373', lineHeight: '1.5',
+                margin: '0 0 16px 0', fontSize: '13px', color: isDark ? '#a0a0a0' : '#737373', lineHeight: '1.5',
               }}>{level.description}</p>
             )}
 
             {/* Order info */}
             {level.order_index !== undefined && level.order_index > 0 && (
               <div style={{
-                background: '#FAFAFA', borderRadius: '10px', padding: '10px 14px',
-                marginBottom: '16px', fontSize: '13px', color: '#737373',
+                background: isDark ? '#141414' : '#FAFAFA', borderRadius: '10px', padding: '10px 14px',
+                marginBottom: '16px', fontSize: '13px', color: isDark ? '#a0a0a0' : '#737373',
               }}>
-                Ordem: <strong style={{ color: '#1a1a1a' }}>{level.order_index}</strong>
+                Ordem: <strong style={{ color: isDark ? '#f0f0f0' : '#1a1a1a' }}>{level.order_index}</strong>
               </div>
             )}
 
@@ -181,13 +184,13 @@ export default function Levels() {
                 onClick={() => { setEditingLevel(level); setShowCreateModal(true); }}
                 style={{
                   flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                  padding: '10px 16px', background: '#F5F5F5', color: '#404040',
+                  padding: '10px 16px', background: isDark ? '#262626' : '#F5F5F5', color: isDark ? '#d0d0d0' : '#404040',
                   border: 'none', borderRadius: '10px', fontSize: '13px',
                   fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                   transition: 'background 0.2s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#EBEBEB')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '#F5F5F5')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? '#333' : '#EBEBEB')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = isDark ? '#262626' : '#F5F5F5')}
               >
                 <FontAwesomeIcon icon={faPen} style={{ fontSize: '12px' }} />
                 Editar
@@ -198,13 +201,13 @@ export default function Levels() {
                   onClick={() => handleDelete(level.id)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                    padding: '10px 16px', background: '#FEF2F2', color: '#EF4444',
+                    padding: '10px 16px', background: isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2', color: '#EF4444',
                     border: 'none', borderRadius: '10px', fontSize: '13px',
                     fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                     transition: 'background 0.2s',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FEE2E2')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#FEF2F2')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2')}
                 >
                   <FontAwesomeIcon icon={faTrash} style={{ fontSize: '12px' }} />
                   Excluir
@@ -217,11 +220,11 @@ export default function Levels() {
         {levels.length === 0 && (
           <div style={{
             gridColumn: '1 / -1', textAlign: 'center', padding: '48px 24px',
-            background: 'white', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+            background: isDark ? '#1a1a1a' : 'white', borderRadius: '16px', boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.06)',
           }}>
-            <FontAwesomeIcon icon={faLayerGroup} style={{ fontSize: '40px', color: '#E5E5E5', marginBottom: '16px' }} />
-            <p style={{ color: '#737373', fontSize: '15px', margin: '0 0 8px 0' }}>Nenhum nível cadastrado ainda.</p>
-            <p style={{ color: '#A3A3A3', fontSize: '13px', margin: 0 }}>Clique em "Novo Nível" para começar.</p>
+            <FontAwesomeIcon icon={faLayerGroup} style={{ fontSize: '40px', color: isDark ? '#333' : '#E5E5E5', marginBottom: '16px' }} />
+            <p style={{ color: isDark ? '#a0a0a0' : '#737373', fontSize: '15px', margin: '0 0 8px 0' }}>Nenhum nível cadastrado ainda.</p>
+            <p style={{ color: isDark ? '#6b6b6b' : '#A3A3A3', fontSize: '13px', margin: 0 }}>Clique em "Novo Nível" para começar.</p>
           </div>
         )}
       </div>

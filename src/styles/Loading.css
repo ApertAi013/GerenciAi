@@ -20,3 +20,13 @@
     transform: rotate(360deg);
   }
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .loading-container {
+  background-color: #0f0f0f;
+}
+
+[data-theme="dark"] .spinner {
+  border-color: #262626;
+  border-top-color: #F58A25;
+}

@@ -238,6 +238,81 @@
   100% { transform: rotate(360deg); }
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .whatsapp-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .whatsapp-header p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .whatsapp-card {
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .whatsapp-card:hover {
+  box-shadow: 0 12px 32px rgba(37, 211, 102, 0.15);
+}
+
+[data-theme="dark"] .whatsapp-card h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .whatsapp-card p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .whatsapp-card-button {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .whatsapp-card-button:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .whatsapp-info {
+  background: linear-gradient(135deg, #1f1f1f 0%, #141414 100%);
+  border-color: #262626;
+}
+
+[data-theme="dark"] .whatsapp-info h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .whatsapp-info-item {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .whatsapp-info-item p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .whatsapp-features {
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .whatsapp-features h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .whatsapp-features li {
+  color: #a0a0a0;
+  background: #141414;
+}
+
+[data-theme="dark"] .whatsapp-features li:hover {
+  background: #1f1f1f;
+}
+
+[data-theme="dark"] .spinner {
+  border-color: #262626;
+  border-top-color: #25D366;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .whatsapp-container {

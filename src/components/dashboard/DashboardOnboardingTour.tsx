@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import Joyride, { type CallBackProps, type Step, STATUS } from 'react-joyride';
 import { useThemeStore } from '../../store/themeStore';
 
-interface ScheduleOnboardingTourProps {
+interface DashboardOnboardingTourProps {
   run: boolean;
   onFinish: () => void;
 }
@@ -12,58 +12,38 @@ const steps: Step[] = [
     target: 'body',
     content: (
       <div>
-        <h3>Dicas da Agenda</h3>
-        <p>Vamos te mostrar algumas funcionalidades da agenda que vão facilitar sua gestão!</p>
+        <h3>Bem-vindo ao ArenaAi! 🎉</h3>
+        <p>Este é o seu painel principal. Aqui você tem uma visão geral de tudo que acontece na sua arena.</p>
+        <p>Vamos te mostrar algumas funcionalidades!</p>
       </div>
     ),
     disableBeacon: true,
     placement: 'center',
   },
   {
-    target: '.class-name',
+    target: '.theme-toggle-btn',
     content: (
       <div>
-        <h3>Editar Turma</h3>
-        <p><strong>Clique no nome da turma</strong> para abrir o modal de edição.</p>
-        <p>Você pode alterar horário, capacidade, níveis, cor e mais.</p>
+        <h3>Alternar Tema</h3>
+        <p>Você pode alternar entre o <strong>modo claro</strong> e o <strong>modo escuro</strong> a qualquer momento clicando aqui.</p>
+        <p>Escolha o que for mais confortável para você!</p>
       </div>
     ),
     placement: 'bottom',
   },
   {
-    target: '.class-card-header',
+    target: '[data-tour="sidebar-arenas"]',
     content: (
       <div>
-        <h3>Mover Turma</h3>
-        <p><strong>Arraste pelo cabeçalho</strong> (área do horário) para mover a turma para outro dia ou horário.</p>
+        <h3>Suas Arenas</h3>
+        <p>Acesse <strong>Arenas</strong> para gerenciar suas quadras, configurar horários de funcionamento e acompanhar métricas.</p>
       </div>
     ),
-    placement: 'bottom',
-  },
-  {
-    target: '.student-chip',
-    content: (
-      <div>
-        <h3>Transferir Aluno</h3>
-        <p><strong>Arraste um aluno</strong> de uma turma para outra para transferi-lo.</p>
-        <p>Clique no nome do aluno para ver os detalhes dele.</p>
-      </div>
-    ),
-    placement: 'bottom',
-  },
-  {
-    target: '.schedule-search',
-    content: (
-      <div>
-        <h3>Buscar Turma</h3>
-        <p>Use a busca para encontrar turmas rapidamente pelo nome ou modalidade.</p>
-      </div>
-    ),
-    placement: 'bottom',
+    placement: 'right',
   },
 ];
 
-export default function ScheduleOnboardingTour({ run, onFinish }: ScheduleOnboardingTourProps) {
+export default function DashboardOnboardingTour({ run, onFinish }: DashboardOnboardingTourProps) {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
 

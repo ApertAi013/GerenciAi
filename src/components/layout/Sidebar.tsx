@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router';
+import { useThemeStore } from '../../store/themeStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHome,
@@ -88,6 +89,8 @@ const PROTECTED_PATHS = ['/dashboard'];
 export default function Sidebar() {
   const location = useLocation();
   const { user } = useAuthStore();
+  const { theme } = useThemeStore();
+  const logoSrc = theme === 'dark' ? '/arenai-logo-white.svg' : '/arenai-logo.svg';
   const { hasAccess: hasMigrationAccess, isLoading: isMigrationLoading } = useFeatureAccess('data_migration');
 
   const [sidebarConfig, setSidebarConfig] = useState<SidebarConfig>(() => {
@@ -161,7 +164,7 @@ export default function Sidebar() {
   return (
     <div className="sidebar">
       <div className="sidebar-logo">
-        <img src="/arenai-logo.svg" alt="ArenaAi" className="sidebar-logo-img" />
+        <img src={logoSrc} alt="ArenaAi" className="sidebar-logo-img" />
       </div>
 
       <nav className="sidebar-nav">
@@ -239,6 +242,7 @@ export default function Sidebar() {
                 key={item.path}
                 to={item.path}
                 className={`sidebar-item ${isActive ? 'active' : ''}`}
+                {...(item.path === '/arenas' ? { 'data-tour': 'sidebar-arenas' } : {})}
               >
                 <span className="sidebar-icon">
                   <FontAwesomeIcon icon={item.icon} />

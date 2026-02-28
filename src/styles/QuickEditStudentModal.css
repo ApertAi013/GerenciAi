@@ -594,6 +594,189 @@
   background: #FFFBF5;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .qe-modal {
+  background: #1a1a1a;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .qe-loading {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-spinner {
+  border-color: #262626;
+  border-top-color: #F58A25;
+}
+
+[data-theme="dark"] .qe-header {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .qe-name {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-badge-estornada {
+  background: #262626;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-btn-icon {
+  background: #262626;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-btn-icon:hover {
+  background: #333333;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-btn-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+[data-theme="dark"] .qe-tabs {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .qe-tab {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .qe-tab:hover {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-tab-active {
+  color: #F58A25;
+  border-bottom-color: #F58A25;
+}
+
+[data-theme="dark"] .qe-empty {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .qe-field label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-field input,
+[data-theme="dark"] .qe-field select {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-field input:focus,
+[data-theme="dark"] .qe-field select:focus {
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.1);
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .qe-save-bar {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .qe-btn-secondary {
+  background: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-btn-secondary:hover:not(:disabled) {
+  background: #333333;
+}
+
+[data-theme="dark"] .qe-enrollment-card {
+  border-color: #262626;
+}
+
+[data-theme="dark"] .qe-enrollment-card:hover {
+  border-color: #333333;
+}
+
+[data-theme="dark"] .qe-enrollment-plan {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-enrollment-meta {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-fin-stat {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .qe-fin-stat-danger {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="dark"] .qe-fin-stat-ok {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="dark"] .qe-fin-stat-label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-fin-stat-value {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-fin-stat-sub {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .qe-invoice-row {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .qe-invoice-ref {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-invoice-date {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-invoice-amount {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-payment-form {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="dark"] .qe-payment-fields input,
+[data-theme="dark"] .qe-payment-fields select {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-payment-fields input:focus,
+[data-theme="dark"] .qe-payment-fields select:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.15);
+}
+
+[data-theme="dark"] .qe-toggle-history {
+  border-color: #333333;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-toggle-history:hover {
+  border-color: #F58A25;
+  color: #F58A25;
+  background: rgba(245, 138, 37, 0.05);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 640px) {
   .qe-overlay {
@@ -871,4 +1054,80 @@
   color: #374151;
   box-shadow: none;
   transform: none;
+}
+
+[data-theme="dark"] .qe-class-selector > label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-class-list {
+  border-color: #262626;
+}
+
+[data-theme="dark"] .qe-class-day {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .qe-class-item:hover {
+  background: #262626;
+}
+
+[data-theme="dark"] .qe-class-item-selected {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: #6366f1;
+}
+
+[data-theme="dark"] .qe-class-item-name {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-class-item-time {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-class-check {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .qe-confirm-modal {
+  background: #1a1a1a;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .qe-confirm-header h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-confirm-text {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-confirm-btn {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .qe-confirm-btn:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .qe-confirm-btn strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .qe-confirm-btn small {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-confirm-btn-secondary {
+  background: #141414;
+  border-color: #333333;
+}
+
+[data-theme="dark"] .qe-confirm-btn-cancel {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .qe-confirm-btn-cancel:hover {
+  color: #f0f0f0;
 }

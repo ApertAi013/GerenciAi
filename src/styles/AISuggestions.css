@@ -252,6 +252,125 @@
   font-size: 1.125rem;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .ai-suggestions-container {
+  background-color: #0f0f0f;
+}
+
+[data-theme="dark"] .suggestions-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .filter-select {
+  border-color: #262626;
+  background-color: #1a1a1a;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .suggestion-card {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-left-color: #333333;
+}
+
+[data-theme="dark"] .suggestion-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .type-label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .priority-badge.priority-high {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .priority-badge.priority-medium {
+  background: rgba(217, 119, 6, 0.15);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .priority-badge.priority-low {
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .status-badge.status-pending {
+  background: rgba(217, 119, 6, 0.15);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .status-badge.status-read {
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .status-badge.status-executed {
+  background: rgba(5, 150, 105, 0.15);
+  color: #34d399;
+}
+
+[data-theme="dark"] .suggestion-content h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .suggestion-content p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .suggestion-metadata {
+  background-color: #141414;
+}
+
+[data-theme="dark"] .suggestion-metadata pre {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .suggestion-footer {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .suggestion-date {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .btn-read {
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .btn-read:hover {
+  background: rgba(37, 99, 235, 0.25);
+}
+
+[data-theme="dark"] .btn-execute {
+  background-color: #22C55E;
+  color: white;
+}
+
+[data-theme="dark"] .btn-delete {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .btn-delete:hover {
+  background: rgba(220, 38, 38, 0.25);
+}
+
+[data-theme="dark"] .no-suggestions {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .no-suggestions p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .loading {
+  color: #a0a0a0;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .ai-suggestions-container {

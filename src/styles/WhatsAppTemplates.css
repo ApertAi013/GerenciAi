@@ -345,6 +345,144 @@
   color: #6B7280;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .templates-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .templates-header p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .template-form {
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .template-form h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus,
+[data-theme="dark"] .form-group textarea:focus {
+  border-color: #25D366;
+  box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.15);
+}
+
+[data-theme="dark"] .form-group small {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .checkbox-label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .variables-section {
+  background: #141414;
+}
+
+[data-theme="dark"] .variables-section h3 {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .variable-chip {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .variable-chip:hover {
+  border-color: #25D366;
+  background: #1f1f1f;
+}
+
+[data-theme="dark"] .variable-chip code {
+  color: #A78BFA;
+}
+
+[data-theme="dark"] .variable-chip small {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .btn-cancel {
+  background: #1a1a1a;
+  border-color: #262626;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .btn-cancel:hover {
+  border-color: #333333;
+  background: #141414;
+}
+
+[data-theme="dark"] .template-card {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .template-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .template-header h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .template-type {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .btn-icon {
+  border-color: #262626;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .btn-icon.edit:hover {
+  border-color: #3B82F6;
+  color: #3B82F6;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .btn-icon.delete:hover {
+  border-color: #EF4444;
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .template-message {
+  background: #141414;
+}
+
+[data-theme="dark"] .template-message pre {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .empty-state {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .empty-state p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .loading {
+  color: #a0a0a0;
+}
+
 @media (max-width: 768px) {
   .whatsapp-templates-container {
     padding: 1rem;

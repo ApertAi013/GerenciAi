@@ -39,3 +39,12 @@
     transform: translateY(-2px);
   }
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .premium-badge {
+  color: #0f0f0f;
+}
+
+[data-theme="dark"] .crown-icon {
+  color: #0f0f0f;
+}

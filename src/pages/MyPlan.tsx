@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { platformBillingService } from '../services/platformBillingService';
+import { useThemeStore } from '../store/themeStore';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -87,6 +88,9 @@ const isUnlimited = (value: number) => value >= 999999;
 // --------------- Component ---------------
 
 export default function MyPlan() {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
+  const logoSrc = isDark ? '/arenai-logo-white.svg' : '/arenai-logo.svg';
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [studentCount, setStudentCount] = useState(0);
   const [classCount, setClassCount] = useState(0);
@@ -266,14 +270,14 @@ export default function MyPlan() {
 
     return (
       <div style={{ flex: 1, minWidth: 200 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13, color: '#6B7280' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13, color: isDark ? '#a0a0a0' : '#6B7280' }}>
           <span>{label}</span>
-          <span style={{ fontWeight: 600, color: isOverLimit ? '#DC2626' : '#111827' }}>
+          <span style={{ fontWeight: 600, color: isOverLimit ? '#DC2626' : (isDark ? '#f0f0f0' : '#111827') }}>
             {current} de {unlimited ? 'Ilimitado' : max}
           </span>
         </div>
         <div style={{
-          width: '100%', height: 8, backgroundColor: '#E5E7EB', borderRadius: 4, overflow: 'hidden',
+          width: '100%', height: 8, backgroundColor: isDark ? '#262626' : '#E5E7EB', borderRadius: 4, overflow: 'hidden',
         }}>
           <div style={{
             width: `${unlimited ? Math.min(pct, 100) : Math.min(pct, 100)}%`,
@@ -400,10 +404,10 @@ export default function MyPlan() {
       {/* ===== Section 2: Active Add-ons ===== */}
       {subscription.addons && subscription.addons.length > 0 && (
         <div style={{
-          backgroundColor: '#fff', borderRadius: 12, padding: '20px 24px',
-          marginBottom: 24, border: '1px solid #E5E7EB',
+          backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: '20px 24px',
+          marginBottom: 24, border: isDark ? '1px solid #262626' : '1px solid #E5E7EB',
         }}>
-          <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: isDark ? '#f0f0f0' : '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
             <FontAwesomeIcon icon={faPuzzlePiece} style={{ color: '#8B5CF6' }} />
             Add-ons Ativos
           </h2>
@@ -425,16 +429,16 @@ export default function MyPlan() {
 
       {/* ===== Section 3: Plan Options ===== */}
       <div style={{
-        backgroundColor: '#fff', borderRadius: 12, padding: '24px 28px',
-        marginBottom: 24, border: '1px solid #E5E7EB',
+        backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: '24px 28px',
+        marginBottom: 24, border: isDark ? '1px solid #262626' : '1px solid #E5E7EB',
       }}>
-        <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: isDark ? '#f0f0f0' : '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
           <FontAwesomeIcon icon={faArrowUp} style={{ color: '#3B82F6' }} />
           Planos Disponiveis
         </h2>
-        <p style={{ margin: '0 0 20px', fontSize: 14, color: '#6B7280' }}>
-          Voce tem <strong style={{ color: '#111827' }}>{studentCount} alunos</strong> e{' '}
-          <strong style={{ color: '#111827' }}>{classCount} turmas</strong>.
+        <p style={{ margin: '0 0 20px', fontSize: 14, color: isDark ? '#a0a0a0' : '#6B7280' }}>
+          Voce tem <strong style={{ color: isDark ? '#f0f0f0' : '#111827' }}>{studentCount} alunos</strong> e{' '}
+          <strong style={{ color: isDark ? '#f0f0f0' : '#111827' }}>{classCount} turmas</strong>.
         </p>
 
         {/* Plans grid */}
@@ -450,9 +454,9 @@ export default function MyPlan() {
             return (
               <div key={plan.id} style={{
                 position: 'relative',
-                border: isCurrent ? '2px solid #3B82F6' : isRecommended ? '2px solid #10B981' : '1px solid #E5E7EB',
+                border: isCurrent ? '2px solid #3B82F6' : isRecommended ? '2px solid #10B981' : (isDark ? '1px solid #262626' : '1px solid #E5E7EB'),
                 borderRadius: 12, padding: '20px 18px',
-                backgroundColor: isCurrent ? '#EFF6FF' : isRecommended ? '#ECFDF5' : '#fff',
+                backgroundColor: isCurrent ? (isDark ? 'rgba(59, 130, 246, 0.1)' : '#EFF6FF') : isRecommended ? (isDark ? 'rgba(16, 185, 129, 0.1)' : '#ECFDF5') : (isDark ? '#141414' : '#fff'),
                 transition: 'box-shadow 0.2s',
                 display: 'flex', flexDirection: 'column',
               }}>
@@ -476,21 +480,21 @@ export default function MyPlan() {
                   </span>
                 )}
 
-                <h3 style={{ margin: '8px 0 4px', fontSize: 17, fontWeight: 700, color: '#111827' }}>
+                <h3 style={{ margin: '8px 0 4px', fontSize: 17, fontWeight: 700, color: isDark ? '#f0f0f0' : '#111827' }}>
                   {plan.name}
                 </h3>
-                <p style={{ margin: '0 0 12px', fontSize: 22, fontWeight: 800, color: '#1E293B' }}>
+                <p style={{ margin: '0 0 12px', fontSize: 22, fontWeight: 800, color: isDark ? '#f0f0f0' : '#1E293B' }}>
                   {formatBRL(plan.price_cents)}
                   <span style={{ fontSize: 13, fontWeight: 400, color: '#6B7280' }}>/mes</span>
                 </p>
 
                 {plan.description && (
-                  <p style={{ margin: '0 0 12px', fontSize: 13, color: '#6B7280', lineHeight: 1.4 }}>
+                  <p style={{ margin: '0 0 12px', fontSize: 13, color: isDark ? '#a0a0a0' : '#6B7280', lineHeight: 1.4 }}>
                     {plan.description}
                   </p>
                 )}
 
-                <div style={{ fontSize: 13, color: '#374151', marginBottom: 16, flex: 1 }}>
+                <div style={{ fontSize: 13, color: isDark ? '#d0d0d0' : '#374151', marginBottom: 16, flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                     <FontAwesomeIcon icon={faUsers} style={{ color: '#3B82F6', width: 14 }} />
                     <span>
@@ -547,8 +551,8 @@ export default function MyPlan() {
                 ) : (
                   <button disabled style={{
                     width: '100%', padding: '10px 0', borderRadius: 8,
-                    border: '1px solid #E5E7EB', backgroundColor: '#F9FAFB',
-                    color: '#9CA3AF', fontWeight: 600, fontSize: 13, cursor: 'default',
+                    border: isDark ? '1px solid #262626' : '1px solid #E5E7EB', backgroundColor: isDark ? '#141414' : '#F9FAFB',
+                    color: isDark ? '#6b6b6b' : '#9CA3AF', fontWeight: 600, fontSize: 13, cursor: 'default',
                   }}>
                     Plano inferior
                   </button>
@@ -561,7 +565,7 @@ export default function MyPlan() {
         {/* Available Add-ons */}
         {addons.length > 0 && (
           <>
-            <h3 style={{ margin: '0 0 12px', fontSize: 16, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 16, fontWeight: 700, color: isDark ? '#f0f0f0' : '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
               <FontAwesomeIcon icon={faPuzzlePiece} style={{ color: '#8B5CF6' }} />
               Add-ons Disponiveis
             </h3>
@@ -570,13 +574,13 @@ export default function MyPlan() {
                 const isActive = subscription.addons?.some((a) => a.addon_slug === addon.slug);
                 return (
                   <div key={addon.id} style={{
-                    border: isActive ? '2px solid #8B5CF6' : '1px solid #E5E7EB',
+                    border: isActive ? '2px solid #8B5CF6' : (isDark ? '1px solid #262626' : '1px solid #E5E7EB'),
                     borderRadius: 10, padding: '14px 18px',
-                    backgroundColor: isActive ? '#F5F3FF' : '#fff',
+                    backgroundColor: isActive ? (isDark ? 'rgba(139, 92, 246, 0.1)' : '#F5F3FF') : (isDark ? '#141414' : '#fff'),
                     minWidth: 200, flex: '1 1 200px', maxWidth: 320,
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                      <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#111827' }}>
+                      <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: isDark ? '#f0f0f0' : '#111827' }}>
                         {addon.name}
                         {addon.is_bundle && (
                           <span style={{
@@ -638,7 +642,7 @@ export default function MyPlan() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <img
-                src="/arenai-logo.svg"
+                src={logoSrc}
                 alt="ArenAi"
                 style={{ height: 36 }}
               />
@@ -731,10 +735,10 @@ export default function MyPlan() {
 
       {/* ===== Section 4: Invoices ===== */}
       <div style={{
-        backgroundColor: '#fff', borderRadius: 12, padding: '24px 28px',
-        marginBottom: 24, border: '1px solid #E5E7EB',
+        backgroundColor: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: '24px 28px',
+        marginBottom: 24, border: isDark ? '1px solid #262626' : '1px solid #E5E7EB',
       }}>
-        <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: isDark ? '#f0f0f0' : '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
           <FontAwesomeIcon icon={faFileInvoiceDollar} style={{ color: '#F59E0B' }} />
           Faturas Recentes
         </h2>
@@ -745,13 +749,13 @@ export default function MyPlan() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid #E5E7EB' }}>
-                  <th style={{ textAlign: 'left', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Mes</th>
-                  <th style={{ textAlign: 'left', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Vencimento</th>
-                  <th style={{ textAlign: 'right', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Valor</th>
-                  <th style={{ textAlign: 'center', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Status</th>
-                  <th style={{ textAlign: 'left', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Pago em</th>
-                  <th style={{ textAlign: 'center', padding: '10px 12px', color: '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Acao</th>
+                <tr style={{ borderBottom: isDark ? '2px solid #262626' : '2px solid #E5E7EB' }}>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', color: isDark ? '#a0a0a0' : '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Mes</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', color: isDark ? '#a0a0a0' : '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Vencimento</th>
+                  <th style={{ textAlign: 'right', padding: '10px 12px', color: isDark ? '#a0a0a0' : '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Valor</th>
+                  <th style={{ textAlign: 'center', padding: '10px 12px', color: isDark ? '#a0a0a0' : '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Status</th>
+                  <th style={{ textAlign: 'left', padding: '10px 12px', color: isDark ? '#a0a0a0' : '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Pago em</th>
+                  <th style={{ textAlign: 'center', padding: '10px 12px', color: isDark ? '#a0a0a0' : '#6B7280', fontWeight: 600, fontSize: 12, textTransform: 'uppercase' }}>Acao</th>
                 </tr>
               </thead>
               <tbody>
@@ -761,20 +765,20 @@ export default function MyPlan() {
                   const isExpanded = expandedInvoiceId === inv.id;
 
                   return (
-                    <tr key={inv.id} style={{ borderBottom: isExpanded ? 'none' : '1px solid #F3F4F6' }}>
-                      <td style={{ padding: '12px', color: '#111827', fontWeight: 500 }}>
+                    <tr key={inv.id} style={{ borderBottom: isExpanded ? 'none' : (isDark ? '1px solid #262626' : '1px solid #F3F4F6') }}>
+                      <td style={{ padding: '12px', color: isDark ? '#f0f0f0' : '#111827', fontWeight: 500 }}>
                         {inv.reference_month}
                       </td>
-                      <td style={{ padding: '12px', color: '#6B7280' }}>
+                      <td style={{ padding: '12px', color: isDark ? '#a0a0a0' : '#6B7280' }}>
                         {new Date(inv.due_date).toLocaleDateString('pt-BR')}
                       </td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>
+                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: isDark ? '#f0f0f0' : '#111827' }}>
                         {formatBRL(inv.final_amount_cents)}
                       </td>
                       <td style={{ padding: '12px', textAlign: 'center' }}>
                         {getInvoiceStatusBadge(inv.status)}
                       </td>
-                      <td style={{ padding: '12px', color: '#6B7280' }}>
+                      <td style={{ padding: '12px', color: isDark ? '#a0a0a0' : '#6B7280' }}>
                         {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('pt-BR') : '-'}
                       </td>
                       <td style={{ padding: '12px', textAlign: 'center' }}>
@@ -875,7 +879,7 @@ export default function MyPlan() {
         >
           <div
             style={{
-              background: '#fff', borderRadius: 20, width: '95%', maxWidth: 520,
+              background: isDark ? '#1a1a1a' : '#fff', borderRadius: 20, width: '95%', maxWidth: 520,
               overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
               animation: 'fadeInUp 0.25s ease-out',
             }}
@@ -891,11 +895,11 @@ export default function MyPlan() {
                 }}>
                   <FontAwesomeIcon icon={faCheckCircle} style={{ color: '#fff', fontSize: 32 }} />
                 </div>
-                <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: '#111827' }}>
+                <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: isDark ? '#f0f0f0' : '#111827' }}>
                   Solicitacao Enviada!
                 </h2>
-                <p style={{ margin: '0 0 8px', fontSize: 15, color: '#6B7280', lineHeight: 1.6 }}>
-                  Seu pedido de upgrade para o plano <strong style={{ color: '#111827' }}>{upgradeModalPlan.name}</strong> foi enviado com sucesso.
+                <p style={{ margin: '0 0 8px', fontSize: 15, color: isDark ? '#a0a0a0' : '#6B7280', lineHeight: 1.6 }}>
+                  Seu pedido de upgrade para o plano <strong style={{ color: isDark ? '#f0f0f0' : '#111827' }}>{upgradeModalPlan.name}</strong> foi enviado com sucesso.
                 </p>
                 <p style={{ margin: '0 0 28px', fontSize: 14, color: '#9CA3AF' }}>
                   Nossa equipe analisara e voce sera notificado assim que aprovado.
@@ -955,15 +959,15 @@ export default function MyPlan() {
                   }}>
                     {/* Current */}
                     <div style={{
-                      background: '#F9FAFB', borderRadius: 12, padding: '16px 18px',
-                      border: '1px solid #E5E7EB', textAlign: 'center',
+                      background: isDark ? '#141414' : '#F9FAFB', borderRadius: 12, padding: '16px 18px',
+                      border: isDark ? '1px solid #262626' : '1px solid #E5E7EB', textAlign: 'center',
                     }}>
-                      <p style={{ margin: '0 0 2px', fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', fontWeight: 600 }}>Atual</p>
-                      <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#374151' }}>{subscription?.plan_name}</p>
-                      <p style={{ margin: 0, fontSize: 13, color: '#6B7280' }}>
+                      <p style={{ margin: '0 0 2px', fontSize: 11, color: isDark ? '#6b6b6b' : '#9CA3AF', textTransform: 'uppercase', fontWeight: 600 }}>Atual</p>
+                      <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: isDark ? '#f0f0f0' : '#374151' }}>{subscription?.plan_name}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: isDark ? '#a0a0a0' : '#6B7280' }}>
                         {isUnlimited(subscription?.max_students ?? 0) ? 'Ilimitado' : `${subscription?.max_students} alunos`}
                       </p>
-                      <p style={{ margin: 0, fontSize: 13, color: '#6B7280' }}>
+                      <p style={{ margin: 0, fontSize: 13, color: isDark ? '#a0a0a0' : '#6B7280' }}>
                         {isUnlimited(subscription?.max_classes ?? 0) ? 'Ilimitado' : `${subscription?.max_classes} turmas`}
                       </p>
                     </div>
@@ -979,11 +983,11 @@ export default function MyPlan() {
 
                     {/* New */}
                     <div style={{
-                      background: '#EFF6FF', borderRadius: 12, padding: '16px 18px',
+                      background: isDark ? 'rgba(59, 130, 246, 0.1)' : '#EFF6FF', borderRadius: 12, padding: '16px 18px',
                       border: '2px solid #3B82F6', textAlign: 'center',
                     }}>
                       <p style={{ margin: '0 0 2px', fontSize: 11, color: '#3B82F6', textTransform: 'uppercase', fontWeight: 600 }}>Novo</p>
-                      <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#1E40AF' }}>{upgradeModalPlan.name}</p>
+                      <p style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: isDark ? '#93C5FD' : '#1E40AF' }}>{upgradeModalPlan.name}</p>
                       <p style={{ margin: 0, fontSize: 13, color: '#3B82F6' }}>
                         {isUnlimited(upgradeModalPlan.max_students) ? 'Ilimitado' : `${upgradeModalPlan.max_students} alunos`}
                       </p>
@@ -1009,8 +1013,8 @@ export default function MyPlan() {
 
                   {/* Reason textarea */}
                   <div style={{ marginBottom: 24 }}>
-                    <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 600, color: '#374151' }}>
-                      Motivo ou observacao <span style={{ fontWeight: 400, color: '#9CA3AF' }}>(opcional)</span>
+                    <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 600, color: isDark ? '#d0d0d0' : '#374151' }}>
+                      Motivo ou observacao <span style={{ fontWeight: 400, color: isDark ? '#6b6b6b' : '#9CA3AF' }}>(opcional)</span>
                     </label>
                     <textarea
                       value={upgradeReason}
@@ -1019,13 +1023,14 @@ export default function MyPlan() {
                       rows={3}
                       style={{
                         width: '100%', padding: '12px 14px', borderRadius: 10,
-                        border: '1px solid #D1D5DB', fontSize: 14, resize: 'vertical',
-                        outline: 'none', fontFamily: 'inherit', color: '#374151',
+                        border: isDark ? '1px solid #333' : '1px solid #D1D5DB', fontSize: 14, resize: 'vertical',
+                        outline: 'none', fontFamily: 'inherit', color: isDark ? '#f0f0f0' : '#374151',
+                        background: isDark ? '#141414' : '#fff',
                         transition: 'border-color 0.2s',
                         boxSizing: 'border-box',
                       }}
                       onFocus={e => e.currentTarget.style.borderColor = '#3B82F6'}
-                      onBlur={e => e.currentTarget.style.borderColor = '#D1D5DB'}
+                      onBlur={e => e.currentTarget.style.borderColor = isDark ? '#333' : '#D1D5DB'}
                     />
                   </div>
 
@@ -1035,8 +1040,8 @@ export default function MyPlan() {
                       onClick={closeUpgradeModal}
                       style={{
                         flex: 1, padding: '13px 16px', borderRadius: 10,
-                        border: '1px solid #D1D5DB', background: '#fff',
-                        color: '#374151', fontWeight: 600, fontSize: 15, cursor: 'pointer',
+                        border: isDark ? '1px solid #333' : '1px solid #D1D5DB', background: isDark ? '#262626' : '#fff',
+                        color: isDark ? '#f0f0f0' : '#374151', fontWeight: 600, fontSize: 15, cursor: 'pointer',
                       }}
                     >
                       Cancelar

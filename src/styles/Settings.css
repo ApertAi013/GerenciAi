@@ -222,3 +222,82 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== DARK MODE OVERRIDES ===== */
+[data-theme="dark"] .settings-page-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .settings-card {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .settings-card-header h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .settings-loading {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .plan-status-badge.status-active {
+  background: rgba(5, 150, 105, 0.15);
+  color: #34d399;
+}
+
+[data-theme="dark"] .plan-status-badge.status-trial {
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .plan-status-badge.status-cancelled {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .plan-status-badge.status-past-due {
+  background: rgba(217, 119, 6, 0.15);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .plan-name {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .plan-price span {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .plan-limit-item {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .plan-limit-item strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .plan-trial-info {
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .no-plan-text {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .settings-link-item {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .link-title {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .link-desc {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .link-arrow {
+  color: #6b6b6b;
+}

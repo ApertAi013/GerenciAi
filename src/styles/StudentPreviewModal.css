@@ -71,6 +71,30 @@
   border-top: 1px solid #e5e7eb;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .student-preview-modal {
+  background: #1a1a1a;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .info-label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .info-value {
+  color: #f0f0f0;
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .student-preview-modal .loading-container {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .modal-footer {
+  border-top-color: #262626;
+}
+
 @media (max-width: 640px) {
   .student-info-grid {
     grid-template-columns: 1fr;

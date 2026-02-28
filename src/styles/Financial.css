@@ -404,3 +404,216 @@
 .level-badge:hover {
   opacity: 0.85;
 }
+
+/* ============================================
+   DARK MODE OVERRIDES
+   ============================================ */
+
+[data-theme="dark"] .stat-card {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .stat-card h3 {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .stat-card small {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .financial-search-input {
+  border-color: #262626;
+  background-color: #141414;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .financial-search-input:focus {
+  border-color: #F58A25;
+}
+
+[data-theme="dark"] .filter-bar {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .filter-btn {
+  border-color: #262626;
+  background: #141414;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .filter-btn.active {
+  background: #F58A25;
+  border-color: #F58A25;
+  color: #fff;
+}
+
+[data-theme="dark"] .invoices-table-container {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .invoices-table thead {
+  background-color: #141414;
+}
+
+[data-theme="dark"] .invoices-table th {
+  color: #f0f0f0;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .invoices-table td {
+  color: #a0a0a0;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .invoices-table tbody tr:hover {
+  background-color: #141414;
+}
+
+[data-theme="dark"] .status-paid {
+  background-color: rgba(5, 150, 105, 0.15);
+  color: #34d399;
+}
+
+[data-theme="dark"] .status-open {
+  background-color: rgba(217, 119, 6, 0.15);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .status-overdue {
+  background-color: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .status-cancelled {
+  background-color: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .status-refunded {
+  background-color: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .original-amount {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .btn-action:hover {
+  background-color: #141414;
+}
+
+[data-theme="dark"] .invoice-details {
+  background: #141414;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .invoice-details h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .invoice-details p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .payment-form textarea {
+  border-color: #262626;
+  background-color: #141414;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .advanced-filters {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .filter-group label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .filter-select {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .btn-clear-filters {
+  background: #141414;
+  border-color: #262626;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .column-config-dropdown {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .column-config-header {
+  color: #f0f0f0;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .column-config-item {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .column-config-item:hover {
+  background: #141414;
+}
+
+/* Month Navigation */
+.fin-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fin-month-arrow {
+  background: none;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.fin-month-arrow:hover {
+  border-color: #3498db;
+  color: #3498db;
+}
+
+.fin-month-select {
+  padding: 6px 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  color: #333;
+}
+
+.fin-month-select:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+[data-theme="dark"] .fin-month-nav {
+  gap: 8px;
+}
+
+[data-theme="dark"] .fin-month-arrow {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  padding: 6px 10px;
+}
+
+[data-theme="dark"] .fin-month-arrow:hover {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .fin-month-select {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}

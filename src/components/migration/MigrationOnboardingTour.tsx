@@ -1,4 +1,5 @@
 import Joyride, { type Step, type CallBackProps } from 'react-joyride';
+import { useThemeStore } from '../../store/themeStore';
 
 interface MigrationOnboardingTourProps {
   run: boolean;
@@ -70,6 +71,9 @@ const steps: Step[] = [
 ];
 
 export default function MigrationOnboardingTour({ run, onFinish }: MigrationOnboardingTourProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
+
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { status } = data;
     const finishedStatuses = ['finished', 'skipped'];
@@ -90,7 +94,13 @@ export default function MigrationOnboardingTour({ run, onFinish }: MigrationOnbo
       styles={{
         options: {
           primaryColor: '#3b82f6',
+          textColor: isDark ? '#f0f0f0' : undefined,
+          backgroundColor: isDark ? '#1a1a1a' : undefined,
+          arrowColor: isDark ? '#1a1a1a' : undefined,
           zIndex: 10000,
+        },
+        tooltip: {
+          ...(isDark && { border: '1px solid #333333' }),
         },
       }}
       locale={{

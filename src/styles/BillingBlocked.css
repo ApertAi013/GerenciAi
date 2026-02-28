@@ -184,6 +184,83 @@
   color: #555;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .billing-blocked-page {
+  background: #0f0f0f;
+}
+
+[data-theme="dark"] .billing-blocked-card {
+  background: #1a1a1a;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .billing-blocked-icon {
+  background: rgba(245, 158, 11, 0.15);
+}
+
+[data-theme="dark"] .billing-blocked-card h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .billing-blocked-subtitle {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .billing-blocked-invoice-details {
+  background: #141414;
+  border-radius: 12px;
+}
+
+[data-theme="dark"] .billing-blocked-detail-row {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .billing-blocked-detail-row + .billing-blocked-detail-row {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .billing-blocked-detail-row strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .billing-blocked-qr-image {
+  border-color: #262626;
+}
+
+[data-theme="dark"] .billing-blocked-qr-label {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .billing-blocked-btn-copy {
+  background: #1f1f1f;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .billing-blocked-btn-copy:hover {
+  background: #333333;
+}
+
+[data-theme="dark"] .billing-blocked-info {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+[data-theme="dark"] .billing-blocked-no-invoice {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+}
+
+[data-theme="dark"] .billing-blocked-btn-logout {
+  background: transparent;
+  color: #6b6b6b;
+  border-color: #333333;
+}
+
+[data-theme="dark"] .billing-blocked-btn-logout:hover {
+  background: #262626;
+  color: #a0a0a0;
+}
+
 @media (max-width: 520px) {
   .billing-blocked-card {
     padding: 28px 20px;

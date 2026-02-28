@@ -209,6 +209,109 @@
   color: #6B7280;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .logs-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .logs-header p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .logs-filters {
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .filter-header {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .filter-group select {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .filter-group select:focus {
+  border-color: #25D366;
+  box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.15);
+}
+
+[data-theme="dark"] .log-card {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-left-color: #262626;
+}
+
+[data-theme="dark"] .log-card.sent {
+  border-left-color: #3B82F6;
+}
+
+[data-theme="dark"] .log-card.delivered {
+  border-left-color: #10B981;
+}
+
+[data-theme="dark"] .log-card.read {
+  border-left-color: #22C55E;
+}
+
+[data-theme="dark"] .log-card.failed {
+  border-left-color: #EF4444;
+}
+
+[data-theme="dark"] .log-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .log-student strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .log-student small {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .type-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .log-date {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .log-invoice {
+  background: #141414;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .log-message {
+  background: #141414;
+}
+
+[data-theme="dark"] .log-message pre {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .log-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+}
+
+[data-theme="dark"] .empty-state {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .empty-state p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .loading {
+  color: #a0a0a0;
+}
+
 @media (max-width: 768px) {
   .whatsapp-logs-container {
     padding: 1rem;

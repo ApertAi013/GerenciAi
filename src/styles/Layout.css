@@ -39,5 +39,13 @@
 
 /* ===== Dark Mode ===== */
 [data-theme="dark"] .layout {
-  background: #16213E;
+  background: #141414;
+}
+
+[data-theme="dark"] .help-fab {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .help-fab:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
 }

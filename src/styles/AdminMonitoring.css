@@ -299,6 +299,138 @@
   font-weight: 600;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .admin-monitoring-container {
+  background-color: #0f0f0f;
+}
+
+[data-theme="dark"] .monitoring-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .monitoring-header p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .monitoring-tabs {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .monitoring-tabs.main-tabs {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .monitoring-tabs.sub-tabs {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .tab {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .tab:hover {
+  color: #F58A25;
+}
+
+[data-theme="dark"] .tab.active {
+  color: #F58A25;
+  border-bottom-color: #F58A25;
+}
+
+[data-theme="dark"] .metric-card {
+  background: #1a1a1a;
+  border-color: #262626;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .metric-header {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .metric-header svg {
+  color: #F58A25;
+}
+
+[data-theme="dark"] .metric-header h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .metric-item span {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .metric-item strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .metric-item.info-text {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .metric-item strong.premium {
+  color: #F58A25;
+}
+
+[data-theme="dark"] .info-banner {
+  background: #262626;
+  border-color: #F58A25;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .health-status {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .status-badge.healthy {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+[data-theme="dark"] .status-badge.degraded {
+  background: rgba(245, 158, 11, 0.15);
+  color: #F59E0B;
+}
+
+[data-theme="dark"] .status-badge.unhealthy {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+[data-theme="dark"] .health-timestamp {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .access-denied h1 {
+  color: #EF4444;
+}
+
+[data-theme="dark"] .access-denied p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .loading {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .charts-section {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .charts-title {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .chart-card {
+  background: #1a1a1a;
+  border-color: #262626;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .chart-card h3 {
+  color: #f0f0f0;
+}
+
 @media (max-width: 768px) {
   .admin-monitoring-container {
     padding: 1rem;

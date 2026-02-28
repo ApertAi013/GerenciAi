@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import toast from 'react-hot-toast';
+import { useThemeStore } from '../store/themeStore';
 import { authService } from '../services/authService';
 import '../styles/Login.css';
 
 export default function ForgotPassword() {
+  const { theme } = useThemeStore();
+  const logoSrc = theme === 'dark' ? '/arenai-logo-white.svg' : '/arenai-logo.svg';
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -29,7 +32,7 @@ export default function ForgotPassword() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <img src="/arenai-logo.svg" alt="ArenaAi" className="login-logo" />
+          <img src={logoSrc} alt="ArenaAi" className="login-logo" />
           <h2>Esqueci minha senha</h2>
           <p>Digite seu email para receber o link de redefinição</p>
         </div>

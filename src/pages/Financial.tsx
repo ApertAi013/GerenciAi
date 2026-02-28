@@ -752,9 +752,10 @@ export default function Financial() {
         <h1>Financeiro</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {/* Seletor de Mês */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="fin-month-nav">
             <button
               type="button"
+              className="fin-month-arrow"
               onClick={() => {
                 const months = getMonthOptions();
                 const currentIndex = months.findIndex(m => m.value === selectedMonth);
@@ -762,54 +763,30 @@ export default function Financial() {
                   setSelectedMonth(months[currentIndex - 1].value);
                 }
               }}
-              style={{
-                background: 'none',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                fontSize: '16px'
-              }}
               title="Mês anterior"
             >
               ◀
             </button>
             <select
+              className="fin-month-select"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: '1px solid #ddd',
-                fontSize: '16px',
-                fontWeight: '500',
-                minWidth: '200px',
-                cursor: 'pointer',
-                textTransform: 'capitalize'
-              }}
             >
               {getMonthOptions().map(month => (
-                <option key={month.value} value={month.value} style={{ textTransform: 'capitalize' }}>
+                <option key={month.value} value={month.value}>
                   {month.label}
                 </option>
               ))}
             </select>
             <button
               type="button"
+              className="fin-month-arrow"
               onClick={() => {
                 const months = getMonthOptions();
                 const currentIndex = months.findIndex(m => m.value === selectedMonth);
                 if (currentIndex < months.length - 1) {
                   setSelectedMonth(months[currentIndex + 1].value);
                 }
-              }}
-              style={{
-                background: 'none',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                fontSize: '16px'
               }}
               title="Próximo mês"
             >

@@ -72,3 +72,23 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .wtp-dropdown {
+  background: #1a1a1a;
+  border-color: #262626;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .wtp-header {
+  color: #6b6b6b;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .wtp-item {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .wtp-item:hover {
+  background: #1f1f1f;
+}

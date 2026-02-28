@@ -366,3 +366,126 @@
 .login-footer strong {
   color: #404040;
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .login-container {
+  background: #0f0f0f;
+}
+
+[data-theme="dark"] .login-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .login-header h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .login-header p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .saved-accounts-label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .saved-account-item {
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+}
+
+[data-theme="dark"] .saved-account-item:hover {
+  border-color: #F58A25;
+  background: rgba(245, 138, 37, 0.05);
+}
+
+[data-theme="dark"] .saved-account-item.active {
+  border-color: #F58A25;
+  background: rgba(245, 138, 37, 0.08);
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.1);
+}
+
+[data-theme="dark"] .saved-account-name {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .saved-account-email {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .saved-account-remove {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .saved-account-remove:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+[data-theme="dark"] .saved-account-item.has-token {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+[data-theme="dark"] .saved-account-item.has-token:hover {
+  border-color: #10B981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+[data-theme="dark"] .saved-account-item.has-token .saved-account-email {
+  color: #10B981;
+}
+
+[data-theme="dark"] .saved-account-item.logging-in {
+  border-color: #F58A25;
+  background: rgba(245, 138, 37, 0.05);
+}
+
+[data-theme="dark"] .error-alert {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #EF4444;
+}
+
+[data-theme="dark"] .form-group label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group input {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+[data-theme="dark"] .form-group input:focus {
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.1);
+  background: rgba(255,255,255,0.08);
+}
+
+[data-theme="dark"] .checkbox-label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .success-alert {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10B981;
+}
+
+[data-theme="dark"] .back-to-login {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .login-footer {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .login-footer p {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .login-footer strong {
+  color: #a0a0a0;
+}

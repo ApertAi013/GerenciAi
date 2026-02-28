@@ -15,6 +15,13 @@ const WEEKDAY_MAP: Record<string, number> = {
 };
 
 export default function PublicTrialBooking() {
+  // Public pages always use light theme
+  useEffect(() => {
+    const prev = document.documentElement.getAttribute('data-theme');
+    document.documentElement.setAttribute('data-theme', 'light');
+    return () => { if (prev) document.documentElement.setAttribute('data-theme', prev); };
+  }, []);
+
   const { bookingToken } = useParams<{ bookingToken: string }>();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);

@@ -91,6 +91,13 @@ const FAQ_ITEMS = [
 ];
 
 export default function Signup() {
+  // Public pages always use light theme
+  useEffect(() => {
+    const prev = document.documentElement.getAttribute('data-theme');
+    document.documentElement.setAttribute('data-theme', 'light');
+    return () => { if (prev) document.documentElement.setAttribute('data-theme', prev); };
+  }, []);
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const formRef = useRef<HTMLDivElement>(null);

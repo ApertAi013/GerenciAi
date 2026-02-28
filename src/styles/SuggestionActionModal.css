@@ -220,6 +220,81 @@
   border-color: #9ca3af;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .modal-container {
+  background: #1a1a1a;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .modal-header {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .modal-header h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .modal-close {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .modal-close:hover {
+  background-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .modal-item {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .modal-item:hover {
+  background: #262626;
+  border-color: #333333;
+}
+
+[data-theme="dark"] .item-info h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .item-info .phone {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .item-info .detail {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .progress-bar {
+  background-color: #262626;
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: #262626;
+  color: #f0f0f0;
+  border-color: #333333;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: #333333;
+  border-color: #6b6b6b;
+}
+
+[data-theme="dark"] .modal-footer {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .btn-cancel {
+  background: #262626;
+  color: #f0f0f0;
+  border-color: #333333;
+}
+
+[data-theme="dark"] .btn-cancel:hover {
+  background: #333333;
+  border-color: #6b6b6b;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .modal-container {

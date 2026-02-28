@@ -126,6 +126,52 @@
   margin: 0;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .ai-container {
+  background-color: #0f0f0f;
+}
+
+[data-theme="dark"] .ai-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .ai-header p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .ai-card {
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .ai-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .ai-card h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .ai-card p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .ai-info {
+  background: #141414;
+}
+
+[data-theme="dark"] .ai-info h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .ai-info-item strong {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .ai-info-item p {
+  color: #a0a0a0;
+}
+
 @media (max-width: 768px) {
   .ai-container {
     padding: 1rem;

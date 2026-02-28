@@ -672,3 +672,384 @@
     display: none;
   }
 }
+
+/* ===== Courts Config Section ===== */
+.courts-config-section {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
+}
+
+.courts-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 14px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F8FAFC;
+}
+
+.courts-config-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1F2937;
+  font-weight: 600;
+}
+
+.courts-config-toggle {
+  color: #6B7280;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.courts-config-grid {
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.courts-config-empty {
+  color: #9CA3AF;
+  font-size: 0.9rem;
+}
+
+.courts-config-card {
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 16px;
+  background: #FAFAFA;
+}
+
+.courts-config-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.courts-config-card-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1F2937;
+}
+
+.courts-config-status {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.courts-config-status.active {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.courts-config-status.inactive {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.courts-config-price {
+  font-size: 0.8rem;
+  color: #6B7280;
+  margin: 0 0 8px 0;
+}
+
+.courts-config-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: #22C55E;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ===== Dark Mode Overrides ===== */
+[data-theme="dark"] .courts-config-section {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .courts-config-header {
+  background: #141414;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .courts-config-header h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .courts-config-toggle {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .courts-config-card {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .courts-config-card-header h4 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .courts-config-status.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+[data-theme="dark"] .courts-config-status.inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .courts-config-price {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .courts-config-empty {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .rentals-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .rental-stat-card {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .rental-stat-card h3 {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .rental-stat-card .value {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .rentals-filters {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .rentals-filters h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .filter-group label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .filter-group input,
+[data-theme="dark"] .filter-group select {
+  border-color: #262626;
+  background: #141414;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .filter-group input:focus,
+[data-theme="dark"] .filter-group select:focus {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .rentals-list {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .rentals-list h3 {
+  color: #f0f0f0;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .rentals-table thead {
+  background: #141414;
+}
+
+[data-theme="dark"] .rentals-table th {
+  color: #a0a0a0;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .rentals-table td {
+  color: #f0f0f0;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .rentals-table tbody tr:hover {
+  background: #141414;
+}
+
+[data-theme="dark"] .status-badge.status-agendada {
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .status-badge.status-confirmada {
+  background: rgba(5, 150, 105, 0.15);
+  color: #34d399;
+}
+
+[data-theme="dark"] .status-badge.status-cancelada {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .status-badge.status-concluida {
+  background: rgba(161, 161, 170, 0.15);
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .status-badge.payment-pendente {
+  background: rgba(217, 119, 6, 0.15);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .status-badge.payment-paga {
+  background: rgba(5, 150, 105, 0.15);
+  color: #34d399;
+}
+
+[data-theme="dark"] .status-badge.payment-cancelada {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: #141414;
+  color: #f0f0f0;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .btn-secondary:hover:not(:disabled) {
+  background: #1f1f1f;
+}
+
+[data-theme="dark"] .modal-content {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .modal-header {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .modal-header h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .modal-close {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .modal-close:hover {
+  background: #141414;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .modal-footer {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .form-group label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+  border-color: #262626;
+  background: #141414;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus,
+[data-theme="dark"] .form-group textarea:focus {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .radio-option label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .empty-state {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .spinner {
+  border-color: #262626;
+  border-top-color: #FF9900;
+}
+
+[data-theme="dark"] .student-search-input {
+  border-color: #262626;
+  background: #141414;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .student-search-input:focus {
+  background: #1a1a1a;
+}
+
+[data-theme="dark"] .student-dropdown {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .student-dropdown-item {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .student-dropdown-item:hover {
+  background-color: #141414;
+}
+
+[data-theme="dark"] .student-dropdown-name {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .student-dropdown-info {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .student-dropdown-empty {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .selected-student-badge {
+  background-color: rgba(5, 150, 105, 0.15);
+  color: #34d399;
+}
+
+[data-theme="dark"] .selected-student-badge button {
+  color: #34d399;
+}
+
+[data-theme="dark"] .rental-card {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .rental-card-title {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .rental-card-court {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .rental-detail-item label {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .rental-detail-item span {
+  color: #f0f0f0;
+}

@@ -110,7 +110,7 @@ export default function SystemGuide() {
     <div className="sg-page">
       {/* ── Navbar ── */}
       <nav className="sg-nav">
-        <img src="/arenai-logo.svg" alt="ArenaAi" className="sg-nav-logo" />
+        <img src="/arenai-logo-white.svg" alt="ArenaAi" className="sg-nav-logo" />
         <button className="sg-nav-btn" onClick={() => navigate('/login')}>
           Acessar o Sistema <FontAwesomeIcon icon={faArrowRight} />
         </button>
@@ -124,7 +124,7 @@ export default function SystemGuide() {
           <div className="sg-hero-shape" />
         </div>
         <div className="sg-hero-content">
-          <img src="/arenai-logo.svg" alt="ArenaAi" className="sg-hero-logo" />
+          <img src="/arenai-logo-white.svg" alt="ArenaAi" className="sg-hero-logo" />
           <div className="sg-hero-badge">
             <FontAwesomeIcon icon={faRocket} /> Guia do Sistema
           </div>

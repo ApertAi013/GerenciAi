@@ -400,6 +400,33 @@ export default function Announcements() {
         .btn-success:hover {
           background-color: #388e3c;
         }
+
+        /* Dark Mode */
+        [data-theme="dark"] .announcement-card {
+          background: #1a1a1a;
+          border-color: #262626;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] .announcement-title-row h3 {
+          color: #f0f0f0;
+        }
+
+        [data-theme="dark"] .announcement-target {
+          color: #a0a0a0;
+        }
+
+        [data-theme="dark"] .announcement-content {
+          background: #141414;
+        }
+
+        [data-theme="dark"] .announcement-content p {
+          color: #d0d0d0;
+        }
+
+        [data-theme="dark"] .announcement-meta {
+          color: #6b6b6b;
+        }
       `}</style>
     </div>
   );

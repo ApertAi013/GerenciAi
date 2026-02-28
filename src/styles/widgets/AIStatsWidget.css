@@ -268,3 +268,78 @@
   color: #666;
   text-align: center;
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .ai-stats-widget .widget-header {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .ai-stats-widget .widget-header h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .ai-stats-widget .view-all-btn {
+  color: #7B93F5;
+}
+
+[data-theme="dark"] .ai-stats-widget .view-all-btn:hover {
+  color: #9B7FCC;
+}
+
+[data-theme="dark"] .ai-stats-widget .loading,
+[data-theme="dark"] .ai-stats-widget .empty-state {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .ai-stats-widget .empty-state p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .ai-stats-widget .empty-state small {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .ai-stats-widget .premium-message {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .ai-stats-widget .premium-message p {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .ai-stats-widget .premium-message small {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .ai-stats-widget .stat-item {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .ai-stats-widget .stat-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .ai-stats-widget .stat-value {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .ai-stats-widget .stat-label {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .ai-stats-widget .priority-summary {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .ai-stats-widget .priority-summary h4 {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .ai-stats-widget .priority-progress {
+  background: #262626;
+}
+
+[data-theme="dark"] .ai-stats-widget .priority-count {
+  color: #a0a0a0;
+}

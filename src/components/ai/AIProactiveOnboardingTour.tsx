@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import Joyride, { type CallBackProps, type Step, STATUS } from 'react-joyride';
+import { useThemeStore } from '../../store/themeStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faRobot,
@@ -21,6 +22,9 @@ interface AIProactiveOnboardingTourProps {
 }
 
 export default function AIProactiveOnboardingTour({ run, onFinish, isPremiumUser }: AIProactiveOnboardingTourProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
+
   const steps: Step[] = [
     {
       target: 'body',
@@ -119,15 +123,16 @@ export default function AIProactiveOnboardingTour({ run, onFinish, isPremiumUser
       styles={{
         options: {
           primaryColor: '#4F46E5',
-          textColor: '#1F2937',
-          backgroundColor: '#FFFFFF',
+          textColor: isDark ? '#f0f0f0' : '#1F2937',
+          backgroundColor: isDark ? '#1a1a1a' : '#FFFFFF',
           overlayColor: 'rgba(0, 0, 0, 0.7)',
-          arrowColor: '#FFFFFF',
+          arrowColor: isDark ? '#1a1a1a' : '#FFFFFF',
           zIndex: 10000,
         },
         tooltip: {
           fontSize: '15px',
           padding: '20px',
+          ...(isDark && { border: '1px solid #333333' }),
         },
         tooltipContainer: {
           textAlign: 'center',
@@ -139,11 +144,11 @@ export default function AIProactiveOnboardingTour({ run, onFinish, isPremiumUser
           borderRadius: '6px',
         },
         buttonBack: {
-          color: '#6B7280',
+          color: isDark ? '#a0a0a0' : '#6B7280',
           fontSize: '14px',
         },
         buttonSkip: {
-          color: '#9CA3AF',
+          color: isDark ? '#6b6b6b' : '#9CA3AF',
           fontSize: '14px',
         },
       }}

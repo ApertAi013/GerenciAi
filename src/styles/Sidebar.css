@@ -318,3 +318,53 @@
   color: #dc3545;
   border-color: #dc3545;
 }
+
+/* ===== Dark Mode Overrides ===== */
+[data-theme="dark"] .sidebar {
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .sidebar-item {
+  color: #d0d0d0;
+}
+
+[data-theme="dark"] .sidebar-item:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .sidebar-item.active {
+  color: var(--color-orange);
+}
+
+[data-theme="dark"] .sidebar-pro-badge {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes subtle-pulse-dark {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+}
+
+[data-theme="dark"] .sidebar-pro-badge {
+  animation-name: subtle-pulse-dark;
+}
+
+[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb {
+  background: #262626;
+}
+
+[data-theme="dark"] .sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
+
+[data-theme="dark"] .sidebar-edit-item-hidden {
+  opacity: 0.35;
+}
+

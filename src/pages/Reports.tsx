@@ -33,6 +33,7 @@ import {
   Area,
 } from 'recharts';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import { reportService } from '../services/reportService';
 import { modalityService } from '../services/modalityService';
 import { api } from '../services/api';
@@ -62,6 +63,8 @@ const DONUT_COLORS = ['#F58A25', '#3B82F6', '#10B981', '#8B5CF6', '#EF4444', '#F
 
 export default function Reports() {
   const { user } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [isLoading, setIsLoading] = useState(true);
   const [modalities, setModalities] = useState<Modality[]>([]);
   const [selectedModality, setSelectedModality] = useState<number | null>(null);
@@ -561,11 +564,11 @@ export default function Reports() {
             <div className="rpt-chart-wrap">
               <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={curveChartData} margin={{ top: 5, right: 20, left: -5, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
                   <XAxis
                     dataKey="day"
                     tick={{ fontSize: 11, fill: '#6B7280' }}
-                    axisLine={{ stroke: '#E5E7EB' }}
+                    axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }}
                     tickLine={false}
                     tickFormatter={(v: number) => `${v}`}
                   />
@@ -608,11 +611,11 @@ export default function Reports() {
           <div className="rpt-chart-wrap">
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={revenueChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: '#E5E7EB' }} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
                   tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} />
-                <Tooltip content={<ChartTooltipContent />} />
+                <Tooltip content={<ChartTooltipContent />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
                 <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
                 <Bar dataKey="Faturado" fill="#C7D2FE" radius={[6, 6, 0, 0]} barSize={20} />
                 <Bar dataKey="Recebido" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
@@ -631,8 +634,8 @@ export default function Reports() {
           <div className="rpt-chart-wrap">
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={ticketChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: '#E5E7EB' }} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
                   tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `R$${v}`} />
                 <Tooltip content={<ChartTooltipContent />} />
@@ -656,10 +659,10 @@ export default function Reports() {
           <div className="rpt-chart-wrap">
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={enrollmentChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: '#E5E7EB' }} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip content={<ChartTooltipContent />} />
+                <Tooltip content={<ChartTooltipContent />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
                 <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
                 <Bar dataKey="Novas" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
                 <Bar dataKey="Canceladas" fill="#EF4444" radius={[6, 6, 0, 0]} barSize={20} />
@@ -677,10 +680,10 @@ export default function Reports() {
           <div className="rpt-chart-wrap">
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={activeChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: '#E5E7EB' }} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip content={<ChartTooltipContent />} />
+                <Tooltip content={<ChartTooltipContent />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
                 <Bar dataKey="Ativos" fill="#8B5CF6" radius={[6, 6, 0, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
@@ -699,11 +702,11 @@ export default function Reports() {
           <div className="rpt-chart-wrap">
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={churnChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: '#E5E7EB' }} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
                   tickFormatter={(v: number) => `${v}%`} />
-                <Tooltip content={<ChartTooltipContent />} />
+                <Tooltip content={<ChartTooltipContent />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
                 <Bar dataKey="Churn %" fill="#EF4444" radius={[6, 6, 0, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
@@ -775,7 +778,7 @@ export default function Reports() {
                         <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number, name: string) => [`${value} matrículas`, name]} />
+                    <Tooltip formatter={(value: number, name: string) => [`${value} matrículas`, name]} contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} itemStyle={isDark ? { color: '#f0f0f0' } : undefined} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -819,7 +822,7 @@ export default function Reports() {
                         <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number, name: string) => [`${value} matrículas`, name]} />
+                    <Tooltip formatter={(value: number, name: string) => [`${value} matrículas`, name]} contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} itemStyle={isDark ? { color: '#f0f0f0' } : undefined} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

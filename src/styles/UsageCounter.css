@@ -127,3 +127,48 @@
     transform: scale(1.2) rotate(180deg);
   }
 }
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] .usage-counter-container {
+  background: #141414;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .usage-counter {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .usage-counter.warning {
+  border-color: #F59E0B;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+[data-theme="dark"] .usage-counter.danger {
+  border-color: #EF4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+[data-theme="dark"] .usage-label {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .usage-count {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .usage-progress-bar {
+  background: #262626;
+}
+
+[data-theme="dark"] .usage-reset {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .usage-warning {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+[data-theme="dark"] .warning .usage-warning {
+  background: rgba(245, 158, 11, 0.1);
+}

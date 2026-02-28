@@ -663,6 +663,309 @@
   font-size: 0.9rem;
 }
 
+/* ===== Dark Mode ===== */
+
+/* Page header */
+[data-theme="dark"] .forms-page-header h1 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .forms-subtitle {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .forms-loading,
+[data-theme="dark"] .forms-empty {
+  color: #a0a0a0;
+}
+
+/* Form cards */
+[data-theme="dark"] .form-card {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .form-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .form-card-header h3 {
+  color: #f0f0f0;
+}
+
+/* Badges */
+[data-theme="dark"] .badge-type {
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .badge-required {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .badge-inactive {
+  background: rgba(255, 255, 255, 0.05);
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .badge-expired {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .form-card-desc {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .form-card-meta {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .form-card-dates {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .form-card-actions {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .form-card-actions button {
+  background: #141414;
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .form-card-actions button:hover {
+  background: #1f1f1f;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-card-actions .btn-danger:hover {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+/* Pagination */
+[data-theme="dark"] .forms-pagination button {
+  border-color: #262626;
+  background: #1a1a1a;
+  color: #f0f0f0;
+}
+
+/* Modals */
+[data-theme="dark"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .forms-modal {
+  background: #1a1a1a;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .modal-header {
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .modal-header h2 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .modal-close {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .modal-body {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .modal-footer {
+  border-top-color: #262626;
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: #1f1f1f;
+}
+
+/* Form groups */
+[data-theme="dark"] .form-group label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group input[type="text"],
+[data-theme="dark"] .form-group input[type="url"],
+[data-theme="dark"] .form-group input[type="datetime-local"],
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus,
+[data-theme="dark"] .form-group textarea:focus {
+  border-color: #7C3AED;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+[data-theme="dark"] .checkbox-label {
+  color: #f0f0f0;
+}
+
+/* Image dropzone */
+[data-theme="dark"] .image-dropzone {
+  border-color: #262626;
+  background: #141414;
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .image-dropzone:hover {
+  border-color: #7C3AED;
+  background: rgba(124, 58, 237, 0.08);
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .image-dropzone.dragging {
+  border-color: #7C3AED;
+  background: rgba(124, 58, 237, 0.12);
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .image-dropzone.uploading {
+  border-color: #7C3AED;
+  background: rgba(124, 58, 237, 0.08);
+}
+
+[data-theme="dark"] .image-dropzone small {
+  color: #6b6b6b;
+}
+
+[data-theme="dark"] .image-uploading-spinner {
+  border-color: #262626;
+  border-top-color: #7C3AED;
+}
+
+/* Options */
+[data-theme="dark"] .btn-remove-option {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .btn-add-option {
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .btn-add-option:hover {
+  background: rgba(124, 58, 237, 0.25);
+}
+
+/* Student select */
+[data-theme="dark"] .student-search-box input {
+  background: #141414;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .student-select-list {
+  border-color: #262626;
+  background: #141414;
+}
+
+[data-theme="dark"] .student-select-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .student-select-item small {
+  color: #6b6b6b;
+}
+
+/* Responses */
+[data-theme="dark"] .responses-summary {
+  background: #141414;
+}
+
+[data-theme="dark"] .summary-total {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .option-stat-label {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .option-stat-bar {
+  background: #262626;
+}
+
+[data-theme="dark"] .option-stat-count {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .no-responses {
+  color: #6b6b6b;
+}
+
+/* Responses table */
+[data-theme="dark"] .responses-table th {
+  color: #a0a0a0;
+  border-bottom-color: #262626;
+}
+
+[data-theme="dark"] .responses-table td {
+  border-bottom-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .responses-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Preview modal */
+[data-theme="dark"] .preview-modal {
+  background: #1a1a1a;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .preview-phone-content {
+  background: #141414;
+  border-color: #262626;
+}
+
+[data-theme="dark"] .preview-title {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .preview-desc {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .preview-required-badge {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .preview-option {
+  background: #1a1a1a;
+  border-color: #262626;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .preview-radio {
+  border-color: #333333;
+}
+
+[data-theme="dark"] .preview-textarea {
+  background: #1a1a1a;
+  border-color: #333333;
+  color: #6b6b6b;
+}
+
 @media (max-width: 640px) {
   .forms-grid { grid-template-columns: 1fr; }
   .form-row { flex-direction: column; }

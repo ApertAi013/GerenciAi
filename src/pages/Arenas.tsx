@@ -6,6 +6,7 @@ import { arenaService } from '../services/arenaService';
 import type { ArenaDashboardData } from '../services/arenaService';
 import { modalityService } from '../services/modalityService';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import type { Arena } from '../types/authTypes';
 
 const ARENA_COLORS = ['#FF9900', '#3B82F6', '#10B981', '#8B5CF6', '#EC4899', '#F59E0B', '#06B6D4'];
@@ -33,6 +34,8 @@ export default function Arenas() {
   const [editingArena, setEditingArena] = useState<ArenaWithCounts | null>(null);
   const [error, setError] = useState('');
   const { currentArenaId, setCurrentArena, user, setUser } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
 
   // Dashboard state
   const [dashboard, setDashboard] = useState<ArenaDashboardData | null>(null);
@@ -212,8 +215,8 @@ export default function Arenas() {
         marginBottom: '32px',
       }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#1a1a1a' }}>Arenas</h1>
-          <p style={{ color: '#737373', fontSize: '14px', marginTop: '6px', margin: '6px 0 0 0' }}>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>Arenas</h1>
+          <p style={{ color: isDark ? '#a0a0a0' : '#737373', fontSize: '14px', marginTop: '6px', margin: '6px 0 0 0' }}>
             Gerencie suas arenas. Cada arena possui alunos, turmas e quadras independentes.
           </p>
         </div>
@@ -248,14 +251,14 @@ export default function Arenas() {
       {/* Dashboard loading / error */}
       {arenas.length > 0 && !dashboard && (dashboardLoading || dashboardError) && (
         <div style={{
-          background: dashboardError ? '#fef2f2' : 'white',
+          background: dashboardError ? (isDark ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2') : (isDark ? '#1a1a1a' : 'white'),
           borderRadius: '12px',
           padding: '20px',
           marginBottom: '24px',
           textAlign: 'center',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
         }}>
-          {dashboardLoading && <span style={{ color: '#737373' }}>Carregando dashboard...</span>}
+          {dashboardLoading && <span style={{ color: isDark ? '#a0a0a0' : '#737373' }}>Carregando dashboard...</span>}
           {dashboardError && <span style={{ color: '#ef4444' }}>{dashboardError}</span>}
         </div>
       )}
@@ -266,7 +269,7 @@ export default function Arenas() {
           {/* Filters */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
             <FontAwesomeIcon icon={faChartBar} style={{ color: '#FF9900', fontSize: '16px' }} />
-            <span style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a1a' }}>Visao Geral</span>
+            <span style={{ fontSize: '16px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>Visao Geral</span>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
               {/* Modality filter */}
               {modalities.length > 0 && (
@@ -276,9 +279,9 @@ export default function Arenas() {
                   style={{
                     padding: '6px 12px',
                     borderRadius: '20px',
-                    border: selectedModalityId ? '1px solid #FF9900' : '1px solid #E5E5E5',
-                    background: selectedModalityId ? '#FFF3E0' : 'white',
-                    color: selectedModalityId ? '#FF9900' : '#737373',
+                    border: selectedModalityId ? '1px solid #FF9900' : (isDark ? '1px solid #333' : '1px solid #E5E5E5'),
+                    background: selectedModalityId ? (isDark ? 'rgba(255, 153, 0, 0.15)' : '#FFF3E0') : (isDark ? '#1a1a1a' : 'white'),
+                    color: selectedModalityId ? '#FF9900' : (isDark ? '#a0a0a0' : '#737373'),
                     fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -313,9 +316,9 @@ export default function Arenas() {
                   style={{
                     padding: '6px 14px',
                     borderRadius: '20px',
-                    border: filterMode === p.value ? '1px solid #FF9900' : '1px solid #E5E5E5',
-                    background: filterMode === p.value ? '#FFF3E0' : 'white',
-                    color: filterMode === p.value ? '#FF9900' : '#737373',
+                    border: filterMode === p.value ? '1px solid #FF9900' : (isDark ? '1px solid #333' : '1px solid #E5E5E5'),
+                    background: filterMode === p.value ? (isDark ? 'rgba(255, 153, 0, 0.15)' : '#FFF3E0') : (isDark ? '#1a1a1a' : 'white'),
+                    color: filterMode === p.value ? '#FF9900' : (isDark ? '#a0a0a0' : '#737373'),
                     fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -338,13 +341,14 @@ export default function Arenas() {
                 style={{
                   padding: '6px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #E5E5E5',
+                  border: isDark ? '1px solid #333' : '1px solid #E5E5E5',
                   fontSize: '13px',
                   fontFamily: 'inherit',
-                  color: '#404040',
+                  color: isDark ? '#f0f0f0' : '#404040',
+                  background: isDark ? '#141414' : 'white',
                 }}
               />
-              <span style={{ color: '#A3A3A3', fontSize: '13px' }}>ate</span>
+              <span style={{ color: isDark ? '#6b6b6b' : '#A3A3A3', fontSize: '13px' }}>ate</span>
               <input
                 type="month"
                 value={customEnd}
@@ -352,10 +356,11 @@ export default function Arenas() {
                 style={{
                   padding: '6px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #E5E5E5',
+                  border: isDark ? '1px solid #333' : '1px solid #E5E5E5',
                   fontSize: '13px',
                   fontFamily: 'inherit',
-                  color: '#404040',
+                  color: isDark ? '#f0f0f0' : '#404040',
+                  background: isDark ? '#141414' : 'white',
                 }}
               />
             </div>
@@ -376,17 +381,17 @@ export default function Arenas() {
               { label: 'Inadimplencia', value: formatCurrency(dashboard.totals.total_overdue_cents), icon: faExclamationTriangle, color: '#EF4444' },
             ].map((kpi) => (
               <div key={kpi.label} style={{
-                background: 'white',
+                background: isDark ? '#1a1a1a' : 'white',
                 borderRadius: '12px',
                 padding: '16px 20px',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
                 borderLeft: `3px solid ${kpi.color}`,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                   <FontAwesomeIcon icon={kpi.icon} style={{ color: kpi.color, fontSize: '13px' }} />
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#A3A3A3', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{kpi.label}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: isDark ? '#6b6b6b' : '#A3A3A3', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{kpi.label}</span>
                 </div>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: '#1a1a1a' }}>{kpi.value}</div>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>{kpi.value}</div>
               </div>
             ))}
           </div>
@@ -394,13 +399,13 @@ export default function Arenas() {
           {/* Chart */}
           {chartData.length > 0 && (
             <div style={{
-              background: 'white',
+              background: isDark ? '#1a1a1a' : 'white',
               borderRadius: '12px',
               padding: '20px',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
               marginBottom: '24px',
             }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600, color: '#404040' }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600, color: isDark ? '#d0d0d0' : '#404040' }}>
                 Receita por Arena
               </h3>
               <ResponsiveContainer width="100%" height={280}>
@@ -413,7 +418,9 @@ export default function Arenas() {
                       formatCurrency(value * 100),
                       name,
                     ]}
-                    contentStyle={{ borderRadius: '8px', border: '1px solid #E5E5E5', fontSize: '12px' }}
+                    contentStyle={{ borderRadius: '8px', border: isDark ? '1px solid #333' : '1px solid #E5E5E5', fontSize: '12px', background: isDark ? '#1a1a1a' : '#fff', color: isDark ? '#f0f0f0' : '#333' }}
+                    itemStyle={isDark ? { color: '#f0f0f0' } : undefined}
+                    labelStyle={isDark ? { color: '#a0a0a0' } : undefined}
                   />
                   <Legend wrapperStyle={{ fontSize: '12px' }} />
                   {dashboard.arenas.map((arena, idx) => (
@@ -443,25 +450,25 @@ export default function Arenas() {
 
           {/* Comparison Table */}
           <div style={{
-            background: 'white',
+            background: isDark ? '#1a1a1a' : 'white',
             borderRadius: '12px',
             padding: '20px',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.06)',
             marginBottom: '8px',
             overflowX: 'auto',
           }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600, color: '#404040' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: 600, color: isDark ? '#d0d0d0' : '#404040' }}>
               Comparativo por Arena
             </h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr style={{ borderBottom: '2px solid #F0F0F0' }}>
+                <tr style={{ borderBottom: isDark ? '2px solid #262626' : '2px solid #F0F0F0' }}>
                   {['Arena', 'Alunos', 'Matriculas', 'Turmas', 'Faturado', 'Recebido', 'Inadimplencia'].map(h => (
                     <th key={h} style={{
                       padding: '10px 12px',
                       textAlign: h === 'Arena' ? 'left' : 'right',
                       fontWeight: 600,
-                      color: '#737373',
+                      color: isDark ? '#a0a0a0' : '#737373',
                       fontSize: '11px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px',
@@ -471,8 +478,8 @@ export default function Arenas() {
               </thead>
               <tbody>
                 {arenaFinancials.map((a, idx) => (
-                  <tr key={a.arena_id} style={{ borderBottom: '1px solid #F5F5F5' }}>
-                    <td style={{ padding: '12px', fontWeight: 600, color: '#1a1a1a' }}>
+                  <tr key={a.arena_id} style={{ borderBottom: isDark ? '1px solid #262626' : '1px solid #F5F5F5' }}>
+                    <td style={{ padding: '12px', fontWeight: 600, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>
                       <span style={{
                         display: 'inline-block',
                         width: '10px',
@@ -483,10 +490,10 @@ export default function Arenas() {
                       }} />
                       {a.arena_name}
                     </td>
-                    <td style={{ padding: '12px', textAlign: 'right', color: '#404040' }}>{a.student_count}</td>
-                    <td style={{ padding: '12px', textAlign: 'right', color: '#404040' }}>{a.active_enrollments}</td>
-                    <td style={{ padding: '12px', textAlign: 'right', color: '#404040' }}>{a.class_count}</td>
-                    <td style={{ padding: '12px', textAlign: 'right', color: '#404040', fontWeight: 500 }}>{formatCurrency(a.faturado)}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: isDark ? '#d0d0d0' : '#404040' }}>{a.student_count}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: isDark ? '#d0d0d0' : '#404040' }}>{a.active_enrollments}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: isDark ? '#d0d0d0' : '#404040' }}>{a.class_count}</td>
+                    <td style={{ padding: '12px', textAlign: 'right', color: isDark ? '#d0d0d0' : '#404040', fontWeight: 500 }}>{formatCurrency(a.faturado)}</td>
                     <td style={{ padding: '12px', textAlign: 'right', color: '#10B981', fontWeight: 500 }}>{formatCurrency(a.recebido)}</td>
                     <td style={{ padding: '12px', textAlign: 'right', color: a.total_overdue_cents > 0 ? '#EF4444' : '#404040', fontWeight: 500 }}>
                       {formatCurrency(a.total_overdue_cents)}
@@ -494,14 +501,14 @@ export default function Arenas() {
                   </tr>
                 ))}
                 {/* Total row */}
-                <tr style={{ borderTop: '2px solid #E5E5E5', background: '#FAFAFA' }}>
-                  <td style={{ padding: '12px', fontWeight: 700, color: '#1a1a1a' }}>Total</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>{dashboard.totals.student_count}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>{dashboard.totals.active_enrollments}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>{dashboard.totals.class_count}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>{formatCurrency(financialTotals.faturado)}</td>
+                <tr style={{ borderTop: isDark ? '2px solid #333' : '2px solid #E5E5E5', background: isDark ? '#141414' : '#FAFAFA' }}>
+                  <td style={{ padding: '12px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>Total</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>{dashboard.totals.student_count}</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>{dashboard.totals.active_enrollments}</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>{dashboard.totals.class_count}</td>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>{formatCurrency(financialTotals.faturado)}</td>
                   <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: '#10B981' }}>{formatCurrency(financialTotals.recebido)}</td>
-                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: dashboard.totals.total_overdue_cents > 0 ? '#EF4444' : '#1a1a1a' }}>
+                  <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: dashboard.totals.total_overdue_cents > 0 ? '#EF4444' : (isDark ? '#f0f0f0' : '#1a1a1a') }}>
                     {formatCurrency(dashboard.totals.total_overdue_cents)}
                   </td>
                 </tr>
@@ -523,12 +530,12 @@ export default function Arenas() {
             <div
               key={arena.id}
               style={{
-                background: 'white',
+                background: isDark ? '#1a1a1a' : 'white',
                 borderRadius: '16px',
                 padding: '24px',
                 boxShadow: isActive
                   ? '0 0 0 2px #FF9900, 0 4px 16px rgba(255, 153, 0, 0.15)'
-                  : '0 2px 8px rgba(0, 0, 0, 0.06)',
+                  : (isDark ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.06)'),
                 transition: 'box-shadow 0.2s, transform 0.2s',
                 position: 'relative',
                 overflow: 'hidden',
@@ -553,7 +560,7 @@ export default function Arenas() {
                   width: '48px',
                   height: '48px',
                   borderRadius: '12px',
-                  background: isActive ? '#FFF3E0' : '#F5F5F5',
+                  background: isActive ? (isDark ? 'rgba(255, 153, 0, 0.15)' : '#FFF3E0') : (isDark ? '#262626' : '#F5F5F5'),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -561,7 +568,7 @@ export default function Arenas() {
                 }}>
                   <FontAwesomeIcon
                     icon={faBuilding}
-                    style={{ fontSize: '20px', color: isActive ? '#FF9900' : '#A3A3A3' }}
+                    style={{ fontSize: '20px', color: isActive ? '#FF9900' : (isDark ? '#6b6b6b' : '#A3A3A3') }}
                   />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -570,7 +577,7 @@ export default function Arenas() {
                       margin: 0,
                       fontSize: '18px',
                       fontWeight: 700,
-                      color: '#1a1a1a',
+                      color: isDark ? '#f0f0f0' : '#1a1a1a',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -581,8 +588,8 @@ export default function Arenas() {
                       <span style={{
                         fontSize: '11px',
                         fontWeight: 600,
-                        color: '#737373',
-                        background: '#F0F0F0',
+                        color: isDark ? '#a0a0a0' : '#737373',
+                        background: isDark ? '#262626' : '#F0F0F0',
                         padding: '2px 8px',
                         borderRadius: '4px',
                       }}>Padrao</span>
@@ -622,7 +629,7 @@ export default function Arenas() {
                 <p style={{
                   margin: '0 0 16px 0',
                   fontSize: '13px',
-                  color: '#737373',
+                  color: isDark ? '#a0a0a0' : '#737373',
                   lineHeight: '1.5',
                 }}>{arena.description}</p>
               )}
@@ -635,7 +642,7 @@ export default function Arenas() {
               }}>
                 <div style={{
                   flex: 1,
-                  background: '#FAFAFA',
+                  background: isDark ? '#141414' : '#FAFAFA',
                   borderRadius: '10px',
                   padding: '12px 16px',
                   display: 'flex',
@@ -644,15 +651,15 @@ export default function Arenas() {
                 }}>
                   <FontAwesomeIcon icon={faUsers} style={{ color: '#667eea', fontSize: '16px' }} />
                   <div>
-                    <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a1a' }}>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>
                       {arena.student_count ?? 0}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#A3A3A3', fontWeight: 500 }}>Alunos</div>
+                    <div style={{ fontSize: '11px', color: isDark ? '#6b6b6b' : '#A3A3A3', fontWeight: 500 }}>Alunos</div>
                   </div>
                 </div>
                 <div style={{
                   flex: 1,
-                  background: '#FAFAFA',
+                  background: isDark ? '#141414' : '#FAFAFA',
                   borderRadius: '10px',
                   padding: '12px 16px',
                   display: 'flex',
@@ -661,10 +668,10 @@ export default function Arenas() {
                 }}>
                   <FontAwesomeIcon icon={faUserGroup} style={{ color: '#f59e0b', fontSize: '16px' }} />
                   <div>
-                    <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a1a' }}>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>
                       {arena.class_count ?? 0}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#A3A3A3', fontWeight: 500 }}>Turmas</div>
+                    <div style={{ fontSize: '11px', color: isDark ? '#6b6b6b' : '#A3A3A3', fontWeight: 500 }}>Turmas</div>
                   </div>
                 </div>
               </div>
@@ -708,9 +715,9 @@ export default function Arenas() {
                     justifyContent: 'center',
                     gap: '6px',
                     padding: '10px 16px',
-                    background: 'white',
-                    color: '#404040',
-                    border: '1px solid #E5E5E5',
+                    background: isDark ? '#262626' : 'white',
+                    color: isDark ? '#d0d0d0' : '#404040',
+                    border: isDark ? '1px solid #333' : '1px solid #E5E5E5',
                     borderRadius: '8px',
                     fontSize: '13px',
                     fontWeight: 500,
@@ -718,8 +725,8 @@ export default function Arenas() {
                     fontFamily: 'inherit',
                     transition: 'all 0.2s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F5F5F5'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? '#333' : '#F5F5F5'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? '#262626' : 'white'; }}
                 >
                   <FontAwesomeIcon icon={faPen} style={{ fontSize: '11px' }} />
                   Editar
@@ -734,9 +741,9 @@ export default function Arenas() {
                       justifyContent: 'center',
                       gap: '6px',
                       padding: '10px 16px',
-                      background: 'white',
+                      background: isDark ? 'rgba(239, 68, 68, 0.1)' : 'white',
                       color: '#ef4444',
-                      border: '1px solid #fecaca',
+                      border: isDark ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #fecaca',
                       borderRadius: '8px',
                       fontSize: '13px',
                       fontWeight: 500,
@@ -744,8 +751,8 @@ export default function Arenas() {
                       fontFamily: 'inherit',
                       transition: 'all 0.2s',
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#fef2f2'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.1)' : 'white'; }}
                   >
                     <FontAwesomeIcon icon={faPowerOff} style={{ fontSize: '11px' }} />
                     Desativar
@@ -777,6 +784,8 @@ function ArenaModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const isEditMode = !!arena;
   const [formData, setFormData] = useState({
     name: arena?.name || '',
@@ -839,7 +848,7 @@ function ArenaModal({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'white',
+          background: isDark ? '#1a1a1a' : 'white',
           borderRadius: '16px',
           width: '100%',
           maxWidth: '480px',
@@ -853,7 +862,7 @@ function ArenaModal({
           justifyContent: 'space-between',
           marginBottom: '24px',
         }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#1a1a1a' }}>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>
             {isEditMode ? 'Editar Arena' : 'Criar Nova Arena'}
           </h2>
           <button
@@ -890,7 +899,7 @@ function ArenaModal({
               display: 'block',
               fontSize: '13px',
               fontWeight: 600,
-              color: '#404040',
+              color: isDark ? '#d0d0d0' : '#404040',
               marginBottom: '6px',
             }}>Nome *</label>
             <input
@@ -903,7 +912,9 @@ function ArenaModal({
               style={{
                 width: '100%',
                 padding: '10px 14px',
-                border: '1px solid #D4D4D4',
+                border: isDark ? '1px solid #333' : '1px solid #D4D4D4',
+                background: isDark ? '#141414' : 'white',
+                color: isDark ? '#f0f0f0' : 'inherit',
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontFamily: 'inherit',
@@ -918,7 +929,7 @@ function ArenaModal({
               display: 'block',
               fontSize: '13px',
               fontWeight: 600,
-              color: '#404040',
+              color: isDark ? '#d0d0d0' : '#404040',
               marginBottom: '6px',
             }}>Descricao</label>
             <textarea
@@ -930,7 +941,9 @@ function ArenaModal({
               style={{
                 width: '100%',
                 padding: '10px 14px',
-                border: '1px solid #D4D4D4',
+                border: isDark ? '1px solid #333' : '1px solid #D4D4D4',
+                background: isDark ? '#141414' : 'white',
+                color: isDark ? '#f0f0f0' : 'inherit',
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontFamily: 'inherit',
@@ -947,9 +960,9 @@ function ArenaModal({
               disabled={isSubmitting}
               style={{
                 padding: '10px 20px',
-                background: 'white',
-                color: '#404040',
-                border: '1px solid #E5E5E5',
+                background: isDark ? '#262626' : 'white',
+                color: isDark ? '#d0d0d0' : '#404040',
+                border: isDark ? '1px solid #333' : '1px solid #E5E5E5',
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontWeight: 500,
