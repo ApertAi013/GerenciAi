@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import QuickEditStudentModal from '../QuickEditStudentModal';
 import PaymentBlockedOverlay from '../PaymentBlockedOverlay';
+import LaraChat from '../lara/LaraChat';
 import { useAuthStore } from '../../store/authStore';
 import '../../styles/Layout.css';
 
@@ -35,15 +34,7 @@ export default function Layout() {
           onDismiss={() => setDismissed(true)}
         />
       )}
-      <a
-        href="/guia-do-sistema"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="help-fab"
-        title="Guia do Sistema"
-      >
-        <FontAwesomeIcon icon={faQuestion} />
-      </a>
+      <LaraChat />
     </div>
   );
 }
