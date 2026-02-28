@@ -13,6 +13,8 @@ export interface ShopProduct {
   modality_name?: string;
   payment_type: 'platform' | 'direct';
   is_active: boolean;
+  sizes?: string[];
+  colors?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +30,8 @@ export interface ShopOrder {
   product_name: string;
   product_image?: string;
   product_price: number;
+  selected_size?: string;
+  selected_color?: string;
   student_name: string;
   student_phone?: string;
   student_email?: string;

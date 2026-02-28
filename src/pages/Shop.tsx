@@ -102,7 +102,7 @@ export default function Shop() {
     if (!order.student_phone) return;
     const phone = order.student_phone.replace(/\D/g, '');
     const msg = encodeURIComponent(
-      `Olá ${order.student_name}! 🛍️ Seu pedido de ${order.product_name} (${order.quantity}x) foi confirmado e está separado para retirada! Pode vir buscar quando quiser.`
+      `Olá ${order.student_name}! 🛍️ Seu pedido de ${order.product_name}${order.selected_size ? ` (${order.selected_size})` : ''}${order.selected_color ? ` (${order.selected_color})` : ''} (${order.quantity}x) foi confirmado e está separado para retirada! Pode vir buscar quando quiser.`
     );
     window.open(`https://wa.me/55${phone}?text=${msg}`, '_blank');
   };
@@ -266,7 +266,11 @@ export default function Shop() {
                             </div>
                           </div>
                         </td>
-                        <td>{order.product_name}</td>
+                        <td>
+                          {order.product_name}
+                          {order.selected_size && <span className="shop-badge shop-badge-platform" style={{ marginLeft: 6 }}>{order.selected_size}</span>}
+                          {order.selected_color && <span className="shop-badge shop-badge-platform" style={{ marginLeft: 4 }}>{order.selected_color}</span>}
+                        </td>
                         <td>{order.quantity}x</td>
                         <td style={{ fontWeight: 600 }}>{formatCurrency(order.total_cents)}</td>
                         <td><span className={`shop-badge ${status.cls}`}>{status.label}</span></td>
@@ -340,6 +344,8 @@ function ProductModal({ product, onClose, onSuccess }: { product: ShopProduct | 
   const [visibilityModalityId, setVisibilityModalityId] = useState<number | null>(product?.visibility_modality_id || null);
   const [paymentType, setPaymentType] = useState<'platform' | 'direct'>(product?.payment_type || 'direct');
   const [isActive, setIsActive] = useState(product?.is_active !== false);
+  const [sizesText, setSizesText] = useState(product?.sizes?.join(', ') || '');
+  const [colorsText, setColorsText] = useState(product?.colors?.join(', ') || '');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(product?.image_url || null);
   const [modalities, setModalities] = useState<{ id: number; name: string }[]>([]);
@@ -387,6 +393,10 @@ function ProductModal({ product, onClose, onSuccess }: { product: ShopProduct | 
       }
       formData.append('payment_type', paymentType);
       formData.append('is_active', String(isActive));
+      const sizesArr = sizesText.split(',').map(s => s.trim()).filter(Boolean);
+      const colorsArr = colorsText.split(',').map(s => s.trim()).filter(Boolean);
+      if (sizesArr.length > 0) formData.append('sizes', JSON.stringify(sizesArr));
+      if (colorsArr.length > 0) formData.append('colors', JSON.stringify(colorsArr));
       if (imageFile) formData.append('image', imageFile);
 
       if (isEditing) {
@@ -437,6 +447,18 @@ function ProductModal({ product, onClose, onSuccess }: { product: ShopProduct | 
             <div className="mm-field">
               <label>Descrição</label>
               <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Descrição (opcional)" rows={3} />
+            </div>
+
+            {/* Sizes + Colors */}
+            <div className="mm-field-row">
+              <div className="mm-field">
+                <label>Tamanhos (opcional)</label>
+                <input type="text" value={sizesText} onChange={e => setSizesText(e.target.value)} placeholder="Ex: P, M, G, GG" />
+              </div>
+              <div className="mm-field">
+                <label>Cores (opcional)</label>
+                <input type="text" value={colorsText} onChange={e => setColorsText(e.target.value)} placeholder="Ex: Preto, Branco, Azul" />
+              </div>
             </div>
 
             {/* Price + Stock */}
