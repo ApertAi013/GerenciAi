@@ -6,10 +6,13 @@ import type { Class, Modality, ClassStudent } from '../types/classTypes';
 import CreateClassModal from '../components/CreateClassModal';
 import StudentPreviewModal from '../components/StudentPreviewModal';
 import AddMultipleStudentsModal from '../components/AddMultipleStudentsModal';
+import { useThemeStore } from '../store/themeStore';
 import '../styles/Classes.css';
 import '../styles/ModernModal.css';
 
 export default function Classes() {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [classes, setClasses] = useState<Class[]>([]);
   const [modalities, setModalities] = useState<Modality[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -221,13 +224,13 @@ export default function Classes() {
             <div style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               marginBottom: '1rem', paddingBottom: '0.5rem',
-              borderBottom: '2px solid #E5E7EB',
+              borderBottom: `2px solid ${isDark ? '#262626' : '#E5E7EB'}`,
             }}>
-              <FontAwesomeIcon icon={faCalendarDays} style={{ color: '#6B7280' }} />
-              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#1F2937' }}>
+              <FontAwesomeIcon icon={faCalendarDays} style={{ color: isDark ? '#a0a0a0' : '#6B7280' }} />
+              <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: isDark ? '#f0f0f0' : '#1F2937' }}>
                 {label}
               </h2>
-              <span style={{ fontSize: '0.8rem', color: '#9CA3AF', fontWeight: 400 }}>
+              <span style={{ fontSize: '0.8rem', color: isDark ? '#6b6b6b' : '#9CA3AF', fontWeight: 400 }}>
                 ({dayClasses.length} turma{dayClasses.length !== 1 ? 's' : ''})
               </span>
             </div>
@@ -344,7 +347,7 @@ export default function Classes() {
                           onClick={() => setSelectedStudentId(student.student_id)}
                           style={{
                             cursor: 'pointer',
-                            ...(isStudentLevelMismatch(cls, student) ? { borderColor: '#f59e0b', backgroundColor: '#fffbeb' } : {})
+                            ...(isStudentLevelMismatch(cls, student) ? { borderColor: '#f59e0b', backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb' } : {})
                           }}
                         >
                           {isStudentLevelMismatch(cls, student) && (

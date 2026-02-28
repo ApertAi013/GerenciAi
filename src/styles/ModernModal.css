@@ -418,6 +418,7 @@
   background: #141414;
   border-color: #262626;
   color: #f0f0f0;
+  color-scheme: dark;
 }
 [data-theme="dark"] .mm-field input:focus,
 [data-theme="dark"] .mm-field select:focus,

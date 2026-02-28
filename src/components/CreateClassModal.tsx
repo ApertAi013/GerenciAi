@@ -4,6 +4,7 @@ import { courtService } from '../services/courtService';
 import { levelService } from '../services/levelService';
 import type { Modality, Class } from '../types/classTypes';
 import type { Level } from '../types/levelTypes';
+import { useThemeStore } from '../store/themeStore';
 import '../styles/Classes.css';
 import '../styles/ModernModal.css';
 
@@ -39,6 +40,8 @@ export default function CreateClassModal({
   prefilledData,
 }: CreateClassModalProps) {
   const isEditMode = !!editClass;
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
 
   const [formData, setFormData] = useState({
     modality_id: '',
@@ -336,7 +339,7 @@ export default function CreateClassModal({
                 </button>
               ))}
             </div>
-            <small style={{ color: '#666', marginTop: '0.5rem', display: 'block' }}>
+            <small style={{ color: isDark ? '#6b6b6b' : '#666', marginTop: '0.5rem', display: 'block' }}>
               O horário de término será calculado automaticamente
             </small>
           </div>
@@ -359,11 +362,11 @@ export default function CreateClassModal({
 
             {schedules.map((schedule, index) => (
               <div key={index} style={{
-                border: '1px solid #ddd',
+                border: `1px solid ${isDark ? '#262626' : '#ddd'}`,
                 borderRadius: '4px',
                 padding: '1rem',
                 marginBottom: '1rem',
-                backgroundColor: '#f9f9f9'
+                backgroundColor: isDark ? '#141414' : '#f9f9f9'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <strong>Horário {index + 1}</strong>
@@ -402,9 +405,9 @@ export default function CreateClassModal({
                         style={{
                           padding: '6px 12px', borderRadius: '6px', cursor: 'pointer',
                           fontSize: '0.85rem', fontWeight: 500, transition: 'all 0.15s',
-                          background: schedule.weekdays.includes(w.key) ? '#22C55E' : '#F3F4F6',
-                          color: schedule.weekdays.includes(w.key) ? 'white' : '#374151',
-                          border: `1.5px solid ${schedule.weekdays.includes(w.key) ? '#16A34A' : '#D1D5DB'}`,
+                          background: schedule.weekdays.includes(w.key) ? '#22C55E' : (isDark ? '#262626' : '#F3F4F6'),
+                          color: schedule.weekdays.includes(w.key) ? 'white' : (isDark ? '#f0f0f0' : '#374151'),
+                          border: `1.5px solid ${schedule.weekdays.includes(w.key) ? '#16A34A' : (isDark ? '#333' : '#D1D5DB')}`,
                         }}
                       >
                         {w.label}
@@ -430,7 +433,7 @@ export default function CreateClassModal({
                       type="time"
                       value={schedule.end_time}
                       readOnly
-                      style={{ backgroundColor: '#f0f0f0' }}
+                      style={{ backgroundColor: isDark ? '#0f0f0f' : '#f0f0f0' }}
                       title="Calculado automaticamente baseado na duração"
                     />
                   </div>
@@ -454,9 +457,9 @@ export default function CreateClassModal({
                       cursor: 'pointer',
                       padding: '0.5rem 0.75rem',
                       border: '2px solid',
-                      borderColor: selectedLevels.includes(level.name) ? '#10b981' : '#ddd',
+                      borderColor: selectedLevels.includes(level.name) ? '#10b981' : (isDark ? '#333' : '#ddd'),
                       borderRadius: '6px',
-                      backgroundColor: selectedLevels.includes(level.name) ? '#d1fae5' : 'white',
+                      backgroundColor: selectedLevels.includes(level.name) ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#d1fae5') : (isDark ? '#1a1a1a' : 'white'),
                       transition: 'all 0.2s'
                     }}
                   >
@@ -472,7 +475,7 @@ export default function CreateClassModal({
                   </label>
                 ))}
               </div>
-              <small style={{ color: '#666', marginTop: '0.5rem', display: 'block' }}>
+              <small style={{ color: isDark ? '#6b6b6b' : '#666', marginTop: '0.5rem', display: 'block' }}>
                 Selecione os níveis de alunos que podem participar desta turma
               </small>
             </div>
@@ -503,10 +506,10 @@ export default function CreateClassModal({
                       height: '40px',
                       borderRadius: '8px',
                       backgroundColor: color,
-                      border: formData.color === color ? '3px solid #000' : '2px solid #ddd',
+                      border: formData.color === color ? `3px solid ${isDark ? '#fff' : '#000'}` : `2px solid ${isDark ? '#333' : '#ddd'}`,
                       cursor: 'pointer',
                       transition: 'all 0.2s',
-                      boxShadow: formData.color === color ? '0 0 0 2px white, 0 0 0 4px ' + color : 'none'
+                      boxShadow: formData.color === color ? `0 0 0 2px ${isDark ? '#1a1a1a' : 'white'}, 0 0 0 4px ${color}` : 'none'
                     }}
                     title={name}
                   />
@@ -523,15 +526,15 @@ export default function CreateClassModal({
                     width: '50px',
                     height: '40px',
                     borderRadius: '8px',
-                    border: '2px solid #ddd',
+                    border: `2px solid ${isDark ? '#333' : '#ddd'}`,
                     cursor: 'pointer'
                   }}
                   title="Escolher cor customizada"
                 />
-                <small style={{ fontSize: '0.7rem', color: '#666' }}>Custom</small>
+                <small style={{ fontSize: '0.7rem', color: isDark ? '#6b6b6b' : '#666' }}>Custom</small>
               </div>
             </div>
-            <small style={{ color: '#666', marginTop: '0.5rem', display: 'block' }}>
+            <small style={{ color: isDark ? '#6b6b6b' : '#666', marginTop: '0.5rem', display: 'block' }}>
               Esta cor será usada no calendário e na visualização de matrículas
             </small>
           </div>

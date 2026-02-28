@@ -667,6 +667,7 @@
   background: #141414;
   border-color: #262626;
   color: #f0f0f0;
+  color-scheme: dark;
 }
 
 [data-theme="dark"] .qe-field input:focus,
@@ -758,6 +759,7 @@
   background: #141414;
   border-color: #262626;
   color: #f0f0f0;
+  color-scheme: dark;
 }
 
 [data-theme="dark"] .qe-payment-fields input:focus,

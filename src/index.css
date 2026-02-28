@@ -100,11 +100,18 @@ button {
   color: #6b6b6b;
 }
 
+[data-theme="dark"] * {
+  scrollbar-color: #262626 #0f0f0f;
+}
+[data-theme="dark"] ::-webkit-scrollbar {
+  background: #0f0f0f;
+}
 [data-theme="dark"] ::-webkit-scrollbar-track {
   background: #0f0f0f;
 }
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
   background: #262626;
+  border-radius: 4px;
 }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
   background: #333333;

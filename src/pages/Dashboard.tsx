@@ -41,6 +41,7 @@ import {
   Legend,
 } from 'recharts';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import { financialService } from '../services/financialService';
 import { classService } from '../services/classService';
 import { enrollmentService } from '../services/enrollmentService';
@@ -126,6 +127,8 @@ interface StudentData {
 
 export default function Dashboard() {
   const { user } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -983,12 +986,12 @@ export default function Dashboard() {
         <div className="dash-chart-wrap">
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: '#E5E7EB' }} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
               <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
                 tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)} />
               <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip content={<ChartTooltip />} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
               <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
               <Bar yAxisId="left" dataKey="faturado" name="Faturado" fill="#C7D2FE" radius={[6, 6, 0, 0]} barSize={24} />
               <Bar yAxisId="left" dataKey="recebido" name="Recebido" fill="#34D399" radius={[6, 6, 0, 0]} barSize={24} />

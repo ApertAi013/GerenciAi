@@ -988,7 +988,7 @@
 
 /* Chart Tooltip */
 .dash-chart-tooltip {
-  background: var(--color-black);
+  background: #1a1a1a;
   border-radius: var(--radius-md);
   padding: 0.75rem 1rem;
   box-shadow: var(--shadow-lg);
@@ -996,7 +996,7 @@
 }
 
 .dash-chart-tooltip-title {
-  color: var(--color-grey-soft);
+  color: #9CA3AF;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -1010,7 +1010,7 @@
   gap: 0.4rem;
   font-size: 0.8rem;
   margin: 0.2rem 0;
-  color: var(--color-pure-white);
+  color: #ffffff;
 }
 
 .dash-chart-tooltip-row strong {
@@ -1878,17 +1878,6 @@
 }
 
 /* ===== Dark Mode ===== */
-[data-theme="dark"] .dash-header {
-  background: linear-gradient(135deg, #0F0F23 0%, #1A1A35 100%);
-}
-
-[data-theme="dark"] .dash-header::before {
-  opacity: 0.05;
-}
-
-[data-theme="dark"] .dash-header::after {
-  opacity: 0.04;
-}
 
 /* Students Popup */
 [data-theme="dark"] .dash-students-popup {
@@ -2152,8 +2141,33 @@
   color: #FFD04F;
 }
 
+[data-theme="dark"] .dash-promo-badge {
+  background: rgba(245, 138, 37, 0.15);
+  color: #F5A623;
+}
+
 [data-theme="dark"] .dash-promo-title {
   color: #ffffff;
+}
+
+[data-theme="dark"] .dash-promo-highlight {
+  background: linear-gradient(135deg, #F5A623, #F97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="dark"] .dash-promo-benefit svg {
+  color: #F5A623;
+}
+
+[data-theme="dark"] .dash-promo-btn {
+  background: linear-gradient(135deg, #F97316, #EA580C);
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.25);
+}
+
+[data-theme="dark"] .dash-promo-btn:hover {
+  box-shadow: 0 6px 24px rgba(249, 115, 22, 0.35);
 }
 
 /* Date badge — keep dark text on gradient */
