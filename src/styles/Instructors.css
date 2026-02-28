@@ -436,19 +436,6 @@
   min-height: 400px;
 }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Responsive */
@@ -636,7 +623,3 @@
   color: #a0a0a0;
 }
 
-[data-theme="dark"] .spinner {
-  border-color: #262626;
-  border-top-color: #3b82f6;
-}
