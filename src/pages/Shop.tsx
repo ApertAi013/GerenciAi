@@ -124,7 +124,7 @@ export default function Shop() {
   return (
     <div className="shop-page">
       <div className="shop-header">
-        <h1>🛍️ Lojinha</h1>
+        <h1><FontAwesomeIcon icon={faStore} style={{ marginRight: 10, color: '#FF9900' }} /> Lojinha</h1>
         {tab === 'products' && (
           <button className="shop-btn-primary" onClick={() => { setEditingProduct(null); setShowProductModal(true); }}>
             <FontAwesomeIcon icon={faPlus} /> Novo Produto
