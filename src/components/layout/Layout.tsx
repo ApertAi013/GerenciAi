@@ -16,11 +16,20 @@ export default function Layout() {
   const location = useLocation();
   const [dismissed, setDismissed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showMobileBanner, setShowMobileBanner] = useState(() => {
+    if (window.innerWidth > 768) return false;
+    return !localStorage.getItem('mobile_banner_dismissed');
+  });
 
   // Close mobile menu on navigation
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  const dismissMobileBanner = () => {
+    setShowMobileBanner(false);
+    localStorage.setItem('mobile_banner_dismissed', '1');
+  };
 
   const billingStatus = user?.billing_status;
   const isExempt = EXEMPT_ROUTES.some(r => location.pathname.startsWith(r));
@@ -44,6 +53,23 @@ export default function Layout() {
         />
       )}
       <LaraChat />
+      {showMobileBanner && (
+        <div className="mobile-app-banner">
+          <div className="mobile-app-banner-content">
+            <div className="mobile-app-banner-icon">📱</div>
+            <div className="mobile-app-banner-text">
+              <strong>Este site foi feito para uso no computador.</strong>
+              <p>Para uma melhor experiência no celular, recomendamos o uso do nosso aplicativo.</p>
+            </div>
+            <button className="mobile-app-banner-close" onClick={dismissMobileBanner} type="button">✕</button>
+          </div>
+          <div className="mobile-app-banner-actions">
+            <button className="mobile-app-banner-btn" onClick={dismissMobileBanner} type="button">
+              Continuar no site
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
