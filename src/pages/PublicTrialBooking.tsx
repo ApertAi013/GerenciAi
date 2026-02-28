@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendarPlus } from '@fortawesome/free-solid-svg-icons';
 import { publicTrialBookingService } from '../services/publicTrialBookingService';
 import type { TrialModality, TrialClass, TrialAvailability } from '../services/publicTrialBookingService';
 import '../styles/PublicTrialBooking.css';
@@ -541,6 +543,24 @@ export default function PublicTrialBooking() {
             </div>
 
             <div className="ptb-success-links">
+              {bookingResult.attendance_date && bookingResult.start_time && bookingResult.end_time && (
+                <a
+                  href={(() => {
+                    const dateStr = bookingResult.attendance_date.split('T')[0].replace(/-/g, '');
+                    const startStr = bookingResult.start_time.slice(0, 5).replace(':', '') + '00';
+                    const endStr = bookingResult.end_time.slice(0, 5).replace(':', '') + '00';
+                    const title = encodeURIComponent(`Aula Experimental - ${bookingResult.class_name || bookingResult.modality_name}`);
+                    const details = encodeURIComponent(`Turma: ${bookingResult.class_name}\nModalidade: ${bookingResult.modality_name}`);
+                    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}T${startStr}/${dateStr}T${endStr}&details=${details}`;
+                  })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ptb-btn ptb-btn-secondary"
+                  style={{ textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  <FontAwesomeIcon icon={faCalendarPlus} /> Adicionar ao Google Calendar
+                </a>
+              )}
               <a href={`/aula-experimental/status/${bookingResult.booking_token}`} className="ptb-btn ptb-btn-primary" style={{ textDecoration: 'none', textAlign: 'center' }}>
                 Ver Detalhes
               </a>

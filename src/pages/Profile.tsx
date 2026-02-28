@@ -5,6 +5,7 @@ import { authService } from '../services/authService';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../services/api';
 import toast from 'react-hot-toast';
+import ImageCropModal from '../components/ImageCropModal';
 import '../styles/Profile.css';
 
 interface ProfileData {
@@ -35,6 +36,7 @@ export default function Profile() {
   const [logoUrl, setLogoUrl] = useState('');
   const [isSavingBusiness, setIsSavingBusiness] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Password form
@@ -93,7 +95,7 @@ export default function Profile() {
     }
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -102,17 +104,24 @@ export default function Profile() {
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = () => setCropImageSrc(reader.result as string);
+    reader.readAsDataURL(file);
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
+
+  const handleCroppedImage = async (blob: Blob) => {
+    setCropImageSrc(null);
     setIsUploadingLogo(true);
     try {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', new File([blob], 'logo.jpg', { type: 'image/jpeg' }));
       const response = await api.post('/api/upload/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const url = response.data?.data?.url;
       if (url) {
         setLogoUrl(url);
-        // Save immediately
         const saveResponse = await authService.updateProfile({ logo_url: url });
         if (saveResponse.status === 'success') {
           toast.success('Logo atualizada com sucesso');
@@ -126,7 +135,6 @@ export default function Profile() {
       toast.error(error.response?.data?.message || 'Erro ao enviar imagem');
     } finally {
       setIsUploadingLogo(false);
-      if (logoInputRef.current) logoInputRef.current.value = '';
     }
   };
 
@@ -397,6 +405,16 @@ export default function Profile() {
           </button>
         </div>
       </div>
+
+      {cropImageSrc && (
+        <ImageCropModal
+          imageSrc={cropImageSrc}
+          onCropComplete={handleCroppedImage}
+          onClose={() => setCropImageSrc(null)}
+          cropShape="round"
+          aspect={1}
+        />
+      )}
     </div>
   );
 }

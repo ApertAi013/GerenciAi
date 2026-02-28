@@ -241,6 +241,12 @@ export default function MyPlan() {
 
   const getRecommendedPlanId = (): number | null => {
     if (plans.length === 0) return null;
+    // Recomendar o plano Professional
+    const professional = plans.find(
+      (p) => (p as any).slug === 'professional' || p.name.toLowerCase().includes('professional') || p.name.toLowerCase().includes('profissional')
+    );
+    if (professional) return professional.id;
+    // Fallback: plano mais adequado ao uso atual
     const sorted = [...plans].sort((a, b) => a.price_cents - b.price_cents);
     const recommended = sorted.find(
       (p) => (isUnlimited(p.max_students) || p.max_students >= studentCount) &&

@@ -26,6 +26,9 @@ import {
   Plus,
   Edit3,
   ExternalLink,
+  Send,
+  Bell,
+  Target,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { trialStudentService } from '../services/trialStudentService';
@@ -597,6 +600,37 @@ export default function TrialStudents() {
             <UserPlus size={18} style={{ marginRight: '0.5rem' }} />
             Novo Aluno Experimental
           </button>
+        </div>
+      </div>
+
+      {/* Como funciona o fluxo */}
+      <div className="trial-config-section">
+        <div className="trial-config-header" style={{ cursor: 'default' }}>
+          <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={20} />
+            Como funciona o fluxo
+          </h2>
+        </div>
+        <div className="trial-config-body">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            {[
+              { icon: <Send size={20} />, color: '#3B82F6', title: 'Você compartilha o link', desc: 'Envie o link de aula experimental para seus prospects via WhatsApp, redes sociais ou site.' },
+              { icon: <UserPlus size={20} />, color: '#8B5CF6', title: 'O prospect se cadastra', desc: 'Ele escolhe a turma, seleciona o dia e preenche seus dados.' },
+              { icon: <Bell size={20} />, color: '#F59E0B', title: 'Você recebe uma notificação', desc: 'O sistema avisa sobre o novo agendamento de aula experimental.' },
+              { icon: <Target size={20} />, color: '#10B981', title: 'Acompanhe e converta', desc: 'Gerencie os experimentais aqui e converta-os em alunos matriculados.' },
+            ].map((step, i) => (
+              <div key={i} style={{
+                background: `${step.color}10`, border: `1px solid ${step.color}30`,
+                borderRadius: 12, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: step.color, fontWeight: 600 }}>
+                  {step.icon}
+                  <span style={{ fontSize: '0.875rem' }}>{step.title}</span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>{step.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
