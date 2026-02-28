@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faCalendarCheck, faBuilding, faExchangeAlt, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faCalendarCheck, faBuilding, faExchangeAlt, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import { studentService } from '../../services/studentService';
@@ -19,7 +19,11 @@ interface SearchResult {
   subtitle: string;
 }
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const { user, currentArenaId, setCurrentArena } = useAuthStore();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
@@ -201,6 +205,9 @@ export default function Header() {
 
   return (
     <header className="header">
+      <button className="header-hamburger" onClick={onMenuClick} type="button" aria-label="Menu">
+        <FontAwesomeIcon icon={faBars} />
+      </button>
       <div className="header-search" ref={searchRef}>
         <FontAwesomeIcon icon={faSearch} className="search-icon-left" />
         <input

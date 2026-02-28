@@ -86,7 +86,12 @@ const menuItems: MenuItem[] = [
 
 const PROTECTED_PATHS = ['/dashboard'];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { user } = useAuthStore();
   const { theme } = useThemeStore();
@@ -162,7 +167,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
       <div className="sidebar-logo">
         <img src={logoSrc} alt="ArenaAi" className="sidebar-logo-img" />
       </div>
@@ -242,6 +247,7 @@ export default function Sidebar() {
                 key={item.path}
                 to={item.path}
                 className={`sidebar-item ${isActive ? 'active' : ''}`}
+                onClick={() => onClose?.()}
                 {...(item.path === '/arenas' ? { 'data-tour': 'sidebar-arenas' } : {})}
               >
                 <span className="sidebar-icon">

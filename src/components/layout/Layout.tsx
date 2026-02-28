@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -15,6 +15,12 @@ export default function Layout() {
   const { user } = useAuthStore();
   const location = useLocation();
   const [dismissed, setDismissed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on navigation
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const billingStatus = user?.billing_status;
   const isExempt = EXEMPT_ROUTES.some(r => location.pathname.startsWith(r));
@@ -22,8 +28,11 @@ export default function Layout() {
 
   return (
     <div className="layout">
-      <Sidebar />
-      <Header />
+      {isMobileMenuOpen && (
+        <div className="mobile-overlay" onClick={() => setIsMobileMenuOpen(false)} />
+      )}
+      <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+      <Header onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
       <main className="layout-content">
         <Outlet />
       </main>

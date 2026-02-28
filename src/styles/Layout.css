@@ -10,7 +10,36 @@
   min-height: calc(100vh - 70px);
 }
 
+/* ===== Mobile Overlay ===== */
+.mobile-overlay {
+  display: none;
+}
+
 /* ===== Dark Mode ===== */
 [data-theme="dark"] .layout {
   background: #141414;
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .layout-content {
+    margin-left: 0;
+    margin-top: 56px;
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
+
+  .mobile-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 199;
+    animation: overlayFadeIn 0.3s ease;
+  }
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
