@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 import Joyride, { type CallBackProps, type Step, STATUS } from 'react-joyride';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRocket } from '@fortawesome/free-solid-svg-icons';
 import { useThemeStore } from '../../store/themeStore';
 
 interface DashboardOnboardingTourProps {
@@ -12,7 +14,10 @@ const steps: Step[] = [
     target: 'body',
     content: (
       <div>
-        <h3>Bem-vindo ao ArenaAi! 🎉</h3>
+        <div style={{ marginBottom: '8px' }}>
+          <FontAwesomeIcon icon={faRocket} style={{ fontSize: '1.5rem', color: '#F97316' }} />
+        </div>
+        <h3>Bem-vindo ao ArenaAi!</h3>
         <p>Este é o seu painel principal. Aqui você tem uma visão geral de tudo que acontece na sua arena.</p>
         <p>Vamos te mostrar algumas funcionalidades!</p>
       </div>

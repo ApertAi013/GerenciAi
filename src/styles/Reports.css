@@ -957,11 +957,11 @@
 }
 
 [data-theme="dark"] .rpt-header {
-  background: linear-gradient(135deg, #7a3d0a 0%, #4a2506 50%, #5c2e08 100%);
+  background: linear-gradient(135deg, #1a1612 0%, #1f1a14 50%, #171310 100%);
 }
 
 [data-theme="dark"] .rpt-header::before {
-  background: rgba(255, 200, 100, 0.15);
+  background: rgba(245, 138, 37, 0.08);
 }
 
 [data-theme="dark"] .rpt-title {
