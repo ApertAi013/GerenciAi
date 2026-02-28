@@ -85,13 +85,25 @@ export default function LaraChat() {
   const handleCategoryClick = useCallback((category: LaraCategory) => {
     const modules = getModulesByCategory(category);
     const catInfo = LARA_CATEGORIES.find(c => c.id === category);
+
+    addMessages(createMsg('user', { text: catInfo?.label || category }));
+
+    // If category has only 1 module, skip straight to subtopics
+    if (modules.length === 1) {
+      setContext(prev => ({
+        ...prev,
+        selectedCategory: category,
+        history: [...prev.history, pushHistory(prev)],
+      }));
+      showModuleSubTopics(modules[0].id);
+      return;
+    }
+
     const options: LaraQuickOption[] = modules.map(m => ({
       id: m.id,
       label: m.name,
       type: 'module' as const,
     }));
-
-    addMessages(createMsg('user', { text: catInfo?.label || category }));
 
     simulateTyping(() => {
       addMessages(
@@ -106,7 +118,7 @@ export default function LaraChat() {
         history: [...prev.history, pushHistory(prev)],
       }));
     });
-  }, [addMessages, pushHistory, simulateTyping]);
+  }, [addMessages, pushHistory, simulateTyping, showModuleSubTopics]);
 
   // ── Module Click ──
   const showModuleSubTopics = useCallback((moduleId: string, addToHistory: boolean = true) => {
