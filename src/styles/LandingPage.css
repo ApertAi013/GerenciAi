@@ -1470,70 +1470,204 @@ body {
 }
 
 @media (max-width: 768px) {
+    /* ===== NAVBAR: compact, hide links ===== */
     .navbar {
-        flex-wrap: wrap;
-        gap: 16px;
-        padding: 20px 24px;
+        padding: 16px 20px;
+        gap: 12px;
     }
 
     .nav-links {
-        order: 3;
-        width: 100%;
-        justify-content: center;
-        gap: 20px;
+        display: none;
+    }
+
+    .logo h1 {
+        font-size: 22px;
+    }
+
+    .logo-subtitle {
+        font-size: 9px;
+    }
+
+    .nav-buttons {
+        gap: 8px;
+    }
+
+    .btn-outline {
+        display: none;
+    }
+
+    .btn-primary {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+
+    /* ===== HERO: hide orange right side entirely ===== */
+    .hero-container {
+        min-height: auto;
+    }
+
+    .hero-right {
+        display: none;
+    }
+
+    .hero-left {
+        min-height: 100vh;
     }
 
     .hero-content {
-        padding: 40px 24px 60px 24px;
+        padding: 32px 20px 48px 20px;
+        max-width: 100%;
     }
 
     .hero-headline {
-        font-size: 38px;
+        font-size: 32px;
+        letter-spacing: -1px;
+        margin-bottom: 20px;
     }
 
     .hero-text {
-        font-size: 16px;
+        font-size: 15px;
+        margin-bottom: 16px;
     }
 
-    .section-title {
-        font-size: 36px;
+    .hero-subtext {
+        font-size: 14px;
+        margin-bottom: 28px;
     }
 
-    .recursos-grid {
-        grid-template-columns: 1fr;
+    .btn-cta {
+        width: 100%;
+        text-align: center;
+        padding: 16px 32px;
+        font-size: 15px;
     }
 
+    /* ===== SECTIONS: compact padding ===== */
     .recursos-section,
     .ia-section,
     .contato-section,
     .parceria-section {
-        padding: 80px 24px;
+        padding: 60px 20px;
+        min-height: auto;
     }
 
-    .parceria-title {
+    .section-title {
+        font-size: 28px;
+        letter-spacing: -0.5px;
+        margin-bottom: 12px;
+    }
+
+    .section-subtitle {
+        font-size: 15px;
+        margin-bottom: 40px;
+    }
+
+    /* ===== RECURSOS ===== */
+    .recursos-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .recurso-card {
+        padding: 28px 24px;
+    }
+
+    .recurso-icon {
         font-size: 36px;
+        margin-bottom: 16px;
+    }
+
+    .recurso-card h3 {
+        font-size: 18px;
+    }
+
+    .recurso-card p {
+        font-size: 14px;
+    }
+
+    /* ===== IA SECTION ===== */
+    .ia-content {
+        gap: 40px;
+    }
+
+    .ia-left .section-title {
+        text-align: center;
+    }
+
+    .ia-left .section-subtitle {
+        text-align: center;
+    }
+
+    .ia-feature h4 {
+        font-size: 16px;
+    }
+
+    .ia-feature p {
+        font-size: 14px;
+    }
+
+    .chat-demo {
+        max-width: 100%;
+    }
+
+    .chat-messages {
+        min-height: 240px;
+        max-height: 240px;
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .chat-header {
+        padding: 14px 18px;
+    }
+
+    .chat-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+
+    .chat-input {
+        padding: 12px 16px;
+    }
+
+    /* ===== PARCERIA ===== */
+    .parceria-title {
+        font-size: 30px;
+        letter-spacing: -1px;
     }
 
     .parceria-description {
-        font-size: 16px;
+        font-size: 15px;
     }
 
     .benefit-card {
         flex-direction: column;
         text-align: center;
-        padding: 24px 20px;
+        padding: 20px 16px;
+    }
+
+    .benefit-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
     }
 
     .benefit-content h4 {
-        font-size: 18px;
+        font-size: 17px;
+    }
+
+    .benefit-content p {
+        font-size: 13px;
     }
 
     .tennis-player {
-        height: 320px;
+        height: 260px;
     }
 
     .floating-video-card {
-        padding: 12px 16px;
+        padding: 10px 14px;
+        gap: 8px;
     }
 
     .card-replay {
@@ -1545,19 +1679,31 @@ body {
     }
 
     .video-card-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-
-    .video-card-value {
+        width: 36px;
+        height: 36px;
         font-size: 14px;
     }
 
+    .video-card-label {
+        font-size: 11px;
+    }
+
+    .video-card-value {
+        font-size: 13px;
+    }
+
     .play-button {
-        width: 60px;
-        height: 60px;
-        font-size: 22px;
+        width: 56px;
+        height: 56px;
+        font-size: 20px;
+    }
+
+    .apertai-logo {
+        height: 56px;
+    }
+
+    .apertai-tagline p {
+        font-size: 16px;
     }
 
     .parceria-cta-group {
@@ -1569,102 +1715,54 @@ body {
     .btn-parceria-secondary {
         width: 100%;
         justify-content: center;
+        padding: 14px 28px;
+        font-size: 15px;
     }
 
-    .card-ai {
-        top: 10%;
-        right: 5%;
+    /* ===== APP SECTION ===== */
+    .app-section {
+        padding: 60px 20px;
     }
 
-    .card-financial {
-        left: 5%;
-        top: 45%;
+    .app-left .section-title {
+        font-size: 28px;
     }
 
-    .card-occupancy {
-        right: 5%;
-        bottom: 20%;
+    .app-feature-item {
+        font-size: 15px;
     }
 
-    .dashboard-card {
-        padding: 16px 20px;
-        min-width: 240px;
+    .app-phone {
+        width: 220px;
     }
 
-    .card-value {
-        font-size: 20px;
+    .app-phone-screen {
+        min-height: 340px;
+        padding: 12px 14px 20px;
     }
 
-    /* Hero right: reduce on mobile */
-    .hero-right {
-        min-height: 400px;
-    }
-
-    .hero-image {
-        height: 70%;
-    }
-
-    /* Nav buttons stack */
-    .nav-buttons {
-        gap: 8px;
-    }
-
-    .btn-outline,
-    .btn-primary {
-        padding: 8px 16px;
-        font-size: 13px;
-    }
-
-    /* Nav links horizontal scroll */
-    .nav-links {
-        gap: 16px;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 4px;
-    }
-
-    .nav-links a {
-        font-size: 13px;
-        white-space: nowrap;
-    }
-
-    /* CTA button full width */
-    .btn-cta {
-        width: 100%;
-        text-align: center;
-        padding: 16px 32px;
+    /* ===== CONTATO ===== */
+    .contato-section {
+        min-height: auto;
+        padding: 60px 20px;
     }
 
     .btn-cta-large {
-        padding: 18px 40px;
-        font-size: 16px;
+        padding: 16px 36px;
+        font-size: 15px;
+        width: 100%;
     }
 
-    /* IA section */
-    .ia-left .section-title {
-        text-align: center;
-    }
-
-    .ia-left .section-subtitle {
-        text-align: center;
-    }
-
-    .chat-demo {
-        max-width: 100%;
-    }
-
-    .chat-messages {
-        min-height: 280px;
-        max-height: 280px;
-    }
-
-    /* Contato */
-    .contato-section {
-        min-height: auto;
-    }
-
+    /* ===== HIDE decorative elements ===== */
     .rings {
+        display: none;
+    }
+
+    .section-transition {
+        display: none;
+    }
+
+    .parceria-bg-shapes {
         display: none;
     }
 }
@@ -1672,61 +1770,60 @@ body {
 /* ===== Very small screens ===== */
 @media (max-width: 480px) {
     .hero-headline {
-        font-size: 28px;
-        letter-spacing: -1px;
+        font-size: 26px;
     }
 
-    .hero-right {
-        min-height: 300px;
+    .hero-text {
+        font-size: 14px;
     }
 
-    .dashboard-card {
-        min-width: 200px;
-        padding: 12px 16px;
-        gap: 10px;
-    }
-
-    .card-icon {
-        width: 36px;
-        height: 36px;
-    }
-
-    .card-label {
-        font-size: 11px;
-    }
-
-    .card-value {
-        font-size: 16px;
-    }
-
-    .card-financial {
-        left: 2%;
+    .hero-subtext {
+        font-size: 13px;
     }
 
     .section-title {
-        font-size: 28px;
+        font-size: 24px;
     }
 
     .section-subtitle {
-        font-size: 16px;
+        font-size: 14px;
     }
 
     .parceria-title {
-        font-size: 28px;
+        font-size: 24px;
     }
 
     .navbar {
-        padding: 16px;
+        padding: 12px 16px;
     }
 
-    .nav-buttons {
-        flex-direction: column;
-        width: 100%;
+    .logo h1 {
+        font-size: 20px;
     }
 
-    .btn-outline,
-    .btn-primary {
-        width: 100%;
-        text-align: center;
+    .recursos-section,
+    .ia-section,
+    .contato-section,
+    .parceria-section,
+    .app-section {
+        padding: 48px 16px;
+    }
+
+    .recurso-card {
+        padding: 24px 20px;
+    }
+
+    .tennis-player {
+        height: 200px;
+    }
+
+    .floating-video-card {
+        display: none;
+    }
+
+    .play-button {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
     }
 }
