@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useThemeStore } from '../store/themeStore';
 import { platformBillingService } from '../services/platformBillingService';
 import { monitoringService } from '../services/monitoringService';
 import toast from 'react-hot-toast';
@@ -141,12 +142,12 @@ const statusLabel: Record<string, string> = {
 
 // ── Inline style objects ─────────────────────────────────────────────────────
 
-const styles = {
+const getStyles = (isDark: boolean) => ({
   container: { padding: 0 } as React.CSSProperties,
   subtabs: {
     display: 'flex',
     gap: '0.5rem',
-    borderBottom: '1px solid #E5E7EB',
+    borderBottom: `1px solid ${isDark ? '#262626' : '#E5E7EB'}`,
     marginBottom: '1.5rem',
     paddingTop: '0.5rem',
   } as React.CSSProperties,
@@ -156,7 +157,7 @@ const styles = {
     padding: '0.75rem 1.25rem',
     fontSize: '0.95rem',
     fontWeight: 500,
-    color: active ? '#FF9900' : '#6B7280',
+    color: active ? '#FF9900' : (isDark ? '#a0a0a0' : '#6B7280'),
     cursor: 'pointer',
     borderBottom: active ? '3px solid #FF9900' : '3px solid transparent',
     transition: 'all 0.2s',
@@ -171,11 +172,11 @@ const styles = {
     marginBottom: '1.5rem',
   } as React.CSSProperties,
   statCard: (accent: string): React.CSSProperties => ({
-    background: '#fff',
+    background: isDark ? '#1a1a1a' : '#fff',
     borderRadius: '12px',
     padding: '1.25rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-    border: '1px solid #E5E7EB',
+    boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.05)',
+    border: `1px solid ${isDark ? '#262626' : '#E5E7EB'}`,
     borderLeft: `4px solid ${accent}`,
     display: 'flex',
     alignItems: 'center',
@@ -193,8 +194,8 @@ const styles = {
     background: `${accent}15`,
     flexShrink: 0,
   }),
-  statValue: { fontSize: '1.5rem', fontWeight: 700, color: '#1F2937', margin: 0 } as React.CSSProperties,
-  statLabel: { fontSize: '0.8rem', color: '#6B7280', margin: 0 } as React.CSSProperties,
+  statValue: { fontSize: '1.5rem', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1F2937', margin: 0 } as React.CSSProperties,
+  statLabel: { fontSize: '0.8rem', color: isDark ? '#a0a0a0' : '#6B7280', margin: 0 } as React.CSSProperties,
   filterRow: {
     display: 'flex',
     gap: '0.75rem',
@@ -205,43 +206,46 @@ const styles = {
   input: {
     padding: '0.5rem 0.75rem',
     borderRadius: '8px',
-    border: '1px solid #D1D5DB',
+    border: `1px solid ${isDark ? '#333' : '#D1D5DB'}`,
     fontSize: '0.9rem',
     outline: 'none',
+    background: isDark ? '#141414' : '#fff',
+    color: isDark ? '#f0f0f0' : '#1F2937',
   } as React.CSSProperties,
   select: {
     padding: '0.5rem 0.75rem',
     borderRadius: '8px',
-    border: '1px solid #D1D5DB',
+    border: `1px solid ${isDark ? '#333' : '#D1D5DB'}`,
     fontSize: '0.9rem',
     outline: 'none',
-    background: '#fff',
+    background: isDark ? '#141414' : '#fff',
+    color: isDark ? '#f0f0f0' : '#1F2937',
   } as React.CSSProperties,
   table: {
     width: '100%',
     borderCollapse: 'collapse' as const,
-    background: '#fff',
+    background: isDark ? '#1a1a1a' : '#fff',
     borderRadius: '12px',
     overflow: 'hidden',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.05)',
   } as React.CSSProperties,
   th: {
     textAlign: 'left' as const,
     padding: '0.75rem 1rem',
-    background: '#F9FAFB',
-    color: '#6B7280',
+    background: isDark ? '#141414' : '#F9FAFB',
+    color: isDark ? '#a0a0a0' : '#6B7280',
     fontSize: '0.8rem',
     fontWeight: 600,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
-    borderBottom: '2px solid #E5E7EB',
+    borderBottom: `2px solid ${isDark ? '#262626' : '#E5E7EB'}`,
   } as React.CSSProperties,
   td: (idx: number): React.CSSProperties => ({
     padding: '0.75rem 1rem',
     fontSize: '0.9rem',
-    color: '#1F2937',
-    borderBottom: '1px solid #F3F4F6',
-    background: idx % 2 === 0 ? '#fff' : '#FAFBFC',
+    color: isDark ? '#f0f0f0' : '#1F2937',
+    borderBottom: `1px solid ${isDark ? '#262626' : '#F3F4F6'}`,
+    background: idx % 2 === 0 ? (isDark ? '#1a1a1a' : '#fff') : (isDark ? '#141414' : '#FAFBFC'),
   }),
   badge: (status: string): React.CSSProperties => {
     const c = statusColors[status] || { bg: '#F3F4F6', color: '#6B7280' };
@@ -312,14 +316,14 @@ const styles = {
     zIndex: 1000,
   } as React.CSSProperties,
   modalContent: {
-    background: '#fff',
+    background: isDark ? '#1a1a1a' : '#fff',
     borderRadius: '16px',
     padding: '2rem',
     width: '95%',
     maxWidth: '800px',
     maxHeight: '85vh',
     overflow: 'auto',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+    boxShadow: isDark ? '0 20px 60px rgba(0,0,0,0.5)' : '0 20px 60px rgba(0,0,0,0.2)',
   } as React.CSSProperties,
   modalHeader: {
     display: 'flex',
@@ -327,20 +331,23 @@ const styles = {
     alignItems: 'center',
     marginBottom: '1.5rem',
     paddingBottom: '1rem',
-    borderBottom: '2px solid #F3F4F6',
+    borderBottom: `2px solid ${isDark ? '#262626' : '#F3F4F6'}`,
   } as React.CSSProperties,
   sectionTitle: {
     fontSize: '1rem',
     fontWeight: 700,
-    color: '#1F2937',
+    color: isDark ? '#f0f0f0' : '#1F2937',
     margin: '1.5rem 0 0.75rem 0',
   } as React.CSSProperties,
-  spinner: { textAlign: 'center' as const, padding: '2rem', color: '#6B7280' } as React.CSSProperties,
-};
+  spinner: { textAlign: 'center' as const, padding: '2rem', color: isDark ? '#a0a0a0' : '#6B7280' } as React.CSSProperties,
+});
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProps = {}) {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
+  const styles = getStyles(isDark);
   const [internalTab, setInternalTab] = useState<BillingSubTab>('dashboard');
   const activeTab = forcedTab ?? internalTab;
   const [loading, setLoading] = useState(false);
@@ -722,7 +729,7 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
                 gestores.map((g, idx) => (
                   <tr key={g.id}>
                     <td style={styles.td(idx)}>{g.full_name}</td>
-                    <td style={{ ...styles.td(idx), fontSize: '0.83rem', color: '#6B7280' }}>{g.email}</td>
+                    <td style={{ ...styles.td(idx), fontSize: '0.83rem', color: isDark ? '#a0a0a0' : '#6B7280' }}>{g.email}</td>
                     <td style={styles.td(idx)}>{g.plan_name || g.billing_plan_slug || '-'}</td>
                     <td style={styles.td(idx)}>
                       {g.student_count}/{g.max_students === -1 ? '\u221E' : g.max_students}
@@ -764,12 +771,12 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
       <div style={styles.modal} onClick={() => setGestorModalOpen(false)}>
         <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
           <div style={styles.modalHeader}>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#1F2937' }}>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', color: isDark ? '#f0f0f0' : '#1F2937' }}>
               Gerenciar Gestor
             </h2>
             <button
               onClick={() => setGestorModalOpen(false)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: '#6B7280' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: isDark ? '#a0a0a0' : '#6B7280' }}
             >
               <FontAwesomeIcon icon={faTimes} />
             </button>
@@ -781,14 +788,14 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
             <>
               {/* User info */}
               <div style={{ marginBottom: '1rem' }}>
-                <p style={{ margin: '0.25rem 0', color: '#1F2937' }}>
+                <p style={{ margin: '0.25rem 0', color: isDark ? '#f0f0f0' : '#1F2937' }}>
                   <strong>{gestorDetail.user?.full_name}</strong> — {gestorDetail.user?.email}
                 </p>
-                <p style={{ margin: '0.25rem 0', color: '#6B7280', fontSize: '0.85rem' }}>
+                <p style={{ margin: '0.25rem 0', color: isDark ? '#a0a0a0' : '#6B7280', fontSize: '0.85rem' }}>
                   Alunos: {gestorDetail.student_count} | Turmas: {gestorDetail.class_count}
                 </p>
                 {gestorDetail.subscription && (
-                  <p style={{ margin: '0.25rem 0', color: '#6B7280', fontSize: '0.85rem' }}>
+                  <p style={{ margin: '0.25rem 0', color: isDark ? '#a0a0a0' : '#6B7280', fontSize: '0.85rem' }}>
                     Plano atual: <strong>{gestorDetail.subscription.plan_name || '-'}</strong> | Status:{' '}
                     <span style={styles.badge(gestorDetail.subscription.status || 'active')}>
                       {statusLabel[gestorDetail.subscription.status] || gestorDetail.subscription.status}
@@ -837,16 +844,16 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           padding: '0.6rem 0.75rem',
-                          background: enabled ? '#F0FDF4' : '#F9FAFB',
+                          background: enabled ? (isDark ? 'rgba(16,185,129,0.1)' : '#F0FDF4') : (isDark ? '#141414' : '#F9FAFB'),
                           borderRadius: '8px',
-                          border: `1px solid ${enabled ? '#BBF7D0' : '#E5E7EB'}`,
+                          border: `1px solid ${enabled ? (isDark ? 'rgba(16,185,129,0.3)' : '#BBF7D0') : (isDark ? '#262626' : '#E5E7EB')}`,
                         }}
                       >
                         <div>
-                          <span style={{ fontWeight: 600, color: '#1F2937', fontSize: '0.9rem' }}>
+                          <span style={{ fontWeight: 600, color: isDark ? '#f0f0f0' : '#1F2937', fontSize: '0.9rem' }}>
                             {addon.name}
                           </span>
-                          <span style={{ marginLeft: '0.5rem', color: '#6B7280', fontSize: '0.8rem' }}>
+                          <span style={{ marginLeft: '0.5rem', color: isDark ? '#6b6b6b' : '#6B7280', fontSize: '0.8rem' }}>
                             {formatBRL(addon.price_cents)}
                             {addon.is_bundle ? ' (bundle)' : ''}
                           </span>
@@ -888,17 +895,17 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             padding: '0.6rem 0.75rem',
-                            background: isEnabled ? '#EFF6FF' : '#F9FAFB',
+                            background: isEnabled ? (isDark ? 'rgba(59,130,246,0.1)' : '#EFF6FF') : (isDark ? '#141414' : '#F9FAFB'),
                             borderRadius: '8px',
-                            border: `1px solid ${isEnabled ? '#BFDBFE' : '#E5E7EB'}`,
+                            border: `1px solid ${isEnabled ? (isDark ? 'rgba(59,130,246,0.3)' : '#BFDBFE') : (isDark ? '#262626' : '#E5E7EB')}`,
                             opacity: isUpdating ? 0.6 : 1,
                           }}
                         >
                           <div>
-                            <span style={{ fontWeight: 600, color: '#1F2937', fontSize: '0.9rem' }}>
+                            <span style={{ fontWeight: 600, color: isDark ? '#f0f0f0' : '#1F2937', fontSize: '0.9rem' }}>
                               {feature.feature_name}
                             </span>
-                            <span style={{ marginLeft: '0.5rem', color: '#6B7280', fontSize: '0.8rem' }}>
+                            <span style={{ marginLeft: '0.5rem', color: isDark ? '#6b6b6b' : '#6B7280', fontSize: '0.8rem' }}>
                               {feature.description}
                             </span>
                           </div>
