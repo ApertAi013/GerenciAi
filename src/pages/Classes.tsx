@@ -234,137 +234,159 @@ export default function Classes() {
                 ({dayClasses.length} turma{dayClasses.length !== 1 ? 's' : ''})
               </span>
             </div>
-            <div className="classes-grid-modern">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '20px',
+            }}>
         {dayClasses.map((cls) => {
           const statusColor = cls.status === 'ativa' ? '#10b981' : cls.status === 'suspensa' ? '#f59e0b' : '#ef4444';
-          const statusLabel = cls.status === 'ativa' ? 'OPERANDO' : cls.status === 'suspensa' ? 'SUSPENSA' : 'CANCELADA';
+          const statusLabel = cls.status === 'ativa' ? 'Ativa' : cls.status === 'suspensa' ? 'Suspensa' : 'Cancelada';
           const enrolledCount = cls.enrolled_count || cls.students?.length || 0;
           const isExpanded = expandedClassId === cls.id;
+          const clsColor = cls.color || '#3B82F6';
+          const occupancyPct = cls.capacity > 0 ? Math.round((enrolledCount / cls.capacity) * 100) : 0;
 
           return (
-            <div key={cls.id} className="class-card-modern" style={{ borderTop: `4px solid ${cls.color || '#3B82F6'}` }}>
-              {/* Color Bar */}
+            <div key={cls.id} style={{
+              background: isDark ? '#1a1a1a' : 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
+              position: 'relative',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column' as const,
+              opacity: cls.status === 'cancelada' ? 0.6 : 1,
+            }}>
+              {/* Top accent bar */}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: clsColor }} />
+
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '12px',
+                  background: isDark ? `${clsColor}25` : `${clsColor}15`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <FontAwesomeIcon icon={faVolleyball} style={{ fontSize: '20px', color: clsColor }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{
+                    margin: 0, fontSize: '16px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{cls.name || cls.modality_name}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '11px', fontWeight: 600, color: statusColor,
+                      background: isDark ? `${statusColor}20` : `${statusColor}15`,
+                      padding: '2px 8px', borderRadius: '4px',
+                    }}>{statusLabel}</span>
+                    <span style={{
+                      fontSize: '11px', fontWeight: 500, color: isDark ? '#6b6b6b' : '#A3A3A3',
+                    }}>{cls.modality_name}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info row */}
               <div style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: '6px',
-                backgroundColor: cls.color || '#3B82F6',
-                borderRadius: '8px 0 0 8px'
-              }} />
+                display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px',
+                fontSize: '12px', color: isDark ? '#a0a0a0' : '#6B7280',
+              }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <FontAwesomeIcon icon={faClock} style={{ fontSize: '11px' }} />
+                  {cls.start_time.substring(0, 5)}{cls.end_time ? ` - ${cls.end_time.substring(0, 5)}` : ''}
+                </span>
+                {cls.location && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <FontAwesomeIcon icon={faLocationDot} style={{ fontSize: '11px' }} />
+                    {cls.location}
+                  </span>
+                )}
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <FontAwesomeIcon icon={faChartSimple} style={{ fontSize: '11px' }} />
+                  {getLevelLabel(cls)}
+                </span>
+              </div>
 
-              {/* Status Header */}
-              <div className="class-status-header" style={{ backgroundColor: statusColor }}>
-                <h3>{cls.name || cls.modality_name}</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Occupancy bar */}
+              <div style={{
+                background: isDark ? '#141414' : '#FAFAFA', borderRadius: '10px',
+                padding: '10px 14px', marginBottom: '16px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: isDark ? '#a0a0a0' : '#6B7280' }}>
+                    <FontAwesomeIcon icon={faUserGroup} style={{ marginRight: '4px' }} />
+                    Ocupação
+                  </span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>
+                    {enrolledCount}/{cls.capacity}
+                  </span>
+                </div>
+                <div style={{
+                  height: '6px', borderRadius: '3px',
+                  background: isDark ? '#262626' : '#E5E7EB',
+                  overflow: 'hidden',
+                }}>
                   <div style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    backgroundColor: cls.color || '#3B82F6',
-                    border: '2px solid white',
-                    boxShadow: '0 0 4px rgba(0,0,0,0.2)'
-                  }} title={`Cor: ${cls.color || '#3B82F6'}`} />
-                  <span className="status-label">{statusLabel}</span>
+                    height: '100%', borderRadius: '3px',
+                    width: `${Math.min(occupancyPct, 100)}%`,
+                    background: occupancyPct >= 90 ? '#EF4444' : occupancyPct >= 70 ? '#F59E0B' : '#10B981',
+                    transition: 'width 0.3s ease',
+                  }} />
                 </div>
+                {getMismatchCount(cls) > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', fontSize: '11px', color: '#f59e0b' }}>
+                    <FontAwesomeIcon icon={faExclamationTriangle} style={{ fontSize: '10px' }} />
+                    {getMismatchCount(cls)} aluno(s) fora do nível
+                  </div>
+                )}
               </div>
 
-              {/* Class Info Grid */}
-              <div className="class-info-grid">
-                <div className="info-column">
-                  <div className="info-item">
-                    <span className="info-label">Modalidade:</span>
-                    <span className="info-value">{cls.modality_name}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="info-label">Dia:</span>
-                    <span className="info-value">{getWeekdayLabel(cls.weekday)}</span>
-                  </div>
-                  {cls.location && (
-                    <div className="info-item">
-                      <span className="info-label">Local:</span>
-                      <span className="info-value">{cls.location}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="info-column">
-                  <div className="info-item">
-                    <span className="info-label">Horário Início:</span>
-                    <span className="info-value">{cls.start_time.substring(0, 5)}</span>
-                  </div>
-                  {cls.end_time && (
-                    <div className="info-item">
-                      <span className="info-label">Horário Fim:</span>
-                      <span className="info-value">{cls.end_time.substring(0, 5)}</span>
-                    </div>
-                  )}
-                  <div className="info-item">
-                    <span className="info-label">Nível:</span>
-                    <span className="info-value">{getLevelLabel(cls)}</span>
-                  </div>
-                  {getMismatchCount(cls) > 0 && (
-                    <div className="info-item" style={{ color: '#f59e0b', fontSize: '0.8rem', marginTop: '2px' }}>
-                      <FontAwesomeIcon icon={faExclamationTriangle} style={{ marginRight: '4px' }} />
-                      <span>{getMismatchCount(cls)} aluno(s) fora do nível</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="info-column">
-                  <div className="info-item">
-                    <span className="info-label">Capacidade:</span>
-                    <span className="info-value">{cls.capacity} alunos</span>
-                  </div>
-                  <div className="info-item highlight">
-                    <span className="info-label">
-                      <FontAwesomeIcon icon={faUserGroup} style={{ marginRight: '4px' }} />
-                      Alunos Matriculados:
-                    </span>
-                    <span className="info-value-highlight">{enrolledCount}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Students Section */}
+              {/* Students expandable */}
               {enrolledCount > 0 && (
-                <div className="students-section">
+                <div style={{ marginBottom: '16px' }}>
                   <button
-                    className="students-toggle"
+                    type="button"
                     onClick={() => setExpandedClassId(isExpanded ? null : cls.id)}
+                    style={{
+                      width: '100%', padding: '8px 12px', borderRadius: '8px',
+                      background: isDark ? '#141414' : '#F3F4F6', border: 'none',
+                      color: isDark ? '#a0a0a0' : '#6B7280', fontSize: '12px', fontWeight: 600,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      fontFamily: 'inherit', transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? '#1f1f1f' : '#E5E7EB'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? '#141414' : '#F3F4F6'; }}
                   >
-                    <FontAwesomeIcon icon={faUsers} />
-                    <span>{isExpanded ? 'Ocultar' : 'Ver'} Alunos ({enrolledCount})</span>
+                    <FontAwesomeIcon icon={faUsers} style={{ fontSize: '11px' }} />
+                    {isExpanded ? 'Ocultar' : 'Ver'} Alunos ({enrolledCount})
                   </button>
-
                   {isExpanded && cls.students && cls.students.length > 0 && (
-                    <div className="students-list">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
                       {cls.students.map((student: ClassStudent) => (
                         <div
                           key={student.enrollment_id}
-                          className="student-chip"
                           onClick={() => setSelectedStudentId(student.student_id)}
                           style={{
-                            cursor: 'pointer',
-                            ...(isStudentLevelMismatch(cls, student) ? { borderColor: '#f59e0b', backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb' } : {})
+                            display: 'flex', flexDirection: 'column', padding: '6px 10px',
+                            background: isDark ? '#141414' : 'white', borderRadius: '6px',
+                            border: `1px solid ${isStudentLevelMismatch(cls, student) ? '#f59e0b' : (isDark ? '#262626' : '#E5E7EB')}`,
+                            cursor: 'pointer', fontSize: '12px', transition: 'all 0.15s',
+                            ...(isStudentLevelMismatch(cls, student) ? { backgroundColor: isDark ? 'rgba(245,158,11,0.1)' : '#fffbeb' } : {}),
                           }}
                         >
-                          {isStudentLevelMismatch(cls, student) && (
-                            <FontAwesomeIcon
-                              icon={faExclamationTriangle}
-                              style={{ color: '#f59e0b', fontSize: '0.75rem', marginRight: '4px' }}
-                              title={`Nível do aluno (${student.level_name}) não corresponde aos níveis da turma (${cls.allowed_levels?.join(', ')})`}
-                            />
-                          )}
-                          <span className="student-name">{student.student_name}</span>
-                          {student.level_name && (
-                            <span className="student-plan" style={isStudentLevelMismatch(cls, student) ? { color: '#f59e0b' } : {}}>
-                              {student.level_name}
+                          <span style={{ fontWeight: 600, color: isDark ? '#f0f0f0' : '#1a1a1a' }}>
+                            {isStudentLevelMismatch(cls, student) && (
+                              <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#f59e0b', fontSize: '10px', marginRight: '4px' }} />
+                            )}
+                            {student.student_name}
+                          </span>
+                          {(student.level_name || student.plan_name) && (
+                            <span style={{ fontSize: '11px', color: isStudentLevelMismatch(cls, student) ? '#f59e0b' : (isDark ? '#6b6b6b' : '#9CA3AF') }}>
+                              {student.level_name}{student.plan_name ? ` · ${student.plan_name}` : ''}
                             </span>
-                          )}
-                          {student.plan_name && (
-                            <span className="student-plan">{student.plan_name}</span>
                           )}
                         </div>
                       ))}
@@ -373,34 +395,55 @@ export default function Classes() {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="class-card-actions-modern">
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
                 <button
                   type="button"
-                  className="btn-action add-students"
                   onClick={() => setAddStudentsClassId(cls.id)}
-                  title="Adicionar vários alunos"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px', background: isDark ? '#262626' : 'white',
+                    color: isDark ? '#d0d0d0' : '#404040', border: isDark ? '1px solid #333' : '1px solid #E5E5E5',
+                    borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'inherit', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? '#333' : '#F5F5F5'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? '#262626' : 'white'; }}
                 >
-                  <FontAwesomeIcon icon={faUserPlus} />
-                  <span>Adicionar Alunos</span>
+                  <FontAwesomeIcon icon={faUserPlus} style={{ fontSize: '11px' }} />
+                  Alunos
                 </button>
                 <button
                   type="button"
-                  className="btn-action edit"
                   onClick={() => handleEditClass(cls)}
-                  title="Editar turma"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px', background: isDark ? '#262626' : 'white',
+                    color: isDark ? '#d0d0d0' : '#404040', border: isDark ? '1px solid #333' : '1px solid #E5E5E5',
+                    borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'inherit', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? '#333' : '#F5F5F5'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? '#262626' : 'white'; }}
                 >
-                  <FontAwesomeIcon icon={faPenToSquare} />
-                  <span>Editar</span>
+                  <FontAwesomeIcon icon={faPenToSquare} style={{ fontSize: '11px' }} />
+                  Editar
                 </button>
                 <button
                   type="button"
-                  className="btn-action delete"
                   onClick={() => handleDeleteClass(cls.id)}
-                  title="Excluir turma"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px', background: isDark ? 'rgba(239,68,68,0.06)' : 'white',
+                    color: isDark ? '#f87171' : '#ef4444', border: isDark ? '1px solid rgba(239,68,68,0.3)' : '1px solid #fecaca',
+                    borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'inherit', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? 'rgba(239,68,68,0.06)' : 'white'; }}
                 >
-                  <FontAwesomeIcon icon={faTrash} />
-                  <span>Excluir</span>
+                  <FontAwesomeIcon icon={faTrash} style={{ fontSize: '11px' }} />
+                  Excluir
                 </button>
               </div>
             </div>

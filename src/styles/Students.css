@@ -519,6 +519,14 @@
 
 /* ===== Dark Mode ===== */
 
+[data-theme="dark"] .student-avatar {
+  background: #333;
+}
+
+[data-theme="dark"] .profile-avatar-large {
+  background: #333;
+}
+
 [data-theme="dark"] .students-header h1 {
   color: #f0f0f0;
 }

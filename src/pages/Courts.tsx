@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTableTennis, faClock, faPen, faTrash, faDollarSign } from '@fortawesome/free-solid-svg-icons';
 import { courtService } from '../services/courtService';
+import { useThemeStore } from '../store/themeStore';
 import type { Court, CreateCourtData, UpdateCourtData, CourtStatus, OperatingHour } from '../types/courtTypes';
 import '../styles/Courts.css';
 import '../styles/ModernModal.css';
@@ -8,6 +11,8 @@ import '../styles/ModernModal.css';
 const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 const Courts: React.FC = () => {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [courts, setCourts] = useState<Court[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -236,7 +241,11 @@ const Courts: React.FC = () => {
         </button>
       </div>
 
-      <div className="courts-grid">
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+        gap: '20px',
+      }}>
         {courts.length === 0 ? (
           <div className="no-courts">
             <p>Nenhuma quadra cadastrada</p>
@@ -245,41 +254,133 @@ const Courts: React.FC = () => {
             </button>
           </div>
         ) : (
-          courts.map((court) => (
-            <div key={court.id} className="court-card">
-              <div className="court-card-header">
-                <h3>{court.name}</h3>
-                <span className={getStatusBadgeClass(court.status)}>
-                  {getStatusLabel(court.status)}
-                </span>
+          courts.map((court) => {
+            const statusColor = court.status === 'ativa' ? '#10b981' : court.status === 'inativa' ? '#ef4444' : '#f59e0b';
+            const statusLabel = getStatusLabel(court.status);
+            return (
+            <div key={court.id} style={{
+              background: isDark ? '#1a1a1a' : 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
+              position: 'relative',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column' as const,
+              opacity: court.status === 'inativa' ? 0.6 : 1,
+            }}>
+              {/* Top accent bar */}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: statusColor }} />
+
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '12px',
+                  background: isDark ? 'rgba(255,153,0,0.15)' : '#FFF3E0',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <FontAwesomeIcon icon={faTableTennis} style={{ fontSize: '20px', color: '#FF9900' }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{
+                    margin: 0, fontSize: '18px', fontWeight: 700, color: isDark ? '#f0f0f0' : '#1a1a1a',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{court.name}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                    <span style={{
+                      fontSize: '11px', fontWeight: 600, color: statusColor,
+                      background: isDark ? `${statusColor}20` : `${statusColor}15`,
+                      padding: '2px 8px', borderRadius: '4px',
+                    }}>{statusLabel}</span>
+                  </div>
+                </div>
               </div>
+
+              {/* Description */}
               {court.description && (
-                <p className="court-description">{court.description}</p>
-              )}
-              {court.default_price_cents != null && court.default_price_cents > 0 && (
-                <p className="court-price">
-                  Preço padrão: R$ {(court.default_price_cents / 100).toFixed(2)}
+                <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: isDark ? '#a0a0a0' : '#737373', lineHeight: '1.5' }}>
+                  {court.description}
                 </p>
               )}
-              {court.cancellation_deadline_hours != null && (
-                <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: '4px 0' }}>
-                  Cancelamento: {court.cancellation_deadline_hours}h de antecedência
-                  {court.cancellation_fee_cents ? ` | Taxa: R$${(court.cancellation_fee_cents / 100).toFixed(2)}` : ''}
-                </p>
+
+              {/* Info box */}
+              {(court.default_price_cents != null && court.default_price_cents > 0 || court.cancellation_deadline_hours != null) && (
+                <div style={{
+                  background: isDark ? '#141414' : '#FAFAFA', borderRadius: '10px',
+                  padding: '12px 14px', marginBottom: '16px', fontSize: '13px',
+                  color: isDark ? '#a0a0a0' : '#737373', display: 'flex', flexDirection: 'column', gap: '6px',
+                }}>
+                  {court.default_price_cents != null && court.default_price_cents > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <FontAwesomeIcon icon={faDollarSign} style={{ fontSize: '12px', color: '#10B981' }} />
+                      <span>Preço: <strong style={{ color: isDark ? '#f0f0f0' : '#1a1a1a' }}>R$ {(court.default_price_cents / 100).toFixed(2)}</strong></span>
+                    </div>
+                  )}
+                  {court.cancellation_deadline_hours != null && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                      <FontAwesomeIcon icon={faClock} style={{ fontSize: '11px' }} />
+                      <span>Cancelamento: {court.cancellation_deadline_hours}h
+                        {court.cancellation_fee_cents ? ` · Taxa: R$${(court.cancellation_fee_cents / 100).toFixed(2)}` : ''}
+                      </span>
+                    </div>
+                  )}
+                </div>
               )}
-              <div className="court-actions">
-                <button className="btn-hours" onClick={() => handleOpenHoursModal(court)}>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                <button
+                  type="button"
+                  onClick={() => handleOpenHoursModal(court)}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px', background: isDark ? '#262626' : 'white',
+                    color: isDark ? '#d0d0d0' : '#404040', border: isDark ? '1px solid #333' : '1px solid #E5E5E5',
+                    borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'inherit', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? '#333' : '#F5F5F5'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? '#262626' : 'white'; }}
+                >
+                  <FontAwesomeIcon icon={faClock} style={{ fontSize: '11px' }} />
                   Horários
                 </button>
-                <button className="btn-edit" onClick={() => handleOpenModal(court)}>
+                <button
+                  type="button"
+                  onClick={() => handleOpenModal(court)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px', background: isDark ? '#262626' : 'white',
+                    color: isDark ? '#d0d0d0' : '#404040', border: isDark ? '1px solid #333' : '1px solid #E5E5E5',
+                    borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'inherit', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? '#333' : '#F5F5F5'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? '#262626' : 'white'; }}
+                >
+                  <FontAwesomeIcon icon={faPen} style={{ fontSize: '11px' }} />
                   Editar
                 </button>
-                <button className="btn-delete" onClick={() => handleDeleteClick(court)}>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteClick(court)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px 16px', background: isDark ? 'rgba(239,68,68,0.06)' : 'white',
+                    color: isDark ? '#f87171' : '#ef4444', border: isDark ? '1px solid rgba(239,68,68,0.3)' : '1px solid #fecaca',
+                    borderRadius: '8px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'inherit', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? 'rgba(239,68,68,0.06)' : 'white'; }}
+                >
+                  <FontAwesomeIcon icon={faTrash} style={{ fontSize: '11px' }} />
                   Deletar
                 </button>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 

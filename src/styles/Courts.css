@@ -17,85 +17,9 @@
   margin: 0;
 }
 
-.courts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
+/* Card CSS removed — cards now use inline styles */
 
-.court-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-
-.court-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.court-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-  gap: 1rem;
-}
-
-.court-card-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #1F2937;
-  flex: 1;
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.status-active {
-  background-color: #D1FAE5;
-  color: #065F46;
-}
-
-.status-inactive {
-  background-color: #FEE2E2;
-  color: #991B1B;
-}
-
-.status-maintenance {
-  background-color: #FEF3C7;
-  color: #92400E;
-}
-
-.court-description {
-  color: #6B7280;
-  font-size: 0.875rem;
-  margin: 0.5rem 0;
-  line-height: 1.5;
-}
-
-.court-price {
-  color: #10B981;
-  font-weight: 600;
-  margin: 0.75rem 0;
-}
-
-.court-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #E5E7EB;
-}
-
-.btn-primary, .btn-secondary, .btn-edit, .btn-delete, .btn-cancel, .btn-submit {
+.btn-primary, .btn-secondary, .btn-cancel, .btn-submit {
   padding: 0.625rem 1.25rem;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -121,36 +45,6 @@
 
 .btn-secondary:hover {
   background-color: #D1D5DB;
-}
-
-.btn-hours {
-  flex: 1;
-  background-color: #8B5CF6;
-  color: white;
-}
-
-.btn-hours:hover {
-  background-color: #7C3AED;
-}
-
-.btn-edit {
-  flex: 1;
-  background-color: #3B82F6;
-  color: white;
-}
-
-.btn-edit:hover {
-  background-color: #2563EB;
-}
-
-.btn-delete {
-  flex: 1;
-  background-color: #EF4444;
-  color: white;
-}
-
-.btn-delete:hover {
-  background-color: #DC2626;
 }
 
 .no-courts {
@@ -316,37 +210,6 @@
 /* ===== DARK MODE OVERRIDES ===== */
 [data-theme="dark"] .courts-header h1 {
   color: #f0f0f0;
-}
-
-[data-theme="dark"] .court-card {
-  background: #1a1a1a;
-}
-
-[data-theme="dark"] .court-card-header h3 {
-  color: #f0f0f0;
-}
-
-[data-theme="dark"] .status-active {
-  background-color: rgba(5, 150, 105, 0.15);
-  color: #34d399;
-}
-
-[data-theme="dark"] .status-inactive {
-  background-color: rgba(220, 38, 38, 0.15);
-  color: #f87171;
-}
-
-[data-theme="dark"] .status-maintenance {
-  background-color: rgba(217, 119, 6, 0.15);
-  color: #fbbf24;
-}
-
-[data-theme="dark"] .court-description {
-  color: #a0a0a0;
-}
-
-[data-theme="dark"] .court-actions {
-  border-top-color: #262626;
 }
 
 [data-theme="dark"] .btn-secondary {

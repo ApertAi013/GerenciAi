@@ -201,13 +201,13 @@ export default function Levels() {
                   onClick={() => handleDelete(level.id)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                    padding: '10px 16px', background: isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2', color: '#EF4444',
+                    padding: '10px 16px', background: isDark ? 'rgba(239, 68, 68, 0.06)' : '#FEF2F2', color: isDark ? '#f87171' : '#EF4444',
                     border: 'none', borderRadius: '10px', fontSize: '13px',
                     fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                     transition: 'background 0.2s',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEE2E2')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = isDark ? 'rgba(239, 68, 68, 0.06)' : '#FEF2F2')}
                 >
                   <FontAwesomeIcon icon={faTrash} style={{ fontSize: '12px' }} />
                   Excluir

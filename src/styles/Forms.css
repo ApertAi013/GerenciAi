@@ -286,8 +286,8 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #7C3AED;
-  box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245,138,37,0.1);
 }
 
 .form-row {
@@ -810,8 +810,8 @@
 [data-theme="dark"] .form-group input:focus,
 [data-theme="dark"] .form-group select:focus,
 [data-theme="dark"] .form-group textarea:focus {
-  border-color: #7C3AED;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  border-color: #F58A25;
+  box-shadow: 0 0 0 3px rgba(245, 138, 37, 0.15);
 }
 
 [data-theme="dark"] .checkbox-label {
