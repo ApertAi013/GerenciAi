@@ -1,12 +1,12 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faUsers, faCalendarDays, faMoneyBillWave, faSquare,
+  faUsers, faFlask, faCalendarDays, faMoneyBillWave, faSquare,
   faBullhorn, faCog, faCrown, faGauge,
 } from '@fortawesome/free-solid-svg-icons';
 import type { LaraCategoryInfo, LaraCategory } from '../../types/laraTypes';
 
 const ICON_MAP: Record<string, typeof faUsers> = {
-  faUsers, faCalendarDays, faMoneyBillWave, faSquare,
+  faUsers, faFlask, faCalendarDays, faMoneyBillWave, faSquare,
   faBullhorn, faCog, faCrown, faGauge,
 };
 

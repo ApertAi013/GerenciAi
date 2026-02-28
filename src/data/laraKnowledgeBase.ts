@@ -2,7 +2,8 @@ import type { LaraModule, LaraCategoryInfo, LaraCategory } from '../types/laraTy
 
 // ===== Categorias =====
 export const LARA_CATEGORIES: LaraCategoryInfo[] = [
-  { id: 'gestao_alunos', label: 'Gestao de Alunos', icon: 'faUsers', description: 'Alunos, experimentais, matriculas e instrutores' },
+  { id: 'gestao_alunos', label: 'Gestao de Alunos', icon: 'faUsers', description: 'Alunos, matriculas e instrutores' },
+  { id: 'experimentais', label: 'Aulas Experimentais', icon: 'faFlask', description: 'Links, agendamentos, conversao e metricas' },
   { id: 'aulas_agenda', label: 'Aulas e Agenda', icon: 'faCalendarDays', description: 'Turmas, agenda, niveis e creditos' },
   { id: 'financeiro', label: 'Financeiro', icon: 'faMoneyBillWave', description: 'Faturas, planos, relatorios e pagamentos' },
   { id: 'quadras_locacoes', label: 'Quadras e Locacoes', icon: 'faSquare', description: 'Quadras, locacoes e mensalistas' },
@@ -120,7 +121,7 @@ export const LARA_MODULES: LaraModule[] = [
       primary: ['experimental', 'experimentais', 'aula experimental', 'aula teste', 'trial', 'aula gratis'],
       secondary: ['agendamento experimental', 'conversao', 'converter aluno', 'link agendamento', 'teste gratuito', 'prospect', 'lead'],
     },
-    category: 'gestao_alunos',
+    category: 'experimentais',
     subTopics: [
       {
         id: 'trial_como_funciona',

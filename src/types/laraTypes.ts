@@ -2,6 +2,7 @@
 
 export type LaraCategory =
   | 'gestao_alunos'
+  | 'experimentais'
   | 'aulas_agenda'
   | 'financeiro'
   | 'quadras_locacoes'
