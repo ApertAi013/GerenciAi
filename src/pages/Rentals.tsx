@@ -62,12 +62,15 @@ export default function Rentals() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [bookingLink, setBookingLink] = useState('');
   const [loadingLink, setLoadingLink] = useState(false);
+  const [showRentalPrices, setShowRentalPrices] = useState(true);
+  const [loadingPriceSettings, setLoadingPriceSettings] = useState(false);
 
   // Operating hours modal
   const [showHoursModal, setShowHoursModal] = useState(false);
   const [hoursCourt, setHoursCourt] = useState<Court | null>(null);
   const [operatingHours, setOperatingHours] = useState<OperatingHour[]>([]);
   const [savingHours, setSavingHours] = useState(false);
+  const [priceTexts, setPriceTexts] = useState<Record<number, string>>({});
   const [showCourtsSection, setShowCourtsSection] = useState(true);
 
   useEffect(() => {
@@ -341,6 +344,13 @@ export default function Rentals() {
       }
       const baseUrl = window.location.origin;
       setBookingLink(`${baseUrl}/reservar/${token}`);
+
+      // Load price settings
+      try {
+        const priceRes = await courtService.getRentalPriceSettings();
+        setShowRentalPrices(priceRes.data?.show_rental_prices ?? true);
+      } catch { /* default to true */ }
+
       setShowShareModal(true);
     } catch {
       toast.error('Erro ao gerar link de reserva');
@@ -349,9 +359,30 @@ export default function Rentals() {
     }
   };
 
+  const handleToggleRentalPrices = async (value: boolean) => {
+    setLoadingPriceSettings(true);
+    try {
+      await courtService.updateRentalPriceSettings(value);
+      setShowRentalPrices(value);
+      toast.success(value ? 'Preços visíveis no link' : 'Preços ocultos no link');
+    } catch {
+      toast.error('Erro ao atualizar configuração');
+    } finally {
+      setLoadingPriceSettings(false);
+    }
+  };
+
   const copyLink = () => {
     navigator.clipboard.writeText(bookingLink);
     toast.success('Link copiado!');
+  };
+
+  const initPriceTexts = (hours: OperatingHour[]) => {
+    const texts: Record<number, string> = {};
+    hours.forEach((h) => {
+      texts[h.day_of_week] = h.price_cents ? (h.price_cents / 100).toFixed(2).replace('.', ',') : '';
+    });
+    setPriceTexts(texts);
   };
 
   const handleOpenHoursModal = async (court: Court) => {
@@ -360,6 +391,7 @@ export default function Rentals() {
       const response = await courtService.getOperatingHours(court.id);
       if (response.data) {
         setOperatingHours(response.data);
+        initPriceTexts(response.data);
       }
     } catch {
       const defaults: OperatingHour[] = [];
@@ -375,6 +407,7 @@ export default function Rentals() {
         });
       }
       setOperatingHours(defaults);
+      initPriceTexts(defaults);
     }
     setShowHoursModal(true);
   };
@@ -412,6 +445,12 @@ export default function Rentals() {
         is_active: source.is_active,
       }))
     );
+    const sourceText = priceTexts[sourceDayOfWeek] || '';
+    setPriceTexts(prev => {
+      const next = { ...prev };
+      for (let i = 0; i < 7; i++) next[i] = sourceText;
+      return next;
+    });
     toast.success('Horário copiado para todos os dias');
   };
 
@@ -1178,7 +1217,7 @@ export default function Rentals() {
             </div>
             <div className="mm-content">
               <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '16px' }}>
-                Configure os dias e horários disponíveis para locação pública.
+                Configure os dias, horários e preços disponíveis para locação pública. O valor definido em cada dia será exibido no link de reserva para os clientes.
               </p>
               <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
                 {operatingHours.map((h) => (
@@ -1222,6 +1261,27 @@ export default function Rentals() {
                           <option value={90}>1h30</option>
                           <option value={120}>2h</option>
                         </select>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ color: '#9CA3AF', fontSize: '0.8rem' }}>R$</span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="0,00"
+                            value={priceTexts[h.day_of_week] ?? ''}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/[^\d,.]/, '');
+                              setPriceTexts(prev => ({ ...prev, [h.day_of_week]: val }));
+                            }}
+                            onBlur={() => {
+                              const raw = (priceTexts[h.day_of_week] || '').replace(',', '.');
+                              const parsed = parseFloat(raw);
+                              const cents = !isNaN(parsed) && parsed > 0 ? Math.round(parsed * 100) : null;
+                              updateHour(h.day_of_week, 'price_cents', cents);
+                              setPriceTexts(prev => ({ ...prev, [h.day_of_week]: cents ? (cents / 100).toFixed(2).replace('.', ',') : '' }));
+                            }}
+                            style={{ padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: '6px', fontSize: '0.85rem', width: '80px' }}
+                          />
+                        </div>
                         <button
                           type="button" onClick={() => copyToAllDays(h.day_of_week)}
                           title="Copiar para todos"
@@ -1286,6 +1346,45 @@ export default function Rentals() {
                   Copiar
                 </button>
               </div>
+              {/* Price toggle */}
+              <div style={{
+                marginTop: '20px', padding: '16px', background: showRentalPrices ? '#F0FDF4' : '#F9FAFB',
+                borderRadius: '10px', border: `1.5px solid ${showRentalPrices ? '#22C55E' : '#E5E7EB'}`,
+                transition: 'all 0.2s ease',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#1F2937', marginBottom: '4px' }}>
+                      Exibir preços no link
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#6B7280' }}>
+                      {showRentalPrices
+                        ? 'Os valores dos horários estão visíveis para quem acessar o link.'
+                        : 'Os valores dos horários estão ocultos no link de reserva.'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleRentalPrices(!showRentalPrices)}
+                    disabled={loadingPriceSettings}
+                    style={{
+                      width: '52px', height: '28px', borderRadius: '14px', border: 'none',
+                      background: showRentalPrices ? '#22C55E' : '#D1D5DB',
+                      cursor: loadingPriceSettings ? 'wait' : 'pointer',
+                      position: 'relative', transition: 'background 0.2s ease', flexShrink: 0,
+                    }}
+                  >
+                    <div style={{
+                      width: '22px', height: '22px', borderRadius: '50%',
+                      background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      position: 'absolute', top: '3px',
+                      left: showRentalPrices ? '27px' : '3px',
+                      transition: 'left 0.2s ease',
+                    }} />
+                  </button>
+                </div>
+              </div>
+
               <p style={{ color: '#9CA3AF', fontSize: '0.8rem', marginTop: '12px' }}>
                 Envie via WhatsApp, redes sociais ou onde preferir. Qualquer pessoa pode reservar sem precisar de cadastro.
               </p>

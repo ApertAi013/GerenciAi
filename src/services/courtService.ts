@@ -54,4 +54,15 @@ export const courtService = {
     const response = await api.post('/api/courts/booking-token/generate');
     return response.data;
   },
+
+  // Rental price visibility settings
+  getRentalPriceSettings: async (): Promise<CourtApiResponse<{ show_rental_prices: boolean }>> => {
+    const response = await api.get('/api/courts/rental-price-settings');
+    return response.data;
+  },
+
+  updateRentalPriceSettings: async (show_rental_prices: boolean): Promise<CourtApiResponse<{ show_rental_prices: boolean }>> => {
+    const response = await api.put('/api/courts/rental-price-settings', { show_rental_prices });
+    return response.data;
+  },
 };

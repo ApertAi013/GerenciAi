@@ -31,6 +31,10 @@
 .mm-modal-lg { max-width: 780px; }
 .mm-modal-xl { max-width: 950px; }
 
+.mm-modal-xl .mm-content {
+  padding: 1rem;
+}
+
 /* Header */
 .mm-header {
   display: flex;

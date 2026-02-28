@@ -45,6 +45,7 @@ import {
   faTshirt,
   faTrophy,
   faEnvelope,
+  faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import toast from 'react-hot-toast';
@@ -54,11 +55,13 @@ import { arenaService } from '../services/arenaService';
 import { levelService } from '../services/levelService';
 import { modalityService } from '../services/modalityService';
 import { classService } from '../services/classService';
+import { enrollmentService } from '../services/enrollmentService';
 import { planService } from '../services/planService';
 import { courtService } from '../services/courtService';
 import { trialStudentService } from '../services/trialStudentService';
 import { studentService } from '../services/studentService';
 import { api } from '../services/api';
+import ImageCropModal from '../components/ImageCropModal';
 
 // ─── Types ───
 interface CreatedLevel {
@@ -91,7 +94,7 @@ interface CreatedPlan {
   price_cents: number;
 }
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 9;
 
 const LEVEL_COLORS = [
   '#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444',
@@ -396,6 +399,7 @@ export default function Onboarding() {
   const [arenaName, setArenaName] = useState(user?.arenas?.[0]?.name || '');
   const [logoUrl, setLogoUrl] = useState(user?.logo_url || '');
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   // Step 2 — Levels
   const [levelName, setLevelName] = useState('');
@@ -409,7 +413,7 @@ export default function Onboarding() {
   const [createdCourts, setCreatedCourts] = useState<CreatedCourt[]>([]);
   const [classModalityId, setClassModalityId] = useState<number | null>(null);
   const [className, setClassName] = useState('');
-  const [classWeekday, setClassWeekday] = useState('');
+  const [classWeekdays, setClassWeekdays] = useState<string[]>([]);
   const [classStartTime, setClassStartTime] = useState('');
   const [classDuration, setClassDuration] = useState(60);
   const [classColor, setClassColor] = useState(LEVEL_COLORS[1]);
@@ -434,7 +438,12 @@ export default function Onboarding() {
   const [studentLevel, setStudentLevel] = useState('');
   const [createdStudent, setCreatedStudent] = useState<{ id: number; name: string } | null>(null);
 
-  // Step 6 — Trial class config
+  // Step 6 — Enrollment
+  const [enrollmentPlanId, setEnrollmentPlanId] = useState<number | null>(null);
+  const [enrollmentClassIds, setEnrollmentClassIds] = useState<Set<number>>(new Set());
+  const [enrollmentCreated, setEnrollmentCreated] = useState(false);
+
+  // Step 7 — Trial class config
   const [trialBookingToken, setTrialBookingToken] = useState<string | null>(null);
   const [trialEnabledClassIds, setTrialEnabledClassIds] = useState<Set<number>>(new Set());
 
@@ -502,13 +511,22 @@ export default function Onboarding() {
     }
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error('Imagem muito grande. Máximo 2MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => setCropImageSrc(reader.result as string);
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleCroppedLogo = async (blob: Blob) => {
+    setCropImageSrc(null);
     setUploadingLogo(true);
     try {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', new File([blob], 'logo.jpg', { type: 'image/jpeg' }));
       const response = await api.post('/api/upload/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -589,6 +607,25 @@ export default function Onboarding() {
     }
   };
 
+  // Auto-format time input: digits only, auto-inserts ":"
+  const handleTimeChange = (value: string, setter: (v: string) => void) => {
+    const digits = value.replace(/[^\d]/g, '').slice(0, 4);
+    if (digits.length <= 2) {
+      setter(digits);
+    } else {
+      setter(`${digits.slice(0, 2)}:${digits.slice(2)}`);
+    }
+  };
+
+  const normalizeTime = (value: string): string => {
+    const digits = value.replace(/[^\d]/g, '');
+    if (!digits) return '';
+    if (digits.length === 1) return `0${digits}:00`;
+    if (digits.length === 2) return `${digits.padStart(2, '0')}:00`;
+    if (digits.length === 3) return `${digits.slice(0, 2)}:${digits.slice(2)}0`;
+    return `${digits.slice(0, 2)}:${digits.slice(2, 4)}`;
+  };
+
   const calcEndTime = (start: string, durationMin: number) => {
     if (!start) return '';
     const [h, m] = start.split(':').map(Number);
@@ -599,33 +636,37 @@ export default function Onboarding() {
   };
 
   const handleCreateClass = async () => {
-    if (!classModalityId || !classWeekday || !classStartTime) {
-      toast.error('Preencha modalidade, dia e horário de início');
+    if (!classModalityId || classWeekdays.length === 0 || !classStartTime) {
+      toast.error('Preencha modalidade, dia(s) e horário de início');
       return;
     }
     setLoading(true);
     try {
       const endTime = calcEndTime(classStartTime, classDuration);
-      const res = await classService.createClass({
-        modality_id: classModalityId,
-        name: className.trim() || undefined,
-        weekday: classWeekday as any,
-        start_time: classStartTime,
-        end_time: endTime || undefined,
-        allowed_levels: classAllowedLevels.length > 0 ? classAllowedLevels : undefined,
-        color: classColor,
-        location: classLocation.trim() || undefined,
-        capacity: classCapacity ? parseInt(classCapacity) : undefined,
-      });
       const modName = createdModalities.find(m => m.id === classModalityId)?.name || '';
-      setCreatedClasses(prev => [...prev, { id: res.data.id, modality_name: modName, weekday: classWeekday, start_time: classStartTime }]);
+
+      for (const day of classWeekdays) {
+        const res = await classService.createClass({
+          modality_id: classModalityId,
+          name: className.trim() || undefined,
+          weekday: day as any,
+          start_time: classStartTime,
+          end_time: endTime || undefined,
+          allowed_levels: classAllowedLevels.length > 0 ? classAllowedLevels : undefined,
+          color: classColor,
+          location: classLocation.trim() || undefined,
+          capacity: classCapacity ? parseInt(classCapacity) : undefined,
+        });
+        setCreatedClasses(prev => [...prev, { id: res.data.id, modality_name: modName, weekday: day, start_time: classStartTime }]);
+      }
+
       setClassName('');
-      setClassWeekday('');
+      setClassWeekdays([]);
       setClassStartTime('');
       setClassAllowedLevels([]);
       setClassLocation('');
       setClassCapacity('20');
-      toast.success('Turma criada!');
+      toast.success(classWeekdays.length > 1 ? `${classWeekdays.length} turmas criadas!` : 'Turma criada!');
     } catch {
       toast.error('Erro ao criar turma');
     } finally {
@@ -686,6 +727,30 @@ export default function Onboarding() {
       toast.success(`Aluno "${res.data.full_name}" cadastrado!`);
     } catch (err: any) {
       const msg = err.response?.data?.message || err.response?.data?.errors?.[0]?.message || 'Erro ao cadastrar aluno';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateEnrollment = async () => {
+    if (!createdStudent || !enrollmentPlanId || enrollmentClassIds.size === 0) {
+      toast.error('Selecione um plano e pelo menos uma turma');
+      return;
+    }
+    setLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await enrollmentService.createEnrollment({
+        student_id: createdStudent.id,
+        plan_id: enrollmentPlanId,
+        start_date: today,
+        class_ids: Array.from(enrollmentClassIds),
+      });
+      setEnrollmentCreated(true);
+      toast.success('Matrícula criada com sucesso!');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Erro ao criar matrícula';
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -760,7 +825,7 @@ export default function Onboarding() {
 
   const renderStep1 = () => (
     <div className="onb-fade" key="step1">
-      <div style={styles.stepIndicator}>ETAPA 1 DE 8</div>
+      <div style={styles.stepIndicator}>ETAPA 1 DE 9</div>
       <h1 style={styles.stepTitle}>Bem-vindo ao ArenaAi, {user?.full_name?.split(' ')[0]}!</h1>
       <p style={styles.stepSubtitle}>
         Vamos configurar sua arena em poucos passos. Uma <strong>arena</strong> representa seu espaço esportivo
@@ -829,7 +894,7 @@ export default function Onboarding() {
 
   const renderStep2 = () => (
     <div className="onb-fade" key="step2">
-      <div style={styles.stepIndicator}>ETAPA 2 DE 8</div>
+      <div style={styles.stepIndicator}>ETAPA 2 DE 9</div>
       <h1 style={styles.stepTitle}>Crie seus Níveis</h1>
       <p style={styles.stepSubtitle}>
         Níveis categorizam seus alunos por experiência e servem como filtro para turmas.
@@ -886,9 +951,16 @@ export default function Onboarding() {
         </div>
       )}
 
-      <div style={styles.infoBox}>
-        Gerencie seus níveis a qualquer momento em <strong>Níveis</strong> no menu lateral.
-      </div>
+      {createdLevels.length > 0 && (
+        <div style={{
+          marginTop: '16px', padding: '14px 16px', borderRadius: '10px',
+          background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)',
+        }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
+            Pronto! Você já aprendeu como criar níveis. Pode continuar explorando aqui ou seguir para o próximo passo — tudo isso está disponível no sistema a qualquer momento.
+          </p>
+        </div>
+      )}
 
       <div style={styles.navRow}>
         <button style={styles.secondaryBtn} onClick={prev}>
@@ -903,7 +975,7 @@ export default function Onboarding() {
 
   const renderStep3 = () => (
     <div className="onb-fade" key="step3">
-      <div style={styles.stepIndicator}>ETAPA 3 DE 8</div>
+      <div style={styles.stepIndicator}>ETAPA 3 DE 9</div>
       <h1 style={styles.stepTitle}>Modalidades, Quadras e Turmas</h1>
       <p style={styles.stepSubtitle}>
         Crie as modalidades (esportes/atividades), suas quadras e depois monte as turmas.
@@ -1022,13 +1094,15 @@ export default function Onboarding() {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Dia da Semana</label>
+            <label style={styles.label}>Dias da Semana <span style={{ fontWeight: 400, fontSize: '0.8em', color: '#888' }}>(selecione um ou mais)</span></label>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {WEEKDAYS.map(w => (
                 <div
                   key={w.key}
-                  style={styles.weekdayChip(classWeekday === w.key)}
-                  onClick={() => setClassWeekday(w.key)}
+                  style={styles.weekdayChip(classWeekdays.includes(w.key))}
+                  onClick={() => setClassWeekdays(prev =>
+                    prev.includes(w.key) ? prev.filter(d => d !== w.key) : [...prev, w.key]
+                  )}
                 >
                   {w.label}
                 </div>
@@ -1040,10 +1114,14 @@ export default function Onboarding() {
             <div style={{ flex: 1, ...styles.formGroup }}>
               <label style={styles.label}>Horário Início</label>
               <input
-                type="time"
+                type="text"
+                inputMode="numeric"
                 style={styles.input}
                 value={classStartTime}
-                onChange={e => setClassStartTime(e.target.value)}
+                onChange={e => handleTimeChange(e.target.value, setClassStartTime)}
+                onBlur={() => setClassStartTime(normalizeTime(classStartTime))}
+                placeholder="08:00"
+                maxLength={5}
               />
             </div>
             <div style={{ flex: 1, ...styles.formGroup }}>
@@ -1141,9 +1219,9 @@ export default function Onboarding() {
           )}
 
           <button
-            style={{ ...styles.createBtn, opacity: loading || !classWeekday || !classStartTime ? 0.6 : 1 }}
+            style={{ ...styles.createBtn, opacity: loading || classWeekdays.length === 0 || !classStartTime ? 0.6 : 1 }}
             onClick={handleCreateClass}
-            disabled={loading || !classWeekday || !classStartTime}
+            disabled={loading || classWeekdays.length === 0 || !classStartTime}
           >
             {loading ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faPlus} />}
             Criar Turma
@@ -1162,9 +1240,16 @@ export default function Onboarding() {
         </div>
       )}
 
-      <div style={styles.infoBox}>
-        Gerencie modalidades e turmas em <strong>Turmas</strong>, e quadras em <strong>Quadras</strong> no menu lateral.
-      </div>
+      {createdClasses.length > 0 && (
+        <div style={{
+          marginTop: '16px', padding: '14px 16px', borderRadius: '10px',
+          background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)',
+        }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
+            Pronto! Você já aprendeu como criar modalidades, quadras e turmas. Pode continuar explorando aqui ou seguir para o próximo passo — tudo isso está disponível no sistema a qualquer momento.
+          </p>
+        </div>
+      )}
 
       <div style={styles.navRow}>
         <button style={styles.secondaryBtn} onClick={prev}>
@@ -1183,7 +1268,7 @@ export default function Onboarding() {
 
   const renderStep4 = () => (
     <div className="onb-fade" key="step4">
-      <div style={styles.stepIndicator}>ETAPA 4 DE 8</div>
+      <div style={styles.stepIndicator}>ETAPA 4 DE 9</div>
       <h1 style={styles.stepTitle}>Crie seus Planos</h1>
       <p style={styles.stepSubtitle}>
         Planos definem o preço e a quantidade de aulas por semana. Ao matricular um aluno,
@@ -1347,7 +1432,7 @@ export default function Onboarding() {
 
   const renderStep5 = () => (
     <div className="onb-fade" key="step5">
-      <div style={styles.stepIndicator}>ETAPA 5 DE 8</div>
+      <div style={styles.stepIndicator}>ETAPA 5 DE 9</div>
       <h1 style={styles.stepTitle}>Cadastre seu Primeiro Aluno</h1>
       <p style={styles.stepSubtitle}>
         Agora que a arena está configurada, cadastre um aluno para testar o fluxo completo.
@@ -1512,9 +1597,122 @@ export default function Onboarding() {
     </div>
   );
 
+  // Step 6 — Enrollment
   const renderStep6 = () => (
     <div className="onb-fade" key="step6">
-      <div style={styles.stepIndicator}>ETAPA 6 DE 8</div>
+      <div style={styles.stepIndicator}>ETAPA 6 DE 9</div>
+      <h1 style={styles.stepTitle}>
+        <FontAwesomeIcon icon={faFileInvoiceDollar} style={{ color: '#8b5cf6', marginRight: '12px', fontSize: '1.5rem' }} />
+        Crie uma Matrícula
+      </h1>
+      <p style={styles.stepDescription}>
+        Vincule o aluno cadastrado a um plano e turma. Faturas serão geradas automaticamente conforme o plano escolhido.
+      </p>
+
+      {!enrollmentCreated ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Student (read-only) */}
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Aluno</label>
+            <input style={{ ...styles.input, opacity: 0.7 }} readOnly value={createdStudent?.name || 'Nenhum aluno cadastrado'} />
+          </div>
+
+          {/* Plan selection */}
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Plano</label>
+            <select
+              style={styles.input}
+              value={enrollmentPlanId || ''}
+              onChange={e => setEnrollmentPlanId(Number(e.target.value) || null)}
+            >
+              <option value="">Selecione um plano</option>
+              {createdPlans.map(p => (
+                <option key={p.id} value={p.id}>{p.name} — R$ {(p.price_cents / 100).toFixed(2).replace('.', ',')}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Class selection */}
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Turma(s)</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {createdClasses.map(c => (
+                <label key={c.id} style={{
+                  display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px',
+                  borderRadius: '8px', cursor: 'pointer',
+                  background: enrollmentClassIds.has(c.id) ? 'rgba(139,92,246,0.1)' : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${enrollmentClassIds.has(c.id) ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={enrollmentClassIds.has(c.id)}
+                    onChange={() => setEnrollmentClassIds(prev => {
+                      const next = new Set(prev);
+                      if (next.has(c.id)) next.delete(c.id);
+                      else next.add(c.id);
+                      return next;
+                    })}
+                  />
+                  <span style={{ fontSize: '0.9rem' }}>{c.name} — {c.weekday}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <button
+            style={{ ...styles.createBtn, opacity: loading || !createdStudent || !enrollmentPlanId || enrollmentClassIds.size === 0 ? 0.6 : 1 }}
+            onClick={handleCreateEnrollment}
+            disabled={loading || !createdStudent || !enrollmentPlanId || enrollmentClassIds.size === 0}
+          >
+            {loading ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faCheck} />}
+            Criar Matrícula
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{
+            padding: '20px', borderRadius: '12px',
+            background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+          }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: '1rem', color: '#22C55E' }}>
+              <FontAwesomeIcon icon={faCheck} style={{ marginRight: '8px' }} />
+              Matrícula criada com sucesso!
+            </h3>
+            <p style={{ margin: '0 0 8px', fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+              <strong>{createdStudent?.name}</strong> agora está matriculado(a) no plano <strong>{createdPlans.find(p => p.id === enrollmentPlanId)?.name}</strong>.
+            </p>
+            <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+              <p style={{ margin: '4px 0' }}>Faturas são geradas automaticamente conforme o plano.</p>
+              <p style={{ margin: '4px 0' }}>Você pode cancelar ou editar matrículas a qualquer momento na aba <strong>Matrículas</strong>.</p>
+            </div>
+          </div>
+
+          <div style={{
+            padding: '14px 16px', borderRadius: '10px',
+            background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)',
+          }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
+              Pronto! Você já aprendeu como matricular alunos. Pode continuar explorando ou seguir para o próximo passo.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div style={styles.navRow}>
+        <button style={styles.secondaryBtn} onClick={prev}>
+          <FontAwesomeIcon icon={faArrowLeft} /> Voltar
+        </button>
+        <button style={styles.primaryBtn} onClick={next}>
+          Próximo <FontAwesomeIcon icon={faArrowRight} />
+        </button>
+      </div>
+    </div>
+  );
+
+  // Step 7 — Trial class config (was step 6)
+  const renderStep7 = () => (
+    <div className="onb-fade" key="step7">
+      <div style={styles.stepIndicator}>ETAPA 7 DE 9</div>
       <h1 style={styles.stepTitle}>
         <FontAwesomeIcon icon={faUserPlus} style={{ color: '#3b82f6', marginRight: '12px', fontSize: '1.5rem' }} />
         Alunos Experimentais
@@ -1748,9 +1946,10 @@ export default function Onboarding() {
     </div>
   );
 
-  const renderStep7 = () => (
-    <div className="onb-fade" key="step7">
-      <div style={styles.stepIndicator}>ETAPA 7 DE 8</div>
+  // Step 8 — Court operating hours (was step 7)
+  const renderStep8 = () => (
+    <div className="onb-fade" key="step8">
+      <div style={styles.stepIndicator}>ETAPA 8 DE 9</div>
       <h1 style={styles.stepTitle}>
         <FontAwesomeIcon icon={faBuilding} style={{ color: '#8b5cf6', marginRight: '12px', fontSize: '1.5rem' }} />
         Locação de Quadras
@@ -1759,6 +1958,17 @@ export default function Onboarding() {
         Ofereça locação de quadras com <strong>link público de reserva</strong>. Seus clientes escolhem quadra,
         data e horário — tudo online, sem precisar te ligar.
       </p>
+
+      {/* Warning about schedule conflicts */}
+      <div style={{
+        background: 'rgba(245, 158, 11, 0.1)', borderRadius: '12px', padding: '16px', marginBottom: '16px',
+        border: '1px solid rgba(245, 158, 11, 0.3)', display: 'flex', alignItems: 'flex-start', gap: '12px',
+      }}>
+        <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: '#F59E0B', fontSize: '1.1rem', marginTop: '2px', flexShrink: 0 }} />
+        <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.5 }}>
+          Não se preocupe com horários já marcados, a agenda cuidará disso para você. Selecione aqui os horários em que as quadras estarão disponíveis no geral.
+        </p>
+      </div>
 
       {/* Step 1: Configure operating hours for each court */}
       <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', marginBottom: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -1805,13 +2015,17 @@ export default function Onboarding() {
                       <div style={{ display: 'flex', gap: '12px' }}>
                         <div style={{ flex: 1, ...styles.formGroup }}>
                           <label style={styles.label}>Abertura</label>
-                          <input type="time" style={styles.input} value={courtHoursForm.open}
-                            onChange={e => setCourtHoursForm(p => ({ ...p, open: e.target.value }))} />
+                          <input type="text" inputMode="numeric" style={styles.input} value={courtHoursForm.open}
+                            placeholder="08:00" maxLength={5}
+                            onChange={e => { const v = e.target.value; const d = v.replace(/[^\d]/g, '').slice(0,4); setCourtHoursForm(p => ({ ...p, open: d.length <= 2 ? d : `${d.slice(0,2)}:${d.slice(2)}` })); }}
+                            onBlur={() => setCourtHoursForm(p => ({ ...p, open: normalizeTime(p.open) }))} />
                         </div>
                         <div style={{ flex: 1, ...styles.formGroup }}>
                           <label style={styles.label}>Fechamento</label>
-                          <input type="time" style={styles.input} value={courtHoursForm.close}
-                            onChange={e => setCourtHoursForm(p => ({ ...p, close: e.target.value }))} />
+                          <input type="text" inputMode="numeric" style={styles.input} value={courtHoursForm.close}
+                            placeholder="22:00" maxLength={5}
+                            onChange={e => { const v = e.target.value; const d = v.replace(/[^\d]/g, '').slice(0,4); setCourtHoursForm(p => ({ ...p, close: d.length <= 2 ? d : `${d.slice(0,2)}:${d.slice(2)}` })); }}
+                            onBlur={() => setCourtHoursForm(p => ({ ...p, close: normalizeTime(p.close) }))} />
                         </div>
                         <div style={{ flex: 1, ...styles.formGroup }}>
                           <label style={styles.label}>Preço/hora (R$)</label>
@@ -2012,9 +2226,10 @@ export default function Onboarding() {
     </div>
   );
 
-  const renderStep8 = () => (
-    <div className="onb-fade" key="step8">
-      <div style={styles.stepIndicator}>ETAPA 8 DE 8</div>
+  // Step 9 — App, Communication & Features (was step 8)
+  const renderStep9 = () => (
+    <div className="onb-fade" key="step9">
+      <div style={styles.stepIndicator}>ETAPA 9 DE 9</div>
       <h1 style={styles.stepTitle}>App, Comunicação e mais</h1>
       <p style={styles.stepSubtitle}>
         O ArenaAi oferece um ecossistema completo para conectar você com seus alunos.
@@ -2399,6 +2614,7 @@ export default function Onboarding() {
       case 6: return renderStep6();
       case 7: return renderStep7();
       case 8: return renderStep8();
+      case 9: return renderStep9();
       default: return renderStep1();
     }
   };
@@ -2445,6 +2661,16 @@ export default function Onboarding() {
           {renderCurrentStep()}
         </div>
       </div>
+
+      {cropImageSrc && (
+        <ImageCropModal
+          imageSrc={cropImageSrc}
+          onCropComplete={handleCroppedLogo}
+          onClose={() => setCropImageSrc(null)}
+          cropShape="round"
+          aspect={1}
+        />
+      )}
     </div>
   );
 }

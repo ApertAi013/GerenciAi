@@ -1236,7 +1236,7 @@ export default function Enrollments() {
 }
 
 // Edit Enrollment Modal Component
-function EditEnrollmentModal({
+export function EditEnrollmentModal({
   enrollment,
   plans,
   classes,

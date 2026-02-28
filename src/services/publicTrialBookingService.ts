@@ -134,4 +134,15 @@ export const publicTrialBookingService = {
     const response = await publicTrialApi.put(`/api/public/trial-booking/trial/${bookingToken}/cancel`);
     return response.data;
   },
+
+  async getPlans(token: string): Promise<{
+    status: string;
+    data: {
+      show_prices: boolean;
+      plans: Array<{ id: number; name: string; sessions_per_week: number; price_cents: number }>;
+    };
+  }> {
+    const response = await publicTrialApi.get(`/api/public/trial-booking/${token}/plans`);
+    return response.data;
+  },
 };

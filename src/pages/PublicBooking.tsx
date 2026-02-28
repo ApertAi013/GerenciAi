@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendarPlus } from '@fortawesome/free-solid-svg-icons';
 import { publicBookingService } from '../services/publicBookingService';
 import type { PublicCourt, TimeSlot } from '../services/publicBookingService';
 import '../styles/PublicBooking.css';
@@ -464,6 +466,24 @@ export default function PublicBooking() {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '16px' }}>
+              {selectedDate && selectedSlot && selectedCourt && (
+                <a
+                  href={(() => {
+                    const dateStr = selectedDate.replace(/-/g, '');
+                    const startStr = selectedSlot.start_time.replace(':', '') + '00';
+                    const endStr = selectedSlot.end_time.replace(':', '') + '00';
+                    const title = encodeURIComponent(`Reserva Quadra - ${selectedCourt.name}`);
+                    const details = encodeURIComponent(`Quadra: ${selectedCourt.name}\nHorário: ${selectedSlot.start_time} - ${selectedSlot.end_time}`);
+                    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}T${startStr}/${dateStr}T${endStr}&details=${details}`;
+                  })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pb-btn pb-btn-secondary pb-btn-full"
+                  style={{ textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <FontAwesomeIcon icon={faCalendarPlus} /> Adicionar ao Google Calendar
+                </a>
+              )}
               {rentalToken && (
                 <a
                   href={`/reserva/${rentalToken}`}

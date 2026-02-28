@@ -301,7 +301,12 @@ export default function Signup() {
             )}
 
             <div className="signup-success-actions">
-              <button className="signup-btn-primary" onClick={() => navigate('/login')}>
+              <button className="signup-btn-primary" onClick={() => {
+                const confirmed = window.confirm(
+                  'Você copiou sua senha? Ela foi exibida acima e também enviada por email. Guarde-a antes de continuar!'
+                );
+                if (confirmed) navigate('/login');
+              }}>
                 Acessar o sistema
                 <FontAwesomeIcon icon={faArrowRight} />
               </button>

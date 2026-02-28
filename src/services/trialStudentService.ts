@@ -186,18 +186,42 @@ export const trialStudentService = {
     return response.data;
   },
 
-  async createBookingLink(data: { name: string; class_ids: number[] }): Promise<{ status: string; data: any }> {
+  async createBookingLink(data: { name: string; class_ids: number[]; show_prices?: boolean; plan_ids?: number[] }): Promise<{ status: string; data: any }> {
     const response = await api.post('/api/trial-students/booking-links', data);
     return response.data;
   },
 
-  async updateBookingLink(id: number, data: { name?: string; class_ids?: number[]; is_active?: boolean }): Promise<{ status: string; message: string }> {
+  async updateBookingLink(id: number, data: { name?: string; class_ids?: number[]; is_active?: boolean; show_prices?: boolean; plan_ids?: number[] }): Promise<{ status: string; message: string }> {
     const response = await api.put(`/api/trial-students/booking-links/${id}`, data);
     return response.data;
   },
 
   async deleteBookingLink(id: number): Promise<{ status: string; message: string }> {
     const response = await api.delete(`/api/trial-students/booking-links/${id}`);
+    return response.data;
+  },
+
+  // ============================================================
+  // Price visibility settings
+  // ============================================================
+
+  async getTrialPriceSettings(): Promise<{
+    status: string;
+    data: {
+      show_trial_prices: boolean;
+      trial_visible_plan_ids: number[];
+      plans: Array<{ id: number; name: string; sessions_per_week: number; price_cents: number }>;
+    };
+  }> {
+    const response = await api.get('/api/trial-students/price-settings');
+    return response.data;
+  },
+
+  async updateTrialPriceSettings(data: {
+    show_trial_prices?: boolean;
+    trial_visible_plan_ids?: number[];
+  }): Promise<{ status: string; message: string }> {
+    const response = await api.put('/api/trial-students/price-settings', data);
     return response.data;
   },
 };

@@ -35,6 +35,7 @@ interface WeekViewProps {
   onSlotClick?: (day: number, hour: string) => void;
   onStudentClick?: (studentId: number) => void;
   onClassClick?: (classId: string) => void;
+  onDayClick?: (date: Date) => void;
 }
 
 const HOURS = [
@@ -369,7 +370,8 @@ export default function WeekView({
   isSaving,
   onSlotClick,
   onStudentClick,
-  onClassClick
+  onClassClick,
+  onDayClick
 }: WeekViewProps) {
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
 
@@ -496,7 +498,11 @@ export default function WeekView({
                   className="day-column"
                   style={{ width: `${columnWidth}px` }}
                 >
-                  <div className={`day-header ${isToday ? 'today' : ''}`}>
+                  <div
+                    className={`day-header ${isToday ? 'today' : ''}`}
+                    onClick={() => onDayClick?.(currentDay)}
+                    style={{ cursor: onDayClick ? 'pointer' : undefined }}
+                  >
                     <div className="day-name">{DAYS_OF_WEEK[index + 1] || 'Dom'}</div>
                     <div className="day-number">{format(currentDay, 'd')}</div>
                   </div>

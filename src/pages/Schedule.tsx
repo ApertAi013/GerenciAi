@@ -850,6 +850,7 @@ export default function Schedule() {
           onSlotClick={handleSlotClick}
           onStudentClick={setSelectedStudentId}
           onClassClick={handleClassClick}
+          onDayClick={(date: Date) => { setCurrentWeek(date); setViewMode('day'); }}
         />
       )}
 

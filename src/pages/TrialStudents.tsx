@@ -26,6 +26,9 @@ import {
   Plus,
   Edit3,
   ExternalLink,
+  Send,
+  Bell,
+  Target,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { trialStudentService } from '../services/trialStudentService';
@@ -72,6 +75,12 @@ export default function TrialStudents() {
   const [showCreateLinkModal, setShowCreateLinkModal] = useState(false);
   const [editingLink, setEditingLink] = useState<any | null>(null);
 
+  // Price settings state
+  const [showTrialPrices, setShowTrialPrices] = useState(false);
+  const [visiblePlanIds, setVisiblePlanIds] = useState<number[]>([]);
+  const [allPlans, setAllPlans] = useState<Array<{ id: number; name: string; sessions_per_week: number; price_cents: number }>>([]);
+  const [loadingPriceSettings, setLoadingPriceSettings] = useState(false);
+
   // Helper function to safely convert to number
   const safeNumber = (value: any, defaultValue: number = 0): number => {
     const num = Number(value);
@@ -85,6 +94,7 @@ export default function TrialStudents() {
     fetchUpcomingBookings();
     fetchAllClasses();
     fetchBookingLinks();
+    fetchPriceSettings();
   }, [statusFilter, expiredFilter]);
 
   const fetchStudents = async () => {
@@ -213,6 +223,46 @@ export default function TrialStudents() {
       }
     } catch (error) {
       console.error('Error fetching booking links:', error);
+    }
+  };
+
+  const fetchPriceSettings = async () => {
+    try {
+      const response = await trialStudentService.getTrialPriceSettings();
+      if (response.status === 'success') {
+        setShowTrialPrices(response.data.show_trial_prices);
+        setVisiblePlanIds(response.data.trial_visible_plan_ids || []);
+        setAllPlans(response.data.plans || []);
+      }
+    } catch (error) {
+      console.error('Error fetching price settings:', error);
+    }
+  };
+
+  const handleToggleTrialPrices = async (value: boolean) => {
+    setLoadingPriceSettings(true);
+    try {
+      await trialStudentService.updateTrialPriceSettings({ show_trial_prices: value });
+      setShowTrialPrices(value);
+      toast.success(value ? 'Preços habilitados nos links' : 'Preços desabilitados nos links');
+    } catch {
+      toast.error('Erro ao atualizar configuração');
+    } finally {
+      setLoadingPriceSettings(false);
+    }
+  };
+
+  const handleTogglePlanVisibility = async (planId: number) => {
+    const newIds = visiblePlanIds.includes(planId)
+      ? visiblePlanIds.filter(id => id !== planId)
+      : [...visiblePlanIds, planId];
+    setVisiblePlanIds(newIds);
+    try {
+      await trialStudentService.updateTrialPriceSettings({ trial_visible_plan_ids: newIds });
+    } catch {
+      toast.error('Erro ao atualizar planos');
+      // revert
+      setVisiblePlanIds(visiblePlanIds);
     }
   };
 
@@ -553,6 +603,37 @@ export default function TrialStudents() {
         </div>
       </div>
 
+      {/* Como funciona o fluxo */}
+      <div className="trial-config-section">
+        <div className="trial-config-header" style={{ cursor: 'default' }}>
+          <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={20} />
+            Como funciona o fluxo
+          </h2>
+        </div>
+        <div className="trial-config-body">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            {[
+              { icon: <Send size={20} />, color: '#3B82F6', title: 'Você compartilha o link', desc: 'Envie o link de aula experimental para seus prospects via WhatsApp, redes sociais ou site.' },
+              { icon: <UserPlus size={20} />, color: '#8B5CF6', title: 'O prospect se cadastra', desc: 'Ele escolhe a turma, seleciona o dia e preenche seus dados.' },
+              { icon: <Bell size={20} />, color: '#F59E0B', title: 'Você recebe uma notificação', desc: 'O sistema avisa sobre o novo agendamento de aula experimental.' },
+              { icon: <Target size={20} />, color: '#10B981', title: 'Acompanhe e converta', desc: 'Gerencie os experimentais aqui e converta-os em alunos matriculados.' },
+            ].map((step, i) => (
+              <div key={i} style={{
+                background: `${step.color}10`, border: `1px solid ${step.color}30`,
+                borderRadius: 12, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: step.color, fontWeight: 600 }}>
+                  {step.icon}
+                  <span style={{ fontSize: '0.875rem' }}>{step.title}</span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Trial Class Config Section */}
       <div className="trial-config-section">
         <div
@@ -687,6 +768,90 @@ export default function TrialStudents() {
         )}
       </div>
 
+      {/* Price visibility settings - own section */}
+      <div className="trial-config-section">
+        <div className="trial-config-header" style={{ cursor: 'default' }}>
+          <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <DollarSign size={20} />
+            Exibição de Preços nos Links
+          </h2>
+          <button
+            type="button"
+            onClick={() => handleToggleTrialPrices(!showTrialPrices)}
+            disabled={loadingPriceSettings}
+            style={{
+              width: '52px', height: '28px', borderRadius: '14px', border: 'none',
+              background: showTrialPrices ? '#22C55E' : '#D1D5DB',
+              cursor: loadingPriceSettings ? 'wait' : 'pointer',
+              position: 'relative', transition: 'background 0.2s ease', flexShrink: 0,
+            }}
+          >
+            <div style={{
+              width: '22px', height: '22px', borderRadius: '50%',
+              background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              position: 'absolute', top: '3px',
+              left: showTrialPrices ? '27px' : '3px',
+              transition: 'left 0.2s ease',
+            }} />
+          </button>
+        </div>
+
+        <div className="trial-config-body">
+          <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: showTrialPrices ? '1rem' : 0 }}>
+            {showTrialPrices
+              ? 'Os preços dos planos selecionados serão exibidos no link global e nos links personalizados que tiverem preços habilitados.'
+              : 'Os preços dos planos estão ocultos em todos os links de aula experimental.'}
+          </p>
+
+          {showTrialPrices && (
+            <>
+              <div style={{ fontSize: '0.85rem', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>
+                Planos a exibir no link global:
+              </div>
+              {allPlans.length === 0 ? (
+                <p style={{ fontSize: '0.8rem', color: '#999' }}>
+                  Nenhum plano ativo encontrado. Crie planos na seção de Planos.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {allPlans.map((plan) => (
+                    <label
+                      key={plan.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '8px 10px', borderRadius: '8px', cursor: 'pointer',
+                        background: visiblePlanIds.includes(plan.id) ? '#ECFDF5' : 'white',
+                        border: `1px solid ${visiblePlanIds.includes(plan.id) ? '#86EFAC' : '#E5E7EB'}`,
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visiblePlanIds.includes(plan.id)}
+                        onChange={() => handleTogglePlanVisibility(plan.id)}
+                        style={{ accentColor: '#22C55E' }}
+                      />
+                      <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500, color: '#1F2937' }}>
+                        {plan.name}
+                        {plan.sessions_per_week > 0 && (
+                          <span style={{ color: '#6B7280', fontWeight: 400 }}> · {plan.sessions_per_week}x/sem</span>
+                        )}
+                      </span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#059669' }}>
+                        R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '8px' }}>
+                Links personalizados podem ter seus próprios planos selecionados ao criar/editar.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Custom Booking Links Section */}
       <div className="trial-config-section">
         <div
@@ -744,6 +909,15 @@ export default function TrialStudents() {
                           ) : (
                             <span style={{ color: '#999', fontSize: '0.8rem' }}>
                               {link.class_ids?.length || 0} turma(s)
+                            </span>
+                          )}
+                          {link.show_prices && (
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '3px',
+                              fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px',
+                              background: '#ECFDF5', color: '#059669', fontWeight: 500,
+                            }}>
+                              <DollarSign size={10} /> Preços
                             </span>
                           )}
                         </div>
@@ -1128,6 +1302,7 @@ export default function TrialStudents() {
           link={editingLink}
           allClasses={allClasses}
           trialClassConfigs={trialClassConfigs}
+          allPlans={allPlans}
           onClose={() => { setShowCreateLinkModal(false); setEditingLink(null); }}
           onSuccess={() => {
             fetchBookingLinks();
@@ -1456,15 +1631,18 @@ interface CreateBookingLinkModalProps {
   link: any | null;
   allClasses: any[];
   trialClassConfigs: any[];
+  allPlans: Array<{ id: number; name: string; sessions_per_week: number; price_cents: number }>;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, onClose, onSuccess }: CreateBookingLinkModalProps) {
+function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, allPlans, onClose, onSuccess }: CreateBookingLinkModalProps) {
   const [name, setName] = useState(link?.name || '');
   const [selectedClassIds, setSelectedClassIds] = useState<number[]>(link?.class_ids || []);
   const [saving, setSaving] = useState(false);
   const [classSearch, setClassSearch] = useState('');
+  const [linkShowPrices, setLinkShowPrices] = useState<boolean>(link?.show_prices || false);
+  const [linkPlanIds, setLinkPlanIds] = useState<number[]>(link?.plan_ids || []);
 
   const WEEKDAY_LABELS_LOCAL: Record<string, string> = {
     seg: 'Seg', ter: 'Ter', qua: 'Qua', qui: 'Qui',
@@ -1521,10 +1699,16 @@ function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, onClose, 
     setSaving(true);
     try {
       if (link) {
-        await trialStudentService.updateBookingLink(link.id, { name: name.trim(), class_ids: selectedClassIds });
+        await trialStudentService.updateBookingLink(link.id, {
+          name: name.trim(), class_ids: selectedClassIds,
+          show_prices: linkShowPrices, plan_ids: linkShowPrices ? linkPlanIds : [],
+        });
         toast.success('Link atualizado com sucesso');
       } else {
-        await trialStudentService.createBookingLink({ name: name.trim(), class_ids: selectedClassIds });
+        await trialStudentService.createBookingLink({
+          name: name.trim(), class_ids: selectedClassIds,
+          show_prices: linkShowPrices, plan_ids: linkShowPrices ? linkPlanIds : [],
+        });
         toast.success('Link criado com sucesso');
       }
       onSuccess();
@@ -1650,6 +1834,79 @@ function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, onClose, 
               Algumas turmas selecionadas não estão habilitadas para aula experimental. Elas não aparecerão no link enquanto não forem habilitadas na seção acima.
             </div>
           )}
+
+          {/* Price settings for this link */}
+          <div style={{
+            marginTop: '1rem', padding: '14px', borderRadius: '10px',
+            background: linkShowPrices ? '#F0FDF4' : '#F9FAFB',
+            border: `1.5px solid ${linkShowPrices ? '#22C55E' : '#E5E7EB'}`,
+            transition: 'all 0.2s ease',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: linkShowPrices && allPlans.length > 0 ? '10px' : 0 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1F2937', marginBottom: '2px' }}>
+                  Exibir preços neste link
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>
+                  {linkShowPrices ? 'Os planos selecionados serão exibidos neste link.' : 'Preços ocultos neste link.'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLinkShowPrices(!linkShowPrices)}
+                style={{
+                  width: '48px', height: '26px', borderRadius: '13px', border: 'none',
+                  background: linkShowPrices ? '#22C55E' : '#D1D5DB',
+                  cursor: 'pointer', position: 'relative', transition: 'background 0.2s ease', flexShrink: 0,
+                }}
+              >
+                <div style={{
+                  width: '20px', height: '20px', borderRadius: '50%',
+                  background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  position: 'absolute', top: '3px',
+                  left: linkShowPrices ? '25px' : '3px',
+                  transition: 'left 0.2s ease',
+                }} />
+              </button>
+            </div>
+
+            {linkShowPrices && allPlans.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {allPlans.map((plan) => (
+                  <label
+                    key={plan.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '6px 8px', borderRadius: '6px', cursor: 'pointer',
+                      background: linkPlanIds.includes(plan.id) ? '#ECFDF5' : 'white',
+                      border: `1px solid ${linkPlanIds.includes(plan.id) ? '#86EFAC' : '#E5E7EB'}`,
+                      transition: 'all 0.15s ease', fontSize: '0.85rem',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={linkPlanIds.includes(plan.id)}
+                      onChange={() => {
+                        setLinkPlanIds(prev =>
+                          prev.includes(plan.id) ? prev.filter(id => id !== plan.id) : [...prev, plan.id]
+                        );
+                      }}
+                      style={{ accentColor: '#22C55E' }}
+                    />
+                    <span style={{ flex: 1, fontWeight: 500, color: '#1F2937' }}>
+                      {plan.name}
+                      {plan.sessions_per_week > 0 && (
+                        <span style={{ color: '#6B7280', fontWeight: 400 }}> · {plan.sessions_per_week}x/sem</span>
+                      )}
+                    </span>
+                    <span style={{ fontWeight: 600, color: '#059669' }}>
+                      R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="trial-modal-footer">
