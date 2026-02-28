@@ -339,6 +339,7 @@ function ProductModal({ product, onClose, onSuccess }: { product: ShopProduct | 
   const [visibility, setVisibility] = useState<'all' | 'modality' | 'specific'>(product?.visibility || 'all');
   const [visibilityModalityId, setVisibilityModalityId] = useState<number | null>(product?.visibility_modality_id || null);
   const [paymentType, setPaymentType] = useState<'platform' | 'direct'>(product?.payment_type || 'direct');
+  const [isActive, setIsActive] = useState(product?.is_active !== false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(product?.image_url || null);
   const [modalities, setModalities] = useState<{ id: number; name: string }[]>([]);
@@ -385,7 +386,7 @@ function ProductModal({ product, onClose, onSuccess }: { product: ShopProduct | 
         formData.append('visibility_modality_id', String(visibilityModalityId));
       }
       formData.append('payment_type', paymentType);
-      if (isEditing) formData.append('is_active', String(product!.is_active));
+      formData.append('is_active', String(isActive));
       if (imageFile) formData.append('image', imageFile);
 
       if (isEditing) {
@@ -493,6 +494,24 @@ function ProductModal({ product, onClose, onSuccess }: { product: ShopProduct | 
                 </div>
               )}
             </div>
+
+            {/* Active Toggle */}
+            {isEditing && (
+              <div className="mm-field">
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 0' }}>
+                  <input
+                    type="checkbox"
+                    checked={isActive}
+                    onChange={e => setIsActive(e.target.checked)}
+                    style={{ width: 18, height: 18, accentColor: '#FF9900' }}
+                  />
+                  <span style={{ fontWeight: 600 }}>Produto Ativo</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary, #6b7280)', fontWeight: 400 }}>
+                    — {isActive ? 'Visível para os alunos' : 'Oculto para os alunos'}
+                  </span>
+                </label>
+              </div>
+            )}
           </div>
 
           <div className="mm-footer">
