@@ -446,5 +446,7 @@
 [data-theme="dark"] .shop-btn-icon:hover { background: #252525; }
 
 [data-theme="dark"] .shop-chip { background: #1a1a1a; border-color: #2a2a2a; color: #a0a0a0; }
+[data-theme="dark"] .shop-chip.active { background: #FF9900; color: #fff; border-color: #FF9900; }
+[data-theme="dark"] .shop-filter-chip.active { background: #FF9900; color: #fff; border-color: #FF9900; }
 [data-theme="dark"] .shop-modal-image-picker { background: #252525; border-color: #2a2a2a; }
 [data-theme="dark"] .shop-modal-image-placeholder { color: #666; }

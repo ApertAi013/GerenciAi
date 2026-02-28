@@ -59,13 +59,22 @@ export default function Shop() {
     }
   };
 
-  const handleDeleteProduct = async (product: ShopProduct) => {
-    if (!confirm(`Desativar "${product.name}"?`)) return;
+  const handleToggleProduct = async (product: ShopProduct) => {
+    const action = product.is_active ? 'Desativar' : 'Reativar';
+    if (!confirm(`${action} "${product.name}"?`)) return;
     try {
-      await shopService.deleteProduct(product.id);
+      if (product.is_active) {
+        await shopService.deleteProduct(product.id);
+      } else {
+        const formData = new FormData();
+        formData.append('name', product.name);
+        formData.append('price_cents', String(product.price_cents));
+        formData.append('is_active', 'true');
+        await shopService.updateProduct(product.id, formData);
+      }
       fetchAll();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Erro ao desativar produto');
+      alert(err.response?.data?.message || `Erro ao ${action.toLowerCase()} produto`);
     }
   };
 
@@ -171,7 +180,13 @@ export default function Shop() {
                   </div>
                   <div className="shop-product-actions">
                     <button className="shop-btn-icon" onClick={(e) => { e.stopPropagation(); setEditingProduct(p); setShowProductModal(true); }}><FontAwesomeIcon icon={faPen} /></button>
-                    <button className="shop-btn-icon danger" onClick={(e) => { e.stopPropagation(); handleDeleteProduct(p); }}><FontAwesomeIcon icon={faTrash} /></button>
+                    <button
+                      className={`shop-btn-icon ${p.is_active ? 'danger' : ''}`}
+                      title={p.is_active ? 'Desativar' : 'Reativar'}
+                      onClick={(e) => { e.stopPropagation(); handleToggleProduct(p); }}
+                    >
+                      <FontAwesomeIcon icon={p.is_active ? faTrash : faCheck} />
+                    </button>
                     {!p.is_active && <span className="shop-badge shop-badge-inactive">Inativo</span>}
                   </div>
                 </div>
