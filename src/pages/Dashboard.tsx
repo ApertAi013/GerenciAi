@@ -630,7 +630,9 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <div className="dashboard-loading">
-        <div className="loading-spinner" />
+        <div className="loading-spinner">
+          <span /><span /><span />
+        </div>
         <p>Carregando seu painel...</p>
       </div>
     );
@@ -784,7 +786,7 @@ export default function Dashboard() {
             <div className="mm-content">
               {studentsPopup.loading ? (
                 <div className="dash-students-popup-loading">
-                  <div className="loading-spinner" />
+                  <div className="loading-spinner"><span /><span /><span /></div>
                 </div>
               ) : studentsPopup.students.length === 0 ? (
                 <p className="dash-students-popup-empty">Nenhum aluno matriculado</p>

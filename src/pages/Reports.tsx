@@ -332,7 +332,7 @@ export default function Reports() {
   if (isLoading) {
     return (
       <div className="rpt-loading">
-        <div className="loading-spinner" />
+        <div className="loading-spinner"><span /><span /><span /></div>
         <p>Carregando relatórios...</p>
       </div>
     );
