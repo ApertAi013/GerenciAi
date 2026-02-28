@@ -24,7 +24,7 @@ export default function LaraMessage({ message, isDark, categories, onOptionClick
           className="lara-msg-avatar-small"
           style={{ background: 'linear-gradient(135deg, #FFD04F, #F58A25)' }}
         >
-          <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>L</span>
+          <span style={{ color: '#fff', fontSize: 12, fontWeight: 700 }}>T</span>
         </div>
       )}
       <div>

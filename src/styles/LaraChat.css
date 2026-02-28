@@ -402,6 +402,11 @@
   40% { transform: translateY(-6px); }
 }
 
+@keyframes laraTooltipIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ===== Scrollbar ===== */
 .lara-messages::-webkit-scrollbar {
   width: 5px;

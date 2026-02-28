@@ -9,7 +9,7 @@ export default function LaraTypingIndicator({ isDark }: Props) {
         className="lara-msg-avatar-small"
         style={{ background: 'linear-gradient(135deg, #FFD04F, #F58A25)' }}
       >
-        <span style={{ color: '#fff', fontSize: 12 }}>L</span>
+        <span style={{ color: '#fff', fontSize: 12 }}>T</span>
       </div>
       <div
         className="lara-msg-bubble"

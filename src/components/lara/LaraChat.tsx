@@ -59,7 +59,7 @@ export default function LaraChat() {
     if (hasGreeted.current) return;
     hasGreeted.current = true;
     const msg = createMsg('bot', {
-      text: `Ola, ${firstName}! Eu sou a Lara, sua assistente virtual. Posso te ajudar a navegar pelo sistema e tirar duvidas sobre qualquer funcionalidade. Escolha uma categoria ou me pergunte qualquer coisa!`,
+      text: `Ola, ${firstName}! Eu sou o Tony, seu assistente virtual. Posso te ajudar a navegar pelo sistema e tirar duvidas sobre qualquer funcionalidade. Escolha uma categoria ou me pergunte qualquer coisa!`,
     });
     setMessages([msg]);
     setContext({ state: 'greeting', history: [] });

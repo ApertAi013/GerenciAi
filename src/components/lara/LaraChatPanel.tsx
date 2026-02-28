@@ -64,7 +64,7 @@ export default function LaraChatPanel({
           <FontAwesomeIcon icon={faRobot} className="lara-avatar-icon" />
         </div>
         <div className="lara-header-info">
-          <div className="lara-header-name">Lara</div>
+          <div className="lara-header-name">Tony</div>
           <div className="lara-header-status">Assistente virtual</div>
         </div>
         <button className="lara-header-close" onClick={onClose}>
