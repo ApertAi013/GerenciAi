@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { classService } from '../services/classService';
+import { courtService } from '../services/courtService';
 import { levelService } from '../services/levelService';
 import type { Modality, Class } from '../types/classTypes';
 import type { Level } from '../types/levelTypes';
@@ -60,12 +61,15 @@ export default function CreateClassModal({
 
   const [levels, setLevels] = useState<Level[]>([]);
   const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
+  const [courts, setCourts] = useState<{ id: number; name: string }[]>([]);
+  const [useCustomLocation, setUseCustomLocation] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch levels on mount
+  // Fetch levels and courts on mount
   useEffect(() => {
     fetchLevels();
+    fetchCourts();
   }, []);
 
   const fetchLevels = async () => {
@@ -80,6 +84,28 @@ export default function CreateClassModal({
       console.error('Erro ao buscar níveis:', error);
     }
   };
+
+  const fetchCourts = async () => {
+    try {
+      const response = await courtService.getCourts();
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
+        setCourts(response.data.filter((c: any) => c.status === 'ativa').map((c: any) => ({ id: c.id, name: c.name })));
+      }
+    } catch (error) {
+      console.error('Erro ao buscar quadras:', error);
+    }
+  };
+
+  // Se editando e o location não bate com nenhuma quadra, habilitar texto livre
+  useEffect(() => {
+    if (editClass && editClass.location && courts.length > 0) {
+      const matchesCourt = courts.some(c => c.name === editClass.location);
+      if (!matchesCourt) {
+        setUseCustomLocation(true);
+      }
+    }
+  }, [editClass, courts]);
 
   // Aplicar dados pré-preenchidos da agenda
   useEffect(() => {
@@ -512,14 +538,47 @@ export default function CreateClassModal({
 
           <div className="mm-field-row">
             <div className="mm-field">
-              <label htmlFor="location">Local</label>
-              <input
-                id="location"
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="Ex: Quadra 1"
-              />
+              <label htmlFor="location">Local (Quadra)</label>
+              {courts.length > 0 && !useCustomLocation ? (
+                <>
+                  <select
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => {
+                      if (e.target.value === '__custom__') {
+                        setUseCustomLocation(true);
+                        setFormData({ ...formData, location: '' });
+                      } else {
+                        setFormData({ ...formData, location: e.target.value });
+                      }
+                    }}
+                  >
+                    <option value="">Selecione a quadra</option>
+                    {courts.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                    <option value="__custom__">Outro local...</option>
+                  </select>
+                </>
+              ) : (
+                <>
+                  <input
+                    id="location"
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Ex: Quadra 1"
+                  />
+                  {courts.length > 0 && (
+                    <small
+                      style={{ color: 'var(--accent)', cursor: 'pointer', marginTop: '0.25rem', display: 'block' }}
+                      onClick={() => { setUseCustomLocation(false); setFormData({ ...formData, location: '' }); }}
+                    >
+                      Selecionar quadra cadastrada
+                    </small>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="mm-field">
