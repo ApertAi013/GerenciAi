@@ -81,6 +81,33 @@ export default function LaraChat() {
     }
   }, [isOpen, sendGreeting]);
 
+  // ── Module Click ──
+  const showModuleSubTopics = useCallback((moduleId: string, addToHistory: boolean = true) => {
+    const mod = getModuleById(moduleId);
+    if (!mod) return;
+
+    const options: LaraQuickOption[] = mod.subTopics.map(st => ({
+      id: st.id,
+      label: st.label,
+      type: 'subtopic' as const,
+    }));
+
+    simulateTyping(() => {
+      addMessages(
+        createMsg('bot', {
+          text: `${mod.name}: ${mod.description}\n\nSobre o que voce quer saber?`,
+          options,
+        })
+      );
+      setContext(prev => ({
+        state: 'module_selected',
+        selectedModuleId: moduleId,
+        selectedCategory: prev.selectedCategory,
+        history: addToHistory ? [...prev.history, pushHistory(prev)] : prev.history,
+      }));
+    });
+  }, [addMessages, pushHistory, simulateTyping]);
+
   // ── Category Click ──
   const handleCategoryClick = useCallback((category: LaraCategory) => {
     const modules = getModulesByCategory(category);
@@ -119,33 +146,6 @@ export default function LaraChat() {
       }));
     });
   }, [addMessages, pushHistory, simulateTyping, showModuleSubTopics]);
-
-  // ── Module Click ──
-  const showModuleSubTopics = useCallback((moduleId: string, addToHistory: boolean = true) => {
-    const mod = getModuleById(moduleId);
-    if (!mod) return;
-
-    const options: LaraQuickOption[] = mod.subTopics.map(st => ({
-      id: st.id,
-      label: st.label,
-      type: 'subtopic' as const,
-    }));
-
-    simulateTyping(() => {
-      addMessages(
-        createMsg('bot', {
-          text: `${mod.name}: ${mod.description}\n\nSobre o que voce quer saber?`,
-          options,
-        })
-      );
-      setContext(prev => ({
-        state: 'module_selected',
-        selectedModuleId: moduleId,
-        selectedCategory: prev.selectedCategory,
-        history: addToHistory ? [...prev.history, pushHistory(prev)] : prev.history,
-      }));
-    });
-  }, [addMessages, pushHistory, simulateTyping]);
 
   // ── SubTopic Click ──
   const showSubTopicAnswer = useCallback((subTopicId: string) => {
