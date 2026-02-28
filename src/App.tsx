@@ -48,6 +48,7 @@ import BillingBlocked from './pages/BillingBlocked'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Arenas from './pages/Arenas'
+import Shop from './pages/Shop'
 import SystemGuide from './pages/SystemGuide'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import Onboarding from './pages/Onboarding'
@@ -132,6 +133,7 @@ export default function App() {
             <Route path="/avisos" element={<Announcements />} />
             <Route path="/formularios" element={<Forms />} />
             <Route path="/pagamentos-app" element={<AppPayments />} />
+            <Route path="/lojinha" element={<Shop />} />
             <Route path="/arenas" element={<Arenas />} />
             <Route path="/meu-plano" element={<MyPlan />} />
             <Route path="/ia" element={<AI />} />
