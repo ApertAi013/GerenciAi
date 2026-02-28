@@ -870,6 +870,10 @@
   background: #141414;
 }
 
+[data-theme="dark"] .trial-config-header h2 {
+  color: #f0f0f0;
+}
+
 [data-theme="dark"] .trial-config-filters {
   border-bottom-color: #262626;
 }

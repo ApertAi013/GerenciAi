@@ -36,6 +36,7 @@ import { classService } from '../services/classService';
 import CreateTrialStudentModal from '../components/CreateTrialStudentModal';
 import ConvertTrialStudentModal from '../components/ConvertTrialStudentModal';
 import type { TrialStudent, TrialMetrics } from '../types/trialStudentTypes';
+import { useThemeStore } from '../store/themeStore';
 import '../styles/TrialStudents.css';
 
 const WEEKDAY_LABELS: Record<string, string> = {
@@ -48,6 +49,8 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 export default function TrialStudents() {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [students, setStudents] = useState<TrialStudent[]>([]);
   const [metrics, setMetrics] = useState<TrialMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -781,14 +784,14 @@ export default function TrialStudents() {
             disabled={loadingPriceSettings}
             style={{
               width: '52px', height: '28px', borderRadius: '14px', border: 'none',
-              background: showTrialPrices ? '#22C55E' : '#D1D5DB',
+              background: showTrialPrices ? '#22C55E' : (isDark ? '#404040' : '#D1D5DB'),
               cursor: loadingPriceSettings ? 'wait' : 'pointer',
               position: 'relative', transition: 'background 0.2s ease', flexShrink: 0,
             }}
           >
             <div style={{
               width: '22px', height: '22px', borderRadius: '50%',
-              background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              background: isDark ? '#e0e0e0' : 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
               position: 'absolute', top: '3px',
               left: showTrialPrices ? '27px' : '3px',
               transition: 'left 0.2s ease',
@@ -797,7 +800,7 @@ export default function TrialStudents() {
         </div>
 
         <div className="trial-config-body">
-          <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: showTrialPrices ? '1rem' : 0 }}>
+          <p style={{ fontSize: '0.875rem', color: isDark ? '#a0a0a0' : '#666', marginBottom: showTrialPrices ? '1rem' : 0 }}>
             {showTrialPrices
               ? 'Os preços dos planos selecionados serão exibidos no link global e nos links personalizados que tiverem preços habilitados.'
               : 'Os preços dos planos estão ocultos em todos os links de aula experimental.'}
@@ -805,11 +808,11 @@ export default function TrialStudents() {
 
           {showTrialPrices && (
             <>
-              <div style={{ fontSize: '0.85rem', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 500, color: isDark ? '#f0f0f0' : '#374151', marginBottom: '8px' }}>
                 Planos a exibir no link global:
               </div>
               {allPlans.length === 0 ? (
-                <p style={{ fontSize: '0.8rem', color: '#999' }}>
+                <p style={{ fontSize: '0.8rem', color: isDark ? '#6b6b6b' : '#999' }}>
                   Nenhum plano ativo encontrado. Crie planos na seção de Planos.
                 </p>
               ) : (
@@ -820,8 +823,12 @@ export default function TrialStudents() {
                       style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
                         padding: '8px 10px', borderRadius: '8px', cursor: 'pointer',
-                        background: visiblePlanIds.includes(plan.id) ? '#ECFDF5' : 'white',
-                        border: `1px solid ${visiblePlanIds.includes(plan.id) ? '#86EFAC' : '#E5E7EB'}`,
+                        background: visiblePlanIds.includes(plan.id)
+                          ? (isDark ? 'rgba(5, 150, 105, 0.1)' : '#ECFDF5')
+                          : (isDark ? '#141414' : 'white'),
+                        border: `1px solid ${visiblePlanIds.includes(plan.id)
+                          ? (isDark ? '#22c55e' : '#86EFAC')
+                          : (isDark ? '#262626' : '#E5E7EB')}`,
                         transition: 'all 0.15s ease',
                       }}
                     >
@@ -831,20 +838,20 @@ export default function TrialStudents() {
                         onChange={() => handleTogglePlanVisibility(plan.id)}
                         style={{ accentColor: '#22C55E' }}
                       />
-                      <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500, color: '#1F2937' }}>
+                      <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500, color: isDark ? '#f0f0f0' : '#1F2937' }}>
                         {plan.name}
                         {plan.sessions_per_week > 0 && (
-                          <span style={{ color: '#6B7280', fontWeight: 400 }}> · {plan.sessions_per_week}x/sem</span>
+                          <span style={{ color: isDark ? '#a0a0a0' : '#6B7280', fontWeight: 400 }}> · {plan.sessions_per_week}x/sem</span>
                         )}
                       </span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#059669' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#34d399' : '#059669' }}>
                         R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
                       </span>
                     </label>
                   ))}
                 </div>
               )}
-              <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '8px' }}>
+              <p style={{ fontSize: '0.75rem', color: isDark ? '#6b6b6b' : '#9CA3AF', marginTop: '8px' }}>
                 Links personalizados podem ter seus próprios planos selecionados ao criar/editar.
               </p>
             </>
@@ -862,7 +869,7 @@ export default function TrialStudents() {
           <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Link2 size={20} />
             Links Personalizados
-            <span style={{ fontSize: '0.8rem', color: '#666', fontWeight: 400 }}>
+            <span style={{ fontSize: '0.8rem', color: isDark ? '#a0a0a0' : '#666', fontWeight: 400 }}>
               ({bookingLinks.filter((l: any) => l.is_active).length} ativos)
             </span>
           </h2>
@@ -871,7 +878,7 @@ export default function TrialStudents() {
 
         {showBookingLinksSection && (
           <div className="trial-config-body">
-            <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '0.875rem', color: isDark ? '#a0a0a0' : '#666', marginBottom: '1rem' }}>
               Crie links de agendamento que mostram apenas turmas específicas. Ideal para divulgar modalidades separadamente.
             </p>
 
@@ -915,7 +922,8 @@ export default function TrialStudents() {
                             <span style={{
                               display: 'inline-flex', alignItems: 'center', gap: '3px',
                               fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px',
-                              background: '#ECFDF5', color: '#059669', fontWeight: 500,
+                              background: isDark ? 'rgba(5, 150, 105, 0.15)' : '#ECFDF5',
+                              color: isDark ? '#34d399' : '#059669', fontWeight: 500,
                             }}>
                               <DollarSign size={10} /> Preços
                             </span>
@@ -1509,7 +1517,7 @@ function TrialStudentDetailsModal({
                         style={{
                           marginTop: '0.5rem',
                           padding: '0.75rem',
-                          background: 'white',
+                          background: isDark ? '#141414' : 'white',
                           borderRadius: '6px',
                           fontSize: '0.875rem',
                         }}
@@ -1532,16 +1540,16 @@ function TrialStudentDetailsModal({
                       <div
                         key={classItem.id}
                         style={{
-                          background: '#f8f9fa',
+                          background: isDark ? '#141414' : '#f8f9fa',
                           padding: '0.75rem',
                           borderRadius: '8px',
                           fontSize: '0.875rem',
                         }}
                       >
-                        <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.25rem', color: isDark ? '#f0f0f0' : undefined }}>
                           {classItem.class_name}
                         </div>
-                        <div style={{ color: '#666' }}>
+                        <div style={{ color: isDark ? '#a0a0a0' : '#666' }}>
                           Data: {new Date(classItem.attendance_date.split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR')}
                           {' · '}
                           {classItem.attended ? (
@@ -1555,7 +1563,7 @@ function TrialStudentDetailsModal({
                             style={{
                               marginTop: '0.5rem',
                               padding: '0.5rem',
-                              background: 'white',
+                              background: isDark ? '#1a1a1a' : 'white',
                               borderRadius: '4px',
                               fontSize: '0.8rem',
                             }}
@@ -1838,16 +1846,18 @@ function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, allPlans,
           {/* Price settings for this link */}
           <div style={{
             marginTop: '1rem', padding: '14px', borderRadius: '10px',
-            background: linkShowPrices ? '#F0FDF4' : '#F9FAFB',
-            border: `1.5px solid ${linkShowPrices ? '#22C55E' : '#E5E7EB'}`,
+            background: linkShowPrices
+              ? (isDark ? 'rgba(5, 150, 105, 0.1)' : '#F0FDF4')
+              : (isDark ? '#141414' : '#F9FAFB'),
+            border: `1.5px solid ${linkShowPrices ? '#22C55E' : (isDark ? '#262626' : '#E5E7EB')}`,
             transition: 'all 0.2s ease',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: linkShowPrices && allPlans.length > 0 ? '10px' : 0 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1F2937', marginBottom: '2px' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: isDark ? '#f0f0f0' : '#1F2937', marginBottom: '2px' }}>
                   Exibir preços neste link
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>
+                <div style={{ fontSize: '0.75rem', color: isDark ? '#a0a0a0' : '#6B7280' }}>
                   {linkShowPrices ? 'Os planos selecionados serão exibidos neste link.' : 'Preços ocultos neste link.'}
                 </div>
               </div>
@@ -1856,13 +1866,13 @@ function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, allPlans,
                 onClick={() => setLinkShowPrices(!linkShowPrices)}
                 style={{
                   width: '48px', height: '26px', borderRadius: '13px', border: 'none',
-                  background: linkShowPrices ? '#22C55E' : '#D1D5DB',
+                  background: linkShowPrices ? '#22C55E' : (isDark ? '#404040' : '#D1D5DB'),
                   cursor: 'pointer', position: 'relative', transition: 'background 0.2s ease', flexShrink: 0,
                 }}
               >
                 <div style={{
                   width: '20px', height: '20px', borderRadius: '50%',
-                  background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  background: isDark ? '#e0e0e0' : 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                   position: 'absolute', top: '3px',
                   left: linkShowPrices ? '25px' : '3px',
                   transition: 'left 0.2s ease',
@@ -1878,8 +1888,12 @@ function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, allPlans,
                     style={{
                       display: 'flex', alignItems: 'center', gap: '8px',
                       padding: '6px 8px', borderRadius: '6px', cursor: 'pointer',
-                      background: linkPlanIds.includes(plan.id) ? '#ECFDF5' : 'white',
-                      border: `1px solid ${linkPlanIds.includes(plan.id) ? '#86EFAC' : '#E5E7EB'}`,
+                      background: linkPlanIds.includes(plan.id)
+                        ? (isDark ? 'rgba(5, 150, 105, 0.1)' : '#ECFDF5')
+                        : (isDark ? '#141414' : 'white'),
+                      border: `1px solid ${linkPlanIds.includes(plan.id)
+                        ? (isDark ? '#22c55e' : '#86EFAC')
+                        : (isDark ? '#262626' : '#E5E7EB')}`,
                       transition: 'all 0.15s ease', fontSize: '0.85rem',
                     }}
                   >
@@ -1893,13 +1907,13 @@ function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, allPlans,
                       }}
                       style={{ accentColor: '#22C55E' }}
                     />
-                    <span style={{ flex: 1, fontWeight: 500, color: '#1F2937' }}>
+                    <span style={{ flex: 1, fontWeight: 500, color: isDark ? '#f0f0f0' : '#1F2937' }}>
                       {plan.name}
                       {plan.sessions_per_week > 0 && (
-                        <span style={{ color: '#6B7280', fontWeight: 400 }}> · {plan.sessions_per_week}x/sem</span>
+                        <span style={{ color: isDark ? '#a0a0a0' : '#6B7280', fontWeight: 400 }}> · {plan.sessions_per_week}x/sem</span>
                       )}
                     </span>
-                    <span style={{ fontWeight: 600, color: '#059669' }}>
+                    <span style={{ fontWeight: 600, color: isDark ? '#34d399' : '#059669' }}>
                       R$ {(plan.price_cents / 100).toFixed(2).replace('.', ',')}
                     </span>
                   </label>

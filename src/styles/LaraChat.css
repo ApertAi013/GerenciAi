@@ -276,6 +276,14 @@
   color: #fff;
 }
 
+[data-theme="dark"] .lara-link-btn {
+  color: #fff;
+}
+
+[data-theme="dark"] .lara-link-btn:hover {
+  color: #fff;
+}
+
 /* ===== Input Area ===== */
 .lara-input-area {
   display: flex;
