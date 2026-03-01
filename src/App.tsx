@@ -49,6 +49,8 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Arenas from './pages/Arenas'
 import Shop from './pages/Shop'
+import Torneios from './pages/Torneios'
+import PublicTournamentRegistration from './pages/PublicTournamentRegistration'
 import SystemGuide from './pages/SystemGuide'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import Onboarding from './pages/Onboarding'
@@ -112,6 +114,7 @@ export default function App() {
         <Route path="/contratar" element={<Signup />} />
         <Route path="/apertai" element={<ApertaiPromo />} />
         <Route path="/billing-blocked" element={<BillingBlocked />} />
+        <Route path="/torneio/:registrationToken" element={<PublicTournamentRegistration />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/onboarding" element={<Onboarding />} />
@@ -134,6 +137,7 @@ export default function App() {
             <Route path="/formularios" element={<Forms />} />
             <Route path="/pagamentos-app" element={<AppPayments />} />
             <Route path="/lojinha" element={<Shop />} />
+            <Route path="/torneios" element={<Torneios />} />
             <Route path="/arenas" element={<Arenas />} />
             <Route path="/meu-plano" element={<MyPlan />} />
             <Route path="/ia" element={<AI />} />

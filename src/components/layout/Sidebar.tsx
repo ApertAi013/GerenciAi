@@ -35,6 +35,7 @@ import {
   faCheck,
   faPen,
   faStore,
+  faTrophy,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -72,6 +73,7 @@ const menuItems: MenuItem[] = [
   { path: '/formularios', label: 'Formulários', icon: faClipboardCheck },
   { path: '/financeiro', label: 'Financeiro', icon: faMoneyBillWave },
   { path: '/lojinha', label: 'Lojinha', icon: faStore },
+  { path: '/torneios', label: 'Torneios', icon: faTrophy },
   { path: '/pagamentos-app', label: 'Pagamento App', icon: faMobileAlt },
   { path: '/relatorios', label: 'Relatórios', icon: faChartBar },
   { path: '/niveis', label: 'Níveis', icon: faLayerGroup },
