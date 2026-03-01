@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faTrash, faLink, faCopy, faCheck, faTimes, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { studentService } from '../services/studentService';
+import type { PendingRegistration } from '../services/studentService';
 import { levelService } from '../services/levelService';
 import { financialService } from '../services/financialService';
 import type { Student } from '../types/studentTypes';
@@ -29,11 +30,19 @@ export default function Students() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<number>>(new Set());
   const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+  const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>([]);
+  const [registrationToken, setRegistrationToken] = useState<string | null>(null);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [approvingStudent, setApprovingStudent] = useState<PendingRegistration | null>(null);
+  const [approveLevel, setApproveLevel] = useState<number | undefined>(undefined);
   const itemsPerPage = 20;
 
   useEffect(() => {
     fetchStudents();
     fetchLevels();
+    fetchPendingRegistrations();
   }, [statusFilter]);
 
   const fetchLevels = async () => {
@@ -66,6 +75,64 @@ export default function Students() {
       console.error('Erro ao buscar alunos:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchPendingRegistrations = async () => {
+    try {
+      const response = await studentService.getPendingRegistrations();
+      setPendingRegistrations(response.data || []);
+    } catch (error) {
+      console.error('Erro ao buscar cadastros pendentes:', error);
+    }
+  };
+
+  const handleGetLink = async () => {
+    try {
+      const response = await studentService.getRegistrationToken();
+      if (response.data?.token) {
+        setRegistrationToken(response.data.token);
+      } else {
+        const genResponse = await studentService.generateRegistrationToken();
+        setRegistrationToken(genResponse.data.token);
+      }
+      setShowLinkModal(true);
+    } catch (error) {
+      console.error('Erro ao obter link:', error);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (!registrationToken) return;
+    const link = `${window.location.origin}/cadastro-aluno/${registrationToken}`;
+    navigator.clipboard.writeText(link);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const handleApproveRegistration = async () => {
+    if (!approvingStudent || !approveLevel) return;
+    try {
+      await studentService.approveRegistration(approvingStudent.id, approveLevel);
+      setShowApproveModal(false);
+      setApprovingStudent(null);
+      setApproveLevel(undefined);
+      fetchPendingRegistrations();
+      fetchStudents();
+    } catch (error) {
+      console.error('Erro ao aprovar cadastro:', error);
+      alert('Erro ao aprovar cadastro');
+    }
+  };
+
+  const handleRejectRegistration = async (id: number) => {
+    if (!confirm('Tem certeza que deseja rejeitar este cadastro?')) return;
+    try {
+      await studentService.rejectRegistration(id);
+      fetchPendingRegistrations();
+    } catch (error) {
+      console.error('Erro ao rejeitar cadastro:', error);
+      alert('Erro ao rejeitar cadastro');
     }
   };
 
@@ -231,6 +298,9 @@ export default function Students() {
             </button>
           )}
 
+          <button type="button" className="btn-primary" onClick={handleGetLink} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <FontAwesomeIcon icon={faLink} /> Link
+          </button>
           <button type="button" className="btn-primary" onClick={() => setShowCreateModal(true)}>
             + ALUNO
           </button>
@@ -239,6 +309,86 @@ export default function Students() {
           </button>
         </div>
       </div>
+
+      {/* Pending Registrations Banner */}
+      {pendingRegistrations.length > 0 && (
+        <div style={{
+          background: '#FEF3C7',
+          border: '1px solid #F59E0B',
+          borderRadius: '10px',
+          padding: '16px',
+          marginBottom: '16px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <FontAwesomeIcon icon={faUserPlus} style={{ color: '#D97706' }} />
+            <strong style={{ color: '#92400E' }}>
+              {pendingRegistrations.length} cadastro{pendingRegistrations.length > 1 ? 's' : ''} pendente{pendingRegistrations.length > 1 ? 's' : ''} de aprovacao
+            </strong>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+            {pendingRegistrations.map((reg) => (
+              <div key={reg.id} style={{
+                background: '#fff',
+                border: '1px solid #E5E7EB',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                minWidth: '240px',
+                flex: '1 1 240px',
+                maxWidth: '360px',
+              }}>
+                <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '4px' }}>{reg.full_name}</div>
+                <div style={{ fontSize: '0.85rem', color: '#6B7280' }}>{reg.email}</div>
+                {reg.phone && <div style={{ fontSize: '0.85rem', color: '#6B7280' }}>{reg.phone}</div>}
+                <div style={{ fontSize: '0.8rem', color: '#9CA3AF', marginTop: '4px' }}>
+                  {new Date(reg.created_at).toLocaleDateString('pt-BR')}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setApprovingStudent(reg);
+                      setApproveLevel(undefined);
+                      setShowApproveModal(true);
+                    }}
+                    style={{
+                      background: '#10B981',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 14px',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faCheck} /> Aprovar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRejectRegistration(reg.id)}
+                    style={{
+                      background: '#EF4444',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 14px',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faTimes} /> Rejeitar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="filter-tabs">
@@ -490,6 +640,119 @@ export default function Students() {
             fetchStudents();
           }}
         />
+      )}
+
+      {/* Registration Link Modal */}
+      {showLinkModal && registrationToken && (
+        <div className="mm-overlay" onClick={() => setShowLinkModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
+              <h2>Link de Cadastro de Aluno</h2>
+              <button type="button" className="mm-close" onClick={() => setShowLinkModal(false)}>&#10005;</button>
+            </div>
+            <div className="mm-content">
+              <p style={{ color: '#6B7280', marginBottom: '16px' }}>
+                Compartilhe este link para que alunos preencham seus proprios dados de cadastro.
+              </p>
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                background: '#F3F4F6',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                alignItems: 'center',
+              }}>
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/cadastro-aluno/${registrationToken}`}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '0.85rem',
+                    outline: 'none',
+                    color: '#374151',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  style={{
+                    background: linkCopied ? '#10B981' : '#3B82F6',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.85rem',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <FontAwesomeIcon icon={linkCopied ? faCheck : faCopy} />
+                  {linkCopied ? 'Copiado!' : 'Copiar'}
+                </button>
+              </div>
+            </div>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowLinkModal(false)}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approve Registration Modal */}
+      {showApproveModal && approvingStudent && (
+        <div className="mm-overlay" onClick={() => setShowApproveModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-header">
+              <h2>Aprovar Cadastro</h2>
+              <button type="button" className="mm-close" onClick={() => setShowApproveModal(false)}>&#10005;</button>
+            </div>
+            <div className="mm-content">
+              <div style={{ marginBottom: '16px' }}>
+                <strong>{approvingStudent.full_name}</strong>
+                <div style={{ fontSize: '0.9rem', color: '#6B7280' }}>{approvingStudent.email}</div>
+                {approvingStudent.phone && <div style={{ fontSize: '0.9rem', color: '#6B7280' }}>{approvingStudent.phone}</div>}
+                {approvingStudent.cpf && <div style={{ fontSize: '0.9rem', color: '#6B7280' }}>CPF: {approvingStudent.cpf}</div>}
+              </div>
+              <div className="mm-field">
+                <label htmlFor="approve-level">Nivel do Aluno *</label>
+                <select
+                  id="approve-level"
+                  value={approveLevel || ''}
+                  onChange={(e) => setApproveLevel(Number(e.target.value) || undefined)}
+                  required
+                >
+                  <option value="">Selecione o nivel...</option>
+                  {levels.map((level) => (
+                    <option key={level.id} value={level.id}>
+                      {level.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mm-footer">
+              <button type="button" className="mm-btn mm-btn-secondary" onClick={() => setShowApproveModal(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="mm-btn mm-btn-primary"
+                onClick={handleApproveRegistration}
+                disabled={!approveLevel}
+              >
+                Aprovar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

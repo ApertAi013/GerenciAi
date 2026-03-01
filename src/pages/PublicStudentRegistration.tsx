@@ -1,0 +1,253 @@
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router';
+import { publicStudentRegistrationService } from '../services/publicStudentRegistrationService';
+import '../styles/PublicTrialBooking.css';
+
+export default function PublicStudentRegistration() {
+  // Public pages always use light theme
+  useEffect(() => {
+    const prev = document.documentElement.getAttribute('data-theme');
+    document.documentElement.setAttribute('data-theme', 'light');
+    return () => { if (prev) document.documentElement.setAttribute('data-theme', prev); };
+  }, []);
+
+  const { token } = useParams<{ token: string }>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Business info
+  const [businessName, setBusinessName] = useState('');
+  const [businessDescription, setBusinessDescription] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+
+  // Form fields
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [sex, setSex] = useState('');
+
+  useEffect(() => {
+    if (!token) return;
+    loadInfo();
+  }, [token]);
+
+  const loadInfo = async () => {
+    try {
+      setLoading(true);
+      const response = await publicStudentRegistrationService.getRegistrationInfo(token!);
+      setBusinessName(response.data?.business_name || '');
+      setBusinessDescription(response.data?.business_description || '');
+      setLogoUrl(response.data?.logo_url || '');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Link de cadastro invalido ou expirado.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const formatCpf = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim() || !email.trim()) {
+      setError('Nome e email sao obrigatorios.');
+      return;
+    }
+
+    setError('');
+    setSubmitting(true);
+
+    try {
+      const data: any = {
+        full_name: fullName.trim(),
+        email: email.trim(),
+      };
+      if (phone) data.phone = phone.replace(/\D/g, '');
+      if (cpf) data.cpf = cpf.replace(/\D/g, '');
+      if (birthDate) data.birth_date = birthDate;
+      if (sex) data.sex = sex;
+
+      await publicStudentRegistrationService.registerStudent(token!, data);
+      setSuccess(true);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao enviar cadastro.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="ptb-page">
+        <div className="ptb-container">
+          <div className="ptb-loading">Carregando...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !businessName) {
+    return (
+      <div className="ptb-page">
+        <div className="ptb-container">
+          <div className="ptb-error-card">
+            <h2>Link Invalido</h2>
+            <p>{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="ptb-page">
+        <div className="ptb-container">
+          <div className="ptb-card" style={{ textAlign: 'center', padding: '40px 24px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#10003;</div>
+            <h2 style={{ color: '#10B981', marginBottom: '12px' }}>Cadastro Enviado!</h2>
+            <p style={{ color: '#6B7280', fontSize: '1rem', lineHeight: 1.5 }}>
+              Seu cadastro foi enviado com sucesso para <strong>{businessName}</strong>.
+              <br />O gestor ira analisar e aprovar em breve.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ptb-page">
+      <div className="ptb-container">
+        {/* Header */}
+        <div className="ptb-card" style={{ textAlign: 'center', marginBottom: '16px' }}>
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt={businessName}
+              style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', marginBottom: 12 }}
+            />
+          )}
+          <h1 style={{ fontSize: '1.4rem', margin: '0 0 4px 0', color: '#1F2937' }}>{businessName}</h1>
+          {businessDescription && (
+            <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: 0 }}>{businessDescription}</p>
+          )}
+        </div>
+
+        {/* Form */}
+        <div className="ptb-card">
+          <h2 style={{ fontSize: '1.1rem', marginBottom: '20px', color: '#1F2937' }}>Cadastro de Aluno</h2>
+
+          {error && (
+            <div className="ptb-error-inline">
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="ptb-field">
+              <label className="ptb-label">Nome Completo *</label>
+              <input
+                className="ptb-input"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Seu nome completo"
+                required
+              />
+            </div>
+
+            <div className="ptb-field">
+              <label className="ptb-label">Email *</label>
+              <input
+                className="ptb-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                required
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="ptb-field">
+                <label className="ptb-label">Telefone</label>
+                <input
+                  className="ptb-input"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(formatPhone(e.target.value))}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+
+              <div className="ptb-field">
+                <label className="ptb-label">CPF</label>
+                <input
+                  className="ptb-input"
+                  type="text"
+                  value={cpf}
+                  onChange={(e) => setCpf(formatCpf(e.target.value))}
+                  placeholder="000.000.000-00"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="ptb-field">
+                <label className="ptb-label">Data de Nascimento</label>
+                <input
+                  className="ptb-input"
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                />
+              </div>
+
+              <div className="ptb-field">
+                <label className="ptb-label">Sexo</label>
+                <select
+                  className="ptb-input"
+                  value={sex}
+                  onChange={(e) => setSex(e.target.value)}
+                >
+                  <option value="">Selecione...</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Outro">Outro</option>
+                  <option value="N/I">Prefiro nao informar</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="ptb-btn ptb-btn-primary"
+              disabled={submitting}
+              style={{ width: '100%', marginTop: '8px' }}
+            >
+              {submitting ? 'Enviando...' : 'Enviar Cadastro'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

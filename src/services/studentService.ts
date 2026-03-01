@@ -45,4 +45,41 @@ export const studentService = {
       data: response.data.data || []
     };
   },
+
+  // Registration link
+  async getRegistrationToken(): Promise<{ success: boolean; data: { token: string | null } }> {
+    const response = await api.get('/api/students/registration-token');
+    return response.data;
+  },
+
+  async generateRegistrationToken(): Promise<{ success: boolean; data: { token: string } }> {
+    const response = await api.post('/api/students/registration-token/generate');
+    return response.data;
+  },
+
+  async getPendingRegistrations(): Promise<{ success: boolean; data: PendingRegistration[] }> {
+    const response = await api.get('/api/students/pending-registrations');
+    return response.data;
+  },
+
+  async approveRegistration(id: number, level_id: number): Promise<{ success: boolean; data: Student }> {
+    const response = await api.put(`/api/students/${id}/approve-registration`, { level_id });
+    return response.data;
+  },
+
+  async rejectRegistration(id: number): Promise<{ success: boolean }> {
+    const response = await api.delete(`/api/students/${id}/reject-registration`);
+    return response.data;
+  },
 };
+
+export interface PendingRegistration {
+  id: number;
+  full_name: string;
+  email: string;
+  phone?: string;
+  cpf?: string;
+  birth_date?: string;
+  sex?: string;
+  created_at: string;
+}
