@@ -178,8 +178,8 @@ function CreateModal({ editingTournament, onClose, onSave }: {
           </div>
         </div>
         <div className="mm-footer">
-          <button className="mm-btn-cancel" onClick={onClose}>Cancelar</button>
-          <button className="mm-btn-save" onClick={handleSubmit} disabled={saving}>
+          <button className="mm-btn mm-btn-secondary" onClick={onClose}>Cancelar</button>
+          <button className="mm-btn mm-btn-primary" onClick={handleSubmit} disabled={saving}>
             {saving ? <FontAwesomeIcon icon={faSpinner} spin /> : editingTournament ? 'Salvar' : 'Criar Torneio'}
           </button>
         </div>
