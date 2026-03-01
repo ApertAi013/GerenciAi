@@ -598,6 +598,11 @@
   color: #f0f0f0;
 }
 
+[data-theme="dark"] .students-table input[type="checkbox"] {
+  color-scheme: dark;
+  accent-color: #3B82F6;
+}
+
 [data-theme="dark"] .status-active {
   background: rgba(5, 150, 105, 0.15);
   color: #34d399;
