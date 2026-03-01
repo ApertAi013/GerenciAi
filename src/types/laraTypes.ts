@@ -7,6 +7,7 @@ export type LaraCategory =
   | 'financeiro'
   | 'quadras_locacoes'
   | 'comunicacao'
+  | 'torneios_loja'
   | 'configuracoes'
   | 'premium'
   | 'admin';
