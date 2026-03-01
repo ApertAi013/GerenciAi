@@ -120,10 +120,10 @@ export default function PublicStudentRegistration() {
     return (
       <div className="ptb-page">
         <div className="ptb-container">
-          <div className="ptb-card" style={{ textAlign: 'center', padding: '40px 24px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#10003;</div>
-            <h2 style={{ color: '#10B981', marginBottom: '12px' }}>Cadastro Enviado!</h2>
-            <p style={{ color: '#6B7280', fontSize: '1rem', lineHeight: 1.5 }}>
+          <div className="ptb-step ptb-success">
+            <div className="ptb-success-icon">&#10003;</div>
+            <h2>Cadastro Enviado!</h2>
+            <p>
               Seu cadastro foi enviado com sucesso para <strong>{businessName}</strong>.
               <br />O gestor ira analisar e aprovar em breve.
             </p>
@@ -137,23 +137,17 @@ export default function PublicStudentRegistration() {
     <div className="ptb-page">
       <div className="ptb-container">
         {/* Header */}
-        <div className="ptb-card" style={{ textAlign: 'center', marginBottom: '16px' }}>
+        <div className="ptb-header">
           {logoUrl && (
-            <img
-              src={logoUrl}
-              alt={businessName}
-              style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', marginBottom: 12 }}
-            />
+            <img src={logoUrl} alt={businessName} className="ptb-logo" />
           )}
-          <h1 style={{ fontSize: '1.4rem', margin: '0 0 4px 0', color: '#1F2937' }}>{businessName}</h1>
-          {businessDescription && (
-            <p style={{ color: '#6B7280', fontSize: '0.9rem', margin: 0 }}>{businessDescription}</p>
-          )}
+          <h1>{businessName}</h1>
+          {businessDescription && <p className="ptb-subtitle">{businessDescription}</p>}
         </div>
 
         {/* Form */}
-        <div className="ptb-card">
-          <h2 style={{ fontSize: '1.1rem', marginBottom: '20px', color: '#1F2937' }}>Cadastro de Aluno</h2>
+        <div className="ptb-step">
+          <h2>Cadastro de Aluno</h2>
 
           {error && (
             <div className="ptb-error-inline">
@@ -162,10 +156,9 @@ export default function PublicStudentRegistration() {
           )}
 
           <form onSubmit={handleSubmit}>
-            <div className="ptb-field">
-              <label className="ptb-label">Nome Completo *</label>
+            <div className="ptb-form-group">
+              <label>Nome Completo *</label>
               <input
-                className="ptb-input"
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -174,10 +167,9 @@ export default function PublicStudentRegistration() {
               />
             </div>
 
-            <div className="ptb-field">
-              <label className="ptb-label">Email *</label>
+            <div className="ptb-form-group">
+              <label>Email *</label>
               <input
-                className="ptb-input"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -187,10 +179,9 @@ export default function PublicStudentRegistration() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="ptb-field">
-                <label className="ptb-label">Telefone</label>
+              <div className="ptb-form-group">
+                <label>Telefone</label>
                 <input
-                  className="ptb-input"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(formatPhone(e.target.value))}
@@ -198,10 +189,9 @@ export default function PublicStudentRegistration() {
                 />
               </div>
 
-              <div className="ptb-field">
-                <label className="ptb-label">CPF</label>
+              <div className="ptb-form-group">
+                <label>CPF</label>
                 <input
-                  className="ptb-input"
                   type="text"
                   value={cpf}
                   onChange={(e) => setCpf(formatCpf(e.target.value))}
@@ -211,22 +201,29 @@ export default function PublicStudentRegistration() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="ptb-field">
-                <label className="ptb-label">Data de Nascimento</label>
+              <div className="ptb-form-group">
+                <label>Data de Nascimento</label>
                 <input
-                  className="ptb-input"
                   type="date"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
                 />
               </div>
 
-              <div className="ptb-field">
-                <label className="ptb-label">Sexo</label>
+              <div className="ptb-form-group">
+                <label>Sexo</label>
                 <select
-                  className="ptb-input"
                   value={sex}
                   onChange={(e) => setSex(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '10px',
+                    fontSize: '1rem',
+                    backgroundColor: 'white',
+                    boxSizing: 'border-box',
+                  }}
                 >
                   <option value="">Selecione...</option>
                   <option value="Masculino">Masculino</option>
@@ -237,14 +234,15 @@ export default function PublicStudentRegistration() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="ptb-btn ptb-btn-primary"
-              disabled={submitting}
-              style={{ width: '100%', marginTop: '8px' }}
-            >
-              {submitting ? 'Enviando...' : 'Enviar Cadastro'}
-            </button>
+            <div className="ptb-btn-row" style={{ marginTop: '24px' }}>
+              <button
+                type="submit"
+                className="ptb-btn ptb-btn-primary"
+                disabled={submitting}
+              >
+                {submitting ? 'Enviando...' : 'Enviar Cadastro'}
+              </button>
+            </div>
           </form>
         </div>
       </div>
