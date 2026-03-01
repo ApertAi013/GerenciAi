@@ -55,7 +55,7 @@
 .bracket-match {
   width: 200px;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #e2e8f0;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
@@ -95,15 +95,21 @@
   color: #475569;
   border-bottom: 1px solid #f1f5f9;
   min-height: 30px;
+  background: inherit;
+}
+
+.bracket-match-team:first-of-type {
+  border-radius: 8px 8px 0 0;
+}
+
+.bracket-match-team:last-child {
+  border-bottom: none;
+  border-radius: 0 0 8px 8px;
 }
 
 [data-theme="dark"] .bracket-match-team {
   color: #cbd5e1;
   border-color: #334155;
-}
-
-.bracket-match-team:last-child {
-  border-bottom: none;
 }
 
 .bracket-match-team.winner {
