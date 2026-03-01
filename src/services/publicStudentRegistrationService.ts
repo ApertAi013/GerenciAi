@@ -1,9 +1,12 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.DEV
+  ? ''
+  : 'https://gerenciai-backend-798546007335.us-east1.run.app';
 
 const publicApi = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
 });
 
 export const publicStudentRegistrationService = {
