@@ -657,7 +657,7 @@ export default function Students() {
               <div style={{
                 display: 'flex',
                 gap: '8px',
-                background: '#F3F4F6',
+                background: 'var(--bg-tertiary)',
                 borderRadius: '8px',
                 padding: '10px 12px',
                 alignItems: 'center',
@@ -672,7 +672,7 @@ export default function Students() {
                     background: 'transparent',
                     fontSize: '0.85rem',
                     outline: 'none',
-                    color: '#374151',
+                    color: 'var(--text-primary)',
                   }}
                 />
                 <button
