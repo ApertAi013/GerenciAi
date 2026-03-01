@@ -728,6 +728,108 @@
   color: #f0f0f0;
 }
 
+/* ===== Pending Registrations Banner ===== */
+.pending-registrations-banner {
+  background: #FEF3C7;
+  border: 1px solid #F59E0B;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.pending-registrations-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #92400E;
+}
+
+.pending-registrations-header svg {
+  color: #D97706;
+}
+
+.pending-registrations-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pending-registration-card {
+  background: var(--bg-secondary, #fff);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 240px;
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
+.pending-reg-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+  color: var(--text-primary, #1F2937);
+}
+
+.pending-reg-info {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6B7280);
+}
+
+.pending-reg-date {
+  font-size: 0.8rem;
+  color: var(--text-muted, #9CA3AF);
+  margin-top: 4px;
+}
+
+.pending-reg-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pending-reg-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+}
+
+.pending-reg-btn.approve {
+  background: #10B981;
+}
+
+.pending-reg-btn.approve:hover {
+  background: #059669;
+}
+
+.pending-reg-btn.reject {
+  background: #EF4444;
+}
+
+.pending-reg-btn.reject:hover {
+  background: #DC2626;
+}
+
+[data-theme="dark"] .pending-registrations-banner {
+  background: rgba(217, 119, 6, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="dark"] .pending-registrations-header {
+  color: #FBBF24;
+}
+
+[data-theme="dark"] .pending-registrations-header svg {
+  color: #FBBF24;
+}
+
 /* ===== Mobile ===== */
 @media (max-width: 768px) {
   .students-page { padding: 1rem; }

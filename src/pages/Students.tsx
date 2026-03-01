@@ -313,74 +313,38 @@ export default function Students() {
 
       {/* Pending Registrations Banner */}
       {pendingRegistrations.length > 0 && (
-        <div style={{
-          background: '#FEF3C7',
-          border: '1px solid #F59E0B',
-          borderRadius: '10px',
-          padding: '16px',
-          marginBottom: '16px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <FontAwesomeIcon icon={faUserPlus} style={{ color: '#D97706' }} />
-            <strong style={{ color: '#92400E' }}>
+        <div className="pending-registrations-banner">
+          <div className="pending-registrations-header">
+            <FontAwesomeIcon icon={faUserPlus} />
+            <strong>
               {pendingRegistrations.length} cadastro{pendingRegistrations.length > 1 ? 's' : ''} pendente{pendingRegistrations.length > 1 ? 's' : ''} de aprovacao
             </strong>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+          <div className="pending-registrations-list">
             {pendingRegistrations.map((reg) => (
-              <div key={reg.id} style={{
-                background: '#fff',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                minWidth: '240px',
-                flex: '1 1 240px',
-                maxWidth: '360px',
-              }}>
-                <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '4px' }}>{reg.full_name}</div>
-                <div style={{ fontSize: '0.85rem', color: '#6B7280' }}>{reg.email}</div>
-                {reg.phone && <div style={{ fontSize: '0.85rem', color: '#6B7280' }}>{reg.phone}</div>}
-                <div style={{ fontSize: '0.8rem', color: '#9CA3AF', marginTop: '4px' }}>
+              <div key={reg.id} className="pending-registration-card">
+                <div className="pending-reg-name">{reg.full_name}</div>
+                <div className="pending-reg-info">{reg.email}</div>
+                {reg.phone && <div className="pending-reg-info">{reg.phone}</div>}
+                <div className="pending-reg-date">
                   {new Date(reg.created_at).toLocaleDateString('pt-BR')}
                 </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                <div className="pending-reg-actions">
                   <button
                     type="button"
+                    className="pending-reg-btn approve"
                     onClick={() => {
                       setApprovingStudent(reg);
                       setApproveLevel(undefined);
                       setShowApproveModal(true);
-                    }}
-                    style={{
-                      background: '#10B981',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '6px 14px',
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
                     }}
                   >
                     <FontAwesomeIcon icon={faCheck} /> Aprovar
                   </button>
                   <button
                     type="button"
+                    className="pending-reg-btn reject"
                     onClick={() => handleRejectRegistration(reg.id)}
-                    style={{
-                      background: '#EF4444',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '6px 14px',
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
                   >
                     <FontAwesomeIcon icon={faTimes} /> Rejeitar
                   </button>
