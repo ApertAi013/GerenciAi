@@ -315,6 +315,63 @@
 }
 
 /* Sub-tabs inside detail modal */
+/* Start tournament banner */
+.torneio-start-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
+  border: 2px solid #22c55e;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  animation: torneio-banner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes torneio-banner-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+}
+
+[data-theme="dark"] .torneio-start-banner {
+  background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+  border-color: #22c55e;
+}
+
+.torneio-start-banner-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #166534;
+}
+
+[data-theme="dark"] .torneio-start-banner-info {
+  color: #86efac;
+}
+
+.torneio-start-banner-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: none;
+  background: #22c55e;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.torneio-start-banner-btn:hover {
+  background: #16a34a;
+}
+
 .torneio-sub-tabs {
   display: flex;
   gap: 0;

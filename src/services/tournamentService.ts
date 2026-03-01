@@ -6,6 +6,7 @@ export interface Tournament {
   description?: string;
   image_url?: string;
   tournament_date: string;
+  start_time?: string;
   tournament_end_date?: string;
   location?: string;
   format: 'double_elimination' | 'single_elimination';

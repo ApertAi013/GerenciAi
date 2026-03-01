@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus, faTrophy, faSpinner, faCalendar, faMapMarkerAlt,
   faUsers, faPlay, faStop, faCheck, faTimes, faCopy, faLink,
-  faCamera, faMedal, faChevronRight, faCircle,
+  faCamera, faMedal, faChevronRight, faCircle, faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { tournamentService } from '../services/tournamentService';
 import type { Tournament, TournamentTeam, BracketData, TournamentMatch, TournamentRanking } from '../services/tournamentService';
@@ -22,6 +22,171 @@ const STATUS_FILTERS = [
   { key: 'registration', label: 'Inscrições' }, { key: 'live', label: 'Ao Vivo' },
   { key: 'finished', label: 'Finalizados' },
 ];
+
+// ─── Create/Edit Modal (extracted to fix image upload ref issue) ───
+function CreateModal({ editingTournament, onClose, onSave }: {
+  editingTournament: Tournament | null;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const [title, setTitle] = useState(editingTournament?.title || '');
+  const [description, setDescription] = useState(editingTournament?.description || '');
+  const [tournamentDate, setTournamentDate] = useState(editingTournament?.tournament_date?.split('T')[0] || '');
+  const [startTime, setStartTime] = useState(editingTournament?.start_time || '');
+  const [endDate, setEndDate] = useState(editingTournament?.tournament_end_date?.split('T')[0] || '');
+  const [location, setLocation] = useState(editingTournament?.location || '');
+  const [format, setFormat] = useState(editingTournament?.format || 'double_elimination');
+  const [teamSize, setTeamSize] = useState(String(editingTournament?.team_size || 1));
+  const [maxParticipants, setMaxParticipants] = useState(editingTournament?.max_participants ? String(editingTournament.max_participants) : '');
+  const [registrationMode, setRegistrationMode] = useState(editingTournament?.registration_mode || 'manual');
+  const [requireApproval, setRequireApproval] = useState(editingTournament?.require_approval || false);
+  const [showScores, setShowScores] = useState(editingTournament?.show_scores_to_students !== false);
+  const [thirdPlaceMatch, setThirdPlaceMatch] = useState(editingTournament?.third_place_match || false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = async () => {
+    if (!title.trim() || !tournamentDate) {
+      toast.error('Título e data são obrigatórios');
+      return;
+    }
+    setSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', title.trim());
+      formData.append('description', description);
+      formData.append('tournament_date', tournamentDate);
+      if (startTime) formData.append('start_time', startTime);
+      if (endDate) formData.append('tournament_end_date', endDate);
+      formData.append('location', location);
+      formData.append('format', format);
+      formData.append('team_size', teamSize);
+      if (maxParticipants) formData.append('max_participants', maxParticipants);
+      formData.append('registration_mode', registrationMode);
+      formData.append('require_approval', String(requireApproval));
+      formData.append('show_scores_to_students', String(showScores));
+      formData.append('third_place_match', String(thirdPlaceMatch));
+      if (imageFile) formData.append('image', imageFile);
+
+      if (editingTournament) {
+        await tournamentService.updateTournament(editingTournament.id, formData);
+        toast.success('Torneio atualizado!');
+      } else {
+        await tournamentService.createTournament(formData);
+        toast.success('Torneio criado!');
+      }
+      onClose();
+      onSave();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao salvar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="mm-overlay" onClick={onClose}>
+      <div className="mm-modal mm-modal-md" onClick={e => e.stopPropagation()}>
+        <div className="mm-header">
+          <h3>{editingTournament ? 'Editar Torneio' : 'Novo Torneio'}</h3>
+          <button className="mm-close" onClick={onClose}>&times;</button>
+        </div>
+        <div className="mm-content">
+          <div className="mm-field">
+            <label>Título *</label>
+            <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Copa Arena Beach Tennis" />
+          </div>
+          <div className="mm-field">
+            <label>Descrição</label>
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Descrição do torneio..." />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <div className="mm-field">
+              <label>Data Início *</label>
+              <input type="date" value={tournamentDate} onChange={e => setTournamentDate(e.target.value)} />
+            </div>
+            <div className="mm-field">
+              <label>Horário</label>
+              <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+            </div>
+            <div className="mm-field">
+              <label>Data Fim</label>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+            </div>
+          </div>
+          <div className="mm-field">
+            <label>Localização</label>
+            <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Ex: Arena Beach Sports" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="mm-field">
+              <label>Formato</label>
+              <select value={format} onChange={e => setFormat(e.target.value as any)}>
+                <option value="double_elimination">Dupla Eliminatória</option>
+                <option value="single_elimination">Eliminatória Simples</option>
+              </select>
+            </div>
+            <div className="mm-field">
+              <label>Tamanho da Equipe</label>
+              <select value={teamSize} onChange={e => setTeamSize(e.target.value)}>
+                <option value="1">Individual (1x1)</option>
+                <option value="2">Dupla (2x2)</option>
+                <option value="3">Trio (3x3)</option>
+                <option value="4">Quarteto (4x4)</option>
+                <option value="5">Quinteto (5x5)</option>
+              </select>
+            </div>
+          </div>
+          <div className="mm-field">
+            <label>Máximo de participantes (opcional)</label>
+            <input type="number" value={maxParticipants} onChange={e => setMaxParticipants(e.target.value)} placeholder="Ex: 16" />
+          </div>
+          <div className="mm-field">
+            <label>Modo de Inscrição</label>
+            <select value={registrationMode} onChange={e => setRegistrationMode(e.target.value as any)}>
+              <option value="manual">Manual — Você adiciona as equipes</option>
+              <option value="link">Link Público — Envie um link para inscrição</option>
+              <option value="open">Aberto — Alunos se inscrevem pelo app</option>
+            </select>
+            <small style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: 4 }}>
+              {registrationMode === 'manual' && 'Você adiciona as equipes manualmente no sistema.'}
+              {registrationMode === 'link' && 'Um link será gerado para compartilhar. Qualquer pessoa pode se inscrever por ele.'}
+              {registrationMode === 'open' && 'O torneio aparece como aberto para seus alunos no app.'}
+            </small>
+          </div>
+          <div className="mm-field">
+            <label>Imagem (opcional)</label>
+            <input type="file" ref={fileRef} accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ display: 'none' }} />
+            <button type="button" className="torneio-btn-outline" onClick={() => fileRef.current?.click()} style={{ width: '100%', textAlign: 'center', padding: '10px', borderRadius: '8px' }}>
+              <FontAwesomeIcon icon={faCamera} /> {imageFile ? imageFile.name : 'Selecionar imagem'}
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input type="checkbox" checked={requireApproval} onChange={e => setRequireApproval(e.target.checked)} />
+              Exigir aprovação de inscrições
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input type="checkbox" checked={showScores} onChange={e => setShowScores(e.target.checked)} />
+              Mostrar placares para alunos
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input type="checkbox" checked={thirdPlaceMatch} onChange={e => setThirdPlaceMatch(e.target.checked)} />
+              Disputa de 3º lugar
+            </label>
+          </div>
+        </div>
+        <div className="mm-footer">
+          <button className="mm-btn-cancel" onClick={onClose}>Cancelar</button>
+          <button className="mm-btn-save" onClick={handleSubmit} disabled={saving}>
+            {saving ? <FontAwesomeIcon icon={faSpinner} spin /> : editingTournament ? 'Salvar' : 'Criar Torneio'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Torneios() {
   const [tab, setTab] = useState<'tournaments' | 'live' | 'ranking'>('tournaments');
@@ -243,162 +408,6 @@ export default function Torneios() {
 
   const liveTournaments = tournaments.filter(t => t.status === 'live');
 
-  // ─── Create/Edit Modal ───
-  const CreateModal = () => {
-    const [title, setTitle] = useState(editingTournament?.title || '');
-    const [description, setDescription] = useState(editingTournament?.description || '');
-    const [tournamentDate, setTournamentDate] = useState(editingTournament?.tournament_date?.split('T')[0] || '');
-    const [endDate, setEndDate] = useState(editingTournament?.tournament_end_date?.split('T')[0] || '');
-    const [location, setLocation] = useState(editingTournament?.location || '');
-    const [format, setFormat] = useState(editingTournament?.format || 'double_elimination');
-    const [teamSize, setTeamSize] = useState(String(editingTournament?.team_size || 1));
-    const [maxParticipants, setMaxParticipants] = useState(editingTournament?.max_participants ? String(editingTournament.max_participants) : '');
-    const [registrationMode, setRegistrationMode] = useState(editingTournament?.registration_mode || 'manual');
-    const [requireApproval, setRequireApproval] = useState(editingTournament?.require_approval || false);
-    const [showScores, setShowScores] = useState(editingTournament?.show_scores_to_students !== false);
-    const [thirdPlaceMatch, setThirdPlaceMatch] = useState(editingTournament?.third_place_match || false);
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [saving, setSaving] = useState(false);
-    const fileRef = useRef<HTMLInputElement>(null);
-
-    const handleSubmit = async () => {
-      if (!title.trim() || !tournamentDate) {
-        toast.error('Título e data são obrigatórios');
-        return;
-      }
-      setSaving(true);
-      try {
-        const formData = new FormData();
-        formData.append('title', title.trim());
-        formData.append('description', description);
-        formData.append('tournament_date', tournamentDate);
-        if (endDate) formData.append('tournament_end_date', endDate);
-        formData.append('location', location);
-        formData.append('format', format);
-        formData.append('team_size', teamSize);
-        if (maxParticipants) formData.append('max_participants', maxParticipants);
-        formData.append('registration_mode', registrationMode);
-        formData.append('require_approval', String(requireApproval));
-        formData.append('show_scores_to_students', String(showScores));
-        formData.append('third_place_match', String(thirdPlaceMatch));
-        if (imageFile) formData.append('image', imageFile);
-
-        if (editingTournament) {
-          await tournamentService.updateTournament(editingTournament.id, formData);
-          toast.success('Torneio atualizado!');
-        } else {
-          await tournamentService.createTournament(formData);
-          toast.success('Torneio criado!');
-        }
-        setShowCreateModal(false);
-        setEditingTournament(null);
-        fetchAll();
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || 'Erro ao salvar');
-      } finally {
-        setSaving(false);
-      }
-    };
-
-    return (
-      <div className="mm-overlay" onClick={() => { setShowCreateModal(false); setEditingTournament(null); }}>
-        <div className="mm-modal mm-modal-md" onClick={e => e.stopPropagation()}>
-          <div className="mm-header">
-            <h3>{editingTournament ? 'Editar Torneio' : 'Novo Torneio'}</h3>
-            <button className="mm-close" onClick={() => { setShowCreateModal(false); setEditingTournament(null); }}>&times;</button>
-          </div>
-          <div className="mm-content">
-            <div className="mm-field">
-              <label>Título *</label>
-              <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Copa Arena Beach Tennis" />
-            </div>
-            <div className="mm-field">
-              <label>Descrição</label>
-              <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Descrição do torneio..." />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="mm-field">
-                <label>Data Início *</label>
-                <input type="date" value={tournamentDate} onChange={e => setTournamentDate(e.target.value)} />
-              </div>
-              <div className="mm-field">
-                <label>Data Fim</label>
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-              </div>
-            </div>
-            <div className="mm-field">
-              <label>Localização</label>
-              <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Ex: Arena Beach Sports" />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="mm-field">
-                <label>Formato</label>
-                <select value={format} onChange={e => setFormat(e.target.value as any)}>
-                  <option value="double_elimination">Dupla Eliminatória</option>
-                  <option value="single_elimination">Eliminatória Simples</option>
-                </select>
-              </div>
-              <div className="mm-field">
-                <label>Tamanho da Equipe</label>
-                <select value={teamSize} onChange={e => setTeamSize(e.target.value)}>
-                  <option value="1">Individual (1x1)</option>
-                  <option value="2">Dupla (2x2)</option>
-                  <option value="3">Trio (3x3)</option>
-                  <option value="4">Quarteto (4x4)</option>
-                  <option value="5">Quinteto (5x5)</option>
-                </select>
-              </div>
-            </div>
-            <div className="mm-field">
-              <label>Máximo de participantes (opcional)</label>
-              <input type="number" value={maxParticipants} onChange={e => setMaxParticipants(e.target.value)} placeholder="Ex: 16" />
-            </div>
-            <div className="mm-field">
-              <label>Modo de Inscrição</label>
-              <select value={registrationMode} onChange={e => setRegistrationMode(e.target.value as any)}>
-                <option value="manual">Manual — Você adiciona as equipes</option>
-                <option value="link">Link Público — Envie um link para inscrição</option>
-                <option value="open">Aberto — Alunos se inscrevem pelo app</option>
-              </select>
-              <small style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: 4 }}>
-                {registrationMode === 'manual' && 'Você adiciona as equipes manualmente no sistema.'}
-                {registrationMode === 'link' && 'Um link será gerado para compartilhar. Qualquer pessoa pode se inscrever por ele.'}
-                {registrationMode === 'open' && 'O torneio aparece como aberto para seus alunos no app.'}
-              </small>
-            </div>
-            <div className="mm-field">
-              <label>Imagem (opcional)</label>
-              <input type="file" ref={fileRef} accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ display: 'none' }} />
-              <button type="button" className="torneio-btn-outline" onClick={() => fileRef.current?.click()} style={{ width: '100%', textAlign: 'center', padding: '10px', borderRadius: '8px' }}>
-                <FontAwesomeIcon icon={faCamera} /> {imageFile ? imageFile.name : 'Selecionar imagem'}
-              </button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input type="checkbox" checked={requireApproval} onChange={e => setRequireApproval(e.target.checked)} />
-                Exigir aprovação de inscrições
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input type="checkbox" checked={showScores} onChange={e => setShowScores(e.target.checked)} />
-                Mostrar placares para alunos
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input type="checkbox" checked={thirdPlaceMatch} onChange={e => setThirdPlaceMatch(e.target.checked)} />
-                Disputa de 3º lugar
-              </label>
-            </div>
-          </div>
-          <div className="mm-footer">
-            <button className="mm-btn-cancel" onClick={() => { setShowCreateModal(false); setEditingTournament(null); }}>Cancelar</button>
-            <button className="mm-btn-save" onClick={handleSubmit} disabled={saving}>
-              {saving ? <FontAwesomeIcon icon={faSpinner} spin /> : editingTournament ? 'Salvar' : 'Criar Torneio'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // ─── Match Detail Modal ───
   const MatchDetailModal = ({ match, onClose }: { match: TournamentMatch; onClose: () => void }) => {
     return (
@@ -544,7 +553,7 @@ export default function Torneios() {
                   <div className="torneio-card-body">
                     <div className="torneio-card-title">{t.title}</div>
                     <div className="torneio-card-meta">
-                      <span><FontAwesomeIcon icon={faCalendar} /> {new Date(t.tournament_date).toLocaleDateString('pt-BR')}</span>
+                      <span><FontAwesomeIcon icon={faCalendar} /> {new Date(t.tournament_date).toLocaleDateString('pt-BR')}{t.start_time ? ` ${t.start_time}` : ''}</span>
                       {t.location && <span><FontAwesomeIcon icon={faMapMarkerAlt} /> {t.location}</span>}
                       <span><FontAwesomeIcon icon={faUsers} /> {t.team_count || 0} equipes</span>
                     </div>
@@ -629,7 +638,13 @@ export default function Torneios() {
       )}
 
       {/* ─── Create/Edit Modal ─── */}
-      {showCreateModal && <CreateModal />}
+      {showCreateModal && (
+        <CreateModal
+          editingTournament={editingTournament}
+          onClose={() => { setShowCreateModal(false); setEditingTournament(null); }}
+          onSave={fetchAll}
+        />
+      )}
 
       {/* ─── Detail Modal ─── */}
       {selectedTournament && (
@@ -643,6 +658,19 @@ export default function Torneios() {
               <button className="mm-close" onClick={() => setSelectedTournament(null)}>&times;</button>
             </div>
             <div className="mm-content">
+              {/* Start tournament banner - visible on all tabs when ready */}
+              {selectedTournament.bracket_generated && selectedTournament.status !== 'live' && selectedTournament.status !== 'finished' && selectedTournament.status !== 'cancelled' && (
+                <div className="torneio-start-banner">
+                  <div className="torneio-start-banner-info">
+                    <FontAwesomeIcon icon={faPlay} />
+                    <span>Chave gerada! Quando estiver pronto, inicie o torneio para começar os jogos.</span>
+                  </div>
+                  <button className="torneio-start-banner-btn" onClick={handleStartTournament}>
+                    <FontAwesomeIcon icon={faPlay} /> Iniciar Torneio
+                  </button>
+                </div>
+              )}
+
               {/* Sub-tabs */}
               <div className="torneio-sub-tabs">
                 <button className={`torneio-sub-tab ${detailTab === 'info' ? 'active' : ''}`} onClick={() => setDetailTab('info')}>Detalhes</button>
@@ -667,14 +695,16 @@ export default function Torneios() {
                     <div className="torneio-detail-info">
                       <h2>{selectedTournament.title}</h2>
                       {selectedTournament.description && <p>{selectedTournament.description}</p>}
-                      <p><FontAwesomeIcon icon={faCalendar} /> {new Date(selectedTournament.tournament_date).toLocaleDateString('pt-BR')}{selectedTournament.tournament_end_date ? ` — ${new Date(selectedTournament.tournament_end_date).toLocaleDateString('pt-BR')}` : ''}</p>
+                      <p><FontAwesomeIcon icon={faCalendar} /> {new Date(selectedTournament.tournament_date).toLocaleDateString('pt-BR')}{selectedTournament.start_time ? ` às ${selectedTournament.start_time}` : ''}{selectedTournament.tournament_end_date ? ` — ${new Date(selectedTournament.tournament_end_date).toLocaleDateString('pt-BR')}` : ''}</p>
                       {selectedTournament.location && <p><FontAwesomeIcon icon={faMapMarkerAlt} /> {selectedTournament.location}</p>}
                       <p><FontAwesomeIcon icon={faUsers} /> {selectedTournament.teams?.length || 0} equipes — {selectedTournament.format === 'double_elimination' ? 'Dupla Eliminatória' : 'Eliminatória Simples'} — {selectedTournament.team_size === 1 ? 'Individual' : `${selectedTournament.team_size}x${selectedTournament.team_size}`}</p>
 
                       <div className="torneio-detail-actions">
                         <button className="torneio-btn-outline" onClick={() => { setEditingTournament(selectedTournament); setShowCreateModal(true); }}>Editar</button>
-                        {selectedTournament.status === 'ready' && (
-                          <button className="torneio-btn-success" onClick={handleStartTournament}><FontAwesomeIcon icon={faPlay} /> Iniciar Torneio</button>
+                        {selectedTournament.bracket_generated && selectedTournament.status !== 'live' && selectedTournament.status !== 'finished' && selectedTournament.status !== 'cancelled' && (
+                          <button className="torneio-btn-success" onClick={handleStartTournament} style={{ padding: '10px 20px', fontSize: '1rem', fontWeight: 700 }}>
+                            <FontAwesomeIcon icon={faPlay} /> Iniciar Torneio
+                          </button>
                         )}
                         {selectedTournament.status === 'live' && (
                           <button className="torneio-btn-danger" onClick={handleFinishTournament}><FontAwesomeIcon icon={faStop} /> Finalizar</button>
