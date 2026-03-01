@@ -114,7 +114,7 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
         <div className="bracket-section">
           <div className="bracket-grand-final">
             <div>
-              <div className="bracket-gf-label" style={{ color: '#d97706' }}>Disputa de 3o Lugar</div>
+              <div className="bracket-gf-label" style={{ color: '#d97706' }}>Disputa de 3º Lugar</div>
               <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} />
             </div>
           </div>

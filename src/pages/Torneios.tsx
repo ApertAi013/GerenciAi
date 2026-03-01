@@ -6,7 +6,7 @@ import {
   faCamera, faMedal, faChevronRight, faCircle, faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { tournamentService } from '../services/tournamentService';
-import type { Tournament, TournamentTeam, BracketData, TournamentMatch, TournamentRanking } from '../services/tournamentService';
+import type { Tournament, TournamentTeam, BracketData, TournamentMatch, TournamentRanking, TournamentGroup } from '../services/tournamentService';
 import BracketViewer from '../components/BracketViewer';
 import toast from 'react-hot-toast';
 import '../styles/Torneios.css';
@@ -45,6 +45,14 @@ function CreateModal({ editingTournament, onClose, onSave }: {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Group stage fields
+  const [numGroups, setNumGroups] = useState(String(editingTournament?.num_groups || 2));
+  const [teamsPerGroup, setTeamsPerGroup] = useState(String(editingTournament?.teams_per_group || 4));
+  const [advancePerGroup, setAdvancePerGroup] = useState(String(editingTournament?.advance_per_group || 2));
+  const [knockoutFormat, setKnockoutFormat] = useState(editingTournament?.knockout_format || 'single_elimination');
+  const [pointsWin, setPointsWin] = useState(String(editingTournament?.points_win ?? 3));
+  const [pointsDraw, setPointsDraw] = useState(String(editingTournament?.points_draw ?? 1));
+  const [pointsLoss, setPointsLoss] = useState(String(editingTournament?.points_loss ?? 0));
 
   const handleSubmit = async () => {
     if (!title.trim() || !tournamentDate) {
@@ -67,6 +75,15 @@ function CreateModal({ editingTournament, onClose, onSave }: {
       formData.append('require_approval', String(requireApproval));
       formData.append('show_scores_to_students', String(showScores));
       formData.append('third_place_match', String(thirdPlaceMatch));
+      if (format === 'group_stage') {
+        formData.append('num_groups', numGroups);
+        formData.append('teams_per_group', teamsPerGroup);
+        formData.append('advance_per_group', advancePerGroup);
+        formData.append('knockout_format', knockoutFormat);
+        formData.append('points_win', pointsWin);
+        formData.append('points_draw', pointsDraw);
+        formData.append('points_loss', pointsLoss);
+      }
       if (imageFile) formData.append('image', imageFile);
 
       if (editingTournament) {
@@ -119,24 +136,106 @@ function CreateModal({ editingTournament, onClose, onSave }: {
             <label>Localização</label>
             <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Ex: Arena Beach Sports" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div className="mm-field">
-              <label>Tamanho da Equipe</label>
-              <select value={teamSize} onChange={e => setTeamSize(e.target.value)}>
-                <option value="1">Individual (1x1)</option>
-                <option value="2">Dupla (2x2)</option>
-                <option value="3">Trio (3x3)</option>
-                <option value="4">Quarteto (4x4)</option>
-                <option value="5">Quinteto (5x5)</option>
-              </select>
-            </div>
-            <div className="mm-field" style={{ display: 'flex', alignItems: 'center', paddingTop: '22px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input type="checkbox" checked={format === 'double_elimination'} onChange={e => setFormat(e.target.checked ? 'double_elimination' : 'single_elimination')} />
-                Chave dos Perdedores (dupla eliminatória)
-              </label>
+          <div className="mm-field">
+            <label>Tamanho da Equipe</label>
+            <select value={teamSize} onChange={e => setTeamSize(e.target.value)}>
+              <option value="1">Individual (1x1)</option>
+              <option value="2">Dupla (2x2)</option>
+              <option value="3">Trio (3x3)</option>
+              <option value="4">Quarteto (4x4)</option>
+              <option value="5">Quinteto (5x5)</option>
+            </select>
+          </div>
+          <div className="mm-field">
+            <label>Formato</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[
+                { value: 'single_elimination', label: 'Elim. Simples' },
+                { value: 'double_elimination', label: 'Dupla Eliminatória' },
+                { value: 'group_stage', label: 'Fase de Grupos' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFormat(opt.value as any)}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: format === opt.value ? '2px solid #3b82f6' : '2px solid var(--border-color, #e2e8f0)',
+                    background: format === opt.value ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary, #f8fafc)',
+                    color: format === opt.value ? '#3b82f6' : 'var(--text-primary, #334155)',
+                    fontWeight: format === opt.value ? 700 : 500,
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
+          {format === 'group_stage' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div className="mm-field">
+                  <label>Nº de Grupos</label>
+                  <input type="number" min="2" max="12" value={numGroups} onChange={e => setNumGroups(e.target.value)} />
+                </div>
+                <div className="mm-field">
+                  <label>Equipes por Grupo</label>
+                  <input type="number" min="3" max="12" value={teamsPerGroup} onChange={e => setTeamsPerGroup(e.target.value)} />
+                </div>
+                <div className="mm-field">
+                  <label>Avançam por Grupo</label>
+                  <input type="number" min="1" max="8" value={advancePerGroup} onChange={e => setAdvancePerGroup(e.target.value)} />
+                </div>
+              </div>
+              <div className="mm-field">
+                <label>Fase Eliminatória (após grupos)</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" onClick={() => setKnockoutFormat('single_elimination')} style={{
+                    flex: 1, padding: '8px 12px', borderRadius: '8px',
+                    border: knockoutFormat === 'single_elimination' ? '2px solid #3b82f6' : '2px solid var(--border-color, #e2e8f0)',
+                    background: knockoutFormat === 'single_elimination' ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary, #f8fafc)',
+                    color: knockoutFormat === 'single_elimination' ? '#3b82f6' : 'var(--text-primary, #334155)',
+                    fontWeight: knockoutFormat === 'single_elimination' ? 700 : 500,
+                    cursor: 'pointer', fontSize: '0.85rem',
+                  }}>
+                    Elim. Simples
+                  </button>
+                  <button type="button" onClick={() => setKnockoutFormat('double_elimination')} style={{
+                    flex: 1, padding: '8px 12px', borderRadius: '8px',
+                    border: knockoutFormat === 'double_elimination' ? '2px solid #3b82f6' : '2px solid var(--border-color, #e2e8f0)',
+                    background: knockoutFormat === 'double_elimination' ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary, #f8fafc)',
+                    color: knockoutFormat === 'double_elimination' ? '#3b82f6' : 'var(--text-primary, #334155)',
+                    fontWeight: knockoutFormat === 'double_elimination' ? 700 : 500,
+                    cursor: 'pointer', fontSize: '0.85rem',
+                  }}>
+                    Dupla Eliminatória
+                  </button>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div className="mm-field">
+                  <label>Pts Vitória</label>
+                  <input type="number" min="0" value={pointsWin} onChange={e => setPointsWin(e.target.value)} />
+                </div>
+                <div className="mm-field">
+                  <label>Pts Empate</label>
+                  <input type="number" min="0" value={pointsDraw} onChange={e => setPointsDraw(e.target.value)} />
+                </div>
+                <div className="mm-field">
+                  <label>Pts Derrota</label>
+                  <input type="number" min="0" value={pointsLoss} onChange={e => setPointsLoss(e.target.value)} />
+                </div>
+              </div>
+              <small style={{ color: '#94a3b8', fontSize: '0.78rem' }}>
+                Total de equipes: {Number(numGroups) * Number(teamsPerGroup)} — Avançam: {Number(numGroups) * Number(advancePerGroup)}
+              </small>
+            </>
+          )}
           <div className="mm-field">
             <label>Máximo de participantes (opcional)</label>
             <input type="number" value={maxParticipants} onChange={e => setMaxParticipants(e.target.value)} placeholder="Ex: 16" />
@@ -191,7 +290,7 @@ export default function Torneios() {
   const [tab, setTab] = useState<'tournaments' | 'live' | 'ranking'>('tournaments');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [rankings, setRankings] = useState<TournamentRanking[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
 
   // Create/Edit modal
@@ -200,9 +299,13 @@ export default function Torneios() {
 
   // Detail modal
   const [selectedTournament, setSelectedTournament] = useState<(Tournament & { teams?: TournamentTeam[] }) | null>(null);
-  const [detailTab, setDetailTab] = useState<'info' | 'teams' | 'bracket' | 'matches'>('info');
+  const [detailTab, setDetailTab] = useState<'info' | 'teams' | 'groups' | 'bracket' | 'matches'>('info');
   const [bracketData, setBracketData] = useState<BracketData | null>(null);
   const [bracketLoading, setBracketLoading] = useState(false);
+
+  // Group data
+  const [groupData, setGroupData] = useState<TournamentGroup[] | null>(null);
+  const [groupsLoading, setGroupsLoading] = useState(false);
 
   // Match management
   const [selectedMatch, setSelectedMatch] = useState<TournamentMatch | null>(null);
@@ -210,10 +313,9 @@ export default function Torneios() {
   const [matchScores, setMatchScores] = useState<{ team1: number; team2: number }>({ team1: 0, team2: 0 });
   const [liveRefreshKey, setLiveRefreshKey] = useState(0);
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll().finally(() => setInitialLoading(false)); }, []);
 
   const fetchAll = async () => {
-    setIsLoading(true);
     try {
       const [tourRes, rankRes] = await Promise.all([
         tournamentService.getTournaments(),
@@ -223,8 +325,6 @@ export default function Torneios() {
       setRankings(rankRes.data || []);
     } catch (err) {
       console.error('Tournament fetch error:', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -291,6 +391,34 @@ export default function Torneios() {
       fetchAll();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro');
+    }
+  };
+
+  const loadGroups = async (tournamentId: number) => {
+    setGroupsLoading(true);
+    try {
+      const res = await tournamentService.getGroupStandings(tournamentId);
+      setGroupData(res.data.groups);
+    } catch (err) {
+      console.error('Groups error:', err);
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
+
+  const handleCompleteGroupStage = async () => {
+    if (!selectedTournament) return;
+    if (!confirm('Avançar para a fase eliminatória? Todas as partidas dos grupos devem estar concluídas.')) return;
+    try {
+      const res = await tournamentService.completeGroupStage(selectedTournament.id);
+      setBracketData(res.data);
+      toast.success('Fase de grupos concluída! Chave eliminatória gerada.');
+      const tRes = await tournamentService.getTournament(selectedTournament.id);
+      setSelectedTournament(tRes.data);
+      setDetailTab('bracket');
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao avançar fase de grupos');
     }
   };
 
@@ -429,7 +557,7 @@ export default function Torneios() {
 
   // ─── Match Detail Modal ───
   const MatchDetailModal = ({ match, onClose }: { match: TournamentMatch; onClose: () => void }) => {
-    const bracketLabel = match.bracket_type === 'winners' ? 'Chave Vencedores' : match.bracket_type === 'losers' ? 'Chave Perdedores' : match.bracket_type === 'grand_final' ? 'Grande Final' : '3º Lugar';
+    const bracketLabel = match.bracket_type === 'winners' ? 'Chave Vencedores' : match.bracket_type === 'losers' ? 'Chave Perdedores' : match.bracket_type === 'grand_final' ? 'Grande Final' : match.bracket_type === 'group' ? 'Fase de Grupos' : '3º Lugar';
     const isPending = match.status === 'pending';
     const isLive = match.status === 'live';
     const isCompleted = match.status === 'completed';
@@ -513,7 +641,7 @@ export default function Torneios() {
   };
 
   // ─── Render ───
-  if (isLoading) {
+  if (initialLoading) {
     return (
       <div className="torneio-page">
         <div className="torneio-loading"><FontAwesomeIcon icon={faSpinner} spin /> Carregando torneios...</div>
@@ -584,7 +712,7 @@ export default function Torneios() {
                         {STATUS_LABELS[t.status]}
                       </span>
                       <span className="torneio-badge torneio-badge-format">
-                        {t.format === 'double_elimination' ? 'Dupla Elim.' : 'Elim. Simples'}
+                        {t.format === 'double_elimination' ? 'Dupla Elim.' : t.format === 'group_stage' ? 'Fase de Grupos' : 'Elim. Simples'}
                       </span>
                       {t.team_size > 1 && (
                         <span className="torneio-badge torneio-badge-teams">{t.team_size}x{t.team_size}</span>
@@ -698,6 +826,11 @@ export default function Torneios() {
                 <button className={`torneio-sub-tab ${detailTab === 'teams' ? 'active' : ''}`} onClick={() => setDetailTab('teams')}>
                   Participantes ({selectedTournament.teams?.length || 0})
                 </button>
+                {selectedTournament.format === 'group_stage' && selectedTournament.bracket_generated && (
+                  <button className={`torneio-sub-tab ${detailTab === 'groups' ? 'active' : ''}`} onClick={() => { setDetailTab('groups'); if (!groupData) loadGroups(selectedTournament.id); }}>
+                    Grupos
+                  </button>
+                )}
                 <button className={`torneio-sub-tab ${detailTab === 'bracket' ? 'active' : ''}`} onClick={() => { setDetailTab('bracket'); if (!bracketData && selectedTournament.bracket_generated) loadBracket(selectedTournament.id); }}>
                   Chave
                 </button>
@@ -718,7 +851,7 @@ export default function Torneios() {
                       {selectedTournament.description && <p>{selectedTournament.description}</p>}
                       <p><FontAwesomeIcon icon={faCalendar} /> {new Date(selectedTournament.tournament_date).toLocaleDateString('pt-BR')}{selectedTournament.start_time ? ` às ${selectedTournament.start_time}` : ''}{selectedTournament.tournament_end_date ? ` — ${new Date(selectedTournament.tournament_end_date).toLocaleDateString('pt-BR')}` : ''}</p>
                       {selectedTournament.location && <p><FontAwesomeIcon icon={faMapMarkerAlt} /> {selectedTournament.location}</p>}
-                      <p><FontAwesomeIcon icon={faUsers} /> {selectedTournament.teams?.length || 0} equipes — {selectedTournament.format === 'double_elimination' ? 'Dupla Eliminatória' : 'Eliminatória Simples'} — {selectedTournament.team_size === 1 ? 'Individual' : `${selectedTournament.team_size}x${selectedTournament.team_size}`}</p>
+                      <p><FontAwesomeIcon icon={faUsers} /> {selectedTournament.teams?.length || 0} equipes — {selectedTournament.format === 'double_elimination' ? 'Dupla Eliminatória' : selectedTournament.format === 'group_stage' ? 'Fase de Grupos' : 'Eliminatória Simples'} — {selectedTournament.team_size === 1 ? 'Individual' : `${selectedTournament.team_size}x${selectedTournament.team_size}`}</p>
 
                       <div className="torneio-detail-actions">
                         <button className="torneio-btn-outline" onClick={() => { setEditingTournament(selectedTournament); setShowCreateModal(true); }}>Editar</button>
@@ -791,7 +924,7 @@ export default function Torneios() {
                             background: team.status === 'approved' || team.status === 'active' ? '#dcfce7' : team.status === 'registered' ? '#fef3c7' : team.status === 'champion' ? '#fef08a' : '#f1f5f9',
                             color: team.status === 'approved' || team.status === 'active' ? '#16a34a' : team.status === 'registered' ? '#d97706' : team.status === 'champion' ? '#a16207' : '#64748b',
                           }}>
-                            {team.status === 'approved' ? 'Aprovado' : team.status === 'registered' ? 'Pendente' : team.status === 'active' ? 'Ativo' : team.status === 'champion' ? 'Campeão' : team.status === 'runner_up' ? 'Vice' : team.status === 'third_place' ? '3º Lugar' : team.status === 'eliminated_winners' ? 'Elim. WB' : team.status === 'eliminated_losers' ? 'Eliminado' : team.status}
+                            {team.status === 'approved' ? 'Aprovado' : team.status === 'registered' ? 'Pendente' : team.status === 'active' ? 'Ativo' : team.status === 'champion' ? 'Campeão' : team.status === 'runner_up' ? 'Vice' : team.status === 'third_place' ? '3º Lugar' : team.status === 'eliminated_winners' ? 'Na Repescagem' : team.status === 'eliminated_losers' ? 'Eliminado' : team.status}
                           </span>
                           {!selectedTournament.bracket_generated && (
                             <button style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => handleRemoveTeam(team.id)}>
@@ -820,20 +953,145 @@ export default function Torneios() {
                 </div>
               )}
 
+              {/* Groups tab */}
+              {detailTab === 'groups' && (
+                <div>
+                  {groupsLoading ? (
+                    <div className="torneio-loading"><FontAwesomeIcon icon={faSpinner} spin /> Carregando grupos...</div>
+                  ) : groupData && groupData.length > 0 ? (
+                    <>
+                      {groupData.map(group => (
+                        <div key={group.id} style={{ marginBottom: 24 }}>
+                          <h4 style={{ margin: '0 0 12px', fontSize: '1rem', fontWeight: 700 }}>{group.group_name}</h4>
+                          <div style={{ overflowX: 'auto' }}>
+                            <table className="torneio-ranking-table" style={{ width: '100%', marginBottom: 8 }}>
+                              <thead>
+                                <tr>
+                                  <th style={{ width: 36 }}>Pos</th>
+                                  <th>Equipe</th>
+                                  <th style={{ textAlign: 'center' }}>J</th>
+                                  <th style={{ textAlign: 'center' }}>V</th>
+                                  <th style={{ textAlign: 'center' }}>E</th>
+                                  <th style={{ textAlign: 'center' }}>D</th>
+                                  <th style={{ textAlign: 'center' }}>Pts</th>
+                                  <th style={{ textAlign: 'center' }}>Saldo</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {group.standings.map(s => (
+                                  <tr key={s.team_id} style={{
+                                    background: s.advances ? 'rgba(16,185,129,0.08)' : undefined,
+                                    opacity: !s.advances && s.matches_played > 0 ? 0.6 : 1,
+                                  }}>
+                                    <td>
+                                      <span style={{
+                                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                        width: 24, height: 24, borderRadius: '50%', fontSize: '0.8rem', fontWeight: 700,
+                                        background: s.advances ? '#10b981' : '#94a3b8', color: '#fff',
+                                      }}>
+                                        {s.position}
+                                      </span>
+                                    </td>
+                                    <td style={{ fontWeight: 600 }}>{s.team_name}</td>
+                                    <td style={{ textAlign: 'center' }}>{s.matches_played}</td>
+                                    <td style={{ textAlign: 'center' }}>{s.wins}</td>
+                                    <td style={{ textAlign: 'center' }}>{s.draws}</td>
+                                    <td style={{ textAlign: 'center' }}>{s.losses}</td>
+                                    <td style={{ textAlign: 'center', fontWeight: 700 }}>{s.points}</td>
+                                    <td style={{ textAlign: 'center', color: s.point_diff > 0 ? '#10b981' : s.point_diff < 0 ? '#ef4444' : undefined }}>
+                                      {s.point_diff > 0 ? '+' : ''}{s.point_diff}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {/* Group matches */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                            {group.matches
+                              .sort((a, b) => a.match_number - b.match_number)
+                              .map(match => (
+                                <div
+                                  key={match.id}
+                                  onClick={() => selectedTournament.status === 'live' && match.team1_id && match.team2_id && match.status !== 'completed' ? setSelectedMatch(match) : undefined}
+                                  style={{
+                                    padding: '8px 12px', borderRadius: 8,
+                                    border: '1px solid var(--border-color, #e2e8f0)',
+                                    background: match.status === 'completed' ? 'rgba(16,185,129,0.05)' : match.status === 'live' ? 'rgba(239,68,68,0.05)' : 'var(--bg-secondary, #f8fafc)',
+                                    fontSize: '0.82rem', minWidth: 180,
+                                    cursor: selectedTournament.status === 'live' && match.team1_id && match.team2_id && match.status !== 'completed' ? 'pointer' : 'default',
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, color: '#94a3b8', fontSize: '0.75rem' }}>
+                                    <span>#{match.match_number}</span>
+                                    {match.status === 'live' && <span style={{ color: '#ef4444', fontWeight: 700 }}>AO VIVO</span>}
+                                    {match.status === 'completed' && <FontAwesomeIcon icon={faCheck} style={{ color: '#10b981' }} />}
+                                  </div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: match.winner_id === match.team1_id ? 700 : 400 }}>
+                                    <span>{match.team1_name || 'A definir'}</span>
+                                    <span>{match.team1_score ?? '-'}</span>
+                                  </div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: match.winner_id === match.team2_id ? 700 : 400 }}>
+                                    <span>{match.team2_name || 'A definir'}</span>
+                                    <span>{match.team2_score ?? '-'}</span>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      ))}
+                      {/* Complete groups button */}
+                      {!(selectedTournament as any).group_stage_completed && selectedTournament.status === 'live' && (
+                        <div style={{ textAlign: 'center', marginTop: 20 }}>
+                          <button
+                            className="torneio-btn-success"
+                            onClick={handleCompleteGroupStage}
+                            style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            <FontAwesomeIcon icon={faChevronRight} /> Avançar para Mata-Mata
+                          </button>
+                          <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: 8 }}>
+                            Todas as partidas dos grupos devem estar concluídas
+                          </p>
+                        </div>
+                      )}
+                      {(selectedTournament as any).group_stage_completed && (
+                        <div style={{ textAlign: 'center', padding: '16px', background: 'rgba(16,185,129,0.08)', borderRadius: 10, marginTop: 16 }}>
+                          <FontAwesomeIcon icon={faCheck} style={{ color: '#10b981', marginRight: 8 }} />
+                          <span style={{ fontWeight: 600, color: '#10b981' }}>Fase de grupos concluída — Veja a chave eliminatória na aba "Chave"</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="torneio-empty">
+                      <p>Nenhum grupo disponível</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Bracket tab */}
               {detailTab === 'bracket' && (
                 <div>
                   {bracketLoading ? (
                     <div className="torneio-loading"><FontAwesomeIcon icon={faSpinner} spin /> Carregando chave...</div>
                   ) : bracketData ? (
-                    <BracketViewer
-                      winners={bracketData.winners}
-                      losers={bracketData.losers}
-                      grandFinal={bracketData.grand_final}
-                      thirdPlace={bracketData.third_place}
-                      onMatchClick={(m) => setSelectedMatch(m)}
-                      interactive={selectedTournament.status === 'live'}
-                    />
+                    selectedTournament.format === 'group_stage' && !bracketData.group_stage_completed ? (
+                      <div className="torneio-empty">
+                        <FontAwesomeIcon icon={faTrophy} />
+                        <p>Fase de grupos em andamento</p>
+                        <small>A chave eliminatória será gerada após concluir a fase de grupos. Veja a aba "Grupos".</small>
+                      </div>
+                    ) : (
+                      <BracketViewer
+                        winners={bracketData.winners}
+                        losers={bracketData.losers}
+                        grandFinal={bracketData.grand_final}
+                        thirdPlace={bracketData.third_place}
+                        onMatchClick={(m) => setSelectedMatch(m)}
+                        interactive={selectedTournament.status === 'live'}
+                      />
+                    )
                   ) : (
                     <div className="torneio-empty">
                       <FontAwesomeIcon icon={faTrophy} />
@@ -861,7 +1119,7 @@ export default function Torneios() {
                         .map(match => (
                           <div key={match.id} className={`torneio-match-card ${match.status === 'live' ? 'live' : ''}`}>
                             <div className="torneio-match-header">
-                              <span>#{match.match_number} — {match.bracket_type === 'winners' ? 'Vencedores' : match.bracket_type === 'losers' ? 'Perdedores' : match.bracket_type === 'grand_final' ? 'Grande Final' : '3º Lugar'} R{match.round_number}</span>
+                              <span>#{match.match_number} — {match.bracket_type === 'winners' ? 'Vencedores' : match.bracket_type === 'losers' ? 'Perdedores' : match.bracket_type === 'grand_final' ? 'Grande Final' : match.bracket_type === 'group' ? 'Grupo' : '3º Lugar'} Rodada {match.round_number}</span>
                               {match.status === 'live' && (
                                 <span className="torneio-live-indicator"><span className="torneio-live-dot" /> AO VIVO</span>
                               )}
@@ -942,6 +1200,7 @@ export default function Torneios() {
           setSelectedMatch(null);
           if (selectedTournament) {
             loadBracket(selectedTournament.id);
+            if (selectedTournament.format === 'group_stage') loadGroups(selectedTournament.id);
           } else {
             // Refresh LiveBracketView when closing from Live tab
             setLiveRefreshKey(k => k + 1);
@@ -982,6 +1241,12 @@ function LiveBracketView({ tournamentId, onMatchClick }: { tournamentId: number;
 // ─── Helper ───
 function getAllMatches(bracket: BracketData): TournamentMatch[] {
   const all: TournamentMatch[] = [];
+  // Group matches
+  if (bracket.groups) {
+    for (const group of bracket.groups) {
+      if (group.matches) all.push(...group.matches);
+    }
+  }
   for (const round of bracket.winners || []) {
     if (round) all.push(...round);
   }

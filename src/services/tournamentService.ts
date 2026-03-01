@@ -9,7 +9,7 @@ export interface Tournament {
   start_time?: string;
   tournament_end_date?: string;
   location?: string;
-  format: 'double_elimination' | 'single_elimination';
+  format: 'double_elimination' | 'single_elimination' | 'group_stage';
   team_size: number;
   max_participants?: number;
   status: 'draft' | 'registration' | 'ready' | 'live' | 'finished' | 'cancelled';
@@ -26,6 +26,15 @@ export interface Tournament {
   team_count?: number;
   created_at: string;
   updated_at: string;
+  // Group stage fields
+  num_groups?: number;
+  teams_per_group?: number;
+  advance_per_group?: number;
+  knockout_format?: 'single_elimination' | 'double_elimination';
+  points_win?: number;
+  points_draw?: number;
+  points_loss?: number;
+  group_stage_completed?: boolean;
 }
 
 export interface TournamentTeam {
@@ -49,10 +58,33 @@ export interface TeamMember {
   is_captain: boolean;
 }
 
+export interface GroupStanding {
+  team_id: number;
+  team_name: string;
+  position: number;
+  matches_played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points: number;
+  points_for: number;
+  points_against: number;
+  point_diff: number;
+  advances: boolean;
+}
+
+export interface TournamentGroup {
+  id: number;
+  group_name: string;
+  group_number: number;
+  standings: GroupStanding[];
+  matches: TournamentMatch[];
+}
+
 export interface TournamentMatch {
   id: number;
   tournament_id: number;
-  bracket_type: 'winners' | 'losers' | 'grand_final' | 'third_place';
+  bracket_type: 'winners' | 'losers' | 'grand_final' | 'third_place' | 'group';
   round_number: number;
   position: number;
   match_number: number;
@@ -82,6 +114,8 @@ export interface BracketData {
   grand_final?: TournamentMatch;
   third_place?: TournamentMatch;
   teams: TournamentTeam[];
+  groups?: TournamentGroup[];
+  group_stage_completed?: boolean;
 }
 
 export interface TournamentRanking {
@@ -189,6 +223,23 @@ export const tournamentService = {
 
   async reportMatchResult(tournamentId: number, matchId: number, data: { winner_id: number; team1_score?: number; team2_score?: number }): Promise<{ status: string; data: BracketData }> {
     const response = await api.put(`/api/tournaments/${tournamentId}/matches/${matchId}/result`, data);
+    return response.data;
+  },
+
+  // Groups
+  async getGroupStandings(tournamentId: number): Promise<{ status: string; data: { groups: TournamentGroup[] } }> {
+    const response = await api.get(`/api/tournaments/${tournamentId}/groups`);
+    return response.data;
+  },
+
+  async completeGroupStage(tournamentId: number): Promise<{ status: string; data: BracketData }> {
+    const response = await api.put(`/api/tournaments/${tournamentId}/complete-groups`);
+    return response.data;
+  },
+
+  // Search students
+  async searchStudents(query: string): Promise<{ status: string; data: { id: number; name: string; email: string }[] }> {
+    const response = await api.get('/api/tournaments/search-students', { params: { q: query } });
     return response.data;
   },
 
