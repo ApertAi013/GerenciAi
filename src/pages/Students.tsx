@@ -89,16 +89,17 @@ export default function Students() {
 
   const handleGetLink = async () => {
     try {
-      const response = await studentService.getRegistrationToken();
-      if (response.data?.token) {
-        setRegistrationToken(response.data.token);
-      } else {
-        const genResponse = await studentService.generateRegistrationToken();
+      // Always generate a fresh token to ensure it's valid
+      const genResponse = await studentService.generateRegistrationToken();
+      if (genResponse.data?.token) {
         setRegistrationToken(genResponse.data.token);
+        setShowLinkModal(true);
+      } else {
+        alert('Erro ao gerar link de cadastro.');
       }
-      setShowLinkModal(true);
     } catch (error) {
       console.error('Erro ao obter link:', error);
+      alert('Erro ao gerar link de cadastro. Tente novamente.');
     }
   };
 
