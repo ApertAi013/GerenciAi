@@ -46,11 +46,13 @@ function MatchCard({ match, onClick, interactive }: { match: TournamentMatch; on
 export default function BracketViewer({ winners, losers, grandFinal, thirdPlace, onMatchClick, interactive }: BracketViewerProps) {
   const getRoundLabel = (bracketType: string, roundIndex: number, totalRounds: number) => {
     if (bracketType === 'winners') {
-      if (roundIndex === totalRounds - 1) return 'Final WB';
-      if (roundIndex === totalRounds - 2) return 'Semi WB';
-      return `Round ${roundIndex + 1}`;
+      if (roundIndex === totalRounds - 1) return 'Final';
+      if (roundIndex === totalRounds - 2) return 'Semifinal';
+      return `Rodada ${roundIndex + 1}`;
     }
-    return `LB Round ${roundIndex + 1}`;
+    if (roundIndex === totalRounds - 1) return 'Final';
+    if (roundIndex === totalRounds - 2) return 'Semifinal';
+    return `Rodada ${roundIndex + 1}`;
   };
 
   return (

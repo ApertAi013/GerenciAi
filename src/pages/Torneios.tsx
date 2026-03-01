@@ -121,13 +121,6 @@ function CreateModal({ editingTournament, onClose, onSave }: {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div className="mm-field">
-              <label>Formato</label>
-              <select value={format} onChange={e => setFormat(e.target.value as any)}>
-                <option value="double_elimination">Dupla Eliminatória</option>
-                <option value="single_elimination">Eliminatória Simples</option>
-              </select>
-            </div>
-            <div className="mm-field">
               <label>Tamanho da Equipe</label>
               <select value={teamSize} onChange={e => setTeamSize(e.target.value)}>
                 <option value="1">Individual (1x1)</option>
@@ -136,6 +129,12 @@ function CreateModal({ editingTournament, onClose, onSave }: {
                 <option value="4">Quarteto (4x4)</option>
                 <option value="5">Quinteto (5x5)</option>
               </select>
+            </div>
+            <div className="mm-field" style={{ display: 'flex', alignItems: 'center', paddingTop: '22px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input type="checkbox" checked={format === 'double_elimination'} onChange={e => setFormat(e.target.checked ? 'double_elimination' : 'single_elimination')} />
+                Chave dos Perdedores (dupla eliminatória)
+              </label>
             </div>
           </div>
           <div className="mm-field">
@@ -430,81 +429,83 @@ export default function Torneios() {
 
   // ─── Match Detail Modal ───
   const MatchDetailModal = ({ match, onClose }: { match: TournamentMatch; onClose: () => void }) => {
+    const bracketLabel = match.bracket_type === 'winners' ? 'Chave Vencedores' : match.bracket_type === 'losers' ? 'Chave Perdedores' : match.bracket_type === 'grand_final' ? 'Grande Final' : '3º Lugar';
+    const isPending = match.status === 'pending';
+    const isLive = match.status === 'live';
+    const isCompleted = match.status === 'completed';
+    const hasBothTeams = !!match.team1_id && !!match.team2_id;
+
     return (
       <div className="mm-overlay" onClick={onClose}>
         <div className="mm-modal mm-modal-sm" onClick={e => e.stopPropagation()}>
           <div className="mm-header">
-            <h3>Partida #{match.match_number}</h3>
+            <h3>Partida #{match.match_number} <span style={{ fontWeight: 400, fontSize: '0.85rem', color: '#94a3b8' }}>— {bracketLabel} · Rodada {match.round_number}</span></h3>
             <button className="mm-close" onClick={onClose}>&times;</button>
           </div>
-          <div className="mm-content">
-            <div className={`torneio-match-card ${match.status === 'live' ? 'live' : ''}`}>
-              <div className="torneio-match-header">
-                <span>{match.bracket_type === 'winners' ? 'Chave Vencedores' : match.bracket_type === 'losers' ? 'Chave Perdedores' : 'Grande Final'} — R{match.round_number}</span>
-                {match.status === 'live' && (
-                  <span className="torneio-live-indicator"><span className="torneio-live-dot" /> AO VIVO</span>
+          <div className="mm-content" style={{ padding: 0 }}>
+            {/* Status banner */}
+            {isLive && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 0', background: '#fee2e2' }}>
+                <span className="torneio-live-dot" /> <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ef4444', letterSpacing: 1 }}>AO VIVO</span>
+              </div>
+            )}
+            {isCompleted && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 0', background: '#dcfce7' }}>
+                <FontAwesomeIcon icon={faCheck} style={{ color: '#16a34a', fontSize: '0.7rem' }} /> <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#16a34a' }}>FINALIZADA</span>
+              </div>
+            )}
+
+            {/* Scoreboard */}
+            <div style={{ display: 'flex', alignItems: 'stretch', padding: '20px 16px', gap: 0 }}>
+              {/* Team 1 */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: '1rem', fontWeight: 600, textAlign: 'center', color: match.winner_id === match.team1_id ? '#10b981' : undefined }}>{match.team1_name || 'A definir'}</span>
+                <span style={{ fontSize: '2.5rem', fontWeight: 800, color: match.winner_id === match.team1_id ? '#10b981' : undefined }}>{match.team1_score ?? 0}</span>
+                {isLive && match.team1_id && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button className="torneio-score-btn minus" onClick={() => handleScoreUpdate(match, match.team1_id!, 'undo_score')}>−</button>
+                    <button className="torneio-score-btn plus" onClick={() => handleScoreUpdate(match, match.team1_id!, 'score')}>+</button>
+                  </div>
                 )}
               </div>
-              <div className="torneio-match-teams">
-                <div className="torneio-match-team" style={{ flexDirection: 'column', alignItems: 'center' }}>
-                  <span className="torneio-match-team-name">{match.team1_name || 'A definir'}</span>
-                  {match.status === 'live' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                      <button className="torneio-score-btn minus" onClick={() => handleScoreUpdate(match, match.team1_id!, 'undo_score')}>−</button>
-                      <span className="torneio-match-score">{match.team1_score || 0}</span>
-                      <button className="torneio-score-btn plus" onClick={() => handleScoreUpdate(match, match.team1_id!, 'score')}>+</button>
-                    </div>
-                  )}
-                  {match.status !== 'live' && match.team1_score !== null && (
-                    <span className="torneio-match-score">{match.team1_score}</span>
-                  )}
-                </div>
-                <span className="torneio-match-vs">VS</span>
-                <div className="torneio-match-team" style={{ flexDirection: 'column', alignItems: 'center' }}>
-                  <span className="torneio-match-team-name">{match.team2_name || 'A definir'}</span>
-                  {match.status === 'live' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                      <button className="torneio-score-btn minus" onClick={() => handleScoreUpdate(match, match.team2_id!, 'undo_score')}>−</button>
-                      <span className="torneio-match-score">{match.team2_score || 0}</span>
-                      <button className="torneio-score-btn plus" onClick={() => handleScoreUpdate(match, match.team2_id!, 'score')}>+</button>
-                    </div>
-                  )}
-                  {match.status !== 'live' && match.team2_score !== null && (
-                    <span className="torneio-match-score">{match.team2_score}</span>
-                  )}
-                </div>
+              {/* VS */}
+              <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#94a3b8' }}>VS</span>
               </div>
-              <div className="torneio-match-actions">
-                {match.status === 'pending' && match.team1_id && match.team2_id && (
-                  <button className="torneio-btn-success" onClick={() => handleStartMatch(match)}>
-                    <FontAwesomeIcon icon={faPlay} /> Iniciar Partida
-                  </button>
-                )}
-                {match.status === 'live' && match.team1_id && match.team2_id && (
-                  <>
-                    <button className="torneio-btn-primary" onClick={() => handleDeclareWinner(match, match.team1_id!)}>
-                      {match.team1_name} Venceu
-                    </button>
-                    <button className="torneio-btn-primary" onClick={() => handleDeclareWinner(match, match.team2_id!)}>
-                      {match.team2_name} Venceu
-                    </button>
-                  </>
-                )}
-                {match.status === 'pending' && match.team1_id && match.team2_id && (
-                  <div style={{ width: '100%', marginTop: '8px' }}>
-                    <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '8px' }}>Ou declare o vencedor direto:</p>
-                    <div className="torneio-winner-selector">
-                      <button className="torneio-winner-btn" onClick={() => handleDeclareWinner(match, match.team1_id!)}>
-                        <FontAwesomeIcon icon={faTrophy} /> {match.team1_name}
-                      </button>
-                      <button className="torneio-winner-btn" onClick={() => handleDeclareWinner(match, match.team2_id!)}>
-                        <FontAwesomeIcon icon={faTrophy} /> {match.team2_name}
-                      </button>
-                    </div>
+              {/* Team 2 */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: '1rem', fontWeight: 600, textAlign: 'center', color: match.winner_id === match.team2_id ? '#10b981' : undefined }}>{match.team2_name || 'A definir'}</span>
+                <span style={{ fontSize: '2.5rem', fontWeight: 800, color: match.winner_id === match.team2_id ? '#10b981' : undefined }}>{match.team2_score ?? 0}</span>
+                {isLive && match.team2_id && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button className="torneio-score-btn minus" onClick={() => handleScoreUpdate(match, match.team2_id!, 'undo_score')}>−</button>
+                    <button className="torneio-score-btn plus" onClick={() => handleScoreUpdate(match, match.team2_id!, 'score')}>+</button>
                   </div>
                 )}
               </div>
             </div>
+
+            {/* Actions */}
+            {hasBothTeams && !isCompleted && (
+              <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {isPending && (
+                  <button className="torneio-btn-success" onClick={() => handleStartMatch(match)} style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
+                    <FontAwesomeIcon icon={faPlay} /> Iniciar Partida
+                  </button>
+                )}
+                <p style={{ fontSize: '0.8rem', color: '#94a3b8', textAlign: 'center', margin: '4px 0 0' }}>
+                  {isLive ? 'Declarar vencedor:' : 'Ou declarar vencedor direto:'}
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <button className="torneio-winner-btn" onClick={() => handleDeclareWinner(match, match.team1_id!)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 8px', borderRadius: 10, border: '2px solid #10b981', background: 'rgba(16,185,129,0.08)', color: '#10b981', fontWeight: 600, cursor: 'pointer', fontSize: '0.88rem' }}>
+                    <FontAwesomeIcon icon={faTrophy} /> {match.team1_name}
+                  </button>
+                  <button className="torneio-winner-btn" onClick={() => handleDeclareWinner(match, match.team2_id!)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 8px', borderRadius: 10, border: '2px solid #3b82f6', background: 'rgba(59,130,246,0.08)', color: '#3b82f6', fontWeight: 600, cursor: 'pointer', fontSize: '0.88rem' }}>
+                    <FontAwesomeIcon icon={faTrophy} /> {match.team2_name}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
