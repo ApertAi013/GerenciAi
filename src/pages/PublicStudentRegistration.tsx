@@ -64,10 +64,50 @@ export default function PublicStudentRegistration() {
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
   };
 
+  const validateCpf = (cpfStr: string): boolean => {
+    const digits = cpfStr.replace(/\D/g, '');
+    if (digits.length !== 11) return false;
+    if (/^(\d)\1{10}$/.test(digits)) return false;
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i);
+    let check = 11 - (sum % 11);
+    if (check >= 10) check = 0;
+    if (parseInt(digits[9]) !== check) return false;
+    sum = 0;
+    for (let i = 0; i < 10; i++) sum += parseInt(digits[i]) * (11 - i);
+    check = 11 - (sum % 11);
+    if (check >= 10) check = 0;
+    return parseInt(digits[10]) === check;
+  };
+
+  const validateEmail = (emailStr: string): boolean => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
+  };
+
+  const validatePhone = (phoneStr: string): boolean => {
+    const digits = phoneStr.replace(/\D/g, '');
+    return digits.length >= 10 && digits.length <= 11;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !email.trim()) {
       setError('Nome e email sao obrigatorios.');
+      return;
+    }
+
+    if (!validateEmail(email.trim())) {
+      setError('Email invalido.');
+      return;
+    }
+
+    if (phone && !validatePhone(phone)) {
+      setError('Telefone invalido. Informe DDD + numero (10 ou 11 digitos).');
+      return;
+    }
+
+    if (cpf && !validateCpf(cpf)) {
+      setError('CPF invalido.');
       return;
     }
 
