@@ -209,6 +209,7 @@ export default function Torneios() {
   const [selectedMatch, setSelectedMatch] = useState<TournamentMatch | null>(null);
   const [matchWinner, setMatchWinner] = useState<number | null>(null);
   const [matchScores, setMatchScores] = useState<{ team1: number; team2: number }>({ team1: 0, team2: 0 });
+  const [liveRefreshKey, setLiveRefreshKey] = useState(0);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -308,41 +309,60 @@ export default function Torneios() {
   };
 
   // ─── Match actions ───
+  const getTournamentId = (match: TournamentMatch) => selectedTournament?.id || match.tournament_id;
+
   const handleStartMatch = async (match: TournamentMatch) => {
-    if (!selectedTournament) return;
+    const tid = getTournamentId(match);
+    if (!tid) return;
     try {
-      await tournamentService.startMatch(selectedTournament.id, match.id);
+      await tournamentService.startMatch(tid, match.id);
       toast.success('Partida iniciada!');
-      loadBracket(selectedTournament.id);
+      // Update match in modal to reflect "live" status
+      setSelectedMatch(prev => prev?.id === match.id ? { ...prev, status: 'live' as const, team1_score: prev.team1_score ?? 0, team2_score: prev.team2_score ?? 0 } : prev);
+      loadBracket(tid);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro');
     }
   };
 
   const handleScoreUpdate = async (match: TournamentMatch, teamId: number, action: 'score' | 'undo_score') => {
-    if (!selectedTournament) return;
+    const tid = getTournamentId(match);
+    if (!tid) return;
     try {
-      await tournamentService.updateMatchScore(selectedTournament.id, match.id, { team_id: teamId, action });
-      loadBracket(selectedTournament.id);
+      await tournamentService.updateMatchScore(tid, match.id, { team_id: teamId, action });
+      // Optimistically update score in modal
+      const delta = action === 'score' ? 1 : -1;
+      setSelectedMatch(prev => {
+        if (!prev || prev.id !== match.id) return prev;
+        if (teamId === prev.team1_id) return { ...prev, team1_score: Math.max(0, (prev.team1_score || 0) + delta) };
+        if (teamId === prev.team2_id) return { ...prev, team2_score: Math.max(0, (prev.team2_score || 0) + delta) };
+        return prev;
+      });
+      loadBracket(tid);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro');
     }
   };
 
   const handleDeclareWinner = async (match: TournamentMatch, winnerId: number) => {
-    if (!selectedTournament) return;
+    const tid = getTournamentId(match);
+    if (!tid) return;
     if (!confirm('Declarar vencedor desta partida?')) return;
     try {
-      const res = await tournamentService.reportMatchResult(selectedTournament.id, match.id, {
+      const res = await tournamentService.reportMatchResult(tid, match.id, {
         winner_id: winnerId,
         team1_score: match.team1_score || 0,
         team2_score: match.team2_score || 0,
       });
       setBracketData(res.data);
       toast.success('Resultado registrado!');
-      // Refresh tournament status
-      const tRes = await tournamentService.getTournament(selectedTournament.id);
-      setSelectedTournament(tRes.data);
+      setSelectedMatch(null); // Close modal after declaring winner
+      // Refresh tournament status if detail modal is open
+      if (selectedTournament) {
+        const tRes = await tournamentService.getTournament(selectedTournament.id);
+        setSelectedTournament(tRes.data);
+      }
+      setLiveRefreshKey(k => k + 1);
       fetchAll();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro');
@@ -592,7 +612,7 @@ export default function Torneios() {
                   <span className="torneio-live-indicator"><span className="torneio-live-dot" /> AO VIVO</span>
                   <h3 style={{ margin: 0, cursor: 'pointer' }} onClick={() => openDetail(t)}>{t.title}</h3>
                 </div>
-                <LiveBracketView tournamentId={t.id} onMatchClick={(m) => setSelectedMatch(m)} />
+                <LiveBracketView key={liveRefreshKey} tournamentId={t.id} onMatchClick={(m) => setSelectedMatch(m)} />
               </div>
             ))
           )}
@@ -917,7 +937,15 @@ export default function Torneios() {
 
       {/* Match Detail Modal */}
       {selectedMatch && (
-        <MatchDetailModal match={selectedMatch} onClose={() => { setSelectedMatch(null); if (selectedTournament) loadBracket(selectedTournament.id); }} />
+        <MatchDetailModal match={selectedMatch} onClose={() => {
+          setSelectedMatch(null);
+          if (selectedTournament) {
+            loadBracket(selectedTournament.id);
+          } else {
+            // Refresh LiveBracketView when closing from Live tab
+            setLiveRefreshKey(k => k + 1);
+          }
+        }} />
       )}
     </div>
   );
