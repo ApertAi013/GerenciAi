@@ -382,6 +382,9 @@ export default function TrialStudents() {
   // Trial class config filter
   const [configModalityFilter, setConfigModalityFilter] = useState<string>('all');
 
+  // Upcoming bookings modality filter
+  const [bookingModalityFilter, setBookingModalityFilter] = useState<string>('all');
+
   // Get config map for quick lookup
   const configMap = new Map(trialClassConfigs.map((c: any) => [c.class_id, c]));
 
@@ -979,45 +982,78 @@ export default function TrialStudents() {
       </div>
 
       {/* Upcoming Trial Bookings Mini Agenda */}
-      {upcomingBookings.length > 0 && (
-        <div className="trial-upcoming-section">
-          <h2 style={{ margin: '0 0 1rem', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Calendar size={20} />
-            Próximos Agendamentos (7 dias)
-          </h2>
-          <div className="trial-upcoming-list">
-            {(() => {
-              // Group by date
-              const grouped: Record<string, any[]> = {};
-              upcomingBookings.forEach((b: any) => {
-                const dateKey = b.attendance_date?.split('T')[0] || b.attendance_date;
-                if (!grouped[dateKey]) grouped[dateKey] = [];
-                grouped[dateKey].push(b);
-              });
-              return Object.entries(grouped).map(([date, bookings]) => (
-                <div key={date} className="trial-upcoming-day">
-                  <div className="trial-upcoming-date">
-                    {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
-                    <span className="trial-upcoming-count">{bookings.length}</span>
+      {upcomingBookings.length > 0 && (() => {
+        const bookingModalities = [...new Set(upcomingBookings.map((b: any) => b.modality_name || 'Sem modalidade'))].sort();
+        const filteredBookings = bookingModalityFilter === 'all'
+          ? upcomingBookings
+          : upcomingBookings.filter((b: any) => (b.modality_name || 'Sem modalidade') === bookingModalityFilter);
+
+        return (
+          <div className="trial-upcoming-section">
+            <h2 style={{ margin: '0 0 1rem', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Calendar size={20} />
+              Próximos Agendamentos (7 dias)
+            </h2>
+
+            {bookingModalities.length > 1 && (
+              <div className="trial-config-filters" style={{ marginBottom: '1rem' }}>
+                <button
+                  className={`trial-config-filter-btn ${bookingModalityFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setBookingModalityFilter('all')}
+                >
+                  Todas ({upcomingBookings.length})
+                </button>
+                {bookingModalities.map(mod => {
+                  const count = upcomingBookings.filter((b: any) => (b.modality_name || 'Sem modalidade') === mod).length;
+                  return (
+                    <button
+                      key={mod}
+                      className={`trial-config-filter-btn ${bookingModalityFilter === mod ? 'active' : ''}`}
+                      onClick={() => setBookingModalityFilter(mod)}
+                    >
+                      {mod}
+                      <span className="trial-config-filter-count">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="trial-upcoming-list">
+              {filteredBookings.length === 0 ? (
+                <p style={{ color: '#9CA3AF', textAlign: 'center', padding: '1rem 0' }}>Nenhum agendamento para esta modalidade</p>
+              ) : (() => {
+                const grouped: Record<string, any[]> = {};
+                filteredBookings.forEach((b: any) => {
+                  const dateKey = b.attendance_date?.split('T')[0] || b.attendance_date;
+                  if (!grouped[dateKey]) grouped[dateKey] = [];
+                  grouped[dateKey].push(b);
+                });
+                return Object.entries(grouped).map(([date, bookings]) => (
+                  <div key={date} className="trial-upcoming-day">
+                    <div className="trial-upcoming-date">
+                      {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
+                      <span className="trial-upcoming-count">{bookings.length}</span>
+                    </div>
+                    <div className="trial-upcoming-bookings">
+                      {bookings.map((b: any) => (
+                        <div key={b.id} className="trial-upcoming-card">
+                          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: b.color || '#3B82F6', marginRight: 6 }} />
+                          <span style={{ fontWeight: 600 }}>{b.student_name}</span>
+                          <span style={{ color: '#666', marginLeft: 8 }}>{b.class_name} · {b.start_time?.slice(0,5)}-{b.end_time?.slice(0,5)}</span>
+                          <span className={`trial-source-badge ${b.booking_source}`}>
+                            {SOURCE_LABELS[b.booking_source] || b.booking_source}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="trial-upcoming-bookings">
-                    {bookings.map((b: any) => (
-                      <div key={b.id} className="trial-upcoming-card">
-                        <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: b.color || '#3B82F6', marginRight: 6 }} />
-                        <span style={{ fontWeight: 600 }}>{b.student_name}</span>
-                        <span style={{ color: '#666', marginLeft: 8 }}>{b.class_name} · {b.start_time?.slice(0,5)}-{b.end_time?.slice(0,5)}</span>
-                        <span className={`trial-source-badge ${b.booking_source}`}>
-                          {SOURCE_LABELS[b.booking_source] || b.booking_source}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ));
-            })()}
+                ));
+              })()}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Metrics */}
       {renderMetrics()}
