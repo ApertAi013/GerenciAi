@@ -45,6 +45,10 @@ export interface AutomationSettings {
   send_time_hour: number;
   send_time_minute: number;
   skip_weekends: boolean;
+  audience_type: 'all' | 'by_modality' | 'by_class' | 'custom';
+  audience_modality_ids: number[] | null;
+  audience_class_ids: number[] | null;
+  audience_student_ids: number[] | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -124,6 +128,10 @@ export interface UpdateAutomationSettingsData {
   send_time_hour?: number;
   send_time_minute?: number;
   skip_weekends?: boolean;
+  audience_type?: 'all' | 'by_modality' | 'by_class' | 'custom';
+  audience_modality_ids?: number[] | null;
+  audience_class_ids?: number[] | null;
+  audience_student_ids?: number[] | null;
 }
 
 export interface LogsFilters {
