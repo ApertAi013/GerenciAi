@@ -48,12 +48,34 @@ export default function WhatsAppAutomation() {
 
       if (settingsRes.status === 'success' || settingsRes.success) {
         const s = settingsRes.data;
-        // Parse JSON fields from backend
-        if (typeof s.audience_modality_ids === 'string') s.audience_modality_ids = JSON.parse(s.audience_modality_ids);
-        if (typeof s.audience_class_ids === 'string') s.audience_class_ids = JSON.parse(s.audience_class_ids);
-        if (typeof s.audience_student_ids === 'string') s.audience_student_ids = JSON.parse(s.audience_student_ids);
-        if (!s.audience_type) s.audience_type = 'all';
-        setSettings(s);
+        if (s) {
+          // Parse JSON fields from backend
+          if (typeof s.audience_modality_ids === 'string') s.audience_modality_ids = JSON.parse(s.audience_modality_ids);
+          if (typeof s.audience_class_ids === 'string') s.audience_class_ids = JSON.parse(s.audience_class_ids);
+          if (typeof s.audience_student_ids === 'string') s.audience_student_ids = JSON.parse(s.audience_student_ids);
+          if (!s.audience_type) s.audience_type = 'all';
+          setSettings(s);
+        } else {
+          // No settings yet — set defaults so the page renders
+          setSettings({
+            due_reminder_enabled: false,
+            due_reminder_days_before: 3,
+            due_reminder_template_id: null,
+            overdue_reminder_enabled: false,
+            overdue_reminder_frequency_days: 7,
+            overdue_reminder_max_count: 3,
+            overdue_reminder_template_id: null,
+            payment_confirmation_enabled: false,
+            payment_confirmation_template_id: null,
+            send_time_hour: 9,
+            send_time_minute: 0,
+            skip_weekends: false,
+            audience_type: 'all',
+            audience_modality_ids: null,
+            audience_class_ids: null,
+            audience_student_ids: null,
+          });
+        }
       }
       if (templatesRes.status === 'success' || templatesRes.success) setTemplates(templatesRes.data);
       if ((modalitiesRes as any).success || (modalitiesRes as any).status === 'success') setModalities((modalitiesRes as any).data || []);
