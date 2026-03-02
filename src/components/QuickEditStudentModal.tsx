@@ -832,7 +832,9 @@ export default function QuickEditStudentModal() {
                                             <div className="qe-class-day">{weekdayFull[day]}</div>
                                             {dayClasses.map(cls => {
                                               const isSelected = (enrollmentForm.class_ids || []).includes(cls.id);
-                                              const isFull = (cls.enrolled_count || 0) >= cls.capacity;
+                                              const originalClasses = enrollments.find(e => e.id === editingEnrollmentId)?.class_ids || [];
+                                              const isStudentEnrolled = originalClasses.includes(cls.id);
+                                              const isFull = !isStudentEnrolled && (cls.enrolled_count || 0) >= cls.capacity;
                                               return (
                                                 <div
                                                   key={cls.id}
@@ -984,7 +986,9 @@ export default function QuickEditStudentModal() {
                                             <div className="qe-class-day">{weekdayFull[day]}</div>
                                             {dayClasses.map(cls => {
                                               const isSelected = turmasClassIds.includes(cls.id);
-                                              const isFull = (cls.enrolled_count || 0) >= cls.capacity;
+                                              const originalTurmas = enrollments.find(e => e.id === turmasEditingId)?.class_ids || [];
+                                              const isStudentEnrolled = originalTurmas.includes(cls.id);
+                                              const isFull = !isStudentEnrolled && (cls.enrolled_count || 0) >= cls.capacity;
                                               return (
                                                 <div
                                                   key={cls.id}

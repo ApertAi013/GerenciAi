@@ -119,7 +119,7 @@ export default function WhatsAppAutomation() {
   };
 
   const getActiveTemplates = () => {
-    return templates.filter((t) => t.is_active);
+    return templates.filter((t) => t.approval_status !== 'rejected' && t.approval_status !== 'pending');
   };
 
   // Audience helpers
