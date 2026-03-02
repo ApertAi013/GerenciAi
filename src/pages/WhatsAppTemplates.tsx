@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -33,6 +33,14 @@ export default function WhatsAppTemplates() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showRequestForm, setShowRequestForm] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const openRequestForm = () => {
+    setShowRequestForm(true);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
 
   // Edit form (only for custom templates — name + isActive)
   const [editForm, setEditForm] = useState({ name: '', is_active: true });
@@ -225,7 +233,7 @@ export default function WhatsAppTemplates() {
           </h1>
           <p>Gerencie os templates de mensagens do WhatsApp</p>
         </div>
-        <button className="btn-new" onClick={() => setShowRequestForm(true)}>
+        <button className="btn-new" onClick={openRequestForm}>
           <FontAwesomeIcon icon={faPlus} /> Solicitar Template Custom
         </button>
       </div>
@@ -259,7 +267,7 @@ export default function WhatsAppTemplates() {
 
       {/* Request Form */}
       {showRequestForm && (
-        <div className="template-form">
+        <div className="template-form" ref={formRef}>
           <h2>Solicitar Template Custom</h2>
           <p className="form-subtitle">
             Templates custom custam <strong>R$0,50 por mensagem</strong> enviada. Após enviar a solicitação, ela será analisada pelo administrador.
@@ -410,7 +418,7 @@ export default function WhatsAppTemplates() {
           {customTemplates.length === 0 ? (
             <div className="empty-state">
               <p>Nenhum template custom</p>
-              <button className="btn-new-sm" onClick={() => setShowRequestForm(true)}>
+              <button className="btn-new-sm" onClick={openRequestForm}>
                 <FontAwesomeIcon icon={faPlus} /> Solicitar Template
               </button>
             </div>
