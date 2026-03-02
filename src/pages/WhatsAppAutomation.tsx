@@ -32,8 +32,8 @@ export default function WhatsAppAutomation() {
         whatsappService.getTemplates(),
       ]);
 
-      if (settingsRes.status === 'success') setSettings(settingsRes.data);
-      if (templatesRes.status === 'success') setTemplates(templatesRes.data);
+      if (settingsRes.status === 'success' || settingsRes.success) setSettings(settingsRes.data);
+      if (templatesRes.status === 'success' || templatesRes.success) setTemplates(templatesRes.data);
     } catch (error: any) {
       console.error('Erro ao carregar dados:', error);
       toast.error('Erro ao carregar configurações');
