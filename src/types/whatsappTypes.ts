@@ -16,6 +16,9 @@ export interface WhatsAppConfig {
 
 export type TemplateType = 'due_reminder' | 'overdue_reminder' | 'payment_confirmation';
 
+export type SysTemplateType = 'std' | 'custom';
+export type ApprovalStatus = 'approved' | 'pending' | 'rejected';
+
 export interface WhatsAppTemplate {
   id?: number;
   user_id?: number;
@@ -23,8 +26,38 @@ export interface WhatsAppTemplate {
   template_type: TemplateType;
   message_template: string;
   is_active: boolean;
+  sys_template_type?: SysTemplateType;
+  approval_status?: ApprovalStatus;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface TemplateRequest {
+  id: number;
+  user_id: number;
+  user_name?: string;
+  user_email?: string;
+  name: string;
+  template_type: TemplateType;
+  message_template: string;
+  status: 'pending' | 'approved' | 'rejected';
+  admin_notes?: string;
+  approved_template_id?: number;
+  param_student_name?: boolean;
+  param_court_name?: boolean;
+  param_days_until_due?: boolean;
+  param_due_date?: boolean;
+  param_pix_key?: boolean;
+  param_amount?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageData {
+  std_sent: number;
+  std_limit: number;
+  custom_sent: number;
+  custom_cost_cents: number;
 }
 
 export interface AutomationSettings {
@@ -132,6 +165,18 @@ export interface UpdateAutomationSettingsData {
   audience_modality_ids?: number[] | null;
   audience_class_ids?: number[] | null;
   audience_student_ids?: number[] | null;
+}
+
+export interface CreateTemplateRequestData {
+  name: string;
+  templateType: TemplateType;
+  messageTemplate: string;
+  param_student_name?: boolean;
+  param_court_name?: boolean;
+  param_days_until_due?: boolean;
+  param_due_date?: boolean;
+  param_pix_key?: boolean;
+  param_amount?: boolean;
 }
 
 export interface LogsFilters {

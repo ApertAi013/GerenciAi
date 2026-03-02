@@ -345,6 +345,317 @@
   color: #6B7280;
 }
 
+/* ===== Usage Banner ===== */
+.usage-banner {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.usage-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.usage-std {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.usage-custom {
+  color: #6B7280;
+  font-size: 0.875rem;
+}
+
+.usage-bar {
+  height: 8px;
+  background: #E5E7EB;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.usage-bar-fill {
+  height: 100%;
+  background: #25D366;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.usage-bar-fill.warning {
+  background: #F59E0B;
+}
+
+.usage-bar-fill.danger {
+  background: #EF4444;
+}
+
+.usage-pricing-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #9CA3AF;
+  font-size: 0.8rem;
+}
+
+/* ===== Section Titles ===== */
+.templates-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  color: #1F2937;
+  margin: 0 0 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-desc {
+  color: #6B7280;
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+}
+
+.section-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.section-badge.std {
+  background: rgba(37, 211, 102, 0.1);
+  color: #128C7E;
+}
+
+.section-badge.custom {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7C3AED;
+}
+
+/* ===== Type Badges ===== */
+.type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.type-badge.std {
+  background: rgba(37, 211, 102, 0.12);
+  color: #128C7E;
+}
+
+.type-badge.custom {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7C3AED;
+}
+
+/* ===== Status Badge ===== */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: rgba(37, 211, 102, 0.1);
+  color: #128C7E;
+}
+
+.status-badge.inactive {
+  background: rgba(156, 163, 175, 0.15);
+  color: #6B7280;
+}
+
+/* ===== Param Checkboxes ===== */
+.param-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+
+.param-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: normal;
+}
+
+.param-checkbox-item:hover {
+  border-color: #25D366;
+  background: rgba(37, 211, 102, 0.04);
+}
+
+.param-checkbox-item input {
+  width: 16px;
+  height: 16px;
+  accent-color: #25D366;
+  cursor: pointer;
+}
+
+.form-subtitle {
+  color: #6B7280;
+  margin: -0.5rem 0 1.5rem 0;
+  font-size: 0.9rem;
+}
+
+/* ===== Inline Edit ===== */
+.inline-edit {
+  padding: 0.375rem 0.5rem;
+  border: 2px solid #25D366;
+  border-radius: 6px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  width: 100%;
+}
+
+.btn-icon.save {
+  border-color: #25D366;
+  color: #25D366;
+}
+
+.btn-icon.save:hover {
+  background: rgba(37, 211, 102, 0.1);
+}
+
+.btn-icon.cancel {
+  border-color: #9CA3AF;
+  color: #9CA3AF;
+}
+
+.btn-icon.cancel:hover {
+  background: rgba(156, 163, 175, 0.1);
+}
+
+.checkbox-label-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.checkbox-label-inline input {
+  width: 16px;
+  height: 16px;
+  accent-color: #25D366;
+}
+
+.btn-new-sm {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* ===== Requests ===== */
+.requests-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.request-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid #E5E7EB;
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.request-header h3 {
+  font-size: 1.1rem;
+  color: #1F2937;
+  margin: 0 0 0.375rem 0;
+}
+
+.request-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.request-status.pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #D97706;
+}
+
+.request-status.approved {
+  background: rgba(37, 211, 102, 0.1);
+  color: #128C7E;
+}
+
+.request-status.rejected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #DC2626;
+}
+
+.admin-notes {
+  background: #FFFBEB;
+  border-left: 3px solid #F59E0B;
+  padding: 0.75rem 1rem;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  color: #92400E;
+}
+
+.request-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.request-date {
+  font-size: 0.8rem;
+  color: #9CA3AF;
+}
+
 /* ===== Dark Mode ===== */
 [data-theme="dark"] .templates-header h1 {
   color: #f0f0f0;
@@ -481,6 +792,113 @@
 
 [data-theme="dark"] .loading {
   color: #a0a0a0;
+}
+
+[data-theme="dark"] .usage-banner {
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .usage-std {
+  color: #d0d0d0;
+}
+
+[data-theme="dark"] .usage-custom {
+  color: #888;
+}
+
+[data-theme="dark"] .usage-bar {
+  background: #333;
+}
+
+[data-theme="dark"] .usage-pricing-info {
+  color: #666;
+}
+
+[data-theme="dark"] .section-title {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .section-desc {
+  color: #888;
+}
+
+[data-theme="dark"] .section-badge.std {
+  background: rgba(37, 211, 102, 0.15);
+  color: #6ee7a0;
+}
+
+[data-theme="dark"] .section-badge.custom {
+  background: rgba(139, 92, 246, 0.15);
+  color: #b794f4;
+}
+
+[data-theme="dark"] .type-badge.std {
+  background: rgba(37, 211, 102, 0.15);
+  color: #6ee7a0;
+}
+
+[data-theme="dark"] .type-badge.custom {
+  background: rgba(139, 92, 246, 0.15);
+  color: #b794f4;
+}
+
+[data-theme="dark"] .param-checkbox-item {
+  border-color: #262626;
+  color: #d0d0d0;
+}
+
+[data-theme="dark"] .param-checkbox-item:hover {
+  border-color: #25D366;
+  background: rgba(37, 211, 102, 0.08);
+}
+
+[data-theme="dark"] .form-subtitle {
+  color: #888;
+}
+
+[data-theme="dark"] .inline-edit {
+  background: #141414;
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .checkbox-label-inline {
+  color: #a0a0a0;
+}
+
+[data-theme="dark"] .request-card {
+  background: #1a1a1a;
+  border-color: #262626;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .request-header h3 {
+  color: #f0f0f0;
+}
+
+[data-theme="dark"] .request-status.pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+}
+
+[data-theme="dark"] .request-status.approved {
+  background: rgba(37, 211, 102, 0.15);
+  color: #6ee7a0;
+}
+
+[data-theme="dark"] .request-status.rejected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+}
+
+[data-theme="dark"] .admin-notes {
+  background: rgba(245, 158, 11, 0.1);
+  border-left-color: #D97706;
+  color: #FBBF24;
+}
+
+[data-theme="dark"] .request-date {
+  color: #666;
 }
 
 @media (max-width: 768px) {

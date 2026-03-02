@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useThemeStore } from '../store/themeStore';
 import { platformBillingService } from '../services/platformBillingService';
 import { monitoringService } from '../services/monitoringService';
+import { whatsappService } from '../services/whatsappService';
+import type { TemplateRequest } from '../types/whatsappTypes';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -21,6 +23,7 @@ import {
   faToggleOff,
   faPlus,
   faCheckCircle,
+  faCommentDots,
 } from '@fortawesome/free-solid-svg-icons';
 import type { Feature } from '../types/monitoringTypes';
 
@@ -102,7 +105,7 @@ interface Addon {
   is_bundle: boolean;
 }
 
-export type BillingSubTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades';
+export type BillingSubTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades' | 'whatsapp_templates';
 
 interface AdminBillingProps {
   forcedTab?: BillingSubTab;
@@ -378,6 +381,11 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
   const [upgradeStatusFilter, setUpgradeStatusFilter] = useState('all');
   const [actionNotes, setActionNotes] = useState<Record<number, string>>({});
 
+  // WhatsApp Template Requests
+  const [wppTemplateRequests, setWppTemplateRequests] = useState<TemplateRequest[]>([]);
+  const [wppStatusFilter, setWppStatusFilter] = useState('all');
+  const [wppActionNotes, setWppActionNotes] = useState<Record<number, string>>({});
+
   // Premium Features (individual toggles per gestor)
   const [features, setFeatures] = useState<Feature[]>([]);
   const [updatingFeature, setUpdatingFeature] = useState<string | null>(null);
@@ -465,6 +473,24 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
     }
   }, [upgradeStatusFilter]);
 
+  const loadWppTemplateRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await whatsappService.adminGetTemplateRequests();
+      if (res.success) {
+        let data = res.data;
+        if (wppStatusFilter !== 'all') {
+          data = data.filter((r: TemplateRequest) => r.status === wppStatusFilter);
+        }
+        setWppTemplateRequests(data);
+      }
+    } catch {
+      toast.error('Erro ao carregar solicitações de template WhatsApp');
+    } finally {
+      setLoading(false);
+    }
+  }, [wppStatusFilter]);
+
   const loadFeatures = useCallback(async () => {
     try {
       const response = await monitoringService.listFeatures();
@@ -512,6 +538,7 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
     }
     if (activeTab === 'faturas') loadInvoices();
     if (activeTab === 'upgrades') loadUpgradeRequests();
+    if (activeTab === 'whatsapp_templates') loadWppTemplateRequests();
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -525,6 +552,10 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
   useEffect(() => {
     if (activeTab === 'upgrades') loadUpgradeRequests();
   }, [upgradeStatusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeTab === 'whatsapp_templates') loadWppTemplateRequests();
+  }, [wppStatusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
@@ -632,6 +663,35 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
       }
     } catch {
       toast.error('Erro ao negar upgrade');
+    }
+  };
+
+  const handleApproveWppTemplate = async (requestId: number) => {
+    try {
+      const res = await whatsappService.adminApproveTemplateRequest(requestId);
+      if (res.success) {
+        toast.success('Template aprovado e criado com sucesso');
+        loadWppTemplateRequests();
+      } else {
+        toast.error((res as any).message || 'Erro ao aprovar template');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao aprovar template');
+    }
+  };
+
+  const handleRejectWppTemplate = async (requestId: number) => {
+    const notes = wppActionNotes[requestId] || '';
+    try {
+      const res = await whatsappService.adminRejectTemplateRequest(requestId, notes || undefined);
+      if (res.success) {
+        toast.success('Template rejeitado');
+        loadWppTemplateRequests();
+      } else {
+        toast.error((res as any).message || 'Erro ao rejeitar template');
+      }
+    } catch {
+      toast.error('Erro ao rejeitar template');
     }
   };
 
@@ -1214,6 +1274,116 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
     </>
   );
 
+  const renderWppTemplateRequests = () => {
+    const templateTypeLabels: Record<string, string> = {
+      due_reminder: 'Lembrete de Vencimento',
+      overdue_reminder: 'Lembrete de Atraso',
+      payment_confirmation: 'Confirmação de Pagamento',
+    };
+
+    return (
+      <>
+        <div style={styles.filterRow}>
+          <select
+            style={styles.select}
+            value={wppStatusFilter}
+            onChange={(e) => setWppStatusFilter(e.target.value)}
+          >
+            <option value="all">Todos os status</option>
+            <option value="pending">Pendente</option>
+            <option value="approved">Aprovado</option>
+            <option value="rejected">Rejeitado</option>
+          </select>
+          <button
+            style={{ ...styles.btnPrimary, ...styles.btnSmall }}
+            onClick={loadWppTemplateRequests}
+          >
+            <FontAwesomeIcon icon={faRefresh} /> Atualizar
+          </button>
+        </div>
+
+        {loading ? (
+          <div style={styles.spinner}><FontAwesomeIcon icon={faSpinner} spin /> Carregando...</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Gestor</th>
+                  <th style={styles.th}>Nome Template</th>
+                  <th style={styles.th}>Tipo</th>
+                  <th style={styles.th}>Mensagem</th>
+                  <th style={styles.th}>Data</th>
+                  <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {wppTemplateRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ ...styles.td(0), textAlign: 'center', color: '#9CA3AF' }}>
+                      Nenhuma solicitação encontrada
+                    </td>
+                  </tr>
+                ) : (
+                  wppTemplateRequests.map((req, idx) => (
+                    <tr key={req.id}>
+                      <td style={styles.td(idx)}>
+                        <div>{req.user_name || `User #${req.user_id}`}</div>
+                        <div style={{ fontSize: '0.78rem', color: '#9CA3AF' }}>{req.user_email || ''}</div>
+                      </td>
+                      <td style={styles.td(idx)}>{req.name}</td>
+                      <td style={styles.td(idx)}>{templateTypeLabels[req.template_type] || req.template_type}</td>
+                      <td style={{ ...styles.td(idx), maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {req.message_template}
+                      </td>
+                      <td style={styles.td(idx)}>
+                        {req.created_at ? new Date(req.created_at).toLocaleDateString('pt-BR') : '-'}
+                      </td>
+                      <td style={styles.td(idx)}>
+                        <span style={styles.badge(req.status === 'rejected' ? 'denied' : req.status)}>
+                          {statusLabel[req.status === 'rejected' ? 'denied' : req.status] || req.status}
+                        </span>
+                      </td>
+                      <td style={styles.td(idx)}>
+                        {req.status === 'pending' && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '180px' }}>
+                            <input
+                              style={{ ...styles.input, fontSize: '0.78rem', padding: '0.3rem 0.5rem' }}
+                              placeholder="Observações (opcional)"
+                              value={wppActionNotes[req.id] || ''}
+                              onChange={(e) =>
+                                setWppActionNotes((prev) => ({ ...prev, [req.id]: e.target.value }))
+                              }
+                            />
+                            <div style={{ display: 'flex', gap: '0.35rem' }}>
+                              <button
+                                style={{ ...styles.btnSuccess, ...styles.btnSmall }}
+                                onClick={() => handleApproveWppTemplate(req.id)}
+                              >
+                                <FontAwesomeIcon icon={faCheck} /> Aprovar
+                              </button>
+                              <button
+                                style={{ ...styles.btnDanger, ...styles.btnSmall }}
+                                onClick={() => handleRejectWppTemplate(req.id)}
+                              >
+                                <FontAwesomeIcon icon={faTimes} /> Rejeitar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </>
+    );
+  };
+
   // ── Main render ────────────────────────────────────────────────────────────
 
   return (
@@ -1233,6 +1403,9 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
           <button style={styles.subtab(activeTab === 'upgrades')} onClick={() => setInternalTab('upgrades')}>
             <FontAwesomeIcon icon={faArrowUp} /> Upgrade Requests
           </button>
+          <button style={styles.subtab(activeTab === 'whatsapp_templates')} onClick={() => setInternalTab('whatsapp_templates')}>
+            <FontAwesomeIcon icon={faCommentDots} /> Templates WhatsApp
+          </button>
         </div>
       )}
 
@@ -1241,6 +1414,7 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
       {activeTab === 'gestores' && renderGestores()}
       {activeTab === 'faturas' && renderFaturas()}
       {activeTab === 'upgrades' && renderUpgradeRequests()}
+      {activeTab === 'whatsapp_templates' && renderWppTemplateRequests()}
     </div>
   );
 }

@@ -12,6 +12,9 @@ import type {
   UpdateTemplateData,
   UpdateAutomationSettingsData,
   LogsFilters,
+  UsageData,
+  TemplateRequest,
+  CreateTemplateRequestData,
 } from '../types/whatsappTypes';
 
 interface ApiResponse<T> {
@@ -121,6 +124,60 @@ export const whatsappService = {
    */
   updateAutomationSettings: async (data: UpdateAutomationSettingsData): Promise<ApiResponse<AutomationSettings>> => {
     const response = await api.put('/api/whatsapp/automation/settings', data);
+    return response.data;
+  },
+
+  // ==================== USAGE ====================
+
+  /**
+   * Buscar uso mensal de mensagens
+   */
+  getUsage: async (): Promise<ApiResponse<UsageData>> => {
+    const response = await api.get('/api/whatsapp/usage');
+    return response.data;
+  },
+
+  // ==================== TEMPLATE REQUESTS ====================
+
+  /**
+   * Criar solicitação de template custom
+   */
+  createTemplateRequest: async (data: CreateTemplateRequestData): Promise<ApiResponse<TemplateRequest>> => {
+    const response = await api.post('/api/whatsapp/template-requests', data);
+    return response.data;
+  },
+
+  /**
+   * Listar minhas solicitações de template
+   */
+  getTemplateRequests: async (): Promise<ApiResponse<TemplateRequest[]>> => {
+    const response = await api.get('/api/whatsapp/template-requests');
+    return response.data;
+  },
+
+  // ==================== ADMIN TEMPLATE REQUESTS ====================
+
+  /**
+   * Listar todas as solicitações de template (admin)
+   */
+  adminGetTemplateRequests: async (): Promise<ApiResponse<TemplateRequest[]>> => {
+    const response = await api.get('/api/whatsapp/admin/template-requests');
+    return response.data;
+  },
+
+  /**
+   * Aprovar solicitação de template (admin)
+   */
+  adminApproveTemplateRequest: async (id: number): Promise<ApiResponse<any>> => {
+    const response = await api.put(`/api/whatsapp/admin/template-requests/${id}/approve`);
+    return response.data;
+  },
+
+  /**
+   * Rejeitar solicitação de template (admin)
+   */
+  adminRejectTemplateRequest: async (id: number, adminNotes?: string): Promise<ApiResponse<any>> => {
+    const response = await api.put(`/api/whatsapp/admin/template-requests/${id}/reject`, { adminNotes });
     return response.data;
   },
 
