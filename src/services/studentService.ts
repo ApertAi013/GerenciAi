@@ -81,5 +81,8 @@ export interface PendingRegistration {
   cpf?: string;
   birth_date?: string;
   sex?: string;
+  preferred_weekdays?: string;
+  preferred_modality?: string;
+  preferred_availability?: string;
   created_at: string;
 }

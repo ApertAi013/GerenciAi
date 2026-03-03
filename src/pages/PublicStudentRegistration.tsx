@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router';
-import { publicStudentRegistrationService } from '../services/publicStudentRegistrationService';
+import { publicStudentRegistrationService, PublicModality } from '../services/publicStudentRegistrationService';
 import '../styles/PublicTrialBooking.css';
+
+const WEEKDAY_OPTIONS = [
+  { key: 'seg', label: 'Seg' },
+  { key: 'ter', label: 'Ter' },
+  { key: 'qua', label: 'Qua' },
+  { key: 'qui', label: 'Qui' },
+  { key: 'sex', label: 'Sex' },
+  { key: 'sab', label: 'Sáb' },
+  { key: 'dom', label: 'Dom' },
+];
 
 export default function PublicStudentRegistration() {
   // Public pages always use light theme
@@ -29,6 +39,10 @@ export default function PublicStudentRegistration() {
   const [cpf, setCpf] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [sex, setSex] = useState('');
+  const [preferredWeekdays, setPreferredWeekdays] = useState<string[]>([]);
+  const [preferredModality, setPreferredModality] = useState('');
+  const [preferredAvailability, setPreferredAvailability] = useState('');
+  const [modalities, setModalities] = useState<PublicModality[]>([]);
 
   useEffect(() => {
     if (!token) return;
@@ -42,6 +56,12 @@ export default function PublicStudentRegistration() {
       setBusinessName(response.data?.business_name || '');
       setBusinessDescription(response.data?.business_description || '');
       setLogoUrl(response.data?.logo_url || '');
+
+      // Load modalities
+      try {
+        const modRes = await publicStudentRegistrationService.getModalities(token!);
+        setModalities(modRes.data || []);
+      } catch { /* ignore - modalities are optional */ }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Link de cadastro invalido ou expirado.');
     } finally {
@@ -123,6 +143,9 @@ export default function PublicStudentRegistration() {
       if (cpf) data.cpf = cpf.replace(/\D/g, '');
       if (birthDate) data.birth_date = birthDate;
       if (sex) data.sex = sex;
+      if (preferredWeekdays.length > 0) data.preferred_weekdays = preferredWeekdays.join(',');
+      if (preferredModality) data.preferred_modality = preferredModality;
+      if (preferredAvailability.trim()) data.preferred_availability = preferredAvailability.trim();
 
       await publicStudentRegistrationService.registerStudent(token!, data);
       setSuccess(true);
@@ -272,6 +295,75 @@ export default function PublicStudentRegistration() {
                   <option value="N/I">Prefiro nao informar</option>
                 </select>
               </div>
+            </div>
+
+            {/* Modalidade Desejada */}
+            {modalities.length > 0 && (
+              <div className="ptb-form-group">
+                <label>Modalidade Desejada</label>
+                <select
+                  value={preferredModality}
+                  onChange={(e) => setPreferredModality(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '1px solid #D1D5DB',
+                    borderRadius: '10px',
+                    fontSize: '1rem',
+                    backgroundColor: 'white',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <option value="">Selecione...</option>
+                  {modalities.map((m) => (
+                    <option key={m.id} value={m.name}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Dia de Aula Desejado */}
+            <div className="ptb-form-group">
+              <label>Dia de Aula Desejado</label>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {WEEKDAY_OPTIONS.map((w) => (
+                  <button
+                    key={w.key}
+                    type="button"
+                    onClick={() => {
+                      setPreferredWeekdays((prev) =>
+                        prev.includes(w.key)
+                          ? prev.filter((d) => d !== w.key)
+                          : [...prev, w.key]
+                      );
+                    }}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: preferredWeekdays.includes(w.key) ? '2px solid #2563eb' : '1px solid #D1D5DB',
+                      backgroundColor: preferredWeekdays.includes(w.key) ? '#2563eb' : 'white',
+                      color: preferredWeekdays.includes(w.key) ? 'white' : '#374151',
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {w.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Horario de Disponibilidade */}
+            <div className="ptb-form-group">
+              <label>Horário de Disponibilidade</label>
+              <input
+                type="text"
+                value={preferredAvailability}
+                onChange={(e) => setPreferredAvailability(e.target.value)}
+                placeholder="Ex: 18h às 20h, Manhã, etc."
+              />
             </div>
 
             <div className="ptb-btn-row" style={{ marginTop: '24px' }}>

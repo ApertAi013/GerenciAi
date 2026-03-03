@@ -325,7 +325,37 @@ export default function Students() {
               <div key={reg.id} className="pending-registration-card">
                 <div className="pending-reg-name">{reg.full_name}</div>
                 <div className="pending-reg-info">{reg.email}</div>
-                {reg.phone && <div className="pending-reg-info">{reg.phone}</div>}
+                {reg.phone && <div className="pending-reg-info">Tel: {reg.phone}</div>}
+                {reg.cpf && <div className="pending-reg-info">CPF: {reg.cpf}</div>}
+                {reg.birth_date && (
+                  <div className="pending-reg-info">
+                    Nascimento: {new Date(reg.birth_date).toLocaleDateString('pt-BR')}
+                  </div>
+                )}
+                {reg.sex && <div className="pending-reg-info">Sexo: {reg.sex}</div>}
+                {reg.preferred_modality && (
+                  <div className="pending-reg-info">Modalidade: {reg.preferred_modality}</div>
+                )}
+                {reg.preferred_weekdays && (
+                  <div className="pending-reg-info" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                    Dias:{' '}
+                    {reg.preferred_weekdays.split(',').map((d) => (
+                      <span key={d} style={{
+                        background: '#2563eb',
+                        color: 'white',
+                        borderRadius: '4px',
+                        padding: '1px 6px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                      }}>
+                        {d.charAt(0).toUpperCase() + d.slice(1)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {reg.preferred_availability && (
+                  <div className="pending-reg-info">Disponibilidade: {reg.preferred_availability}</div>
+                )}
                 <div className="pending-reg-date">
                   {new Date(reg.created_at).toLocaleDateString('pt-BR')}
                 </div>
