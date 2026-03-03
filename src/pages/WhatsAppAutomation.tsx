@@ -7,7 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { whatsappService } from '../services/whatsappService';
 import { classService } from '../services/classService';
 import { studentService } from '../services/studentService';
-import type { AutomationSettings, WhatsAppTemplate } from '../types/whatsappTypes';
+import type { AutomationSettings } from '../types/whatsappTypes';
 import type { Modality, Class } from '../types/classTypes';
 import type { Student } from '../types/studentTypes';
 import PremiumBadge from '../components/chat/PremiumBadge';
@@ -18,7 +18,6 @@ export default function WhatsAppAutomation() {
   const { user } = useAuthStore();
 
   const [settings, setSettings] = useState<AutomationSettings | null>(null);
-  const [templates, setTemplates] = useState<WhatsAppTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -38,9 +37,8 @@ export default function WhatsAppAutomation() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [settingsRes, templatesRes, modalitiesRes, classesRes, studentsRes] = await Promise.all([
+      const [settingsRes, modalitiesRes, classesRes, studentsRes] = await Promise.all([
         whatsappService.getAutomationSettings(),
-        whatsappService.getTemplates(),
         classService.getModalities().catch(() => ({ success: false, data: [] })),
         classService.getClasses({ limit: 500 }).catch(() => ({ success: false, data: [] })),
         studentService.getStudents({ limit: 500, status: 'ativo' }).catch(() => ({ success: false, data: [] })),
@@ -77,7 +75,6 @@ export default function WhatsAppAutomation() {
           });
         }
       }
-      if (templatesRes.status === 'success' || templatesRes.success) setTemplates(templatesRes.data);
       if ((modalitiesRes as any).success || (modalitiesRes as any).status === 'success') setModalities((modalitiesRes as any).data || []);
       if ((classesRes as any).success || (classesRes as any).status === 'success') setClasses((classesRes as any).data || []);
       if ((studentsRes as any).success || (studentsRes as any).status === 'success') setAllStudents((studentsRes as any).data || []);
@@ -116,10 +113,6 @@ export default function WhatsAppAutomation() {
     if (settings) {
       setSettings({ ...settings, ...updates });
     }
-  };
-
-  const getActiveTemplates = () => {
-    return templates.filter((t) => t.approval_status !== 'rejected' && t.approval_status !== 'pending');
   };
 
   // Audience helpers
@@ -340,33 +333,16 @@ export default function WhatsAppAutomation() {
           <p>Enviar lembrete antes do vencimento da mensalidade</p>
 
           {settings.due_reminder_enabled && (
-            <>
-              <div className="form-group">
-                <label>Enviar quantos dias antes?</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="30"
-                  value={settings.due_reminder_days_before}
-                  onChange={(e) => updateSettings({ due_reminder_days_before: parseInt(e.target.value) })}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Template</label>
-                <select
-                  value={settings.due_reminder_template_id || ''}
-                  onChange={(e) => updateSettings({ due_reminder_template_id: parseInt(e.target.value) || null })}
-                >
-                  <option value="">Selecione um template</option>
-                  {getActiveTemplates().map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </>
+            <div className="form-group">
+              <label>Enviar quantos dias antes?</label>
+              <input
+                type="number"
+                min="1"
+                max="30"
+                value={settings.due_reminder_days_before}
+                onChange={(e) => updateSettings({ due_reminder_days_before: parseInt(e.target.value) })}
+              />
+            </div>
           )}
         </div>
 
@@ -410,21 +386,6 @@ export default function WhatsAppAutomation() {
                 />
                 <small>Número máximo de lembretes por fatura</small>
               </div>
-
-              <div className="form-group">
-                <label>Template</label>
-                <select
-                  value={settings.overdue_reminder_template_id || ''}
-                  onChange={(e) => updateSettings({ overdue_reminder_template_id: parseInt(e.target.value) || null })}
-                >
-                  <option value="">Selecione um template</option>
-                  {getActiveTemplates().map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </>
           )}
         </div>
@@ -445,20 +406,9 @@ export default function WhatsAppAutomation() {
           <p>Enviar mensagem de confirmação ao receber pagamento</p>
 
           {settings.payment_confirmation_enabled && (
-            <div className="form-group">
-              <label>Template</label>
-              <select
-                value={settings.payment_confirmation_template_id || ''}
-                onChange={(e) => updateSettings({ payment_confirmation_template_id: parseInt(e.target.value) || null })}
-              >
-                <option value="">Selecione um template</option>
-                {getActiveTemplates().map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '8px' }}>
+              O template de confirmação será enviado automaticamente ao registrar um pagamento.
+            </p>
           )}
         </div>
 
