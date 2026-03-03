@@ -24,6 +24,7 @@ import {
   faPlus,
   faCheckCircle,
   faCommentDots,
+  faGift,
 } from '@fortawesome/free-solid-svg-icons';
 import type { Feature } from '../types/monitoringTypes';
 
@@ -583,6 +584,22 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
     }
   };
 
+  const handleGrantTrial = async () => {
+    if (!selectedGestorId) return;
+    try {
+      const res = await platformBillingService.adminGrantTrial(selectedGestorId);
+      if (res.success) {
+        toast.success('Mês gratuito concedido com sucesso');
+        await loadGestorDetail(selectedGestorId);
+        loadGestores();
+      } else {
+        toast.error(res.message || 'Erro ao conceder mês gratuito');
+      }
+    } catch {
+      toast.error('Erro ao conceder mês gratuito');
+    }
+  };
+
   const handleToggleAddon = async (addonId: number, currentlyEnabled: boolean) => {
     if (!selectedGestorId) return;
     try {
@@ -885,6 +902,21 @@ export default function AdminBilling({ forcedTab, hideTabBar }: AdminBillingProp
                   onClick={handleAssignPlan}
                 >
                   Atribuir Plano
+                </button>
+              </div>
+
+              {/* Grant free month */}
+              <div style={{ marginBottom: '1rem' }}>
+                <button
+                  style={{
+                    ...styles.btnPrimary,
+                    background: isDark ? '#065F46' : '#059669',
+                    width: '100%',
+                    padding: '0.6rem',
+                  }}
+                  onClick={handleGrantTrial}
+                >
+                  <FontAwesomeIcon icon={faGift} /> Conceder Mês Gratuito (Trial)
                 </button>
               </div>
 

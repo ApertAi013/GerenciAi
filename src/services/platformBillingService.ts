@@ -61,6 +61,11 @@ export const platformBillingService = {
     return response.data;
   },
 
+  async adminGrantTrial(gestorId: number) {
+    const response = await api.put(`/api/platform-billing/admin/gestores/${gestorId}/grant-trial`);
+    return response.data;
+  },
+
   async adminToggleAddon(gestorId: number, addonId: number, enable: boolean) {
     const response = await api.put(`/api/platform-billing/admin/gestores/${gestorId}/addons`, {
       addon_id: addonId,
