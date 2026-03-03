@@ -1,10 +1,12 @@
-// Comprehensive Enrollment Form - v2.0
+// Comprehensive Enrollment Form - v2.1
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
 import { classService } from '../services/classService';
 import { levelService } from '../services/levelService';
 import { financialService } from '../services/financialService';
+import GenerateFirstInvoiceModal from './GenerateFirstInvoiceModal';
 import type { Student, CreateStudentRequest } from '../types/studentTypes';
 import type { Plan } from '../types/enrollmentTypes';
 import type { Class } from '../types/classTypes';
@@ -67,6 +69,10 @@ export default function ComprehensiveEnrollmentForm({
   const [markFirstAsPaid, setMarkFirstAsPaid] = useState<boolean>(false);
   const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [paymentMethod, setPaymentMethod] = useState<string>('dinheiro');
+
+  // First invoice modal
+  const [showFirstInvoiceModal, setShowFirstInvoiceModal] = useState(false);
+  const [createdEnrollmentId, setCreatedEnrollmentId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchInitialData();
@@ -279,45 +285,54 @@ export default function ComprehensiveEnrollmentForm({
       }
 
       const enrollmentResponse = await enrollmentService.createEnrollment(enrollmentPayload);
+      const enrollmentId = enrollmentResponse.data?.id || enrollmentResponse.data?.enrollment?.id;
 
-      // If first payment should be marked as paid
-      if (markFirstAsPaid && enrollmentResponse.data) {
+      if (!enrollmentId) {
+        toast.success('Matrícula criada com sucesso!');
+        onSuccess();
+        return;
+      }
+
+      // If first payment should be marked as paid, generate full invoice and pay it
+      if (markFirstAsPaid) {
         try {
-          // Get invoices for this enrollment
+          // Generate invoice with type 'full'
+          await enrollmentService.generateFirstInvoice({
+            enrollment_id: enrollmentId,
+            invoice_type: 'full',
+          });
+
+          // Get the generated invoice
           const invoicesResponse = await financialService.getInvoices({
             student_id: createdStudent.id,
             status: 'aberta',
           });
 
-          // Find the first invoice (should be the one just created)
           const firstInvoice = invoicesResponse.data?.invoices?.[0];
 
           if (firstInvoice) {
-            // Calculate payment value (with discount if applicable)
-            let paymentValue = selectedPlan.price_cents;
-
-            if (discountType === 'fixed') {
-              paymentValue -= discountValue; // Already in cents
-            } else if (discountType === 'percentage') {
-              paymentValue -= (paymentValue * discountValue) / 100;
-            }
-
-            // Register payment
             await financialService.registerPayment({
               invoice_id: firstInvoice.id,
-              amount_cents: Math.max(0, Math.round(paymentValue)),
+              amount_cents: firstInvoice.final_amount_cents,
               method: paymentMethod as 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'outro',
               paid_at: paymentDate,
             });
+            toast.success('Matrícula criada e primeira mensalidade paga!');
+          } else {
+            toast.success('Matrícula criada e fatura gerada!');
           }
-        } catch (paymentErr) {
-          console.error('Erro ao registrar pagamento:', paymentErr);
-          // Don't fail the whole process if payment registration fails
-          // Just log it
-        }
-      }
 
-      onSuccess();
+          onSuccess();
+        } catch (paymentErr) {
+          console.error('Erro ao gerar fatura/pagamento:', paymentErr);
+          toast.success('Matrícula criada! Fatura pode precisar ser gerada manualmente.');
+          onSuccess();
+        }
+      } else {
+        // Show the invoice generation modal
+        setCreatedEnrollmentId(enrollmentId);
+        setShowFirstInvoiceModal(true);
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao criar matrícula');
     } finally {
@@ -904,6 +919,26 @@ export default function ComprehensiveEnrollmentForm({
         )}
         </div>
       </div>
+
+      {/* First Invoice Modal */}
+      {showFirstInvoiceModal && createdEnrollmentId && createdStudent && selectedPlan && (
+        <GenerateFirstInvoiceModal
+          enrollmentId={createdEnrollmentId}
+          studentName={createdStudent.full_name}
+          planPrice={selectedPlan.price_cents}
+          dueDay={dueDay}
+          discountType={discountType}
+          discountValue={discountValue}
+          onClose={() => {
+            setShowFirstInvoiceModal(false);
+            onSuccess();
+          }}
+          onSuccess={() => {
+            setShowFirstInvoiceModal(false);
+            onSuccess();
+          }}
+        />
+      )}
     </div>
   );
 }
