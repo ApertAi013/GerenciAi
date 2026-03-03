@@ -210,7 +210,9 @@ export default function StudentDetails() {
         enrollmentService.getPlans(),
         classService.getClasses({ status: 'ativa' }),
       ]);
-      if (plansRes.status === 'success') setEditPlans(plansRes.data);
+      const plansSuccess = (plansRes as any).status === 'success' || (plansRes as any).success === true;
+      const plansData = (plansRes as any).data || (plansRes as any).plans;
+      if (plansSuccess && plansData) setEditPlans(plansData);
       if (classesRes.status === 'success') setEditClasses(classesRes.data);
       setEditingEnrollment(enrollment);
       setShowEditEnrollmentModal(true);
