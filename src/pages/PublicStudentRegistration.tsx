@@ -43,6 +43,8 @@ export default function PublicStudentRegistration() {
   const [preferredModality, setPreferredModality] = useState('');
   const [preferredAvailability, setPreferredAvailability] = useState('');
   const [modalities, setModalities] = useState<PublicModality[]>([]);
+  const [showWeekdays, setShowWeekdays] = useState(true);
+  const [showAvailability, setShowAvailability] = useState(true);
 
   useEffect(() => {
     if (!token) return;
@@ -56,6 +58,8 @@ export default function PublicStudentRegistration() {
       setBusinessName(response.data?.business_name || '');
       setBusinessDescription(response.data?.business_description || '');
       setLogoUrl(response.data?.logo_url || '');
+      setShowWeekdays(response.data?.show_weekdays !== false);
+      setShowAvailability(response.data?.show_availability !== false);
 
       // Load modalities
       try {
@@ -323,7 +327,7 @@ export default function PublicStudentRegistration() {
             )}
 
             {/* Dia de Aula Desejado */}
-            <div className="ptb-form-group">
+            {showWeekdays && <div className="ptb-form-group">
               <label>Dia de Aula Desejado</label>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {WEEKDAY_OPTIONS.map((w) => (
@@ -353,10 +357,10 @@ export default function PublicStudentRegistration() {
                   </button>
                 ))}
               </div>
-            </div>
+            </div>}
 
             {/* Horario de Disponibilidade */}
-            <div className="ptb-form-group">
+            {showAvailability && <div className="ptb-form-group">
               <label>Horário de Disponibilidade</label>
               <input
                 type="text"
@@ -364,7 +368,7 @@ export default function PublicStudentRegistration() {
                 onChange={(e) => setPreferredAvailability(e.target.value)}
                 placeholder="Ex: 18h às 20h, Manhã, etc."
               />
-            </div>
+            </div>}
 
             <div className="ptb-btn-row" style={{ marginTop: '24px' }}>
               <button

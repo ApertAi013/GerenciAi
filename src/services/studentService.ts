@@ -57,6 +57,16 @@ export const studentService = {
     return response.data;
   },
 
+  async getRegistrationSettings(): Promise<{ success: boolean; data: { show_weekdays: boolean; show_availability: boolean } }> {
+    const response = await api.get('/api/students/registration-settings');
+    return response.data;
+  },
+
+  async updateRegistrationSettings(data: { show_weekdays: boolean; show_availability: boolean }): Promise<{ success: boolean }> {
+    const response = await api.put('/api/students/registration-settings', data);
+    return response.data;
+  },
+
   async getPendingRegistrations(): Promise<{ success: boolean; data: PendingRegistration[] }> {
     const response = await api.get('/api/students/pending-registrations');
     return response.data;

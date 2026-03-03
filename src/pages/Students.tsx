@@ -34,6 +34,8 @@ export default function Students() {
   const [registrationToken, setRegistrationToken] = useState<string | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [linkShowWeekdays, setLinkShowWeekdays] = useState(true);
+  const [linkShowAvailability, setLinkShowAvailability] = useState(true);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [approvingStudent, setApprovingStudent] = useState<PendingRegistration | null>(null);
   const [approveLevel, setApproveLevel] = useState<number | undefined>(undefined);
@@ -93,6 +95,12 @@ export default function Students() {
       const genResponse = await studentService.generateRegistrationToken();
       if (genResponse.data?.token) {
         setRegistrationToken(genResponse.data.token);
+        // Load current settings
+        try {
+          const settingsRes = await studentService.getRegistrationSettings();
+          setLinkShowWeekdays(settingsRes.data?.show_weekdays ?? true);
+          setLinkShowAvailability(settingsRes.data?.show_availability ?? true);
+        } catch { /* defaults are fine */ }
         setShowLinkModal(true);
       } else {
         alert('Erro ao gerar link de cadastro.');
@@ -100,6 +108,17 @@ export default function Students() {
     } catch (error) {
       console.error('Erro ao obter link:', error);
       alert('Erro ao gerar link de cadastro. Tente novamente.');
+    }
+  };
+
+  const handleSaveLinkSettings = async (weekdays: boolean, availability: boolean) => {
+    try {
+      await studentService.updateRegistrationSettings({
+        show_weekdays: weekdays,
+        show_availability: availability,
+      });
+    } catch (err) {
+      console.error('Erro ao salvar configurações do link:', err);
     }
   };
 
@@ -649,6 +668,8 @@ export default function Students() {
               <p style={{ color: '#6B7280', marginBottom: '16px' }}>
                 Compartilhe este link para que alunos preencham seus proprios dados de cadastro.
               </p>
+
+              {/* Campo de link */}
               <div style={{
                 display: 'flex',
                 gap: '8px',
@@ -656,6 +677,7 @@ export default function Students() {
                 borderRadius: '8px',
                 padding: '10px 12px',
                 alignItems: 'center',
+                marginBottom: '20px',
               }}>
                 <input
                   type="text"
@@ -690,6 +712,37 @@ export default function Students() {
                   <FontAwesomeIcon icon={linkCopied ? faCheck : faCopy} />
                   {linkCopied ? 'Copiado!' : 'Copiar'}
                 </button>
+              </div>
+
+              {/* Configurações de campos */}
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                <p style={{ fontWeight: 600, marginBottom: '12px', fontSize: '0.9rem' }}>Campos exibidos no formulario:</p>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: '10px' }}>
+                  <input
+                    type="checkbox"
+                    checked={linkShowWeekdays}
+                    onChange={(e) => {
+                      setLinkShowWeekdays(e.target.checked);
+                      handleSaveLinkSettings(e.target.checked, linkShowAvailability);
+                    }}
+                    style={{ width: '18px', height: '18px', accentColor: '#3B82F6' }}
+                  />
+                  <span style={{ fontSize: '0.9rem' }}>Dia de aula desejado</span>
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={linkShowAvailability}
+                    onChange={(e) => {
+                      setLinkShowAvailability(e.target.checked);
+                      handleSaveLinkSettings(linkShowWeekdays, e.target.checked);
+                    }}
+                    style={{ width: '18px', height: '18px', accentColor: '#3B82F6' }}
+                  />
+                  <span style={{ fontSize: '0.9rem' }}>Horario de disponibilidade</span>
+                </label>
               </div>
             </div>
             <div className="mm-footer">
