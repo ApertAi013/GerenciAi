@@ -95,10 +95,12 @@ export default function WhatsAppAutomation() {
 
       if ((response as any).status === 'success' || (response as any).success === true) {
         const s = response.data;
-        if (typeof s.audience_modality_ids === 'string') s.audience_modality_ids = JSON.parse(s.audience_modality_ids);
-        if (typeof s.audience_class_ids === 'string') s.audience_class_ids = JSON.parse(s.audience_class_ids);
-        if (typeof s.audience_student_ids === 'string') s.audience_student_ids = JSON.parse(s.audience_student_ids);
-        setSettings(s);
+        if (s) {
+          if (typeof s.audience_modality_ids === 'string') s.audience_modality_ids = JSON.parse(s.audience_modality_ids);
+          if (typeof s.audience_class_ids === 'string') s.audience_class_ids = JSON.parse(s.audience_class_ids);
+          if (typeof s.audience_student_ids === 'string') s.audience_student_ids = JSON.parse(s.audience_student_ids);
+          setSettings(s);
+        }
         toast.success('Configurações salvas com sucesso!');
       }
     } catch (error: any) {
