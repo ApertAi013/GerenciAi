@@ -8,7 +8,6 @@ import {
   DollarSign,
   Search,
   Filter,
-  Mail,
   Eye,
   Trash2,
   AlertCircle,
@@ -29,7 +28,10 @@ import {
   Send,
   Bell,
   Target,
+  UserCheck,
 } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import toast from 'react-hot-toast';
 import { trialStudentService } from '../services/trialStudentService';
 import { classService } from '../services/classService';
@@ -183,6 +185,27 @@ export default function TrialStudents() {
         error.response?.data?.message || 'Erro ao enviar follow-up'
       );
     }
+  };
+
+  const handleToggleAttendance = async (student: TrialStudent) => {
+    if (!student.last_trial_attendance_id) return;
+    try {
+      const response = await trialStudentService.toggleAttendance(student.last_trial_attendance_id);
+      if (response.status === 'success') {
+        setStudents(prev => prev.map(s =>
+          s.id === student.id ? { ...s, last_trial_attended: response.data.attended } : s
+        ));
+        toast.success(response.data.attended ? 'Presença confirmada!' : 'Presença removida');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao atualizar presença');
+    }
+  };
+
+  const handleOpenWhatsApp = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    const number = cleaned.startsWith('55') ? cleaned : `55${cleaned}`;
+    window.open(`https://wa.me/${number}`, '_blank');
   };
 
   const fetchTrialClassConfig = async () => {
@@ -1141,6 +1164,7 @@ export default function TrialStudents() {
                 <th>Nome</th>
                 <th>Contato</th>
                 <th>Nível</th>
+                <th>Aula Experimental</th>
                 <th>Aulas</th>
                 <th>Expiração</th>
                 <th>Status</th>
@@ -1156,7 +1180,7 @@ export default function TrialStudents() {
                   <tr key={student.id}>
                     <td>
                       <div style={{ fontWeight: 600 }}>{student.full_name}</div>
-                      {student.trial_converted_to_regular && (
+                      {!!student.trial_converted_to_regular && (
                         <div
                           style={{
                             fontSize: '0.75rem',
@@ -1195,6 +1219,23 @@ export default function TrialStudents() {
                         >
                           {student.level_name || student.level}
                         </span>
+                      ) : (
+                        <span style={{ color: '#999' }}>-</span>
+                      )}
+                    </td>
+                    <td>
+                      {student.last_trial_date ? (
+                        <div style={{ fontSize: '0.825rem' }}>
+                          <div style={{ fontWeight: 600 }}>
+                            {new Date(student.last_trial_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                            {student.last_trial_time && ` · ${String(student.last_trial_time).slice(0, 5)}`}
+                          </div>
+                          {student.last_trial_class_name && (
+                            <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.15rem' }}>
+                              {student.last_trial_class_name}
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <span style={{ color: '#999' }}>-</span>
                       )}
@@ -1256,6 +1297,19 @@ export default function TrialStudents() {
                     </td>
                     <td>
                       <div className="trial-actions">
+                        {student.last_trial_attendance_id && (
+                          <button
+                            className={`trial-action-btn ${student.last_trial_attended ? 'attended' : ''}`}
+                            onClick={() => handleToggleAttendance(student)}
+                            title={student.last_trial_attended ? 'Presença confirmada (clique para remover)' : 'Confirmar presença'}
+                            style={{
+                              color: student.last_trial_attended ? '#22c55e' : '#999',
+                              background: student.last_trial_attended ? '#f0fdf4' : undefined,
+                            }}
+                          >
+                            <UserCheck size={18} />
+                          </button>
+                        )}
                         {!student.trial_converted_to_regular && (
                           <>
                             <button
@@ -1265,13 +1319,14 @@ export default function TrialStudents() {
                             >
                               <CheckCircle size={18} />
                             </button>
-                            {(student.email || student.phone) && (
+                            {student.phone && (
                               <button
                                 className="trial-action-btn"
-                                onClick={() => handleSendFollowup(student)}
-                                title="Enviar Follow-up"
+                                onClick={() => handleOpenWhatsApp(student.phone)}
+                                title="Abrir WhatsApp"
+                                style={{ color: '#25D366' }}
                               >
-                                <Mail size={18} />
+                                <FontAwesomeIcon icon={faWhatsapp} style={{ fontSize: 18 }} />
                               </button>
                             )}
                           </>

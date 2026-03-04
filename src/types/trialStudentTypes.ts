@@ -22,6 +22,11 @@ export interface TrialStudent {
   trial_classes_count?: number;
   followups_count?: number;
   is_expired?: boolean;
+  last_trial_date?: string;
+  last_trial_time?: string;
+  last_trial_class_name?: string;
+  last_trial_attended?: boolean;
+  last_trial_attendance_id?: number;
   created_at?: string; // Optional in case backend doesn't return it
   updated_at?: string;
 }

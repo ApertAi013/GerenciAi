@@ -217,6 +217,14 @@ export const trialStudentService = {
     return response.data;
   },
 
+  async toggleAttendance(attendanceId: number): Promise<{
+    status: string;
+    data: { id: number; attended: boolean };
+  }> {
+    const response = await api.put(`/api/trial-students/attendance/${attendanceId}/toggle-attended`);
+    return response.data;
+  },
+
   async updateTrialPriceSettings(data: {
     show_trial_prices?: boolean;
     trial_visible_plan_ids?: number[];
