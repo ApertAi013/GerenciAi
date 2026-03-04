@@ -4,9 +4,11 @@ import toast from 'react-hot-toast';
 import { trialStudentService } from '../services/trialStudentService';
 import { planService } from '../services/planService';
 import { classService } from '../services/classService';
+import { levelService } from '../services/levelService';
 import type { TrialStudent, UpgradeToRegularRequest } from '../types/trialStudentTypes';
 import type { Plan } from '../types/enrollmentTypes';
 import type { Class } from '../types/classTypes';
+import type { Level } from '../types/levelTypes';
 import { useThemeStore } from '../store/themeStore';
 import '../styles/TrialStudents.css';
 import '../styles/ModernModal.css';
@@ -29,28 +31,41 @@ export default function ConvertTrialStudentModal({
   const [currentStep, setCurrentStep] = useState<Step>('personal');
   const [plans, setPlans] = useState<Plan[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
+  const [levels, setLevels] = useState<Level[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState<UpgradeToRegularRequest>({
     cpf: '',
     birth_date: '',
     sex: 'N/I',
+    level_id: undefined,
     plan_id: 0,
     class_ids: [],
     start_date: new Date().toISOString().split('T')[0],
     due_day: 10,
-    contract_type: 'mensal',
   });
 
   useEffect(() => {
     fetchPlans();
     fetchClasses();
+    fetchLevels();
   }, []);
+
+  const fetchLevels = async () => {
+    try {
+      const response = await levelService.getLevels();
+      const isSuccess = (response as any).status === 'success' || (response as any).success === true;
+      if (isSuccess && response.data) {
+        setLevels(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching levels:', error);
+    }
+  };
 
   const fetchPlans = async () => {
     try {
       const response = await planService.getPlans();
-      // Backend returns either success: boolean OR status: 'success'
       if (response.success || (response as any).status === 'success') {
         const planData = response.data || (response as any).data;
         if (Array.isArray(planData)) {
@@ -65,12 +80,27 @@ export default function ConvertTrialStudentModal({
 
   const fetchClasses = async () => {
     try {
-      const response = await classService.getClasses();
-      // Backend returns either success: boolean OR status: 'success'
+      const response = await classService.getClasses({ status: 'ativa', limit: 500 });
       if (response.success || (response as any).status === 'success') {
         const classData = response.data || (response as any).data;
         if (Array.isArray(classData)) {
-          setClasses(classData.filter((c) => c.status === 'ativa'));
+          const activeClasses = classData.filter((c) => c.status === 'ativa');
+          // Fetch details for each class to get enrolled_count
+          const classesWithDetails = await Promise.all(
+            activeClasses.map(async (cls) => {
+              try {
+                const detailsRes = await classService.getClassById(cls.id);
+                const isSuccess = (detailsRes as any).status === 'success' || (detailsRes as any).success === true;
+                if (isSuccess && detailsRes.data) {
+                  return { ...cls, enrolled_count: detailsRes.data.enrolled_count || 0 };
+                }
+                return cls;
+              } catch {
+                return cls;
+              }
+            })
+          );
+          setClasses(classesWithDetails);
         }
       }
     } catch (error) {
@@ -81,11 +111,12 @@ export default function ConvertTrialStudentModal({
 
   const selectedPlan = plans.find((p) => p.id === formData.plan_id);
   const selectedClasses = classes.filter((c) => formData.class_ids.includes(c.id));
+  const selectedLevel = levels.find((l) => l.id === formData.level_id);
 
   const canProceedToNextStep = () => {
     switch (currentStep) {
       case 'personal':
-        return formData.cpf.length >= 11; // CPF é obrigatório
+        return formData.cpf.length >= 11 && formData.level_id && formData.level_id > 0;
       case 'plan':
         return formData.plan_id > 0;
       case 'classes':
@@ -103,7 +134,8 @@ export default function ConvertTrialStudentModal({
   const handleNext = () => {
     if (!canProceedToNextStep()) {
       if (currentStep === 'personal') {
-        toast.error('CPF é obrigatório para conversão');
+        if (formData.cpf.length < 11) toast.error('CPF é obrigatório para conversão');
+        else if (!formData.level_id) toast.error('Selecione o nível do aluno');
       } else if (currentStep === 'plan') {
         toast.error('Selecione um plano');
       } else if (currentStep === 'classes') {
@@ -249,6 +281,25 @@ export default function ConvertTrialStudentModal({
         </div>
       </div>
 
+      <div className="mm-field">
+        <label htmlFor="level_id" className="required">Nível</label>
+        <select
+          id="level_id"
+          value={formData.level_id || ''}
+          onChange={(e) =>
+            setFormData({ ...formData, level_id: parseInt(e.target.value) || undefined, class_ids: [] })
+          }
+        >
+          <option value="">Selecione o nível...</option>
+          {levels.map((level) => (
+            <option key={level.id} value={level.id}>
+              {level.name}
+            </option>
+          ))}
+        </select>
+        <small>O nível é usado para filtrar turmas compatíveis</small>
+      </div>
+
       <div
         style={{
           background: isDark ? '#141414' : '#f8f9fa',
@@ -262,7 +313,6 @@ export default function ConvertTrialStudentModal({
           <li>Nome: {trialStudent.full_name}</li>
           {trialStudent.phone && <li>Telefone: {trialStudent.phone}</li>}
           {trialStudent.email && <li>E-mail: {trialStudent.email}</li>}
-          {trialStudent.level && <li>Nível: {trialStudent.level}</li>}
           {trialStudent.trial_classes_count !== undefined && (
             <li>Aulas experimentais: {trialStudent.trial_classes_count}</li>
           )}
@@ -313,29 +363,6 @@ export default function ConvertTrialStudentModal({
             ))}
           </select>
         </div>
-      </div>
-
-      <div className="mm-field">
-        <label htmlFor="contract_type">Tipo de Contrato</label>
-        <select
-          id="contract_type"
-          value={formData.contract_type}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              contract_type: e.target.value as
-                | 'mensal'
-                | 'trimestral'
-                | 'semestral'
-                | 'anual',
-            })
-          }
-        >
-          <option value="mensal">Mensal</option>
-          <option value="trimestral">Trimestral</option>
-          <option value="semestral">Semestral</option>
-          <option value="anual">Anual</option>
-        </select>
       </div>
 
       <div className="mm-field">
@@ -413,15 +440,21 @@ export default function ConvertTrialStudentModal({
   );
 
   const renderClassesStep = () => {
-    // Filter classes by student level if available
-    const filteredClasses = trialStudent.level
+    // Filter classes by selected level
+    const levelName = selectedLevel?.name;
+    const filteredByLevel = levelName
       ? classes.filter((c) => {
           if (c.allowed_levels && c.allowed_levels.length > 0) {
-            return c.allowed_levels.includes(trialStudent.level!);
+            return c.allowed_levels.includes(levelName);
           }
           return true;
         })
       : classes;
+
+    // Filter by plan modality if plan has one
+    const filteredClasses = selectedPlan?.modality_id
+      ? filteredByLevel.filter((c) => c.modality_id === selectedPlan.modality_id)
+      : filteredByLevel;
 
     return (
       <div>
@@ -453,10 +486,15 @@ export default function ConvertTrialStudentModal({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {filteredClasses.map((classItem) => {
             const isSelected = formData.class_ids.includes(classItem.id);
+            const enrolled = classItem.enrolled_count || 0;
+            const capacity = classItem.capacity || 0;
+            const available = capacity - enrolled;
+            const isFull = available <= 0 && capacity > 0;
             const canSelect =
-              !selectedPlan ||
-              isSelected ||
-              formData.class_ids.length < selectedPlan.sessions_per_week;
+              !isFull &&
+              (!selectedPlan ||
+                isSelected ||
+                formData.class_ids.length < selectedPlan.sessions_per_week);
 
             return (
               <div
@@ -473,13 +511,17 @@ export default function ConvertTrialStudentModal({
                 }}
                 style={{
                   border: `2px solid ${
-                    isSelected ? '#11998e' : isDark ? '#333' : '#e0e0e0'
+                    isSelected ? '#11998e' : isFull ? (isDark ? '#4a2020' : '#ffcccc') : isDark ? '#333' : '#e0e0e0'
                   }`,
                   borderRadius: '12px',
                   padding: '1rem',
                   cursor: canSelect || isSelected ? 'pointer' : 'not-allowed',
-                  background: isSelected ? (isDark ? '#0a2e1f' : '#e6f7f1') : (isDark ? '#1a1a1a' : 'white'),
-                  opacity: canSelect || isSelected ? 1 : 0.5,
+                  background: isSelected
+                    ? (isDark ? '#0a2e1f' : '#e6f7f1')
+                    : isFull
+                      ? (isDark ? '#1a1010' : '#fff5f5')
+                      : (isDark ? '#1a1a1a' : 'white'),
+                  opacity: canSelect || isSelected ? 1 : 0.6,
                   transition: 'all 0.2s',
                 }}
               >
@@ -490,7 +532,7 @@ export default function ConvertTrialStudentModal({
                     alignItems: 'center',
                   }}
                 >
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <h4 style={{ margin: '0 0 0.5rem 0', color: isDark ? '#f0f0f0' : '#333' }}>
                       {classItem.name}
                     </h4>
@@ -505,30 +547,55 @@ export default function ConvertTrialStudentModal({
                     >
                       {classItem.schedule && <span>📅 {classItem.schedule}</span>}
                       {classItem.allowed_levels && classItem.allowed_levels.length > 0 && (
-                        <span>📊 Nível: {classItem.allowed_levels.join(', ')}</span>
+                        <span>📊 {classItem.allowed_levels.join(', ')}</span>
                       )}
                       {classItem.instructor_name && (
                         <span>👤 {classItem.instructor_name}</span>
                       )}
                     </div>
                   </div>
-                  {isSelected && (
-                    <div
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        background: '#11998e',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      ✓
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {capacity > 0 && (
+                      <div style={{
+                        textAlign: 'center',
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '8px',
+                        background: isFull
+                          ? (isDark ? 'rgba(220,38,38,0.15)' : '#ffe6e6')
+                          : available <= 3
+                            ? (isDark ? 'rgba(217,119,6,0.15)' : '#fff3e0')
+                            : (isDark ? 'rgba(5,150,105,0.15)' : '#e6f7f1'),
+                        color: isFull
+                          ? '#f5576c'
+                          : available <= 3
+                            ? '#f5a623'
+                            : '#11998e',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {isFull ? 'Lotada' : `${available} ${available === 1 ? 'vaga' : 'vagas'}`}
+                      </div>
+                    )}
+                    {isSelected && (
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: '#11998e',
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 'bold',
+                          flexShrink: 0,
+                        }}
+                      >
+                        ✓
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -537,7 +604,7 @@ export default function ConvertTrialStudentModal({
 
         {filteredClasses.length === 0 && (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
-            Nenhuma turma disponível
+            Nenhuma turma disponível para o nível selecionado
           </div>
         )}
       </div>
@@ -570,6 +637,7 @@ export default function ConvertTrialStudentModal({
               <div><strong>Data de Nascimento:</strong> {new Date(formData.birth_date).toLocaleDateString('pt-BR')}</div>
             )}
             <div><strong>Sexo:</strong> {formData.sex === 'M' ? 'Masculino' : formData.sex === 'F' ? 'Feminino' : 'Não informado'}</div>
+            {selectedLevel && <div><strong>Nível:</strong> {selectedLevel.name}</div>}
             {trialStudent.phone && <div><strong>Telefone:</strong> {trialStudent.phone}</div>}
             {trialStudent.email && <div><strong>E-mail:</strong> {trialStudent.email}</div>}
           </div>
@@ -594,7 +662,6 @@ export default function ConvertTrialStudentModal({
               <div><strong>Aulas por Semana:</strong> {selectedPlan.sessions_per_week}x</div>
               <div><strong>Data de Início:</strong> {new Date(formData.start_date).toLocaleDateString('pt-BR')}</div>
               <div><strong>Dia de Vencimento:</strong> {formData.due_day}</div>
-              <div><strong>Tipo de Contrato:</strong> {formData.contract_type}</div>
             </div>
           </div>
         )}

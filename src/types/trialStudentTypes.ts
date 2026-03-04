@@ -103,6 +103,7 @@ export interface UpgradeToRegularRequest {
   cpf: string;
   birth_date?: string;
   sex?: 'M' | 'F' | 'N/I';
+  level_id?: number;
   plan_id: number;
   class_ids: number[];
   start_date: string;
