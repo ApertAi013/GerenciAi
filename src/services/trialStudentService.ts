@@ -3,6 +3,7 @@ import type {
   TrialStudent,
   TrialStudentDetails,
   TrialMetrics,
+  TrialReport,
   CreateTrialStudentRequest,
   UpdateTrialStudentRequest,
   AddToClassRequest,
@@ -62,6 +63,11 @@ export const trialStudentService = {
     end_date?: string;
   }): Promise<TrialMetricsResponse> {
     const response = await api.get<TrialMetricsResponse>('/api/trial-students/metrics', { params });
+    return response.data;
+  },
+
+  async getReport(): Promise<{ status: string; data: TrialReport }> {
+    const response = await api.get('/api/trial-students/report');
     return response.data;
   },
 

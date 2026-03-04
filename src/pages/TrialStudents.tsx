@@ -32,12 +32,16 @@ import {
 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import {
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
 import toast from 'react-hot-toast';
 import { trialStudentService } from '../services/trialStudentService';
 import { classService } from '../services/classService';
 import CreateTrialStudentModal from '../components/CreateTrialStudentModal';
 import ConvertTrialStudentModal from '../components/ConvertTrialStudentModal';
-import type { TrialStudent, TrialMetrics } from '../types/trialStudentTypes';
+import type { TrialStudent, TrialMetrics, TrialReport } from '../types/trialStudentTypes';
 import { useThemeStore } from '../store/themeStore';
 import '../styles/TrialStudents.css';
 
@@ -88,6 +92,11 @@ export default function TrialStudents() {
   const [allPlans, setAllPlans] = useState<Array<{ id: number; name: string; sessions_per_week: number; price_cents: number }>>([]);
   const [loadingPriceSettings, setLoadingPriceSettings] = useState(false);
 
+  // Report state
+  const [report, setReport] = useState<TrialReport | null>(null);
+  const [showReportSection, setShowReportSection] = useState(false);
+  const [showConvertedModal, setShowConvertedModal] = useState(false);
+
   // Helper function to safely convert to number
   const safeNumber = (value: any, defaultValue: number = 0): number => {
     const num = Number(value);
@@ -102,6 +111,7 @@ export default function TrialStudents() {
     fetchAllClasses();
     fetchBookingLinks();
     fetchPriceSettings();
+    fetchReport();
   }, [statusFilter, expiredFilter]);
 
   const fetchStudents = async () => {
@@ -281,6 +291,17 @@ export default function TrialStudents() {
       }
     } catch (error) {
       console.error('Error fetching price settings:', error);
+    }
+  };
+
+  const fetchReport = async () => {
+    try {
+      const response = await trialStudentService.getReport();
+      if (response.status === 'success') {
+        setReport(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching report:', error);
     }
   };
 
@@ -549,7 +570,7 @@ export default function TrialStudents() {
           </div>
         </div>
 
-        <div className="trial-metric-card">
+        <div className="trial-metric-card" onClick={() => metrics.converted_students > 0 && setShowConvertedModal(true)} style={{ cursor: metrics.converted_students > 0 ? 'pointer' : undefined }}>
           <div className="trial-metric-header">
             <div>
               <h3 className="trial-metric-value">{metrics.converted_students}</h3>
@@ -560,7 +581,7 @@ export default function TrialStudents() {
             </div>
           </div>
           <span className="trial-metric-change positive">
-            De {metrics.total_trial_students} alunos experimentais
+            {metrics.converted_students > 0 ? 'Clique para ver detalhes' : `De ${metrics.total_trial_students} alunos experimentais`}
           </span>
         </div>
 
@@ -1100,6 +1121,109 @@ export default function TrialStudents() {
       {/* Metrics */}
       {renderMetrics()}
 
+      {/* Report Section */}
+      {report && (report.monthly.length > 0 || report.by_modality.length > 0) && (
+        <div className="trial-config-section" style={{ marginBottom: '1.5rem' }}>
+          <div
+            className="trial-config-header"
+            onClick={() => setShowReportSection(!showReportSection)}
+          >
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <BarChart3 size={20} />
+              Relatório de Conversão
+            </h2>
+            {showReportSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </div>
+          {showReportSection && (
+            <div style={{ padding: '1.5rem' }}>
+              <div className="trial-report-grid">
+                {/* Monthly conversion chart */}
+                {report.monthly.length > 0 && (
+                  <div className="trial-report-chart-card">
+                    <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Conversão Mensal</h3>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={report.monthly.map(m => ({
+                        ...m,
+                        label: (() => {
+                          const [y, mo] = m.month.split('-');
+                          const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+                          return months[parseInt(mo) - 1] || m.month;
+                        })(),
+                        nao_convertidos: m.total - m.converted,
+                      }))}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#f0f0f0'} />
+                        <XAxis dataKey="label" tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                        <YAxis allowDecimals={false} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                          labelStyle={{ color: isDark ? '#fff' : '#333' }}
+                        />
+                        <Legend />
+                        <Bar dataKey="converted" name="Convertidos" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="nao_convertidos" name="Não convertidos" fill={isDark ? '#444' : '#e0e0e0'} radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Modality conversion pie */}
+                {report.by_modality.length > 0 && (
+                  <div className="trial-report-chart-card">
+                    <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Conversão por Modalidade</h3>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <PieChart>
+                        <Pie
+                          data={report.by_modality}
+                          dataKey="total"
+                          nameKey="modality_name"
+                          cx="50%" cy="50%"
+                          outerRadius={90}
+                          label={({ modality_name, conversion_rate }) => `${modality_name} (${conversion_rate}%)`}
+                          labelLine={true}
+                        >
+                          {report.by_modality.map((_, i) => (
+                            <Cell key={i} fill={['#667eea','#38ef7d','#f5576c','#4facfe','#f093fb','#ffd700','#ff6b6b','#48dbfb'][i % 8]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                          formatter={(value: number, name: string, props: any) => [`${value} alunos (${props.payload.converted} convertidos)`, props.payload.modality_name]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Weekday conversion chart */}
+                {report.by_weekday.length > 0 && (
+                  <div className="trial-report-chart-card">
+                    <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Conversão por Dia da Semana</h3>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={report.by_weekday.map(w => ({
+                        ...w,
+                        label: WEEKDAY_LABELS[w.weekday] || w.weekday,
+                        nao_convertidos: w.total - w.converted,
+                      }))} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#f0f0f0'} />
+                        <XAxis type="number" allowDecimals={false} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                        <YAxis dataKey="label" type="category" width={80} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                          labelStyle={{ color: isDark ? '#fff' : '#333' }}
+                        />
+                        <Legend />
+                        <Bar dataKey="converted" name="Convertidos" fill="#22c55e" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="nao_convertidos" name="Não convertidos" fill={isDark ? '#444' : '#e0e0e0'} radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Filters */}
       <div className="trial-filters">
         <div className="trial-filters-row">
@@ -1182,7 +1306,7 @@ export default function TrialStudents() {
               <tr>
                 <th>Nome</th>
                 <th>Contato</th>
-                <th>Nível</th>
+                <th>Modalidade</th>
                 <th>Aula Experimental</th>
                 <th>Aulas</th>
                 <th>Expiração</th>
@@ -1245,14 +1369,9 @@ export default function TrialStudents() {
                       </div>
                     </td>
                     <td>
-                      {(student.level_name || student.level) ? (
-                        <span
-                          style={{
-                            textTransform: 'capitalize',
-                            fontSize: '0.875rem',
-                          }}
-                        >
-                          {student.level_name || student.level}
+                      {student.last_trial_modality_name ? (
+                        <span style={{ fontSize: '0.875rem' }}>
+                          {student.last_trial_modality_name}
                         </span>
                       ) : (
                         <span style={{ color: '#999' }}>-</span>
@@ -1431,6 +1550,65 @@ export default function TrialStudents() {
           onClose={() => setStudentToView(null)}
           onRefresh={fetchStudents}
         />
+      )}
+
+      {/* Converted students modal */}
+      {showConvertedModal && report && (
+        <div className="modal-overlay" onClick={() => setShowConvertedModal(false)}>
+          <div
+            className={`modal-content ${isDark ? 'dark' : ''}`}
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '600px', padding: '1.5rem', maxHeight: '80vh', overflow: 'auto' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Alunos Convertidos ({report.converted_students.length})</h3>
+              <button onClick={() => setShowConvertedModal(false)} className="modal-close-btn">
+                <X size={20} />
+              </button>
+            </div>
+
+            {report.converted_students.length === 0 ? (
+              <p style={{ color: '#999', textAlign: 'center', padding: '2rem 0' }}>Nenhum aluno convertido ainda.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {report.converted_students.map(cs => (
+                  <div key={cs.id} style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    border: `1px solid ${isDark ? '#333' : '#e8e8e8'}`,
+                    background: isDark ? '#1a1a1a' : '#fafafa',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{cs.full_name}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.2rem' }}>
+                          {cs.modality_name || '-'}
+                          {cs.trial_converted_at && ` · Convertido em ${(() => {
+                            const raw = String(cs.trial_converted_at).split('T')[0];
+                            const [y, m, d] = raw.split('-');
+                            return `${d}/${m}/${y}`;
+                          })()}`}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        {cs.conversion_value_cents > 0 && (
+                          <div style={{ fontWeight: 600, color: '#22c55e', fontSize: '0.95rem' }}>
+                            R$ {(cs.conversion_value_cents / 100).toFixed(2).replace('.', ',')}
+                          </div>
+                        )}
+                        {cs.days_to_convert > 0 && (
+                          <div style={{ fontSize: '0.75rem', color: '#888' }}>
+                            {cs.days_to_convert} dias
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Attendance confirmation modal */}

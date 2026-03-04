@@ -27,6 +27,7 @@ export interface TrialStudent {
   last_trial_class_name?: string;
   last_trial_attended?: boolean;
   last_trial_attendance_id?: number;
+  last_trial_modality_name?: string;
   created_at?: string; // Optional in case backend doesn't return it
   updated_at?: string;
 }
@@ -141,6 +142,21 @@ export interface UpgradeResponse {
     enrollment_id: number;
     invoice_id: number;
   };
+}
+
+export interface TrialReport {
+  monthly: Array<{ month: string; total: number; converted: number }>;
+  by_modality: Array<{ modality_name: string; total: number; converted: number; conversion_rate: number }>;
+  by_weekday: Array<{ weekday: string; total: number; converted: number }>;
+  converted_students: Array<{
+    id: number;
+    full_name: string;
+    phone?: string;
+    trial_converted_at: string;
+    conversion_value_cents: number;
+    days_to_convert: number;
+    modality_name: string;
+  }>;
 }
 
 // Email automation configuration types

@@ -1677,3 +1677,29 @@
     align-self: flex-end;
   }
 }
+
+/* Report Charts */
+.trial-report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+
+.trial-report-chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .trial-report-chart-card {
+  background: #1a1a1a;
+  border-color: #262626;
+}
+
+@media (max-width: 768px) {
+  .trial-report-grid {
+    grid-template-columns: 1fr;
+  }
+}
