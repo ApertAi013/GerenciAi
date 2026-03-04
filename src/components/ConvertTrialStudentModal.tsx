@@ -12,6 +12,7 @@ import type { Level } from '../types/levelTypes';
 import { useThemeStore } from '../store/themeStore';
 import '../styles/TrialStudents.css';
 import '../styles/ModernModal.css';
+import './ComprehensiveEnrollmentForm.css';
 
 interface ConvertTrialStudentModalProps {
   trialStudent: TrialStudent;
@@ -456,150 +457,98 @@ export default function ConvertTrialStudentModal({
       ? filteredByLevel.filter((c) => c.modality_id === selectedPlan.modality_id)
       : filteredByLevel;
 
+    // Group by weekday for calendar view
+    const weekdays = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'] as const;
+    const weekdayLabels: Record<typeof weekdays[number], string> = {
+      seg: 'Segunda', ter: 'Terça', qua: 'Quarta', qui: 'Quinta',
+      sex: 'Sexta', sab: 'Sábado', dom: 'Domingo',
+    };
+    const classesByWeekday = weekdays.map((day) => ({
+      day,
+      label: weekdayLabels[day],
+      classes: filteredClasses.filter((cls) => cls.weekday === day),
+    }));
+
+    const handleClassToggle = (classId: number) => {
+      const isSelected = formData.class_ids.includes(classId);
+      if (!isSelected && selectedPlan && formData.class_ids.length >= selectedPlan.sessions_per_week) return;
+      setFormData({
+        ...formData,
+        class_ids: isSelected
+          ? formData.class_ids.filter((id) => id !== classId)
+          : [...formData.class_ids, classId],
+      });
+    };
+
     return (
-      <div>
-        <h3 style={{ marginBottom: '1rem', color: isDark ? '#f0f0f0' : '#333' }}>
-          Selecione as Turmas
-        </h3>
-
-        {selectedPlan && (
-          <div
-            style={{
-              background: isDark ? '#0d2137' : '#e3f2fd',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem',
-              borderLeft: '4px solid #1976d2',
-            }}
-          >
-            <strong>
-              Selecione {selectedPlan.sessions_per_week} turma(s) conforme o
-              plano {selectedPlan.name}
-            </strong>
-            <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-              Selecionadas: {formData.class_ids.length} /{' '}
-              {selectedPlan.sessions_per_week}
-            </div>
+      <div className="classes-step">
+        <div className="classes-header">
+          <div>
+            <h3 style={{ margin: '0 0 0.5rem', color: isDark ? '#f0f0f0' : '#333' }}>Selecione as Turmas</h3>
+            {selectedPlan && (
+              <p style={{ margin: 0, fontSize: '0.875rem', color: isDark ? '#aaa' : '#666' }}>
+                Selecione {selectedPlan.sessions_per_week} turma(s) compatível(is) com o nível{' '}
+                <strong>{selectedLevel?.name}</strong>
+                {' '} — Selecionadas: {formData.class_ids.length} / {selectedPlan.sessions_per_week}
+              </p>
+            )}
           </div>
-        )}
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {filteredClasses.map((classItem) => {
-            const isSelected = formData.class_ids.includes(classItem.id);
-            const enrolled = classItem.enrolled_count || 0;
-            const capacity = classItem.capacity || 0;
-            const available = capacity - enrolled;
-            const isFull = available <= 0 && capacity > 0;
-            const canSelect =
-              !isFull &&
-              (!selectedPlan ||
-                isSelected ||
-                formData.class_ids.length < selectedPlan.sessions_per_week);
+        <div className="mini-calendar-modern">
+          {classesByWeekday.map((dayData) => (
+            <div key={dayData.day} className="calendar-day-column-modern">
+              <div className="day-header-modern">{dayData.label}</div>
+              <div className="day-classes-modern">
+                {dayData.classes.length === 0 ? (
+                  <div className="no-classes-modern">—</div>
+                ) : (
+                  dayData.classes.map((cls) => {
+                    const enrolled = cls.enrolled_count || 0;
+                    const capacity = cls.capacity || 0;
+                    const available = capacity - enrolled;
+                    const isFull = available <= 0 && capacity > 0;
+                    const isSelected = formData.class_ids.includes(cls.id);
 
-            return (
-              <div
-                key={classItem.id}
-                onClick={() => {
-                  if (!canSelect && !isSelected) return;
-
-                  setFormData({
-                    ...formData,
-                    class_ids: isSelected
-                      ? formData.class_ids.filter((id) => id !== classItem.id)
-                      : [...formData.class_ids, classItem.id],
-                  });
-                }}
-                style={{
-                  border: `2px solid ${
-                    isSelected ? '#11998e' : isFull ? (isDark ? '#4a2020' : '#ffcccc') : isDark ? '#333' : '#e0e0e0'
-                  }`,
-                  borderRadius: '12px',
-                  padding: '1rem',
-                  cursor: canSelect || isSelected ? 'pointer' : 'not-allowed',
-                  background: isSelected
-                    ? (isDark ? '#0a2e1f' : '#e6f7f1')
-                    : isFull
-                      ? (isDark ? '#1a1010' : '#fff5f5')
-                      : (isDark ? '#1a1a1a' : 'white'),
-                  opacity: canSelect || isSelected ? 1 : 0.6,
-                  transition: 'all 0.2s',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ margin: '0 0 0.5rem 0', color: isDark ? '#f0f0f0' : '#333' }}>
-                      {classItem.name}
-                    </h4>
-                    <div
-                      style={{
-                        fontSize: '0.875rem',
-                        color: isDark ? '#999' : '#666',
-                        display: 'flex',
-                        gap: '1rem',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      {classItem.schedule && <span>📅 {classItem.schedule}</span>}
-                      {classItem.allowed_levels && classItem.allowed_levels.length > 0 && (
-                        <span>📊 {classItem.allowed_levels.join(', ')}</span>
-                      )}
-                      {classItem.instructor_name && (
-                        <span>👤 {classItem.instructor_name}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {capacity > 0 && (
-                      <div style={{
-                        textAlign: 'center',
-                        padding: '0.35rem 0.75rem',
-                        borderRadius: '8px',
-                        background: isFull
-                          ? (isDark ? 'rgba(220,38,38,0.15)' : '#ffe6e6')
-                          : available <= 3
-                            ? (isDark ? 'rgba(217,119,6,0.15)' : '#fff3e0')
-                            : (isDark ? 'rgba(5,150,105,0.15)' : '#e6f7f1'),
-                        color: isFull
-                          ? '#f5576c'
-                          : available <= 3
-                            ? '#f5a623'
-                            : '#11998e',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {isFull ? 'Lotada' : `${available} ${available === 1 ? 'vaga' : 'vagas'}`}
-                      </div>
-                    )}
-                    {isSelected && (
+                    return (
                       <div
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: '#11998e',
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 'bold',
-                          flexShrink: 0,
-                        }}
+                        key={cls.id}
+                        className={`class-card-modern ${isSelected ? 'selected' : ''} ${isFull ? 'full' : ''}`}
+                        onClick={() => !isFull && handleClassToggle(cls.id)}
+                        style={{ cursor: isFull ? 'not-allowed' : 'pointer' }}
                       >
-                        ✓
+                        <div className="class-time-badge">
+                          {cls.start_time?.substring(0, 5)}
+                        </div>
+                        <div className="class-info-section">
+                          <div className="class-modality-name">{cls.modality_name || cls.name}</div>
+                          {cls.name && cls.modality_name && <div className="class-custom-name">{cls.name}</div>}
+                          {cls.location && <div className="class-location">📍 {cls.location}</div>}
+                        </div>
+                        <div className={`availability-badge ${isFull ? 'full' : available <= 3 ? 'low' : 'available'}`}>
+                          {isFull ? (
+                            'LOTADA'
+                          ) : (
+                            <>
+                              <span className="available-count">{available}</span>
+                              <span className="available-label">
+                                {available === 1 ? 'vaga' : 'vagas'}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        {isSelected && (
+                          <div className="selection-indicator">
+                            ✓ Selecionada
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
+                    );
+                  })
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
         {filteredClasses.length === 0 && (
