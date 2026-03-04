@@ -1227,7 +1227,11 @@ export default function TrialStudents() {
                       {student.last_trial_date ? (
                         <div style={{ fontSize: '0.825rem' }}>
                           <div style={{ fontWeight: 600 }}>
-                            {new Date(student.last_trial_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                            {(() => {
+                              const raw = String(student.last_trial_date).split('T')[0];
+                              const [y, m, d] = raw.split('-');
+                              return `${d}/${m}`;
+                            })()}
                             {student.last_trial_time && ` · ${String(student.last_trial_time).slice(0, 5)}`}
                           </div>
                           {student.last_trial_class_name && (
