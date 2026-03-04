@@ -217,11 +217,13 @@ export const trialStudentService = {
     return response.data;
   },
 
-  async toggleAttendance(attendanceId: number): Promise<{
+  async toggleAttendance(attendanceId: number, attended?: boolean): Promise<{
     status: string;
     data: { id: number; attended: boolean };
   }> {
-    const response = await api.put(`/api/trial-students/attendance/${attendanceId}/toggle-attended`);
+    const response = await api.put(`/api/trial-students/attendance/${attendanceId}/toggle-attended`,
+      attended !== undefined ? { attended } : {}
+    );
     return response.data;
   },
 

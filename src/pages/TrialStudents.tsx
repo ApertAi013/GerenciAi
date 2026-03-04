@@ -187,18 +187,25 @@ export default function TrialStudents() {
     }
   };
 
-  const handleToggleAttendance = async (student: TrialStudent) => {
+  const [attendanceModalStudent, setAttendanceModalStudent] = useState<TrialStudent | null>(null);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
+  const handleSetAttendance = async (student: TrialStudent, attended: boolean) => {
     if (!student.last_trial_attendance_id) return;
+    setAttendanceLoading(true);
     try {
-      const response = await trialStudentService.toggleAttendance(student.last_trial_attendance_id);
+      const response = await trialStudentService.toggleAttendance(student.last_trial_attendance_id, attended);
       if (response.status === 'success') {
         setStudents(prev => prev.map(s =>
           s.id === student.id ? { ...s, last_trial_attended: response.data.attended } : s
         ));
-        toast.success(response.data.attended ? 'Presença confirmada!' : 'Presença removida');
+        toast.success(attended ? 'Presença confirmada!' : 'Falta registrada');
+        setAttendanceModalStudent(null);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Erro ao atualizar presença');
+    } finally {
+      setAttendanceLoading(false);
     }
   };
 
@@ -1226,7 +1233,12 @@ export default function TrialStudents() {
                     <td>
                       {student.last_trial_date ? (
                         <div style={{ fontSize: '0.825rem' }}>
-                          <div style={{ fontWeight: 600 }}>
+                          <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            {student.last_trial_attended === true ? (
+                              <span style={{ color: '#22c55e', fontWeight: 700 }} title="Compareceu">✓</span>
+                            ) : student.last_trial_attended === false && new Date(String(student.last_trial_date).split('T')[0] + 'T12:00:00') < new Date() ? (
+                              <span style={{ color: '#ef4444', fontWeight: 700 }} title="Faltou">✗</span>
+                            ) : null}
                             {(() => {
                               const raw = String(student.last_trial_date).split('T')[0];
                               const [y, m, d] = raw.split('-');
@@ -1303,12 +1315,12 @@ export default function TrialStudents() {
                       <div className="trial-actions">
                         {student.last_trial_attendance_id && (
                           <button
-                            className={`trial-action-btn ${student.last_trial_attended ? 'attended' : ''}`}
-                            onClick={() => handleToggleAttendance(student)}
-                            title={student.last_trial_attended ? 'Presença confirmada (clique para remover)' : 'Confirmar presença'}
+                            className="trial-action-btn"
+                            onClick={() => setAttendanceModalStudent(student)}
+                            title="Registrar presença"
                             style={{
-                              color: student.last_trial_attended ? '#22c55e' : '#999',
-                              background: student.last_trial_attended ? '#f0fdf4' : undefined,
+                              color: student.last_trial_attended === true ? '#22c55e' : student.last_trial_attended === false && student.last_trial_date && new Date(student.last_trial_date) < new Date() ? '#ef4444' : '#999',
+                              background: student.last_trial_attended === true ? '#f0fdf4' : student.last_trial_attended === false && student.last_trial_date && new Date(student.last_trial_date) < new Date() ? '#fef2f2' : undefined,
                             }}
                           >
                             <UserCheck size={18} />
@@ -1391,6 +1403,80 @@ export default function TrialStudents() {
           onClose={() => setStudentToView(null)}
           onRefresh={fetchStudents}
         />
+      )}
+
+      {/* Attendance confirmation modal */}
+      {attendanceModalStudent && (
+        <div className="modal-overlay" onClick={() => !attendanceLoading && setAttendanceModalStudent(null)}>
+          <div
+            className={`modal-content ${isDark ? 'dark' : ''}`}
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '420px', padding: '1.5rem' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Registrar Presença</h3>
+              <button onClick={() => setAttendanceModalStudent(null)} className="modal-close-btn" disabled={attendanceLoading}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>
+              <strong>{attendanceModalStudent.full_name}</strong>
+            </p>
+            {attendanceModalStudent.last_trial_class_name && (
+              <p style={{ margin: '0 0 0.25rem', fontSize: '0.85rem', color: '#666' }}>
+                Turma: {attendanceModalStudent.last_trial_class_name}
+              </p>
+            )}
+            {attendanceModalStudent.last_trial_date && (
+              <p style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', color: '#666' }}>
+                Data: {(() => {
+                  const raw = String(attendanceModalStudent.last_trial_date).split('T')[0];
+                  const [y, m, d] = raw.split('-');
+                  return `${d}/${m}`;
+                })()}
+                {attendanceModalStudent.last_trial_time && ` às ${String(attendanceModalStudent.last_trial_time).slice(0, 5)}`}
+              </p>
+            )}
+
+            <p style={{ margin: '0 0 1.25rem', fontSize: '0.95rem', color: isDark ? '#ccc' : '#444' }}>
+              O aluno compareceu à aula experimental?
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => handleSetAttendance(attendanceModalStudent, true)}
+                disabled={attendanceLoading}
+                style={{
+                  flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none',
+                  background: '#22c55e', color: '#fff', fontWeight: 600, fontSize: '0.95rem',
+                  cursor: attendanceLoading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', gap: '0.5rem',
+                }}
+              >
+                ✓ Compareceu
+              </button>
+              <button
+                onClick={() => handleSetAttendance(attendanceModalStudent, false)}
+                disabled={attendanceLoading}
+                style={{
+                  flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none',
+                  background: '#ef4444', color: '#fff', fontWeight: 600, fontSize: '0.95rem',
+                  cursor: attendanceLoading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', gap: '0.5rem',
+                }}
+              >
+                ✗ Faltou
+              </button>
+            </div>
+
+            {attendanceModalStudent.last_trial_attended !== null && attendanceModalStudent.last_trial_attended !== undefined && (
+              <p style={{ margin: '1rem 0 0', fontSize: '0.8rem', color: '#999', textAlign: 'center' }}>
+                Status atual: {attendanceModalStudent.last_trial_attended ? '✓ Compareceu' : '✗ Faltou'}
+              </p>
+            )}
+          </div>
+        </div>
       )}
 
       {showEmailConfig && (
