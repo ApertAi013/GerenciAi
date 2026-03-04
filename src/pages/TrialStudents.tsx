@@ -1210,6 +1210,22 @@ export default function TrialStudents() {
                           ✓ Convertido
                         </div>
                       )}
+                      {!student.trial_converted_to_regular && student.last_trial_attended === false && student.last_trial_date && new Date(String(student.last_trial_date).split('T')[0] + 'T12:00:00') < new Date() && (
+                        <div
+                          style={{
+                            fontSize: '0.7rem',
+                            color: '#dc2626',
+                            background: '#fef2f2',
+                            border: '1px solid #fecaca',
+                            borderRadius: '4px',
+                            padding: '2px 6px',
+                            marginTop: '0.25rem',
+                            display: 'inline-block',
+                          }}
+                        >
+                          ⚠ Já faltou
+                        </div>
+                      )}
                     </td>
                     <td>
                       <div style={{ fontSize: '0.875rem' }}>
