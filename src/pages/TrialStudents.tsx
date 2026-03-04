@@ -1122,7 +1122,7 @@ export default function TrialStudents() {
       {renderMetrics()}
 
       {/* Report Section */}
-      {report && (report.monthly.length > 0 || report.by_modality.length > 0) && (
+      {report && (report.monthly.length > 0 || report.by_modality.length > 0 || (report.by_class && report.by_class.length > 0) || (report.by_plan && report.by_plan.length > 0)) && (
         <div className="trial-config-section" style={{ marginBottom: '1.5rem' }}>
           <div
             className="trial-config-header"
@@ -1218,6 +1218,94 @@ export default function TrialStudents() {
                         <Bar dataKey="converted" name="Convertidos" fill="#22c55e" radius={[0, 4, 4, 0]} />
                         <Bar dataKey="nao_convertidos" name="Não convertidos" fill={isDark ? '#444' : '#e0e0e0'} radius={[0, 4, 4, 0]} />
                       </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Conversion by class/turma */}
+                {report.by_class && report.by_class.length > 0 && (
+                  <div className="trial-report-chart-card">
+                    <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Conversão por Turma</h3>
+                    <ResponsiveContainer width="100%" height={Math.max(280, report.by_class.length * 40)}>
+                      <BarChart data={report.by_class.map(c => ({
+                        ...c,
+                        label: `${c.class_name} (${WEEKDAY_LABELS[c.weekday] || c.weekday} ${c.start_time?.slice(0, 5) || ''})`,
+                        nao_convertidos: c.total - c.converted,
+                      }))} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#f0f0f0'} />
+                        <XAxis type="number" allowDecimals={false} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                        <YAxis dataKey="label" type="category" width={180} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 11 }} />
+                        <Tooltip
+                          contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                          labelStyle={{ color: isDark ? '#f0f0f0' : '#333' }}
+                          itemStyle={{ color: isDark ? '#ccc' : '#555' }}
+                          formatter={(value: number, name: string, props: any) => {
+                            if (name === 'Convertidos') return [`${value} (${props.payload.conversion_rate}%)`, name];
+                            return [value, name];
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="converted" name="Convertidos" fill="#667eea" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="nao_convertidos" name="Não convertidos" fill={isDark ? '#444' : '#e0e0e0'} radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Days to convert distribution */}
+                {report.by_days_to_convert && report.by_days_to_convert.length > 0 && (
+                  <div className="trial-report-chart-card">
+                    <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Tempo até Conversão</h3>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={report.by_days_to_convert}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#f0f0f0'} />
+                        <XAxis dataKey="range_label" tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                        <YAxis allowDecimals={false} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                          labelStyle={{ color: isDark ? '#f0f0f0' : '#333' }}
+                          itemStyle={{ color: isDark ? '#ccc' : '#555' }}
+                          formatter={(value: number) => [`${value} alunos`, 'Convertidos']}
+                        />
+                        <Bar dataKey="count" name="Alunos" fill="#4facfe" radius={[4, 4, 0, 0]}>
+                          {report.by_days_to_convert.map((_, i) => (
+                            <Cell key={i} fill={['#22c55e','#4facfe','#f5a623','#f093fb','#f5576c'][i % 5]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Most chosen plans */}
+                {report.by_plan && report.by_plan.length > 0 && (
+                  <div className="trial-report-chart-card">
+                    <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Planos Mais Escolhidos</h3>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <PieChart>
+                        <Pie
+                          data={report.by_plan}
+                          dataKey="count"
+                          nameKey="plan_name"
+                          cx="50%" cy="50%"
+                          outerRadius={90}
+                          label={({ plan_name, count }) => `${plan_name} (${count})`}
+                          labelLine={true}
+                        >
+                          {report.by_plan.map((_, i) => (
+                            <Cell key={i} fill={['#667eea','#22c55e','#f5576c','#4facfe','#f093fb','#ffd700','#ff6b6b','#48dbfb'][i % 8]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                          itemStyle={{ color: isDark ? '#ccc' : '#555' }}
+                          formatter={(value: number, name: string, props: any) => {
+                            const price = props.payload.price_cents;
+                            const formatted = price ? `R$ ${(price / 100).toFixed(2).replace('.', ',')}` : '';
+                            return [`${value} alunos${formatted ? ` • ${formatted}` : ''}`, props.payload.plan_name];
+                          }}
+                        />
+                      </PieChart>
                     </ResponsiveContainer>
                   </div>
                 )}

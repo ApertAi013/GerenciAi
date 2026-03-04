@@ -148,6 +148,9 @@ export interface TrialReport {
   monthly: Array<{ month: string; total: number; converted: number }>;
   by_modality: Array<{ modality_name: string; total: number; converted: number; conversion_rate: number }>;
   by_weekday: Array<{ weekday: string; total: number; converted: number }>;
+  by_class: Array<{ class_name: string; weekday: string; start_time: string; total: number; converted: number; conversion_rate: number }>;
+  by_days_to_convert: Array<{ range_label: string; sort_order: number; count: number }>;
+  by_plan: Array<{ plan_name: string; price_cents: number; count: number }>;
   converted_students: Array<{
     id: number;
     full_name: string;
