@@ -49,6 +49,9 @@ export default function PublicTrialBooking() {
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
+  // Phone check
+  const [checkingPhone, setCheckingPhone] = useState(false);
+
   // Step 5: Success
   const [submitting, setSubmitting] = useState(false);
   const [bookingResult, setBookingResult] = useState<any>(null);
@@ -187,7 +190,7 @@ export default function PublicTrialBooking() {
     );
   }
 
-  if (error && step < 5) {
+  if (error && step === 1 && !fullName && !phone) {
     return (
       <div className="ptb-page">
         <div className="ptb-container">
@@ -221,13 +224,6 @@ export default function PublicTrialBooking() {
                 </span>
               </div>
             ))}
-          </div>
-        )}
-
-        {error && step < 5 && (
-          <div className="ptb-error-inline">
-            {error}
-            <button onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991B1B', fontWeight: 700 }}>✕</button>
           </div>
         )}
 
@@ -301,12 +297,30 @@ export default function PublicTrialBooking() {
                 placeholder="seu@email.com"
               />
             </div>
+            {error && (
+              <div className="ptb-error-inline">
+                {error}
+                <button onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991B1B', fontWeight: 700 }}>✕</button>
+              </div>
+            )}
+
             <button
               className="ptb-btn ptb-btn-primary"
-              disabled={!fullName.trim() || !phone.trim()}
-              onClick={() => setStep(2)}
+              disabled={!fullName.trim() || !phone.trim() || checkingPhone}
+              onClick={async () => {
+                setError('');
+                setCheckingPhone(true);
+                try {
+                  await publicTrialBookingService.checkPhone(bookingToken!, phone);
+                  setStep(2);
+                } catch (err: any) {
+                  setError(err.response?.data?.message || 'Erro ao verificar telefone.');
+                } finally {
+                  setCheckingPhone(false);
+                }
+              }}
             >
-              Continuar
+              {checkingPhone ? 'Verificando...' : 'Continuar'}
             </button>
           </div>
         )}
@@ -332,7 +346,7 @@ export default function PublicTrialBooking() {
                 ))}
               </div>
             )}
-            <button className="ptb-btn ptb-btn-secondary" onClick={() => setStep(1)}>
+            <button className="ptb-btn ptb-btn-secondary" onClick={() => { setError(''); setStep(1); }}>
               Voltar
             </button>
           </div>

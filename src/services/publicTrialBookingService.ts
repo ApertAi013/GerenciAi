@@ -108,6 +108,11 @@ export const publicTrialBookingService = {
     return response.data;
   },
 
+  async checkPhone(token: string, phone: string) {
+    const response = await publicTrialApi.post(`/api/public/trial-booking/${token}/check-phone`, { phone });
+    return response.data;
+  },
+
   async createTrialBooking(token: string, data: {
     full_name: string;
     phone: string;

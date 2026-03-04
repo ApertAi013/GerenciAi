@@ -65,7 +65,8 @@ export default function TrialStudents() {
   const [showEmailConfig, setShowEmailConfig] = useState(false);
 
   // Trial class config state
-  const [showConfigSection, setShowConfigSection] = useState(true);
+  const [showConfigSection, setShowConfigSection] = useState(false);
+  const [configInitialized, setConfigInitialized] = useState(false);
   const [trialClassConfigs, setTrialClassConfigs] = useState<any[]>([]);
   const [allClasses, setAllClasses] = useState<any[]>([]);
   const [loadingConfig, setLoadingConfig] = useState(false);
@@ -76,7 +77,8 @@ export default function TrialStudents() {
 
   // Booking links state
   const [bookingLinks, setBookingLinks] = useState<any[]>([]);
-  const [showBookingLinksSection, setShowBookingLinksSection] = useState(true);
+  const [showBookingLinksSection, setShowBookingLinksSection] = useState(false);
+  const [linksInitialized, setLinksInitialized] = useState(false);
   const [showCreateLinkModal, setShowCreateLinkModal] = useState(false);
   const [editingLink, setEditingLink] = useState<any | null>(null);
 
@@ -220,6 +222,12 @@ export default function TrialStudents() {
       const response = await trialStudentService.getTrialClassConfig();
       if (response.status === 'success') {
         setTrialClassConfigs(response.data);
+        if (!configInitialized) {
+          setConfigInitialized(true);
+          // Expand only if no configs (not yet set up)
+          const enabledConfigs = (response.data || []).filter((c: any) => c.is_enabled);
+          if (enabledConfigs.length === 0) setShowConfigSection(true);
+        }
       }
     } catch (error) {
       console.error('Error fetching trial class config:', error);
@@ -253,6 +261,10 @@ export default function TrialStudents() {
       const response = await trialStudentService.getBookingLinks();
       if (response.status === 'success') {
         setBookingLinks(response.data);
+        if (!linksInitialized) {
+          setLinksInitialized(true);
+          if ((response.data || []).length === 0) setShowBookingLinksSection(true);
+        }
       }
     } catch (error) {
       console.error('Error fetching booking links:', error);
