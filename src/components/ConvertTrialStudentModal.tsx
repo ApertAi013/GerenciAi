@@ -7,6 +7,7 @@ import { classService } from '../services/classService';
 import type { TrialStudent, UpgradeToRegularRequest } from '../types/trialStudentTypes';
 import type { Plan } from '../types/enrollmentTypes';
 import type { Class } from '../types/classTypes';
+import { useThemeStore } from '../store/themeStore';
 import '../styles/TrialStudents.css';
 import '../styles/ModernModal.css';
 
@@ -23,6 +24,8 @@ export default function ConvertTrialStudentModal({
   onClose,
   onSuccess,
 }: ConvertTrialStudentModalProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [currentStep, setCurrentStep] = useState<Step>('personal');
   const [plans, setPlans] = useState<Plan[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
@@ -192,7 +195,7 @@ export default function ConvertTrialStudentModal({
 
   const renderPersonalDataStep = () => (
     <div>
-      <h3 style={{ marginBottom: '1.5rem', color: '#333' }}>
+      <h3 style={{ marginBottom: '1.5rem', color: isDark ? '#f0f0f0' : '#333' }}>
         Dados Pessoais Adicionais
       </h3>
 
@@ -248,7 +251,7 @@ export default function ConvertTrialStudentModal({
 
       <div
         style={{
-          background: '#f8f9fa',
+          background: isDark ? '#141414' : '#f8f9fa',
           padding: '1rem',
           borderRadius: '8px',
           marginTop: '1rem',
@@ -270,7 +273,7 @@ export default function ConvertTrialStudentModal({
 
   const renderPlanStep = () => (
     <div>
-      <h3 style={{ marginBottom: '1.5rem', color: '#333' }}>
+      <h3 style={{ marginBottom: '1.5rem', color: isDark ? '#f0f0f0' : '#333' }}>
         Selecione o Plano
       </h3>
 
@@ -344,13 +347,13 @@ export default function ConvertTrialStudentModal({
               onClick={() => setFormData({ ...formData, plan_id: plan.id, class_ids: [] })}
               style={{
                 border: `2px solid ${
-                  formData.plan_id === plan.id ? '#667eea' : '#e0e0e0'
+                  formData.plan_id === plan.id ? '#667eea' : isDark ? '#333' : '#e0e0e0'
                 }`,
                 borderRadius: '12px',
                 padding: '1rem',
                 cursor: 'pointer',
                 background:
-                  formData.plan_id === plan.id ? '#f0f4ff' : 'white',
+                  formData.plan_id === plan.id ? (isDark ? '#1a1a3e' : '#f0f4ff') : (isDark ? '#1a1a1a' : 'white'),
                 transition: 'all 0.2s',
               }}
             >
@@ -362,7 +365,7 @@ export default function ConvertTrialStudentModal({
                 }}
               >
                 <div>
-                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', color: isDark ? '#f0f0f0' : '#333' }}>
                     {plan.name}
                   </h4>
                   <p style={{ margin: 0, fontSize: '0.875rem', color: '#666' }}>
@@ -373,7 +376,7 @@ export default function ConvertTrialStudentModal({
                       style={{
                         margin: '0.5rem 0 0 0',
                         fontSize: '0.875rem',
-                        color: '#999',
+                        color: isDark ? '#666' : '#999',
                       }}
                     >
                       {plan.description}
@@ -422,14 +425,14 @@ export default function ConvertTrialStudentModal({
 
     return (
       <div>
-        <h3 style={{ marginBottom: '1rem', color: '#333' }}>
+        <h3 style={{ marginBottom: '1rem', color: isDark ? '#f0f0f0' : '#333' }}>
           Selecione as Turmas
         </h3>
 
         {selectedPlan && (
           <div
             style={{
-              background: '#e3f2fd',
+              background: isDark ? '#0d2137' : '#e3f2fd',
               padding: '1rem',
               borderRadius: '8px',
               marginBottom: '1.5rem',
@@ -470,12 +473,12 @@ export default function ConvertTrialStudentModal({
                 }}
                 style={{
                   border: `2px solid ${
-                    isSelected ? '#11998e' : '#e0e0e0'
+                    isSelected ? '#11998e' : isDark ? '#333' : '#e0e0e0'
                   }`,
                   borderRadius: '12px',
                   padding: '1rem',
                   cursor: canSelect || isSelected ? 'pointer' : 'not-allowed',
-                  background: isSelected ? '#e6f7f1' : 'white',
+                  background: isSelected ? (isDark ? '#0a2e1f' : '#e6f7f1') : (isDark ? '#1a1a1a' : 'white'),
                   opacity: canSelect || isSelected ? 1 : 0.5,
                   transition: 'all 0.2s',
                 }}
@@ -488,13 +491,13 @@ export default function ConvertTrialStudentModal({
                   }}
                 >
                   <div>
-                    <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>
+                    <h4 style={{ margin: '0 0 0.5rem 0', color: isDark ? '#f0f0f0' : '#333' }}>
                       {classItem.name}
                     </h4>
                     <div
                       style={{
                         fontSize: '0.875rem',
-                        color: '#666',
+                        color: isDark ? '#999' : '#666',
                         display: 'flex',
                         gap: '1rem',
                         flexWrap: 'wrap',
@@ -543,7 +546,7 @@ export default function ConvertTrialStudentModal({
 
   const renderReviewStep = () => (
     <div>
-      <h3 style={{ marginBottom: '1.5rem', color: '#333' }}>
+      <h3 style={{ marginBottom: '1.5rem', color: isDark ? '#f0f0f0' : '#333' }}>
         Revisar Conversão
       </h3>
 
@@ -551,7 +554,7 @@ export default function ConvertTrialStudentModal({
         {/* Personal Data */}
         <div
           style={{
-            background: '#f8f9fa',
+            background: isDark ? '#141414' : '#f8f9fa',
             padding: '1.5rem',
             borderRadius: '12px',
           }}
@@ -576,7 +579,7 @@ export default function ConvertTrialStudentModal({
         {selectedPlan && (
           <div
             style={{
-              background: '#f8f9fa',
+              background: isDark ? '#141414' : '#f8f9fa',
               padding: '1.5rem',
               borderRadius: '12px',
             }}
@@ -600,7 +603,7 @@ export default function ConvertTrialStudentModal({
         {selectedClasses.length > 0 && (
           <div
             style={{
-              background: '#f8f9fa',
+              background: isDark ? '#141414' : '#f8f9fa',
               padding: '1.5rem',
               borderRadius: '12px',
             }}
@@ -624,12 +627,12 @@ export default function ConvertTrialStudentModal({
         {/* Warning */}
         <div
           style={{
-            background: '#fff3cd',
+            background: isDark ? '#332b00' : '#fff3cd',
             borderLeft: '4px solid #ffc107',
             padding: '1rem',
             borderRadius: '8px',
             fontSize: '0.875rem',
-            color: '#856404',
+            color: isDark ? '#fbbf24' : '#856404',
           }}
         >
           <strong>⚠️ Atenção:</strong>

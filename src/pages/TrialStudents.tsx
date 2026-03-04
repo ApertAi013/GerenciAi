@@ -1156,7 +1156,8 @@ export default function TrialStudents() {
                         <YAxis allowDecimals={false} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
                         <Tooltip
                           contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
-                          labelStyle={{ color: isDark ? '#fff' : '#333' }}
+                          labelStyle={{ color: isDark ? '#f0f0f0' : '#333' }}
+                          itemStyle={{ color: isDark ? '#ccc' : '#555' }}
                         />
                         <Legend />
                         <Bar dataKey="converted" name="Convertidos" fill="#22c55e" radius={[4, 4, 0, 0]} />
@@ -1187,6 +1188,7 @@ export default function TrialStudents() {
                         </Pie>
                         <Tooltip
                           contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                          itemStyle={{ color: isDark ? '#ccc' : '#555' }}
                           formatter={(value: number, name: string, props: any) => [`${value} alunos (${props.payload.converted} convertidos)`, props.payload.modality_name]}
                         />
                       </PieChart>
@@ -1209,7 +1211,8 @@ export default function TrialStudents() {
                         <YAxis dataKey="label" type="category" width={80} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
                         <Tooltip
                           contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
-                          labelStyle={{ color: isDark ? '#fff' : '#333' }}
+                          labelStyle={{ color: isDark ? '#f0f0f0' : '#333' }}
+                          itemStyle={{ color: isDark ? '#ccc' : '#555' }}
                         />
                         <Legend />
                         <Bar dataKey="converted" name="Convertidos" fill="#22c55e" radius={[0, 4, 4, 0]} />
