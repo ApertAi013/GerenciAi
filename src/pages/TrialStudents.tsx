@@ -1425,7 +1425,7 @@ export default function TrialStudents() {
                           ✓ Convertido
                         </div>
                       )}
-                      {!student.trial_converted_to_regular && student.last_trial_attended === false && student.last_trial_date && new Date(String(student.last_trial_date).split('T')[0] + 'T12:00:00') < new Date() && (
+                      {!student.trial_converted_to_regular && Number(student.last_trial_attended) === 0 && student.last_trial_attended !== null && student.last_trial_attended !== undefined && student.last_trial_date && new Date(String(student.last_trial_date).split('T')[0] + 'T12:00:00') < new Date() && (
                         <div
                           style={{
                             fontSize: '0.7rem',
@@ -1472,9 +1472,9 @@ export default function TrialStudents() {
                       {student.last_trial_date ? (
                         <div style={{ fontSize: '0.825rem' }}>
                           <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            {student.last_trial_attended === true ? (
+                            {Number(student.last_trial_attended) === 1 ? (
                               <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.7rem', background: '#16a34a', borderRadius: '4px', padding: '1px 6px' }} title="Compareceu">✓</span>
-                            ) : student.last_trial_attended === false && new Date(String(student.last_trial_date).split('T')[0] + 'T12:00:00') < new Date() ? (
+                            ) : Number(student.last_trial_attended) === 0 && student.last_trial_attended !== null && student.last_trial_attended !== undefined && new Date(String(student.last_trial_date).split('T')[0] + 'T12:00:00') < new Date() ? (
                               <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.7rem', background: '#dc2626', borderRadius: '4px', padding: '1px 6px' }} title="Faltou">✗</span>
                             ) : null}
                             {(() => {
@@ -1557,8 +1557,8 @@ export default function TrialStudents() {
                             onClick={() => setAttendanceModalStudent(student)}
                             title="Registrar presença"
                             style={{
-                              color: student.last_trial_attended === true ? '#22c55e' : student.last_trial_attended === false && student.last_trial_date && new Date(student.last_trial_date) < new Date() ? '#ef4444' : '#999',
-                              background: student.last_trial_attended === true ? '#f0fdf4' : student.last_trial_attended === false && student.last_trial_date && new Date(student.last_trial_date) < new Date() ? '#fef2f2' : undefined,
+                              color: Number(student.last_trial_attended) === 1 ? '#22c55e' : Number(student.last_trial_attended) === 0 && student.last_trial_attended !== null && student.last_trial_attended !== undefined && student.last_trial_date && new Date(student.last_trial_date) < new Date() ? '#ef4444' : '#999',
+                              background: Number(student.last_trial_attended) === 1 ? '#f0fdf4' : Number(student.last_trial_attended) === 0 && student.last_trial_attended !== null && student.last_trial_attended !== undefined && student.last_trial_date && new Date(student.last_trial_date) < new Date() ? '#fef2f2' : undefined,
                             }}
                           >
                             <UserCheck size={18} />
