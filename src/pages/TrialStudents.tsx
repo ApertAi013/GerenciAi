@@ -62,7 +62,7 @@ export default function TrialStudents() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ativo' | 'inativo' | ''>('');
-  const [expiredFilter, setExpiredFilter] = useState<'all' | 'expired' | 'active'>('active');
+  const [expiredFilter, setExpiredFilter] = useState<'all' | 'expired' | 'active'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [studentToConvert, setStudentToConvert] = useState<TrialStudent | null>(null);
   const [studentToView, setStudentToView] = useState<TrialStudent | null>(null);
@@ -1473,9 +1473,9 @@ export default function TrialStudents() {
                         <div style={{ fontSize: '0.825rem' }}>
                           <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                             {student.last_trial_attended === true ? (
-                              <span style={{ color: '#22c55e', fontWeight: 700 }} title="Compareceu">✓</span>
+                              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.7rem', background: '#16a34a', borderRadius: '4px', padding: '1px 6px' }} title="Compareceu">✓</span>
                             ) : student.last_trial_attended === false && new Date(String(student.last_trial_date).split('T')[0] + 'T12:00:00') < new Date() ? (
-                              <span style={{ color: '#ef4444', fontWeight: 700 }} title="Faltou">✗</span>
+                              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.7rem', background: '#dc2626', borderRadius: '4px', padding: '1px 6px' }} title="Faltou">✗</span>
                             ) : null}
                             {(() => {
                               const raw = String(student.last_trial_date).split('T')[0];
