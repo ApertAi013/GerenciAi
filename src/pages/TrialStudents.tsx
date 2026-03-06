@@ -97,6 +97,20 @@ export default function TrialStudents() {
   const [showReportSection, setShowReportSection] = useState(false);
   const [showConvertedModal, setShowConvertedModal] = useState(false);
 
+  // Sorting state
+  type SortKey = 'name' | 'modality' | 'trial_date' | 'classes_count' | 'status';
+  const [sortKey, setSortKey] = useState<SortKey>('trial_date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'name' ? 'asc' : 'desc');
+    }
+  };
+
   // Helper function to safely convert to number
   const safeNumber = (value: any, defaultValue: number = 0): number => {
     const num = Number(value);
@@ -508,6 +522,28 @@ export default function TrialStudents() {
       student.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesSearch;
+  }).sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    switch (sortKey) {
+      case 'name':
+        return dir * a.full_name.localeCompare(b.full_name);
+      case 'modality':
+        return dir * (a.last_trial_modality_name || '').localeCompare(b.last_trial_modality_name || '');
+      case 'trial_date': {
+        const dateA = a.last_trial_date ? new Date(String(a.last_trial_date).split('T')[0]).getTime() : 0;
+        const dateB = b.last_trial_date ? new Date(String(b.last_trial_date).split('T')[0]).getTime() : 0;
+        return dir * (dateA - dateB);
+      }
+      case 'classes_count':
+        return dir * ((a.trial_classes_count || 0) - (b.trial_classes_count || 0));
+      case 'status': {
+        const statusOrder = (s: TrialStudent) =>
+          s.trial_converted_to_regular ? 3 : s.is_expired ? 2 : s.status === 'inativo' ? 1 : 0;
+        return dir * (statusOrder(a) - statusOrder(b));
+      }
+      default:
+        return 0;
+    }
   });
 
   const getDaysRemaining = (student: TrialStudent): string | null => {
@@ -1395,13 +1431,23 @@ export default function TrialStudents() {
           <table className="trial-students-table">
             <thead>
               <tr>
-                <th>Nome</th>
+                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Nome {sortKey === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </th>
                 <th>Contato</th>
-                <th>Modalidade</th>
-                <th>Aula Experimental</th>
-                <th>Aulas</th>
+                <th onClick={() => handleSort('modality')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Modalidade {sortKey === 'modality' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </th>
+                <th onClick={() => handleSort('trial_date')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Aula Experimental {sortKey === 'trial_date' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </th>
+                <th onClick={() => handleSort('classes_count')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Aulas {sortKey === 'classes_count' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </th>
                 <th>Expiração</th>
-                <th>Status</th>
+                <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  Status {sortKey === 'status' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                </th>
                 <th>Ações</th>
               </tr>
             </thead>
