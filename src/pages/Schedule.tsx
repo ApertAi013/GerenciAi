@@ -167,10 +167,11 @@ export default function Schedule() {
 
     // Filtrar por nome
     if (searchTerm.trim()) {
-      const term = searchTerm.trim().toLowerCase();
+      const removeAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const term = removeAccents(searchTerm.trim().toLowerCase());
       filtered = filtered.filter(cls =>
-        cls.name.toLowerCase().includes(term) ||
-        cls.sport.toLowerCase().includes(term)
+        removeAccents(cls.name.toLowerCase()).includes(term) ||
+        removeAccents(cls.sport.toLowerCase()).includes(term)
       );
     }
 

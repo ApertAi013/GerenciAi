@@ -516,10 +516,12 @@ export default function TrialStudents() {
   });
 
   const filteredStudents = students.filter((student) => {
+    const removeAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const term = removeAccents(searchTerm.toLowerCase());
     const matchesSearch =
-      student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      removeAccents(student.full_name.toLowerCase()).includes(term) ||
+      removeAccents((student.phone || '').toLowerCase()).includes(term) ||
+      removeAccents((student.email || '').toLowerCase()).includes(term);
 
     return matchesSearch;
   }).sort((a, b) => {

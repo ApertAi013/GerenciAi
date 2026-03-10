@@ -730,12 +730,14 @@ export default function Enrollments() {
           <tbody>
             {(() => {
               // Filter enrollments by search term
+              const removeAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
               const filteredEnrollments = searchTerm.trim()
-                ? enrollments.filter(enrollment =>
-                    (enrollment.student_name || getStudentName(enrollment.student_id))
-                      .toLowerCase()
-                      .includes(searchTerm.toLowerCase())
-                  )
+                ? (() => {
+                    const term = removeAccents(searchTerm.toLowerCase());
+                    return enrollments.filter(enrollment =>
+                      removeAccents((enrollment.student_name || getStudentName(enrollment.student_id)).toLowerCase()).includes(term)
+                    );
+                  })()
                 : enrollments;
 
               // Apply sorting

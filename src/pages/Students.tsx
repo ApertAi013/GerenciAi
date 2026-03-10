@@ -249,9 +249,12 @@ export default function Students() {
     }
   };
 
+  const removeAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
   const filteredStudents = students.filter(student => {
-    const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (student.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const term = removeAccents(searchTerm.toLowerCase());
+    const matchesSearch = removeAccents(student.full_name.toLowerCase()).includes(term) ||
+      removeAccents((student.email || '').toLowerCase()).includes(term) ||
       student.cpf.includes(searchTerm);
 
     const matchesLevel = !levelFilter || student.level_name === levelFilter;

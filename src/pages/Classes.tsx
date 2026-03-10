@@ -117,10 +117,11 @@ export default function Classes() {
 
   const filteredClasses = useMemo(() => {
     if (!searchTerm.trim()) return classes;
-    const term = searchTerm.trim().toLowerCase();
+    const removeAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const term = removeAccents(searchTerm.trim().toLowerCase());
     return classes.filter(cls =>
-      (cls.name || '').toLowerCase().includes(term) ||
-      (cls.modality_name || '').toLowerCase().includes(term)
+      removeAccents((cls.name || '').toLowerCase()).includes(term) ||
+      removeAccents((cls.modality_name || '').toLowerCase()).includes(term)
     );
   }, [classes, searchTerm]);
 

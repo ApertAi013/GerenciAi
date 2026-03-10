@@ -1067,10 +1067,10 @@ export default function Financial() {
 
               // Apply search filter
               if (searchTerm.trim()) {
+                const removeAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const term = removeAccents(searchTerm.toLowerCase());
                 filteredInvoices = filteredInvoices.filter(invoice =>
-                  (invoice.student_name || '')
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase())
+                  removeAccents((invoice.student_name || '').toLowerCase()).includes(term)
                 );
               }
 
