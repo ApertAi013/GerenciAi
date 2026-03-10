@@ -245,7 +245,7 @@ export default function PublicStudentRegistration() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="ptb-form-row">
               <div className="ptb-form-group">
                 <label>Telefone</label>
                 <input
@@ -267,7 +267,7 @@ export default function PublicStudentRegistration() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="ptb-form-row">
               <div className="ptb-form-group">
                 <label>Data de Nascimento</label>
                 <input
@@ -280,17 +280,9 @@ export default function PublicStudentRegistration() {
               <div className="ptb-form-group">
                 <label>Sexo</label>
                 <select
+                  className="ptb-select"
                   value={sex}
                   onChange={(e) => setSex(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    backgroundColor: 'white',
-                    boxSizing: 'border-box',
-                  }}
                 >
                   <option value="">Selecione...</option>
                   <option value="Masculino">Masculino</option>
@@ -306,17 +298,9 @@ export default function PublicStudentRegistration() {
               <div className="ptb-form-group">
                 <label>Modalidade Desejada</label>
                 <select
+                  className="ptb-select"
                   value={preferredModality}
                   onChange={(e) => setPreferredModality(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: '10px',
-                    fontSize: '1rem',
-                    backgroundColor: 'white',
-                    boxSizing: 'border-box',
-                  }}
                 >
                   <option value="">Selecione...</option>
                   {modalities.map((m) => (

@@ -169,6 +169,29 @@
   box-sizing: border-box;
 }
 
+.ptb-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ptb-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #D1D5DB;
+  border-radius: 10px;
+  font-size: 1rem;
+  background-color: white;
+  box-sizing: border-box;
+  appearance: auto;
+}
+
+.ptb-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 .ptb-form-group input:focus {
   outline: none;
   border-color: #667eea;
@@ -655,5 +678,9 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 2px;
+  }
+
+  .ptb-form-row {
+    grid-template-columns: 1fr;
   }
 }
