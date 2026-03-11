@@ -2171,6 +2171,8 @@ interface CreateBookingLinkModalProps {
 }
 
 function CreateBookingLinkModal({ link, allClasses, trialClassConfigs, allPlans, onClose, onSuccess }: CreateBookingLinkModalProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [name, setName] = useState(link?.name || '');
   const [selectedClassIds, setSelectedClassIds] = useState<number[]>(link?.class_ids || []);
   const [saving, setSaving] = useState(false);
