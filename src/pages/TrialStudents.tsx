@@ -1750,15 +1750,31 @@ export default function TrialStudents() {
                         <span className="trial-status-badge converted">
                           Convertido
                         </span>
+                      ) : (student as any).last_trial_status === 'cancelada' ? (
+                        <span className="trial-status-badge" style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                          Cancelada
+                        </span>
+                      ) : Number(student.last_trial_attended) === 1 ? (
+                        <span className="trial-status-badge" style={{ background: '#dcfce7', color: '#16a34a' }}>
+                          Presente
+                        </span>
+                      ) : Number(student.last_trial_attended) === 0 && student.last_trial_attended !== null && student.last_trial_attended !== undefined ? (
+                        <span className="trial-status-badge" style={{ background: '#fef2f2', color: '#dc2626' }}>
+                          Faltou
+                        </span>
+                      ) : (student as any).followups_count > 0 ? (
+                        <span className="trial-status-badge" style={{ background: '#eff6ff', color: '#2563eb' }}>
+                          Contatado
+                        </span>
                       ) : student.is_expired ? (
                         <span className="trial-status-badge expired">
                           Expirado
                         </span>
-                      ) : student.status === 'ativo' ? (
-                        <span className="trial-status-badge active">Ativo</span>
+                      ) : student.last_trial_attendance_id ? (
+                        <span className="trial-status-badge active">Agendado</span>
                       ) : (
-                        <span className="trial-status-badge inactive">
-                          Inativo
+                        <span className="trial-status-badge" style={{ background: isDark ? '#333' : '#f3f4f6', color: isDark ? '#aaa' : '#6b7280' }}>
+                          Novo
                         </span>
                       )}
                     </td>
