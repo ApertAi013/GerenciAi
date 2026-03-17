@@ -219,21 +219,32 @@ export default function TrialStudents() {
 
   const [attendanceModalStudent, setAttendanceModalStudent] = useState<TrialStudent | null>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
-  const [editingNotesId, setEditingNotesId] = useState<number | null>(null);
-  const [inlineNotesValue, setInlineNotesValue] = useState('');
-  const [savingInlineNotes, setSavingInlineNotes] = useState(false);
+  const [notesModalStudent, setNotesModalStudent] = useState<TrialStudent | null>(null);
+  const [notesModalValue, setNotesModalValue] = useState('');
+  const [notesModalContacted, setNotesModalContacted] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
 
-  const handleSaveInlineNotes = async (studentId: number) => {
-    setSavingInlineNotes(true);
+  const openNotesModal = (student: TrialStudent) => {
+    setNotesModalStudent(student);
+    setNotesModalValue(student.trial_notes || '');
+    setNotesModalContacted(!!(student as any).trial_contacted);
+  };
+
+  const handleSaveNotes = async () => {
+    if (!notesModalStudent) return;
+    setSavingNotes(true);
     try {
-      await trialStudentService.update(studentId, { trial_notes: inlineNotesValue || null });
-      toast.success('Observação salva');
-      setEditingNotesId(null);
+      await trialStudentService.update(notesModalStudent.id, {
+        trial_notes: notesModalValue || null,
+        trial_contacted: notesModalContacted,
+      });
+      toast.success('Detalhes salvos');
+      setNotesModalStudent(null);
       fetchStudents();
     } catch {
       toast.error('Erro ao salvar');
     } finally {
-      setSavingInlineNotes(false);
+      setSavingNotes(false);
     }
   };
 
@@ -554,7 +565,7 @@ export default function TrialStudents() {
       if (attendanceFilter === 'absent' && !(Number(attended) === 0 && attended !== null && attended !== undefined)) return false;
       if (attendanceFilter === 'pending' && (attended !== null && attended !== undefined)) return false;
       if (attendanceFilter === 'cancelled' && !(st.cancelled_count > 0 || st.last_trial_status === 'cancelada')) return false;
-      if (attendanceFilter === 'contacted' && !(st.followups_count > 0)) return false;
+      if (attendanceFilter === 'contacted' && !st.trial_contacted) return false;
     }
 
     return true;
@@ -1741,78 +1752,32 @@ export default function TrialStudents() {
                       </span>
                     </td>
                     <td>
-                      {editingNotesId === student.id ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: 180 }}>
-                          <textarea
-                            value={inlineNotesValue}
-                            onChange={(e) => setInlineNotesValue(e.target.value)}
-                            placeholder="Observações..."
-                            rows={2}
-                            autoFocus
-                            style={{
-                              width: '100%', padding: '0.4rem', borderRadius: 6,
-                              border: `1px solid ${isDark ? '#444' : '#ddd'}`,
-                              background: isDark ? '#1a1a1a' : '#fff',
-                              color: isDark ? '#f0f0f0' : '#333',
-                              fontSize: '0.8rem', resize: 'vertical',
-                            }}
-                          />
-                          <div style={{ display: 'flex', gap: '0.3rem' }}>
-                            <button
-                              onClick={() => handleSaveInlineNotes(student.id)}
-                              disabled={savingInlineNotes}
-                              style={{
-                                padding: '0.25rem 0.6rem', borderRadius: 5, border: 'none',
-                                background: '#667eea', color: '#fff', fontSize: '0.75rem',
-                                fontWeight: 500, cursor: savingInlineNotes ? 'wait' : 'pointer',
-                              }}
-                            >
-                              {savingInlineNotes ? '...' : 'Salvar'}
-                            </button>
-                            <button
-                              onClick={() => setEditingNotesId(null)}
-                              style={{
-                                padding: '0.25rem 0.6rem', borderRadius: 5,
-                                border: `1px solid ${isDark ? '#444' : '#ddd'}`,
-                                background: 'transparent', color: isDark ? '#ccc' : '#666',
-                                fontSize: '0.75rem', cursor: 'pointer',
-                              }}
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          onClick={() => {
-                            setEditingNotesId(student.id);
-                            setInlineNotesValue(student.trial_notes || '');
-                          }}
-                          style={{ cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}
-                          title={student.trial_notes || 'Clique para adicionar observação'}
-                        >
-                          <FileText
-                            size={16}
-                            style={{ flexShrink: 0, marginTop: 1 }}
-                            color={
-                              (student as any).followups_count > 0
-                                ? '#16a34a'
-                                : student.trial_notes
-                                  ? '#f59e0b'
-                                  : isDark ? '#555' : '#ccc'
-                            }
-                          />
-                          {student.trial_notes ? (
-                            <span style={{ fontSize: '0.8rem', color: isDark ? '#ccc' : '#555', lineHeight: 1.3 }}>
-                              {student.trial_notes.length > 40 ? student.trial_notes.slice(0, 40) + '...' : student.trial_notes}
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '0.8rem', color: isDark ? '#555' : '#bbb', fontStyle: 'italic' }}>
-                              Adicionar obs.
-                            </span>
-                          )}
-                        </div>
-                      )}
+                      <div
+                        onClick={() => openNotesModal(student)}
+                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}
+                        title={student.trial_notes || 'Clique para adicionar observação'}
+                      >
+                        <FileText
+                          size={16}
+                          style={{ flexShrink: 0, marginTop: 1 }}
+                          color={
+                            (student as any).trial_contacted
+                              ? '#16a34a'
+                              : student.trial_notes
+                                ? '#f59e0b'
+                                : isDark ? '#555' : '#ccc'
+                          }
+                        />
+                        {student.trial_notes ? (
+                          <span style={{ fontSize: '0.8rem', color: isDark ? '#ccc' : '#555', lineHeight: 1.3 }}>
+                            {student.trial_notes.length > 40 ? student.trial_notes.slice(0, 40) + '...' : student.trial_notes}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.8rem', color: isDark ? '#555' : '#bbb', fontStyle: 'italic' }}>
+                            Adicionar obs.
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td>
                       {student.trial_converted_to_regular ? (
@@ -1831,7 +1796,7 @@ export default function TrialStudents() {
                         <span className="trial-status-badge" style={{ background: '#fef2f2', color: '#dc2626' }}>
                           Faltou
                         </span>
-                      ) : (student as any).followups_count > 0 ? (
+                      ) : (student as any).trial_contacted ? (
                         <span className="trial-status-badge" style={{ background: '#eff6ff', color: '#2563eb' }}>
                           Contatado
                         </span>
@@ -1996,6 +1961,100 @@ export default function TrialStudents() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Notes/Details modal */}
+      {notesModalStudent && (
+        <div className="modal-overlay" onClick={() => !savingNotes && setNotesModalStudent(null)}>
+          <div
+            className={`modal-content ${isDark ? 'dark' : ''}`}
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '480px', padding: '1.5rem' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FileText size={20} color="#667eea" />
+                Detalhes - {notesModalStudent.full_name}
+              </h3>
+              <button onClick={() => setNotesModalStudent(null)} className="modal-close-btn" disabled={savingNotes}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <label
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                padding: '0.75rem 1rem', borderRadius: 10, cursor: 'pointer', marginBottom: '1rem',
+                background: notesModalContacted
+                  ? (isDark ? 'rgba(22, 163, 106, 0.1)' : '#f0fdf4')
+                  : (isDark ? '#1a1a1a' : '#f9fafb'),
+                border: `1px solid ${notesModalContacted
+                  ? (isDark ? '#16a34a' : '#86efac')
+                  : (isDark ? '#333' : '#e5e7eb')}`,
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={notesModalContacted}
+                onChange={(e) => setNotesModalContacted(e.target.checked)}
+                style={{ accentColor: '#16a34a', width: 18, height: 18 }}
+              />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: notesModalContacted ? '#16a34a' : (isDark ? '#ccc' : '#374151') }}>
+                  {notesModalContacted ? 'Entrei em contato' : 'Ainda nao entrei em contato'}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: isDark ? '#888' : '#6b7280' }}>
+                  Marque quando falar com o aluno
+                </div>
+              </div>
+            </label>
+
+            <div style={{ marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#ccc' : '#374151' }}>
+              Observacoes
+            </div>
+            <textarea
+              value={notesModalValue}
+              onChange={(e) => setNotesModalValue(e.target.value)}
+              placeholder="Escreva observacoes sobre o aluno..."
+              rows={4}
+              style={{
+                width: '100%', padding: '0.75rem', borderRadius: 8,
+                border: `1px solid ${isDark ? '#444' : '#ddd'}`,
+                background: isDark ? '#141414' : '#fff',
+                color: isDark ? '#f0f0f0' : '#333',
+                fontSize: '0.9rem', resize: 'vertical', marginBottom: '1.25rem',
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setNotesModalStudent(null)}
+                disabled={savingNotes}
+                style={{
+                  padding: '0.6rem 1.25rem', borderRadius: 8,
+                  border: `1px solid ${isDark ? '#444' : '#ddd'}`,
+                  background: 'transparent', color: isDark ? '#ccc' : '#666',
+                  fontWeight: 500, fontSize: '0.9rem', cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveNotes}
+                disabled={savingNotes}
+                style={{
+                  padding: '0.6rem 1.25rem', borderRadius: 8, border: 'none',
+                  background: '#667eea', color: '#fff',
+                  fontWeight: 600, fontSize: '0.9rem',
+                  cursor: savingNotes ? 'wait' : 'pointer',
+                }}
+              >
+                {savingNotes ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
           </div>
         </div>
       )}
