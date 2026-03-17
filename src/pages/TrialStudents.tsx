@@ -98,7 +98,7 @@ export default function TrialStudents() {
   const [showConvertedModal, setShowConvertedModal] = useState(false);
 
   // Attendance filter
-  const [attendanceFilter, setAttendanceFilter] = useState<'all' | 'attended' | 'absent' | 'pending'>('all');
+  const [attendanceFilter, setAttendanceFilter] = useState<'all' | 'attended' | 'absent' | 'pending' | 'cancelled' | 'contacted'>('all');
 
   // Sorting state
   type SortKey = 'name' | 'modality' | 'trial_date' | 'classes_count' | 'status';
@@ -531,9 +531,12 @@ export default function TrialStudents() {
     // Attendance filter
     if (attendanceFilter !== 'all') {
       const attended = student.last_trial_attended;
+      const st = student as any;
       if (attendanceFilter === 'attended' && Number(attended) !== 1) return false;
       if (attendanceFilter === 'absent' && !(Number(attended) === 0 && attended !== null && attended !== undefined)) return false;
-      if (attendanceFilter === 'pending' && attended !== null && attended !== undefined) return false;
+      if (attendanceFilter === 'pending' && (attended !== null && attended !== undefined)) return false;
+      if (attendanceFilter === 'cancelled' && !(st.cancelled_count > 0 || st.last_trial_status === 'cancelada')) return false;
+      if (attendanceFilter === 'contacted' && !(st.followups_count > 0)) return false;
     }
 
     return true;
@@ -1553,8 +1556,10 @@ export default function TrialStudents() {
               onChange={(e) => setAttendanceFilter(e.target.value as any)}
             >
               <option value="all">Todos</option>
-              <option value="attended">Compareceu</option>
-              <option value="absent">Faltou</option>
+              <option value="attended">Presentes</option>
+              <option value="absent">Faltantes</option>
+              <option value="cancelled">Cancelados pelo aluno</option>
+              <option value="contacted">Contatados</option>
               <option value="pending">Pendente</option>
             </select>
           </div>
