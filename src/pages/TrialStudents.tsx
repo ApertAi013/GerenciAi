@@ -29,6 +29,7 @@ import {
   Bell,
   Target,
   UserCheck,
+  FileText,
 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
@@ -218,6 +219,23 @@ export default function TrialStudents() {
 
   const [attendanceModalStudent, setAttendanceModalStudent] = useState<TrialStudent | null>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [editingNotesId, setEditingNotesId] = useState<number | null>(null);
+  const [inlineNotesValue, setInlineNotesValue] = useState('');
+  const [savingInlineNotes, setSavingInlineNotes] = useState(false);
+
+  const handleSaveInlineNotes = async (studentId: number) => {
+    setSavingInlineNotes(true);
+    try {
+      await trialStudentService.update(studentId, { trial_notes: inlineNotesValue || null });
+      toast.success('Observação salva');
+      setEditingNotesId(null);
+      fetchStudents();
+    } catch {
+      toast.error('Erro ao salvar');
+    } finally {
+      setSavingInlineNotes(false);
+    }
+  };
 
   const handleSetAttendance = async (student: TrialStudent, attended: boolean) => {
     if (!student.last_trial_attendance_id) return;
@@ -1611,7 +1629,7 @@ export default function TrialStudents() {
                 <th onClick={() => handleSort('classes_count')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   Aulas {sortKey === 'classes_count' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </th>
-                <th>Expiração</th>
+                <th>Detalhes</th>
                 <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                   Status {sortKey === 'status' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                 </th>
@@ -1723,25 +1741,76 @@ export default function TrialStudents() {
                       </span>
                     </td>
                     <td>
-                      {daysRemaining ? (
-                        <div
-                          className={`trial-expiration ${expirationClass}`}
-                        >
-                          <span className="trial-expiration-icon">
-                            {expirationClass === 'danger' ? (
-                              <AlertCircle size={16} />
-                            ) : expirationClass === 'warning' ? (
-                              <Clock size={16} />
-                            ) : (
-                              <Calendar size={16} />
-                            )}
-                          </span>
-                          {daysRemaining}
+                      {editingNotesId === student.id ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: 180 }}>
+                          <textarea
+                            value={inlineNotesValue}
+                            onChange={(e) => setInlineNotesValue(e.target.value)}
+                            placeholder="Observações..."
+                            rows={2}
+                            autoFocus
+                            style={{
+                              width: '100%', padding: '0.4rem', borderRadius: 6,
+                              border: `1px solid ${isDark ? '#444' : '#ddd'}`,
+                              background: isDark ? '#1a1a1a' : '#fff',
+                              color: isDark ? '#f0f0f0' : '#333',
+                              fontSize: '0.8rem', resize: 'vertical',
+                            }}
+                          />
+                          <div style={{ display: 'flex', gap: '0.3rem' }}>
+                            <button
+                              onClick={() => handleSaveInlineNotes(student.id)}
+                              disabled={savingInlineNotes}
+                              style={{
+                                padding: '0.25rem 0.6rem', borderRadius: 5, border: 'none',
+                                background: '#667eea', color: '#fff', fontSize: '0.75rem',
+                                fontWeight: 500, cursor: savingInlineNotes ? 'wait' : 'pointer',
+                              }}
+                            >
+                              {savingInlineNotes ? '...' : 'Salvar'}
+                            </button>
+                            <button
+                              onClick={() => setEditingNotesId(null)}
+                              style={{
+                                padding: '0.25rem 0.6rem', borderRadius: 5,
+                                border: `1px solid ${isDark ? '#444' : '#ddd'}`,
+                                background: 'transparent', color: isDark ? '#ccc' : '#666',
+                                fontSize: '0.75rem', cursor: 'pointer',
+                              }}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
                         </div>
                       ) : (
-                        <div className="trial-expiration unlimited">
-                          <CheckCircle size={16} />
-                          Ilimitado
+                        <div
+                          onClick={() => {
+                            setEditingNotesId(student.id);
+                            setInlineNotesValue(student.trial_notes || '');
+                          }}
+                          style={{ cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}
+                          title={student.trial_notes || 'Clique para adicionar observação'}
+                        >
+                          <FileText
+                            size={16}
+                            style={{ flexShrink: 0, marginTop: 1 }}
+                            color={
+                              (student as any).followups_count > 0
+                                ? '#16a34a'
+                                : student.trial_notes
+                                  ? '#f59e0b'
+                                  : isDark ? '#555' : '#ccc'
+                            }
+                          />
+                          {student.trial_notes ? (
+                            <span style={{ fontSize: '0.8rem', color: isDark ? '#ccc' : '#555', lineHeight: 1.3 }}>
+                              {student.trial_notes.length > 40 ? student.trial_notes.slice(0, 40) + '...' : student.trial_notes}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: isDark ? '#555' : '#bbb', fontStyle: 'italic' }}>
+                              Adicionar obs.
+                            </span>
+                          )}
                         </div>
                       )}
                     </td>
