@@ -1391,6 +1391,78 @@ export default function TrialStudents() {
                 )}
               </div>
 
+              {/* Monthly attendance: Total vs Presentes */}
+              {(report as any).monthly_attendance && (report as any).monthly_attendance.length > 0 && (
+                <div className="trial-report-chart-card">
+                  <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Total de Alunos x Presentes (Mensal)</h3>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={(report as any).monthly_attendance.map((m: any) => ({
+                      ...m,
+                      label: (() => {
+                        const [y, mo] = m.month.split('-');
+                        const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+                        return months[parseInt(mo) - 1] || m.month;
+                      })(),
+                      not_attended: m.total - m.attended,
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#f0f0f0'} />
+                      <XAxis dataKey="label" tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                      <YAxis allowDecimals={false} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                      <Tooltip
+                        contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                        labelStyle={{ color: isDark ? '#f0f0f0' : '#333' }}
+                        itemStyle={{ color: isDark ? '#ccc' : '#555' }}
+                        formatter={(value: number, name: string, props: any) => {
+                          if (name === 'Presentes') return [`${value} (${props.payload.total > 0 ? ((value / props.payload.total) * 100).toFixed(0) : 0}%)`, name];
+                          return [value, name];
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="attended" name="Presentes" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="absent" name="Faltaram" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pending" name="Pendentes" fill={isDark ? '#555' : '#d1d5db'} radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Funnel: Total -> Presentes -> Matriculados */}
+              {(report as any).funnel && (report as any).funnel.total_students > 0 && (() => {
+                const f = (report as any).funnel;
+                const funnelChartData = [
+                  { name: 'Total Experimentais', value: f.total_students, fill: '#3B82F6' },
+                  { name: 'Com Agendamento', value: f.with_booking, fill: '#8B5CF6' },
+                  { name: 'Presentes', value: f.attended, fill: '#22c55e' },
+                  { name: 'Matriculados', value: f.converted, fill: '#f59e0b' },
+                ];
+                return (
+                  <div className="trial-report-chart-card">
+                    <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Funil: Presentes x Matriculados</h3>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={funnelChartData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#f0f0f0'} />
+                        <XAxis type="number" allowDecimals={false} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                        <YAxis dataKey="name" type="category" width={130} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                          labelStyle={{ color: isDark ? '#f0f0f0' : '#333' }}
+                          itemStyle={{ color: isDark ? '#ccc' : '#555' }}
+                          formatter={(value: number, _: string, props: any) => {
+                            const pct = f.total_students > 0 ? ((value / f.total_students) * 100).toFixed(1) : '0';
+                            return [`${value} (${pct}% do total)`, props.payload.name];
+                          }}
+                        />
+                        <Bar dataKey="value" name="Alunos" radius={[0, 4, 4, 0]}>
+                          {funnelChartData.map((entry, i) => (
+                            <Cell key={i} fill={entry.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })()}
+
               {/* Conversion by class/turma - horizontal bar, full width at bottom */}
               {report.by_class && report.by_class.length > 0 && (
                 <div className="trial-report-chart-card" style={{ gridColumn: '1 / -1' }}>
