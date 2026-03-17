@@ -2144,7 +2144,7 @@ function TrialStudentDetailsModal({
                   style={{
                     display: 'grid',
                     gap: '0.75rem',
-                    background: '#f8f9fa',
+                    background: isDark ? '#1a1a1a' : '#f8f9fa',
                     padding: '1rem',
                     borderRadius: '8px',
                   }}
@@ -2198,7 +2198,7 @@ function TrialStudentDetailsModal({
                   style={{
                     display: 'grid',
                     gap: '0.75rem',
-                    background: '#f8f9fa',
+                    background: isDark ? '#1a1a1a' : '#f8f9fa',
                     padding: '1rem',
                     borderRadius: '8px',
                   }}
