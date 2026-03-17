@@ -1193,9 +1193,9 @@ export default function TrialStudents() {
                     </div>
                     <div className="trial-upcoming-bookings">
                       {bookings.map((b: any) => (
-                        <div key={b.id} className="trial-upcoming-card" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: b.color || '#3B82F6', flexShrink: 0 }} />
-                          <span style={{ fontWeight: 600 }}>{b.student_name}</span>
+                        <div key={b.id} className="trial-upcoming-card" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', opacity: b.status === 'cancelada' ? 0.6 : 1 }}>
+                          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: b.status === 'cancelada' ? '#9CA3AF' : (b.color || '#3B82F6'), flexShrink: 0 }} />
+                          <span style={{ fontWeight: 600, textDecoration: b.status === 'cancelada' ? 'line-through' : 'none' }}>{b.student_name}</span>
                           <span style={{ color: isDark ? '#aaa' : '#666' }}>{b.class_name} · {b.start_time?.slice(0,5)}-{b.end_time?.slice(0,5)}</span>
                           {b.student_phone && (
                             <span style={{ fontSize: '0.8rem', color: isDark ? '#aaa' : '#888' }}>{b.student_phone}</span>
@@ -1203,7 +1203,9 @@ export default function TrialStudents() {
                           <span className={`trial-source-badge ${b.booking_source}`}>
                             {SOURCE_LABELS[b.booking_source] || b.booking_source}
                           </span>
-                          {b.attended === null || b.attended === undefined ? (
+                          {b.status === 'cancelada' ? (
+                            <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: '#fef2f2', color: '#dc2626', fontWeight: 600, border: '1px solid #fecaca' }}>Cancelada</span>
+                          ) : b.attended === null || b.attended === undefined ? (
                             <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: isDark ? '#333' : '#f3f4f6', color: isDark ? '#aaa' : '#6b7280', fontWeight: 500 }}>Pendente</span>
                           ) : Number(b.attended) === 1 ? (
                             <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: '#dcfce7', color: '#16a34a', fontWeight: 600 }}>Compareceu</span>
