@@ -97,6 +97,9 @@ export default function TrialStudents() {
   const [showReportSection, setShowReportSection] = useState(false);
   const [showConvertedModal, setShowConvertedModal] = useState(false);
 
+  // Attendance filter
+  const [attendanceFilter, setAttendanceFilter] = useState<'all' | 'attended' | 'absent' | 'pending'>('all');
+
   // Sorting state
   type SortKey = 'name' | 'modality' | 'trial_date' | 'classes_count' | 'status';
   const [sortKey, setSortKey] = useState<SortKey>('trial_date');
@@ -523,7 +526,17 @@ export default function TrialStudents() {
       removeAccents((student.phone || '').toLowerCase()).includes(term) ||
       removeAccents((student.email || '').toLowerCase()).includes(term);
 
-    return matchesSearch;
+    if (!matchesSearch) return false;
+
+    // Attendance filter
+    if (attendanceFilter !== 'all') {
+      const attended = student.last_trial_attended;
+      if (attendanceFilter === 'attended' && Number(attended) !== 1) return false;
+      if (attendanceFilter === 'absent' && !(Number(attended) === 0 && attended !== null && attended !== undefined)) return false;
+      if (attendanceFilter === 'pending' && attended !== null && attended !== undefined) return false;
+    }
+
+    return true;
   }).sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1;
     switch (sortKey) {
@@ -672,6 +685,48 @@ export default function TrialStudents() {
             </div>
           </div>
         </div>
+
+        {(metrics as any).total_with_attendance > 0 && (
+          <div className="trial-metric-card">
+            <div className="trial-metric-header">
+              <div>
+                <h3 className="trial-metric-value">
+                  {(metrics as any).attended_students}/{(metrics as any).total_with_attendance}
+                </h3>
+                <p className="trial-metric-label">Presentes / Total</p>
+              </div>
+              <div className="trial-metric-icon active">
+                <UserCheck />
+              </div>
+            </div>
+            <span className="trial-metric-change positive">
+              {(metrics as any).total_with_attendance > 0
+                ? `${(((metrics as any).attended_students / (metrics as any).total_with_attendance) * 100).toFixed(1)}% compareceram`
+                : ''}
+            </span>
+          </div>
+        )}
+
+        {(metrics as any).attended_students > 0 && (
+          <div className="trial-metric-card">
+            <div className="trial-metric-header">
+              <div>
+                <h3 className="trial-metric-value">
+                  {metrics.converted_students}/{(metrics as any).attended_students}
+                </h3>
+                <p className="trial-metric-label">Matriculados / Presentes</p>
+              </div>
+              <div className="trial-metric-icon converted">
+                <Target />
+              </div>
+            </div>
+            <span className="trial-metric-change positive">
+              {(metrics as any).attended_students > 0
+                ? `${((metrics.converted_students / (metrics as any).attended_students) * 100).toFixed(1)}% dos presentes matricularam`
+                : ''}
+            </span>
+          </div>
+        )}
       </div>
     );
   };
@@ -1138,13 +1193,28 @@ export default function TrialStudents() {
                     </div>
                     <div className="trial-upcoming-bookings">
                       {bookings.map((b: any) => (
-                        <div key={b.id} className="trial-upcoming-card">
-                          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: b.color || '#3B82F6', marginRight: 6 }} />
+                        <div key={b.id} className="trial-upcoming-card" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: b.color || '#3B82F6', flexShrink: 0 }} />
                           <span style={{ fontWeight: 600 }}>{b.student_name}</span>
-                          <span style={{ color: '#666', marginLeft: 8 }}>{b.class_name} · {b.start_time?.slice(0,5)}-{b.end_time?.slice(0,5)}</span>
+                          <span style={{ color: isDark ? '#aaa' : '#666' }}>{b.class_name} · {b.start_time?.slice(0,5)}-{b.end_time?.slice(0,5)}</span>
+                          {b.student_phone && (
+                            <span style={{ fontSize: '0.8rem', color: isDark ? '#aaa' : '#888' }}>{b.student_phone}</span>
+                          )}
                           <span className={`trial-source-badge ${b.booking_source}`}>
                             {SOURCE_LABELS[b.booking_source] || b.booking_source}
                           </span>
+                          {b.attended === null || b.attended === undefined ? (
+                            <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: isDark ? '#333' : '#f3f4f6', color: isDark ? '#aaa' : '#6b7280', fontWeight: 500 }}>Pendente</span>
+                          ) : Number(b.attended) === 1 ? (
+                            <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: '#dcfce7', color: '#16a34a', fontWeight: 600 }}>Compareceu</span>
+                          ) : (
+                            <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: '#fef2f2', color: '#dc2626', fontWeight: 600 }}>Faltou</span>
+                          )}
+                          {b.trial_notes && (
+                            <span style={{ fontSize: '0.75rem', color: isDark ? '#999' : '#888', fontStyle: 'italic' }} title={b.trial_notes}>
+                              Obs: {b.trial_notes.length > 30 ? b.trial_notes.slice(0, 30) + '...' : b.trial_notes}
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1260,36 +1330,6 @@ export default function TrialStudents() {
                   </div>
                 )}
 
-                {/* Conversion by class/turma */}
-                {report.by_class && report.by_class.length > 0 && (
-                  <div className="trial-report-chart-card">
-                    <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Conversão por Turma</h3>
-                    <ResponsiveContainer width="100%" height={Math.max(280, report.by_class.length * 40)}>
-                      <BarChart data={report.by_class.map(c => ({
-                        ...c,
-                        label: `${c.class_name} (${WEEKDAY_LABELS[c.weekday] || c.weekday} ${c.start_time?.slice(0, 5) || ''})`,
-                        nao_convertidos: c.total - c.converted,
-                      }))} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#f0f0f0'} />
-                        <XAxis type="number" allowDecimals={false} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
-                        <YAxis dataKey="label" type="category" width={180} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 11 }} />
-                        <Tooltip
-                          contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
-                          labelStyle={{ color: isDark ? '#f0f0f0' : '#333' }}
-                          itemStyle={{ color: isDark ? '#ccc' : '#555' }}
-                          formatter={(value: number, name: string, props: any) => {
-                            if (name === 'Convertidos') return [`${value} (${props.payload.conversion_rate}%)`, name];
-                            return [value, name];
-                          }}
-                        />
-                        <Legend />
-                        <Bar dataKey="converted" name="Convertidos" fill="#667eea" radius={[0, 4, 4, 0]} />
-                        <Bar dataKey="nao_convertidos" name="Não convertidos" fill={isDark ? '#444' : '#e0e0e0'} radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-
                 {/* Days to convert distribution */}
                 {report.by_days_to_convert && report.by_days_to_convert.length > 0 && (
                   <div className="trial-report-chart-card">
@@ -1348,6 +1388,36 @@ export default function TrialStudents() {
                   </div>
                 )}
               </div>
+
+              {/* Conversion by class/turma - horizontal bar, full width at bottom */}
+              {report.by_class && report.by_class.length > 0 && (
+                <div className="trial-report-chart-card" style={{ gridColumn: '1 / -1' }}>
+                  <h3 style={{ margin: '0 0 1rem', fontSize: '0.95rem', fontWeight: 600 }}>Conversão por Turma</h3>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={report.by_class.map(c => ({
+                      ...c,
+                      label: `${c.class_name} (${WEEKDAY_LABELS[c.weekday] || c.weekday} ${c.start_time?.slice(0, 5) || ''})`,
+                      nao_convertidos: c.total - c.converted,
+                    }))}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#333' : '#f0f0f0'} />
+                      <XAxis dataKey="label" tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 11 }} angle={-25} textAnchor="end" height={60} />
+                      <YAxis allowDecimals={false} tick={{ fill: isDark ? '#aaa' : '#666', fontSize: 12 }} />
+                      <Tooltip
+                        contentStyle={{ background: isDark ? '#1a1a1a' : '#fff', border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`, borderRadius: 8 }}
+                        labelStyle={{ color: isDark ? '#f0f0f0' : '#333' }}
+                        itemStyle={{ color: isDark ? '#ccc' : '#555' }}
+                        formatter={(value: number, name: string, props: any) => {
+                          if (name === 'Convertidos') return [`${value} (${props.payload.conversion_rate}%)`, name];
+                          return [value, name];
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="converted" name="Convertidos" fill="#667eea" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="nao_convertidos" name="Não convertidos" fill={isDark ? '#444' : '#e0e0e0'} radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1396,6 +1466,22 @@ export default function TrialStudents() {
               <option value="all">Todos</option>
               <option value="active">Não Expirados</option>
               <option value="expired">Expirados</option>
+            </select>
+          </div>
+
+          <div className="trial-filter-item">
+            <label>
+              <UserCheck size={16} style={{ display: 'inline', marginRight: '0.25rem' }} />
+              Presença
+            </label>
+            <select
+              value={attendanceFilter}
+              onChange={(e) => setAttendanceFilter(e.target.value as any)}
+            >
+              <option value="all">Todos</option>
+              <option value="attended">Compareceu</option>
+              <option value="absent">Faltou</option>
+              <option value="pending">Pendente</option>
             </select>
           </div>
         </div>
@@ -1494,12 +1580,12 @@ export default function TrialStudents() {
                       <div style={{ fontSize: '0.875rem' }}>
                         {student.phone && (
                           <div>
-                            📱 {student.phone}
+                            {student.phone}
                           </div>
                         )}
                         {student.email && (
                           <div style={{ color: '#666' }}>
-                            ✉️ {student.email}
+                            {student.email}
                           </div>
                         )}
                         {!student.phone && !student.email && (
@@ -1904,8 +1990,13 @@ function TrialStudentDetailsModal({
   onClose,
   onRefresh,
 }: TrialStudentDetailsModalProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
   const [details, setDetails] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState(student.trial_notes || '');
+  const [savingNotes, setSavingNotes] = useState(false);
 
   useEffect(() => {
     fetchDetails();
@@ -2036,22 +2127,90 @@ function TrialStudentDetailsModal({
                       <strong>Período:</strong> Ilimitado
                     </div>
                   )}
-                  {student.trial_notes && (
-                    <div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                       <strong>Observações:</strong>
+                      {!editingNotes && (
+                        <button
+                          onClick={() => setEditingNotes(true)}
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            color: '#667eea', fontSize: '0.8rem', fontWeight: 500,
+                          }}
+                        >
+                          {notesValue ? 'Editar' : 'Adicionar'}
+                        </button>
+                      )}
+                    </div>
+                    {editingNotes ? (
+                      <div>
+                        <textarea
+                          value={notesValue}
+                          onChange={(e) => setNotesValue(e.target.value)}
+                          placeholder="Adicione observações sobre o aluno..."
+                          rows={3}
+                          style={{
+                            width: '100%', padding: '0.75rem', borderRadius: '6px',
+                            border: `1px solid ${isDark ? '#333' : '#ddd'}`,
+                            background: isDark ? '#141414' : 'white',
+                            color: isDark ? '#f0f0f0' : '#333',
+                            fontSize: '0.875rem', resize: 'vertical',
+                          }}
+                        />
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <button
+                            onClick={async () => {
+                              setSavingNotes(true);
+                              try {
+                                await trialStudentService.update(student.id, { trial_notes: notesValue || null });
+                                toast.success('Observações salvas');
+                                setEditingNotes(false);
+                                onRefresh();
+                              } catch {
+                                toast.error('Erro ao salvar observações');
+                              } finally {
+                                setSavingNotes(false);
+                              }
+                            }}
+                            disabled={savingNotes}
+                            style={{
+                              padding: '0.4rem 1rem', borderRadius: '6px', border: 'none',
+                              background: '#667eea', color: '#fff', fontWeight: 500,
+                              fontSize: '0.8rem', cursor: savingNotes ? 'wait' : 'pointer',
+                            }}
+                          >
+                            {savingNotes ? 'Salvando...' : 'Salvar'}
+                          </button>
+                          <button
+                            onClick={() => { setEditingNotes(false); setNotesValue(student.trial_notes || ''); }}
+                            style={{
+                              padding: '0.4rem 1rem', borderRadius: '6px', border: `1px solid ${isDark ? '#333' : '#ddd'}`,
+                              background: 'transparent', color: isDark ? '#ccc' : '#666',
+                              fontWeight: 500, fontSize: '0.8rem', cursor: 'pointer',
+                            }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : notesValue ? (
                       <div
                         style={{
-                          marginTop: '0.5rem',
                           padding: '0.75rem',
                           background: isDark ? '#141414' : 'white',
                           borderRadius: '6px',
                           fontSize: '0.875rem',
+                          color: isDark ? '#ccc' : '#333',
                         }}
                       >
-                        {student.trial_notes}
+                        {notesValue}
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div style={{ fontSize: '0.85rem', color: isDark ? '#666' : '#999', fontStyle: 'italic' }}>
+                        Nenhuma observação adicionada.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
