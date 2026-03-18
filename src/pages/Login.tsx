@@ -53,6 +53,8 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [autoLoginEmail, setAutoLoginEmail] = useState<string | null>(null);
+  const [availableRoles, setAvailableRoles] = useState<any[] | null>(null);
+  const [roleToken, setRoleToken] = useState<string | null>(null);
 
   useEffect(() => {
     setSavedAccounts(getSavedAccounts());
@@ -119,6 +121,13 @@ export default function Login() {
       const isSuccess = response.status === 'success' || (response as any).success === true;
 
       if (isSuccess) {
+        // Check if multi-role selection needed
+        if (response.data.requires_role_selection) {
+          setAvailableRoles(response.data.available_roles);
+          setRoleToken(response.data.token);
+          return;
+        }
+
         if (keepLoggedIn) {
           localStorage.setItem('keepLoggedIn', 'true');
         } else {
@@ -128,7 +137,6 @@ export default function Login() {
         const user = response.data.user;
         const token = response.data.token;
 
-        // Salva conta com token para login instantâneo futuro
         saveAccount(email, user.full_name || user.name || user.email, token, user);
         setSavedAccounts(getSavedAccounts());
 
@@ -147,6 +155,31 @@ export default function Login() {
       const errorMessage = err.response?.data?.message || 'Erro ao fazer login. Tente novamente.';
       setError(errorMessage);
       toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelectRole = async (selectedRole: string) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const response = await authService.login({ email, password, selected_role: selectedRole });
+      if (response.status === 'success' && response.data.user) {
+        const user = response.data.user;
+        const token = response.data.token;
+
+        if (keepLoggedIn) localStorage.setItem('keepLoggedIn', 'true');
+        saveAccount(email, user.full_name || user.email, token, user);
+        setSavedAccounts(getSavedAccounts());
+        setAuth(user, token);
+
+        toast.success('Login realizado com sucesso!');
+        setAvailableRoles(null);
+        setTimeout(() => navigate('/dashboard'), 500);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao selecionar perfil.');
     } finally {
       setIsLoading(false);
     }
@@ -219,6 +252,58 @@ export default function Login() {
           </div>
         )}
 
+        {availableRoles ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ textAlign: 'center', margin: '0 0 0.5rem', fontSize: '1.1rem' }}>
+              Como deseja entrar?
+            </h3>
+            <p style={{ textAlign: 'center', color: '#888', fontSize: '0.9rem', margin: 0 }}>
+              Sua conta possui mais de um perfil. Selecione:
+            </p>
+            {availableRoles.map((r: any, i: number) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => handleSelectRole(r.role)}
+                disabled={isLoading}
+                style={{
+                  padding: '1rem 1.25rem', borderRadius: 12,
+                  border: `2px solid ${r.role === 'gestor' ? '#667eea' : '#f59e0b'}`,
+                  background: 'transparent',
+                  cursor: isLoading ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '0.75rem',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => { (e.target as HTMLElement).style.background = r.role === 'gestor' ? '#667eea15' : '#f59e0b15'; }}
+                onMouseLeave={(e) => { (e.target as HTMLElement).style.background = 'transparent'; }}
+              >
+                <span style={{
+                  width: 40, height: 40, borderRadius: '50%', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem',
+                  background: r.role === 'gestor' ? '#667eea20' : '#f59e0b20',
+                }}>
+                  {r.role === 'gestor' ? '🏟' : '🎓'}
+                </span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{r.label}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#888' }}>
+                    {r.role === 'gestor' ? 'Gerenciar sua arena' : 'Acessar como instrutor'}
+                  </div>
+                </div>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => { setAvailableRoles(null); setRoleToken(null); }}
+              style={{
+                background: 'none', border: 'none', color: '#888',
+                cursor: 'pointer', fontSize: '0.85rem', marginTop: '0.5rem',
+              }}
+            >
+              Voltar
+            </button>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label htmlFor="email">Email</label>
@@ -268,6 +353,7 @@ export default function Login() {
             {isLoading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+        )}
       </div>
     </div>
   );
