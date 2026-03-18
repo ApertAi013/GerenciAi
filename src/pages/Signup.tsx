@@ -233,6 +233,8 @@ export default function Signup() {
 
   // Success states
   if (signupResult) {
+    const isExisting = (signupResult as any).isExistingInstructor;
+
     return (
       <div className="signup-page">
         <div className="signup-nav">
@@ -245,9 +247,25 @@ export default function Signup() {
             <div className="signup-success-icon">
               <FontAwesomeIcon icon={faCircleCheck} />
             </div>
-            <h1>Conta criada com sucesso!</h1>
-            <p className="signup-success-sub">Bem-vindo ao ArenaAi, {signupResult.user.full_name}!</p>
+            <h1>{isExisting ? 'Arena criada com sucesso!' : 'Conta criada com sucesso!'}</h1>
+            <p className="signup-success-sub">
+              {isExisting
+                ? `${signupResult.user.full_name}, sua arena foi vinculada ao seu cadastro de instrutor. Use sua senha atual para fazer login.`
+                : `Bem-vindo ao ArenaAi, ${signupResult.user.full_name}!`
+              }
+            </p>
 
+            {isExisting ? (
+              <div className="signup-credentials" style={{ background: '#f0fdf4', borderColor: '#86efac' }}>
+                <h3>Como acessar</h3>
+                <p style={{ margin: '0.5rem 0', fontSize: '0.95rem' }}>
+                  Ao fazer login, voce vera a opcao de entrar como <strong>Gestor</strong> (sua arena) ou <strong>Instrutor</strong> (arena onde voce da aula).
+                </p>
+                <p style={{ margin: '0.5rem 0', fontSize: '0.9rem', color: '#666' }}>
+                  Use a mesma senha que voce ja utiliza como instrutor.
+                </p>
+              </div>
+            ) : (
             <div className="signup-credentials">
               <h3>Suas credenciais de acesso</h3>
               <div className="signup-credential-row">
@@ -258,14 +276,15 @@ export default function Signup() {
                 </button>
               </div>
               <div className="signup-credential-row">
-                <span>Senha temporária:</span>
+                <span>Senha temporaria:</span>
                 <strong>{signupResult.temporaryPassword}</strong>
                 <button onClick={() => copyToClipboard(signupResult.temporaryPassword)} className="signup-copy-btn">
                   <FontAwesomeIcon icon={faCopy} />
                 </button>
               </div>
-              <p className="signup-credential-hint">Estas credenciais também foram enviadas para seu email.</p>
+              <p className="signup-credential-hint">Estas credenciais tambem foram enviadas para seu email.</p>
             </div>
+            )}
 
             {signupResult.invoice && (
               <div className="signup-payment-section">
