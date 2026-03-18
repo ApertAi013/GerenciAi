@@ -1653,7 +1653,7 @@ export default function TrialStudents() {
                 const expirationClass = getExpirationClass(student);
 
                 return (
-                  <tr key={student.id}>
+                  <tr key={`${student.id}-${student.last_trial_attendance_id || 'no-att'}`}>
                     <td>
                       <div style={{ fontWeight: 600 }}>{student.full_name}</div>
                       {!!student.trial_converted_to_regular && (
