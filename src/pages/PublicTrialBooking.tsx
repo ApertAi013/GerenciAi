@@ -26,6 +26,7 @@ export default function PublicTrialBooking() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [warning, setWarning] = useState('');
 
   // Business info
   const [businessName, setBusinessName] = useState('');
@@ -311,7 +312,10 @@ export default function PublicTrialBooking() {
                 setError('');
                 setCheckingPhone(true);
                 try {
-                  await publicTrialBookingService.checkPhone(bookingToken!, phone);
+                  const result = await publicTrialBookingService.checkPhone(bookingToken!, phone);
+                  if (result.data?.warning) {
+                    setWarning(result.data.warning);
+                  }
                   setStep(2);
                 } catch (err: any) {
                   setError(err.response?.data?.message || 'Erro ao verificar telefone.');
@@ -322,6 +326,19 @@ export default function PublicTrialBooking() {
             >
               {checkingPhone ? 'Verificando...' : 'Continuar'}
             </button>
+          </div>
+        )}
+
+        {/* Warning banner */}
+        {warning && step >= 2 && (
+          <div style={{
+            background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10,
+            padding: '0.75rem 1rem', marginBottom: '1rem',
+            display: 'flex', alignItems: 'center', gap: '0.5rem',
+            color: '#92400e', fontSize: '0.9rem', fontWeight: 500,
+          }}>
+            <span style={{ fontSize: '1.2rem' }}>&#9888;</span>
+            {warning}
           </div>
         )}
 
