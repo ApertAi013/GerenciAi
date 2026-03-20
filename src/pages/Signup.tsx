@@ -110,6 +110,7 @@ export default function Signup() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [cpf, setCpf] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -177,6 +178,14 @@ export default function Signup() {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   };
 
+  const formatCPF = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+  };
+
   const handleSubmit = async (action: 'pay' | 'callback') => {
     if (!fullName.trim() || !email.trim()) {
       setError('Preencha nome e email.');
@@ -197,6 +206,7 @@ export default function Signup() {
         body: JSON.stringify({
           full_name: fullName.trim(),
           email: email.trim(),
+          cpf: cpf.replace(/\D/g, ''),
           phone: phone.replace(/\D/g, ''),
           plan_slug: selectedPlan.slug,
           action,
@@ -501,6 +511,16 @@ export default function Signup() {
                   placeholder="seu@email.com"
                 />
               </div>
+            </div>
+            <div className="signup-field">
+              <label>CPF *</label>
+              <input
+                type="text"
+                value={cpf}
+                onChange={e => setCpf(formatCPF(e.target.value))}
+                placeholder="000.000.000-00"
+                maxLength={14}
+              />
             </div>
             <div className="signup-field">
               <label>Telefone</label>
