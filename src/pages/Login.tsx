@@ -55,6 +55,10 @@ export default function Login() {
   const [autoLoginEmail, setAutoLoginEmail] = useState<string | null>(null);
   const [availableRoles, setAvailableRoles] = useState<any[] | null>(null);
   const [roleToken, setRoleToken] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState('');
 
   useEffect(() => {
     setSavedAccounts(getSavedAccounts());
@@ -152,12 +156,46 @@ export default function Login() {
         toast.error('Email ou senha inválidos');
       }
     } catch (err: any) {
+      if (err.response?.data?.requires_email_verification) {
+        setNeedsVerification(true);
+        setVerificationEmail(err.response.data.email || email);
+        return;
+      }
       const errorMessage = err.response?.data?.message || 'Erro ao fazer login. Tente novamente.';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    setResendMsg('');
+    try {
+      const API_URL = import.meta.env.DEV ? '' : 'https://gerenciai-backend-798546007335.us-east1.run.app';
+      const res = await fetch(`${API_URL}/api/public/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verificationEmail }),
+      });
+      const data = await res.json();
+      setResendMsg(data.message);
+    } catch {
+      setResendMsg('Erro ao reenviar.');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const handleSignupHelp = async () => {
+    const API_URL = import.meta.env.DEV ? '' : 'https://gerenciai-backend-798546007335.us-east1.run.app';
+    await fetch(`${API_URL}/api/public/signup-help`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: verificationEmail, message: 'Ajuda na verificacao de email' }),
+    });
+    setResendMsg('Pedido de ajuda enviado! Entraremos em contato em breve.');
   };
 
   const handleSelectRole = async (selectedRole: string) => {
@@ -252,7 +290,39 @@ export default function Login() {
           </div>
         )}
 
-        {availableRoles ? (
+        {needsVerification ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '2.5rem' }}>&#9993;</div>
+            <h3 style={{ margin: 0 }}>Verifique seu email</h3>
+            <p style={{ color: '#666', margin: 0, fontSize: '0.9rem' }}>
+              Enviamos um link de verificacao para <strong>{verificationEmail}</strong>. Verifique sua caixa de entrada e spam.
+            </p>
+            <button
+              onClick={handleResendVerification}
+              disabled={resending}
+              style={{
+                padding: '0.75rem', borderRadius: 8, border: '1px solid #667eea',
+                background: 'transparent', color: '#667eea', fontWeight: 600,
+                cursor: resending ? 'wait' : 'pointer',
+              }}
+            >
+              {resending ? 'Reenviando...' : 'Reenviar email de verificacao'}
+            </button>
+            {resendMsg && <p style={{ color: '#16a34a', fontSize: '0.85rem', margin: 0 }}>{resendMsg}</p>}
+            <button
+              onClick={handleSignupHelp}
+              style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.85rem', textDecoration: 'underline' }}
+            >
+              Preciso de ajuda
+            </button>
+            <button
+              onClick={() => { setNeedsVerification(false); setResendMsg(''); }}
+              style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.85rem' }}
+            >
+              Voltar ao login
+            </button>
+          </div>
+        ) : availableRoles ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h3 style={{ textAlign: 'center', margin: '0 0 0.5rem', fontSize: '1.1rem' }}>
               Como deseja entrar?

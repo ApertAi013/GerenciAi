@@ -48,6 +48,7 @@ import ApertaiPromo from './pages/ApertaiPromo'
 import BillingBlocked from './pages/BillingBlocked'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import VerifyEmail from './pages/VerifyEmail'
 import Arenas from './pages/Arenas'
 import Shop from './pages/Shop'
 import Torneios from './pages/Torneios'
@@ -113,6 +114,7 @@ export default function App() {
         <Route path="/aula-experimental/:bookingToken" element={<PublicTrialBooking />} />
         <Route path="/aula-experimental/status/:bookingToken" element={<PublicTrialBookingStatus />} />
         <Route path="/aula-experimental/meus-agendamentos/:accessToken" element={<PublicTrialStudentDashboard />} />
+        <Route path="/verificar-email/:token" element={<VerifyEmail />} />
         <Route path="/contratar" element={<Signup />} />
         <Route path="/apertai" element={<ApertaiPromo />} />
         <Route path="/billing-blocked" element={<BillingBlocked />} />

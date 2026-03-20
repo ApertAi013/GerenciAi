@@ -111,6 +111,7 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [cpf, setCpf] = useState('');
+  const [honeypot, setHoneypot] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -210,7 +211,8 @@ export default function Signup() {
           phone: phone.replace(/\D/g, ''),
           plan_slug: selectedPlan.slug,
           action,
-          ...(referralCode ? { referral_code: referralCode } : {})
+          ...(referralCode ? { referral_code: referralCode } : {}),
+          ...(honeypot ? { website: honeypot } : {})
         })
       });
 
@@ -490,6 +492,11 @@ export default function Signup() {
 
           {error && <div className="signup-error">{error}</div>}
 
+          {/* Honeypot - invisible to users, visible to bots */}
+          <div style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+            <label htmlFor="website">Website</label>
+            <input id="website" type="text" value={honeypot} onChange={e => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
+          </div>
           <div className="signup-form-fields">
             <div className="signup-field">
               <label>Nome completo *</label>
