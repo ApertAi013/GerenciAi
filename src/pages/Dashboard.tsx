@@ -33,6 +33,8 @@ import {
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import {
   ComposedChart,
+  BarChart,
+  LineChart,
   Bar,
   Line,
   XAxis,
@@ -41,6 +43,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
@@ -50,6 +55,8 @@ import { enrollmentService } from '../services/enrollmentService';
 import { studentService } from '../services/studentService';
 import { levelService } from '../services/levelService';
 import { rentalService } from '../services/rentalService';
+import { reportService } from '../services/reportService';
+import type { EnrollmentMonthlyData, FinancialMonthlyData, PlanBreakdown, ModalityBreakdown } from '../types/reportTypes';
 import { announcementService } from '../services/announcementService';
 import type { Announcement } from '../services/announcementService';
 import { referralService } from '../services/referralService';
@@ -176,9 +183,71 @@ export default function Dashboard() {
     { id: 'agenda', label: 'Mini Agenda' },
     { id: 'avisos', label: 'Avisos' },
     { id: 'inadimplentes', label: 'Inadimplentes' },
+    { id: '_separator', label: 'Relatorios' },
+    { id: 'receita_mensal', label: 'Receita Mensal' },
+    { id: 'ticket_medio', label: 'Ticket Medio' },
+    { id: 'novas_canceladas', label: 'Novas vs Canceladas' },
+    { id: 'clientes_ativos', label: 'Clientes Ativos' },
+    { id: 'churn', label: 'Churn (Evasao)' },
+    { id: 'planos', label: 'Planos Mais Vendidos' },
+    { id: 'modalidades', label: 'Matriculas por Modalidade' },
   ];
 
   const isPanelVisible = (id: string) => visiblePanels.includes(id);
+
+  // Report panels data
+  const [rptEnrollmentStats, setRptEnrollmentStats] = useState<EnrollmentMonthlyData[]>([]);
+  const [rptFinancialMonthly, setRptFinancialMonthly] = useState<FinancialMonthlyData[]>([]);
+  const [rptByPlan, setRptByPlan] = useState<PlanBreakdown[]>([]);
+  const [rptByModality, setRptByModality] = useState<ModalityBreakdown[]>([]);
+
+  const hasReportPanels = ['receita_mensal', 'ticket_medio', 'novas_canceladas', 'clientes_ativos', 'churn', 'planos', 'modalidades'].some(p => visiblePanels.includes(p));
+
+  useEffect(() => {
+    if (!hasReportPanels) return;
+    const fetchReports = async () => {
+      try {
+        const [enrollRes, financialRes] = await Promise.all([
+          reportService.getEnrollmentStats({ months: 6 }),
+          reportService.getFinancialMonthly({ months: 6 }),
+        ]);
+        if (enrollRes.data?.monthly) setRptEnrollmentStats(enrollRes.data.monthly);
+        if (financialRes.data) {
+          setRptFinancialMonthly(financialRes.data.monthly || []);
+          setRptByPlan(financialRes.data.by_plan || []);
+          setRptByModality(financialRes.data.by_modality || []);
+        }
+      } catch (e) {
+        console.warn('Erro ao buscar dados de relatorios:', e);
+      }
+    };
+    fetchReports();
+  }, [hasReportPanels]);
+
+  const formatMonthLabelRpt = (monthStr: string): string => {
+    const [year, month] = monthStr.split('-');
+    const names = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    return `${names[parseInt(month) - 1]}/${year.slice(2)}`;
+  };
+
+  const DONUT_COLORS = ['#F58A25', '#3B82F6', '#10B981', '#8B5CF6', '#EF4444', '#F59E0B', '#EC4899', '#06B6D4'];
+
+  const rptRevenueChartData = rptFinancialMonthly.map(m => ({
+    month: formatMonthLabelRpt(m.month), Faturado: m.faturado_cents / 100, Recebido: m.recebido_cents / 100,
+  }));
+  const rptTicketChartData = rptFinancialMonthly.map(m => ({
+    month: formatMonthLabelRpt(m.month), 'Ticket Medio': m.ticket_medio_cents / 100,
+  }));
+  const rptEnrollmentChartData = rptEnrollmentStats.map(m => ({
+    month: formatMonthLabelRpt(m.month), Novas: m.new_enrollments, Canceladas: m.cancellations,
+  }));
+  const rptActiveChartData = rptEnrollmentStats.map(m => ({
+    month: formatMonthLabelRpt(m.month), Ativos: m.active_at_end,
+  }));
+  const rptChurnChartData = rptEnrollmentStats.map(m => ({
+    month: formatMonthLabelRpt(m.month), 'Churn %': m.churn_rate,
+  }));
+
   const [customRange, setCustomRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   // Period filter helper
@@ -876,24 +945,30 @@ export default function Dashboard() {
             minWidth: 280,
           }}>
             <div style={{ fontWeight: 600, marginBottom: 12, color: isDark ? '#eee' : '#333' }}>Paineis visiveis</div>
-            {panelOptions.map(opt => (
-              <label key={opt.id} style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', cursor: 'pointer',
-              }}>
-                <input
-                  type="checkbox"
-                  checked={visiblePanels.includes(opt.id)}
-                  onChange={() => {
-                    const next = visiblePanels.includes(opt.id)
-                      ? visiblePanels.filter(p => p !== opt.id)
-                      : [...visiblePanels, opt.id];
-                    saveDashboardConfig(next);
-                  }}
-                  style={{ accentColor: '#667eea', width: 16, height: 16 }}
-                />
-                <span style={{ fontSize: '0.85rem', color: isDark ? '#ccc' : '#333' }}>{opt.label}</span>
-              </label>
-            ))}
+            {panelOptions.map(opt =>
+              opt.id === '_separator' ? (
+                <div key={opt.id} style={{ borderTop: `1px solid ${isDark ? '#333' : '#e5e7eb'}`, margin: '8px 0', paddingTop: 8, fontSize: '0.75rem', fontWeight: 600, color: isDark ? '#888' : '#999', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  {opt.label}
+                </div>
+              ) : (
+                <label key={opt.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', cursor: 'pointer',
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={visiblePanels.includes(opt.id)}
+                    onChange={() => {
+                      const next = visiblePanels.includes(opt.id)
+                        ? visiblePanels.filter(p => p !== opt.id)
+                        : [...visiblePanels, opt.id];
+                      saveDashboardConfig(next);
+                    }}
+                    style={{ accentColor: '#667eea', width: 16, height: 16 }}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: isDark ? '#ccc' : '#333' }}>{opt.label}</span>
+                </label>
+              )
+            )}
             <button
               onClick={() => setShowCustomize(false)}
               style={{ marginTop: 12, width: '100%', padding: '8px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
@@ -979,7 +1054,7 @@ export default function Dashboard() {
       )}
 
       {/* ── Matrículas ── */}
-      <section className="dash-section">
+      {isPanelVisible('kpis') && <section className="dash-section">
         <h2 className="dash-title">
           <FontAwesomeIcon icon={faUsers} /> Matrículas
         </h2>
@@ -1009,10 +1084,10 @@ export default function Dashboard() {
             <div className="kpi-accent red" />
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ── Financeiro ── */}
-      <section className="dash-section">
+      {isPanelVisible('kpis') && <section className="dash-section">
         <div className="dash-title-row">
           <h2 className="dash-title"><FontAwesomeIcon icon={faMoneyBillWave} /> Financeiro</h2>
           <span className="dash-badge">{monthLabel}</span>
@@ -1054,10 +1129,10 @@ export default function Dashboard() {
             <div className="kpi-accent orange" />
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ── Gráfico (full width, ACIMA de vagas/níveis) ── */}
-      <section className="dash-panel chart-panel">
+      {isPanelVisible('faturamento') && <section className="dash-panel chart-panel">
         <div className="dash-panel-top">
           <h3 className="dash-panel-title">
             <FontAwesomeIcon icon={faChartLine} /> Faturamento Mensal
@@ -1085,12 +1160,12 @@ export default function Dashboard() {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-      </section>
+      </section>}
 
       {/* ── Vagas + Níveis + Mini Agenda (3 colunas) ── */}
-      <div className="dash-triple">
+      {(isPanelVisible('vagas') || isPanelVisible('niveis') || isPanelVisible('agenda')) && <div className="dash-triple">
         {/* Vagas por Turma */}
-        <section className="dash-panel collapsible-panel">
+        {isPanelVisible('vagas') && <section className="dash-panel collapsible-panel">
           <div className="dash-panel-top">
             <h3 className="dash-panel-title">
               <FontAwesomeIcon icon={faDumbbell} /> Vagas
@@ -1187,10 +1262,10 @@ export default function Dashboard() {
               {vagasData.turmas.length === 0 && <p className="vagas-empty">Nenhuma turma cadastrada</p>}
             </div>
           </div>
-        </section>
+        </section>}
 
         {/* Alunos por Nível */}
-        <section className="dash-panel collapsible-panel">
+        {isPanelVisible('niveis') && <section className="dash-panel collapsible-panel">
           <div className="dash-panel-top">
             <h3 className="dash-panel-title">
               <FontAwesomeIcon icon={faUserGraduate} /> Alunos por Nível
@@ -1226,10 +1301,10 @@ export default function Dashboard() {
               </button>
             )}
           </div>
-        </section>
+        </section>}
 
         {/* Mini Agenda */}
-        <section className="dash-panel collapsible-panel mini-agenda-panel">
+        {isPanelVisible('agenda') && <section className="dash-panel collapsible-panel mini-agenda-panel">
           <div className="dash-panel-top">
             <h3 className="dash-panel-title">
               <FontAwesomeIcon icon={faCalendarDay} /> Agenda de Hoje
@@ -1298,11 +1373,11 @@ export default function Dashboard() {
               </>
             )}
           </div>
-        </section>
-      </div>
+        </section>}
+      </div>}
 
       {/* ── Mini Calendário de Locações ── */}
-      {rentals.length > 0 && (() => {
+      {isPanelVisible('agenda') && rentals.length > 0 && (() => {
         const todayRentals = rentals
           .filter(r => r.status !== 'cancelada')
           .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
@@ -1416,7 +1491,7 @@ export default function Dashboard() {
       })()}
 
       {/* ── Avisos Rápidos ── */}
-      <section className="dash-panel announcements-panel">
+      {isPanelVisible('avisos') && <section className="dash-panel announcements-panel">
         <div className="dash-panel-top">
           <h3 className="dash-panel-title">
             <FontAwesomeIcon icon={faBullhorn} /> Avisos
@@ -1499,10 +1574,10 @@ export default function Dashboard() {
             <p className="announcements-empty">Nenhum aviso ativo no momento</p>
           )}
         </div>
-      </section>
+      </section>}
 
       {/* ── Impacto Financeiro ── */}
-      {enrollments.length > 0 && (() => {
+      {isPanelVisible('saldo_liquido') && enrollments.length > 0 && (() => {
         const months = getLastMonths(6);
         const newByMonth = months.map(({ key }) => enrollments.filter(e => (e.created_at || e.start_date)?.substring(0, 7) === key).length);
         const cancelledByMonth = months.map(({ key }) => enrollments.filter(e => e.status === 'cancelada' && e.updated_at?.substring(0, 7) === key).length);
@@ -1566,7 +1641,7 @@ export default function Dashboard() {
       })()}
 
       {/* ── Inadimplentes ── */}
-      {overdueInvoices.length > 0 && (
+      {isPanelVisible('inadimplentes') && overdueInvoices.length > 0 && (
         <section className="dash-panel overdue-panel">
           <div className="dash-panel-top overdue-top">
             <h3 className="dash-panel-title">
@@ -1598,6 +1673,164 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+
+      {/* ── Relatorios Opcionais ── */}
+      {(isPanelVisible('receita_mensal') || isPanelVisible('ticket_medio')) && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+          {isPanelVisible('receita_mensal') && (
+            <section className="dash-panel chart-panel">
+              <div className="dash-panel-top">
+                <h3 className="dash-panel-title"><FontAwesomeIcon icon={faChartLine} /> Receita Mensal</h3>
+                <button className="dash-link" onClick={() => navigate('/relatorios')}>Relatorios <FontAwesomeIcon icon={faArrowRight} /></button>
+              </div>
+              <div className="dash-chart-wrap">
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={rptRevenueChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} />
+                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
+                    <Bar dataKey="Faturado" fill="#C7D2FE" radius={[6, 6, 0, 0]} barSize={20} />
+                    <Bar dataKey="Recebido" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          )}
+          {isPanelVisible('ticket_medio') && (
+            <section className="dash-panel chart-panel">
+              <div className="dash-panel-top">
+                <h3 className="dash-panel-title"><FontAwesomeIcon icon={faChartLine} /> Ticket Medio</h3>
+                <button className="dash-link" onClick={() => navigate('/relatorios')}>Relatorios <FontAwesomeIcon icon={faArrowRight} /></button>
+              </div>
+              <div className="dash-chart-wrap">
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={rptTicketChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `R$${v}`} />
+                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Line type="monotone" dataKey="Ticket Medio" stroke="#F58A25" strokeWidth={3} dot={{ fill: '#F58A25', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+
+      {(isPanelVisible('novas_canceladas') || isPanelVisible('clientes_ativos')) && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+          {isPanelVisible('novas_canceladas') && (
+            <section className="dash-panel chart-panel">
+              <div className="dash-panel-top">
+                <h3 className="dash-panel-title"><FontAwesomeIcon icon={faUserPlus} /> Novas vs Canceladas</h3>
+                <button className="dash-link" onClick={() => navigate('/relatorios')}>Relatorios <FontAwesomeIcon icon={faArrowRight} /></button>
+              </div>
+              <div className="dash-chart-wrap">
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={rptEnrollmentChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
+                    <Bar dataKey="Novas" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
+                    <Bar dataKey="Canceladas" fill="#EF4444" radius={[6, 6, 0, 0]} barSize={20} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          )}
+          {isPanelVisible('clientes_ativos') && (
+            <section className="dash-panel chart-panel">
+              <div className="dash-panel-top">
+                <h3 className="dash-panel-title"><FontAwesomeIcon icon={faUsers} /> Clientes Ativos</h3>
+                <button className="dash-link" onClick={() => navigate('/relatorios')}>Relatorios <FontAwesomeIcon icon={faArrowRight} /></button>
+              </div>
+              <div className="dash-chart-wrap">
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={rptActiveChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Line type="monotone" dataKey="Ativos" stroke="#8B5CF6" strokeWidth={3} dot={{ fill: '#8B5CF6', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+
+      {(isPanelVisible('churn') || isPanelVisible('planos') || isPanelVisible('modalidades')) && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          {isPanelVisible('churn') && (
+            <section className="dash-panel chart-panel">
+              <div className="dash-panel-top">
+                <h3 className="dash-panel-title"><FontAwesomeIcon icon={faChartLine} /> Churn (Evasao)</h3>
+                <button className="dash-link" onClick={() => navigate('/relatorios')}>Relatorios <FontAwesomeIcon icon={faArrowRight} /></button>
+              </div>
+              <div className="dash-chart-wrap">
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={rptChurnChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `${v}%`} />
+                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Bar dataKey="Churn %" fill="#EF4444" radius={[6, 6, 0, 0]} barSize={24} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          )}
+          {isPanelVisible('planos') && (
+            <section className="dash-panel">
+              <div className="dash-panel-top">
+                <h3 className="dash-panel-title"><FontAwesomeIcon icon={faChartLine} /> Planos Mais Vendidos</h3>
+              </div>
+              {rptByPlan.length > 0 ? (
+                <div style={{ padding: '0 1rem 1rem' }}>
+                  {rptByPlan.slice(0, 6).map((plan, i) => (
+                    <div key={plan.plan_name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: `1px solid ${isDark ? '#262626' : '#f3f4f6'}` }}>
+                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: DONUT_COLORS[i % DONUT_COLORS.length], flexShrink: 0 }} />
+                      <span style={{ flex: 1, fontSize: '0.85rem', color: isDark ? '#ccc' : '#333' }}>{plan.plan_name}</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: isDark ? '#aaa' : '#666' }}>{plan.enrollment_count}</span>
+                      <span style={{ fontSize: '0.75rem', color: isDark ? '#888' : '#999', minWidth: 40, textAlign: 'right' }}>{plan.percentage}%</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ padding: '1rem', color: '#999', fontSize: '0.85rem' }}>Nenhum plano com matriculas</p>
+              )}
+            </section>
+          )}
+          {isPanelVisible('modalidades') && (
+            <section className="dash-panel">
+              <div className="dash-panel-top">
+                <h3 className="dash-panel-title"><FontAwesomeIcon icon={faChartLine} /> Matriculas por Modalidade</h3>
+              </div>
+              {rptByModality.length > 0 ? (
+                <div style={{ padding: '0 1rem 1rem' }}>
+                  {rptByModality.slice(0, 6).map((mod, i) => (
+                    <div key={mod.modality_name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: `1px solid ${isDark ? '#262626' : '#f3f4f6'}` }}>
+                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: DONUT_COLORS[i % DONUT_COLORS.length], flexShrink: 0 }} />
+                      <span style={{ flex: 1, fontSize: '0.85rem', color: isDark ? '#ccc' : '#333' }}>{mod.icon ? `${mod.icon} ` : ''}{mod.modality_name}</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: isDark ? '#aaa' : '#666' }}>{mod.enrollment_count}</span>
+                      <span style={{ fontSize: '0.75rem', color: isDark ? '#888' : '#999', minWidth: 40, textAlign: 'right' }}>{mod.percentage}%</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ padding: '1rem', color: '#999', fontSize: '0.85rem' }}>Nenhuma modalidade com matriculas</p>
+              )}
+            </section>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
