@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { authService } from '../services/authService';
+import { api } from '../services/api';
 import '../styles/Login.css';
 
 interface SavedAccount {
@@ -78,11 +79,20 @@ export default function Login() {
         const meRes = await authService.getMe();
 
         if (meRes.status === 'success' && meRes.data) {
-          // Token válido — login instantâneo
+          // Check if user has multiple roles - if so, show role selection
+          if (meRes.data.available_roles && meRes.data.available_roles.length > 1) {
+            setAvailableRoles(meRes.data.available_roles);
+            setRoleToken(account.token);
+            setEmail(account.email);
+            // Store token temporarily for role switch
+            localStorage.setItem('token', account.token);
+            return;
+          }
+
+          // Single role - login instantâneo
           localStorage.setItem('keepLoggedIn', 'true');
           setAuth(meRes.data, account.token);
 
-          // Atualiza conta salva com dados frescos
           saveAccount(account.email, meRes.data.full_name || meRes.data.name || account.name, account.token, meRes.data);
           setSavedAccounts(getSavedAccounts());
 
@@ -202,12 +212,22 @@ export default function Login() {
     setIsLoading(true);
     setError('');
     try {
-      const response = await authService.login({ email, password, selected_role: selectedRole });
-      if (response.status === 'success' && response.data.user) {
-        const user = response.data.user;
-        const token = response.data.token;
+      let user, token;
 
-        if (keepLoggedIn) localStorage.setItem('keepLoggedIn', 'true');
+      if (roleToken && !password) {
+        // Came from saved account - use switch-role with existing token
+        const switchRes = await api.post('/api/auth/switch-role', { role: selectedRole });
+        user = switchRes.data?.data?.user;
+        token = roleToken;
+      } else {
+        // Came from password login - re-login with selected role
+        const response = await authService.login({ email, password, selected_role: selectedRole });
+        user = response.data.user;
+        token = response.data.token;
+      }
+
+      if (user) {
+        localStorage.setItem('keepLoggedIn', 'true');
         saveAccount(email, user.full_name || user.email, token, user);
         setSavedAccounts(getSavedAccounts());
         setAuth(user, token);

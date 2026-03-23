@@ -5,6 +5,7 @@ import { faBars, faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSe
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import { studentService } from '../../services/studentService';
+import { api } from '../../services/api';
 import { classService } from '../../services/classService';
 import { enrollmentService } from '../../services/enrollmentService';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -29,6 +30,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showArenaMenu, setShowArenaMenu] = useState(false);
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const roleMenuRef = useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -51,9 +54,21 @@ export default function Header({ onMenuClick }: HeaderProps) {
     window.location.reload();
   };
 
+  const handleSwitchRole = async (role: string) => {
+    try {
+      await api.post('/api/auth/switch-role', { role });
+      setShowRoleMenu(false);
+      window.location.reload();
+    } catch {
+      // silent
+    }
+  };
+
   const handleLogout = () => {
     authService.logout();
   };
+
+  const availableRoles = (user as any)?.available_roles || [];
 
   // Close search results when clicking outside
   useEffect(() => {
@@ -66,6 +81,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
       }
       if (arenaRef.current && !arenaRef.current.contains(event.target as Node)) {
         setShowArenaMenu(false);
+      }
+      if (roleMenuRef.current && !roleMenuRef.current.contains(event.target as Node)) {
+        setShowRoleMenu(false);
       }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
@@ -240,6 +258,40 @@ export default function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       <div className="header-actions">
+        {/* Role Switcher */}
+        {availableRoles.length > 1 && (
+          <div className="header-arena-container" ref={roleMenuRef}>
+            <button
+              type="button"
+              className="arena-switcher-btn"
+              onClick={() => setShowRoleMenu(!showRoleMenu)}
+              style={{ borderColor: user?.role === 'gestor' ? '#667eea' : '#F59E0B' }}
+            >
+              <span className="arena-name" style={{ color: user?.role === 'gestor' ? '#667eea' : '#F59E0B' }}>
+                {user?.role === 'gestor' ? 'Gestor' : 'Instrutor'}
+              </span>
+              <FontAwesomeIcon icon={faExchangeAlt} className="arena-switch-icon" />
+            </button>
+
+            {showRoleMenu && (
+              <div className="arena-dropdown">
+                <div className="arena-dropdown-header">Trocar Perfil</div>
+                {availableRoles.map((r: any, i: number) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`arena-dropdown-item ${r.role === user?.role ? 'active' : ''}`}
+                    onClick={() => handleSwitchRole(r.role)}
+                  >
+                    <FontAwesomeIcon icon={faBuilding} />
+                    <span>{r.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Arena Switcher */}
         {hasMultipleArenas && currentArena && (
           <div className="header-arena-container" ref={arenaRef}>
