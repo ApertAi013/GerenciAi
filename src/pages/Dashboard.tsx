@@ -1689,7 +1689,7 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} />
-                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Tooltip cursor={{ fill: 'transparent' }} formatter={(v: number) => formatReais(v)} contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
                     <Bar dataKey="Faturado" fill="#C7D2FE" radius={[6, 6, 0, 0]} barSize={20} />
                     <Bar dataKey="Recebido" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
@@ -1710,7 +1710,7 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `R$${v}`} />
-                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Tooltip formatter={(v: number) => formatReais(v)} contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
                     <Line type="monotone" dataKey="Ticket Medio" stroke="#F58A25" strokeWidth={3} dot={{ fill: '#F58A25', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -1734,7 +1734,7 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Tooltip cursor={{ fill: 'transparent' }} contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
                     <Bar dataKey="Novas" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
                     <Bar dataKey="Canceladas" fill="#EF4444" radius={[6, 6, 0, 0]} barSize={20} />
@@ -1755,7 +1755,7 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Tooltip cursor={{ stroke: isDark ? '#444' : '#ddd' }} contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
                     <Line type="monotone" dataKey="Ativos" stroke="#8B5CF6" strokeWidth={3} dot={{ fill: '#8B5CF6', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -1775,11 +1775,11 @@ export default function Dashboard() {
               </div>
               <div className="dash-chart-wrap">
                 <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={rptChurnChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                  <BarChart data={rptChurnChartData} barCategoryGap="30%" margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `${v}%`} />
-                    <Tooltip contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
+                    <Tooltip cursor={{ fill: 'transparent' }} formatter={(v: number) => `${v.toFixed(1)}%`} contentStyle={isDark ? { background: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#f0f0f0' } : { borderRadius: '8px' }} />
                     <Bar dataKey="Churn %" fill="#EF4444" radius={[6, 6, 0, 0]} barSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
