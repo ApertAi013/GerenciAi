@@ -165,6 +165,7 @@ export interface CancelledEnrollment {
   student_phone?: string;
   student_email?: string;
   plan_name: string;
+  plan_price_cents?: number;
 }
 
 export interface NewEnrollment {
@@ -175,6 +176,7 @@ export interface NewEnrollment {
   student_phone?: string;
   student_email?: string;
   plan_name: string;
+  plan_price_cents?: number;
 }
 
 // Payment Curve (accumulated daily payments per month)
