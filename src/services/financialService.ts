@@ -69,6 +69,17 @@ export const financialService = {
     return response.data;
   },
 
+  async reactivateInvoice(invoiceId: number): Promise<{
+    status: string;
+    message: string;
+  }> {
+    const response = await api.patch<{
+      status: string;
+      message: string;
+    }>(`/api/invoices/${invoiceId}/reactivate`);
+    return response.data;
+  },
+
   // Atualizar faturas vencidas
   async updateOverdueInvoices(): Promise<{
     status: string;

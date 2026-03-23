@@ -481,6 +481,17 @@ export default function Financial() {
     }
   };
 
+  const handleReactivateInvoice = async (invoiceId: number) => {
+    if (!confirm('Deseja reativar esta fatura? Ela voltara para aberta ou vencida dependendo da data de vencimento.')) return;
+    try {
+      await financialService.reactivateInvoice(invoiceId);
+      toast.success('Fatura reativada!');
+      loadInvoices();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erro ao reativar fatura');
+    }
+  };
+
   const openLevelModal = (invoice: Invoice) => {
     setLevelEditInvoice(invoice);
     setSelectedLevelId(invoice.level_id || null);
@@ -660,7 +671,7 @@ export default function Financial() {
       aberta: { label: 'Aberta', class: 'status-open' },
       paga: { label: 'Paga', class: 'status-paid' },
       vencida: { label: 'Vencida', class: 'status-overdue' },
-      cancelada: { label: 'Cancelada', class: 'status-cancelled' },
+      cancelada: { label: 'Fatura Cancelada', class: 'status-cancelled' },
       estornada: { label: 'Estornada', class: 'status-refunded' },
     };
     const info = statusMap[status] || { label: status, class: '' };
@@ -1351,24 +1362,36 @@ export default function Financial() {
                             </button>
                           </>
                         ) : invoice.status === 'cancelada' ? (
-                          <div className="wtp-wrapper">
-                            <button
-                              className="btn-action btn-whatsapp"
-                              onClick={() => handleWhatsAppClick(invoice)}
-                              title="Enviar mensagem via WhatsApp"
-                              style={{ backgroundColor: '#25D366', color: 'white' }}
-                            >
-                              <FontAwesomeIcon icon={faWhatsapp} />
-                            </button>
-                            {showTemplatePicker === invoice.id && (
-                              <WhatsAppTemplatePicker
-                                onSelect={(message) => {
-                                  setShowTemplatePicker(null);
-                                  sendWhatsApp(invoice, message);
-                                }}
-                                onClose={() => setShowTemplatePicker(null)}
-                              />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            {invoice.enrollment_status !== 'cancelada' && (
+                              <button
+                                className="btn-action"
+                                onClick={() => handleReactivateInvoice(invoice.id)}
+                                title="Reativar fatura"
+                                style={{ backgroundColor: '#10B981', color: 'white', borderRadius: 6, border: 'none', padding: '4px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
+                              >
+                                Reativar
+                              </button>
                             )}
+                            <div className="wtp-wrapper">
+                              <button
+                                className="btn-action btn-whatsapp"
+                                onClick={() => handleWhatsAppClick(invoice)}
+                                title="Enviar mensagem via WhatsApp"
+                                style={{ backgroundColor: '#25D366', color: 'white' }}
+                              >
+                                <FontAwesomeIcon icon={faWhatsapp} />
+                              </button>
+                              {showTemplatePicker === invoice.id && (
+                                <WhatsAppTemplatePicker
+                                  onSelect={(message) => {
+                                    setShowTemplatePicker(null);
+                                    sendWhatsApp(invoice, message);
+                                  }}
+                                  onClose={() => setShowTemplatePicker(null)}
+                                />
+                              )}
+                            </div>
                           </div>
                         ) : invoice.status === 'paga' ? (
                           <span className="paid-indicator" title={`Pago em ${formatDate(invoice.paid_at!)}`}>
