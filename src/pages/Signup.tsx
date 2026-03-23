@@ -192,6 +192,14 @@ export default function Signup() {
       setError('Preencha nome e email.');
       return;
     }
+    if (!phone.replace(/\D/g, '') || phone.replace(/\D/g, '').length < 10) {
+      setError('Informe um telefone valido.');
+      return;
+    }
+    if (action === 'pay' && !cpf.replace(/\D/g, '')) {
+      setError('Informe CPF ou CNPJ.');
+      return;
+    }
     if (!selectedPlan) {
       setError('Selecione um plano.');
       return;
@@ -520,17 +528,30 @@ export default function Signup() {
               </div>
             </div>
             <div className="signup-field">
-              <label>CPF *</label>
+              <label>CPF ou CNPJ *</label>
               <input
                 type="text"
                 value={cpf}
-                onChange={e => setCpf(formatCPF(e.target.value))}
-                placeholder="000.000.000-00"
-                maxLength={14}
+                onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, '');
+                  if (digits.length <= 11) {
+                    setCpf(formatCPF(e.target.value));
+                  } else {
+                    // CNPJ format: 00.000.000/0000-00
+                    let v = digits.slice(0, 14);
+                    if (v.length <= 2) setCpf(v);
+                    else if (v.length <= 5) setCpf(`${v.slice(0,2)}.${v.slice(2)}`);
+                    else if (v.length <= 8) setCpf(`${v.slice(0,2)}.${v.slice(2,5)}.${v.slice(5)}`);
+                    else if (v.length <= 12) setCpf(`${v.slice(0,2)}.${v.slice(2,5)}.${v.slice(5,8)}/${v.slice(8)}`);
+                    else setCpf(`${v.slice(0,2)}.${v.slice(2,5)}.${v.slice(5,8)}/${v.slice(8,12)}-${v.slice(12)}`);
+                  }
+                }}
+                placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                maxLength={18}
               />
             </div>
             <div className="signup-field">
-              <label>Telefone</label>
+              <label>Telefone *</label>
               <div className="signup-field-icon">
                 <FontAwesomeIcon icon={faPhone} />
                 <input
