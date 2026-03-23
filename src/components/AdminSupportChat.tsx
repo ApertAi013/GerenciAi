@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Send, X, ChevronLeft } from 'lucide-react';
+import { MessageCircle, Send, X, ChevronLeft, Plus, Search } from 'lucide-react';
 import { useThemeStore } from '../store/themeStore';
 import { api } from '../services/api';
 
@@ -34,6 +34,11 @@ export default function AdminSupportChat() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [totalUnread, setTotalUnread] = useState(0);
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [gestors, setGestors] = useState<any[]>([]);
+  const [gestorSearch, setGestorSearch] = useState('');
+  const [loadingGestors, setLoadingGestors] = useState(false);
+  const [startingChat, setStartingChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -94,6 +99,45 @@ export default function AdminSupportChat() {
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const loadGestors = async () => {
+    setLoadingGestors(true);
+    try {
+      const res = await api.get('/api/admin/monitoring/gestores');
+      setGestors(res.data?.data || []);
+    } catch { /* silent */ }
+    finally { setLoadingGestors(false); }
+  };
+
+  const handleStartChat = async (userId: number) => {
+    setStartingChat(true);
+    try {
+      const res = await api.post(`/api/support-chat/admin/start/${userId}`, {});
+      const convId = res.data?.data?.conversation_id;
+      if (convId) {
+        setShowNewChat(false);
+        await loadConversations();
+        // Find and select the conversation
+        const conv = conversations.find(c => c.user_id === userId);
+        if (conv) setSelectedConv(conv);
+        else {
+          // Reload and try again
+          const res2 = await api.get('/api/support-chat/admin/conversations');
+          const data = res2.data?.data || [];
+          setConversations(data);
+          const found = data.find((c: any) => c.user_id === userId);
+          if (found) setSelectedConv(found);
+        }
+      }
+    } catch { /* silent */ }
+    finally { setStartingChat(false); }
+  };
+
+  const filteredGestors = gestors.filter(g => {
+    if (!gestorSearch.trim()) return true;
+    const q = gestorSearch.toLowerCase();
+    return g.full_name?.toLowerCase().includes(q) || g.email?.toLowerCase().includes(q);
+  });
+
   const cardStyle = {
     background: isDark ? '#1a1a1a' : '#fff',
     border: `1px solid ${isDark ? '#333' : '#e5e7eb'}`,
@@ -101,21 +145,18 @@ export default function AdminSupportChat() {
   };
 
   return (
-    <div style={{ ...cardStyle, display: 'flex', height: 500 }}>
+    <div style={{ ...cardStyle, display: 'flex', height: 500, position: 'relative' }}>
       {/* Conversations list */}
       <div style={{
-        width: selectedConv ? 0 : '100%',
-        minWidth: selectedConv ? 0 : undefined,
-        maxWidth: selectedConv ? 0 : undefined,
-        overflow: 'hidden',
+        width: selectedConv ? 280 : '100%',
+        minWidth: selectedConv ? 280 : undefined,
         borderRight: `1px solid ${isDark ? '#333' : '#e5e7eb'}`,
         display: 'flex', flexDirection: 'column',
-        transition: 'all 0.2s',
-        ...(selectedConv ? {} : { width: '100%' }),
+        transition: 'width 0.2s',
       }}>
         <div style={{ padding: '14px 16px', borderBottom: `1px solid ${isDark ? '#333' : '#e5e7eb'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
           <MessageCircle size={18} color="#667eea" />
-          <span style={{ fontWeight: 600, fontSize: 15, color: isDark ? '#eee' : '#333' }}>
+          <span style={{ fontWeight: 600, fontSize: 15, color: isDark ? '#eee' : '#333', flex: 1 }}>
             Chat de Suporte
           </span>
           {totalUnread > 0 && (
@@ -123,6 +164,16 @@ export default function AdminSupportChat() {
               {totalUnread}
             </span>
           )}
+          <button
+            onClick={() => { setShowNewChat(true); loadGestors(); }}
+            style={{
+              background: '#667eea', border: 'none', borderRadius: 8,
+              color: '#fff', cursor: 'pointer', padding: '6px 12px',
+              fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            <Plus size={14} /> Nova
+          </button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {conversations.length === 0 ? (
@@ -238,9 +289,82 @@ export default function AdminSupportChat() {
         </div>
       ) : (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
-          <div style={{ textAlign: 'center' }}>
-            <MessageCircle size={40} color="#ddd" />
-            <p style={{ marginTop: 8 }}>Selecione uma conversa</p>
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <MessageCircle size={48} color={isDark ? '#444' : '#ddd'} />
+            <p style={{ marginTop: 12, fontSize: 16, fontWeight: 500, color: isDark ? '#888' : '#999' }}>
+              Selecione uma conversa na lista ou inicie uma nova
+            </p>
+            <button
+              onClick={() => { setShowNewChat(true); loadGestors(); }}
+              style={{
+                marginTop: 16, padding: '10px 24px', borderRadius: 8,
+                background: '#667eea', color: '#fff', border: 'none',
+                cursor: 'pointer', fontWeight: 600, fontSize: 14,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+              }}
+            >
+              <Plus size={16} /> Iniciar conversa
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* New conversation modal */}
+      {showNewChat && (
+        <div style={{
+          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10,
+          borderRadius: 14,
+        }} onClick={() => setShowNewChat(false)}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: isDark ? '#1a1a1a' : '#fff', borderRadius: 14,
+              width: '90%', maxWidth: 400, maxHeight: '80%',
+              display: 'flex', flexDirection: 'column',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            }}
+          >
+            <div style={{ padding: '14px 16px', borderBottom: `1px solid ${isDark ? '#333' : '#e5e7eb'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontWeight: 600, fontSize: 15, color: isDark ? '#eee' : '#333' }}>Iniciar conversa</span>
+              <button onClick={() => setShowNewChat(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <X size={18} color={isDark ? '#aaa' : '#666'} />
+              </button>
+            </div>
+            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${isDark ? '#333' : '#e5e7eb'}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: isDark ? '#141414' : '#f3f4f6', borderRadius: 8, padding: '8px 12px' }}>
+                <Search size={16} color="#999" />
+                <input
+                  type="text"
+                  value={gestorSearch}
+                  onChange={e => setGestorSearch(e.target.value)}
+                  placeholder="Buscar gestor..."
+                  style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', color: isDark ? '#eee' : '#333', fontSize: 14 }}
+                />
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', maxHeight: 300 }}>
+              {loadingGestors ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>Carregando...</div>
+              ) : filteredGestors.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>Nenhum gestor encontrado</div>
+              ) : filteredGestors.map((g: any) => (
+                <div
+                  key={g.id}
+                  onClick={() => !startingChat && handleStartChat(g.id)}
+                  style={{
+                    padding: '12px 16px', cursor: startingChat ? 'wait' : 'pointer',
+                    borderBottom: `1px solid ${isDark ? '#262626' : '#f3f4f6'}`,
+                    transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = isDark ? '#222' : '#f9fafb')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <div style={{ fontWeight: 600, fontSize: 14, color: isDark ? '#eee' : '#333' }}>{g.full_name}</div>
+                  <div style={{ fontSize: 12, color: '#999' }}>{g.email}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
