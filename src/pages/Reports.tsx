@@ -721,49 +721,34 @@ export default function Reports() {
       })()}
 
       {/* Grafico Saldo Liquido Mensal */}
-      {(newEnrollmentsList.length > 0 || cancelledList.length > 0) && (() => {
-        const months6 = filteredEnrollment.map(m => ({
-          month: (() => { const [y, mo] = m.month.split('-'); const ms = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']; return `${ms[parseInt(mo)-1]}/${y.slice(2)}`; })(),
-          Matriculas: (m.new_enrollments || 0) * (filteredFinancial.find(f => f.month === m.month)?.recebido_cents || 0) / Math.max(filteredFinancial.find(f => f.month === m.month)?.paid_count || 1, 1) / 100,
-        }));
-        // Simpler: use enrollment data directly
-        const fmtC = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const newPerMonth = newEnrollmentsList.reduce((acc: Record<string, number>, e) => {
-          const m = e.created_at?.substring(0, 7);
-          if (m) acc[m] = (acc[m] || 0) + (e.net_price_cents || e.plan_price_cents || 0);
-          return acc;
-        }, {});
-        const cancelledPerMonth = cancelledList.reduce((acc: Record<string, number>, e) => {
-          const m = e.cancelled_at?.substring(0, 7);
-          if (m) acc[m] = (acc[m] || 0) + (e.net_price_cents || e.plan_price_cents || 0);
-          return acc;
-        }, {});
-        const allMonths = [...new Set([...Object.keys(newPerMonth), ...Object.keys(cancelledPerMonth)])].sort();
-        const saldoData = allMonths.map(m => {
+      {filteredFinancial.length > 0 && (() => {
+        const saldoData = filteredEnrollment.map(m => {
+          const [y, mo] = m.month.split('-');
           const ms = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-          const [y, mo] = m.split('-');
+          const fin = filteredFinancial.find(f => f.month === m.month);
+          const recebido = (fin?.recebido_cents || 0) / 100;
+          const faturado = (fin?.faturado_cents || 0) / 100;
           return {
             month: `${ms[parseInt(mo)-1]}/${y.slice(2)}`,
-            Matriculas: (newPerMonth[m] || 0) / 100,
-            Cancelamentos: (cancelledPerMonth[m] || 0) / 100,
-            Saldo: ((newPerMonth[m] || 0) - (cancelledPerMonth[m] || 0)) / 100,
+            Novas: m.new_enrollments || 0,
+            Canceladas: m.cancellations || 0,
+            Saldo: (m.new_enrollments || 0) - (m.cancellations || 0),
           };
         });
 
         return (
           <section className="rpt-chart-section" style={{ marginTop: '1.5rem' }}>
-            <h3 className="rpt-section-title"><FontAwesomeIcon icon={faChartLine} /> Saldo Liquido Mensal (R$)</h3>
+            <h3 className="rpt-section-title"><FontAwesomeIcon icon={faChartLine} /> Saldo de Matriculas Mensal</h3>
             <div className="rpt-chart-wrap">
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={saldoData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
-                    tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`} />
-                  <Tooltip formatter={(value: number, name: string) => [formatCurrency(value * 100), name]} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
-                  <Bar dataKey="Matriculas" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
-                  <Bar dataKey="Cancelamentos" fill="#F87171" radius={[6, 6, 0, 0]} barSize={20} />
+                  <Bar dataKey="Novas" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
+                  <Bar dataKey="Canceladas" fill="#F87171" radius={[6, 6, 0, 0]} barSize={20} />
                   <Line type="monotone" dataKey="Saldo" stroke="#667eea" strokeWidth={3}
                     dot={{ fill: '#667eea', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
                 </ComposedChart>
