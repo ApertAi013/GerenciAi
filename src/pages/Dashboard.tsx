@@ -623,7 +623,7 @@ export default function Dashboard() {
             <span className="dash-chart-tooltip-dot" style={{ background: entry.color }} />
             {entry.name}:{' '}
             <strong>
-              {entry.name === 'Matrículas' ? entry.value : formatReais(entry.value)}
+              {entry.name === 'Matriculas' || entry.name === 'Matrículas' || entry.name === 'Cancelamentos' ? entry.value : formatReais(entry.value)}
             </strong>
           </p>
         ))}
