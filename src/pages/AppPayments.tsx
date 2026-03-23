@@ -339,6 +339,24 @@ export default function AppPayments() {
         <p className="page-subtitle">Configure pagamentos via PIX no aplicativo dos seus alunos</p>
       </div>
 
+      <a
+        href="https://apps.apple.com/br/app/arenai/id6759476669"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'flex', alignItems: 'center', gap: '0.75rem',
+          padding: '0.75rem 1.25rem', borderRadius: 12,
+          background: '#000', color: '#fff', textDecoration: 'none',
+          marginBottom: '1.5rem', maxWidth: 320,
+        }}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 21.99 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 21.99C7.79 22.03 6.8 20.68 5.96 19.47C4.25 16.99 2.97 12.5 4.7 9.43C5.55 7.91 7.13 6.93 8.84 6.91C10.12 6.89 11.34 7.78 12.14 7.78C12.94 7.78 14.41 6.69 15.95 6.86C16.61 6.89 18.38 7.12 19.53 8.78C19.43 8.84 17.16 10.15 17.19 12.94C17.22 16.27 20.06 17.37 20.09 17.38C20.06 17.44 19.63 18.95 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/></svg>
+        <div>
+          <div style={{ fontSize: '0.65rem', opacity: 0.8 }}>Disponivel na</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: 600, lineHeight: 1.1 }}>App Store</div>
+        </div>
+      </a>
+
       {/* Status banner */}
       {config?.configured && (
         <div className={`app-payments-status-banner ${config.is_enabled ? 'enabled' : 'disabled'}`}>
