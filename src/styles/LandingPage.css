@@ -1827,3 +1827,128 @@ body {
         font-size: 18px;
     }
 }
+
+/* ===== TRIAL CTA BANNER ===== */
+.trial-cta-banner {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    padding: 40px 24px;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background-size: 200% 200%;
+    animation: trialGradient 6s ease infinite;
+}
+
+@keyframes trialGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.trial-cta-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(255,255,255,0.1) 0%, transparent 50%);
+    animation: trialShimmer 4s ease-in-out infinite alternate;
+}
+
+@keyframes trialShimmer {
+    0% { opacity: 0.5; transform: translateX(-20px); }
+    100% { opacity: 1; transform: translateX(20px); }
+}
+
+.trial-cta-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.trial-cta-badge {
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 2px;
+    padding: 8px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.3);
+    animation: trialPulse 2s ease-in-out infinite;
+}
+
+@keyframes trialPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.trial-cta-text {
+    flex: 1;
+    min-width: 200px;
+}
+
+.trial-cta-text h3 {
+    color: #fff;
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin: 0 0 6px;
+}
+
+.trial-cta-highlight {
+    background: rgba(255,255,255,0.2);
+    padding: 2px 12px;
+    border-radius: 8px;
+    display: inline-block;
+}
+
+.trial-cta-text p {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.trial-cta-btn {
+    background: #fff;
+    color: #667eea;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    white-space: nowrap;
+}
+
+.trial-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+    .trial-cta-banner {
+        padding: 32px 16px;
+    }
+    .trial-cta-content {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .trial-cta-text h3 {
+        font-size: 1.3rem;
+    }
+    .trial-cta-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

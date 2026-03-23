@@ -269,6 +269,21 @@ export default function LandingPage() {
         </div>
       </div>
 
+      {/* TRIAL BANNER */}
+      <div className="trial-cta-banner" onClick={handleContratar}>
+        <div className="trial-cta-bg" />
+        <div className="trial-cta-content">
+          <div className="trial-cta-badge">GRATIS</div>
+          <div className="trial-cta-text">
+            <h3>Teste gratis por <span className="trial-cta-highlight">14 dias</span></h3>
+            <p>Sem cartao de credito. Sem compromisso. Cancele quando quiser.</p>
+          </div>
+          <button className="trial-cta-btn">
+            Comecar agora <FontAwesomeIcon icon={faArrowRight} />
+          </button>
+        </div>
+      </div>
+
       {/* RECURSOS SECTION */}
       <section id="recursos" className="recursos-section">
         <div className="section-transition"></div>
