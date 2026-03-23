@@ -66,7 +66,7 @@ const FEATURES = [
 const FAQ_ITEMS = [
   {
     q: 'Quanto tempo dura o período de teste?',
-    a: 'Você tem 30 dias grátis para testar todas as funcionalidades do plano escolhido. Sem compromisso e sem cartão de crédito.'
+    a: 'Voce tem 14 dias gratis para testar todas as funcionalidades do plano escolhido. Sem compromisso e sem cartao de credito. Indicacoes ganham 30 dias!'
   },
   {
     q: 'Posso trocar de plano depois?',
@@ -433,7 +433,7 @@ export default function Signup() {
       {/* PLANS */}
       <section className="signup-plans" id="planos">
         <h2>Escolha seu plano</h2>
-        <p className="signup-plans-sub">Todos os planos incluem 30 dias grátis para testar</p>
+        <p className="signup-plans-sub">Todos os planos incluem 14 dias gratis para testar</p>
 
         {loadingPlans ? (
           <div className="signup-loading">Carregando planos...</div>

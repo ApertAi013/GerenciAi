@@ -608,7 +608,7 @@ export default function LandingPage() {
       <section id="contato" className="contato-section">
         <div className="contato-content">
           <h2 className="section-title">Pronto para transformar a gestão da sua quadra?</h2>
-          <p className="section-subtitle">Sistema completo para arenas de beach tennis, society, futevôlei e padel. Teste grátis por 30 dias.</p>
+          <p className="section-subtitle">Sistema completo para arenas de beach tennis, society, futevolei e padel. Teste gratis por 14 dias.</p>
           <button className="btn-cta-large" onClick={handleContratar}>
             Começar agora
             <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: 12 }} />
