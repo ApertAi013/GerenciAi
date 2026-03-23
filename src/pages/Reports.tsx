@@ -21,6 +21,7 @@ import {
   Bar,
   LineChart,
   Line,
+  ComposedChart,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -650,8 +651,8 @@ export default function Reports() {
 
       {/* Impacto Financeiro: Matriculas vs Cancelamentos */}
       {(newEnrollmentsList.length > 0 || cancelledList.length > 0) && (() => {
-        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (e.plan_price_cents || 0), 0);
-        const totalCancelledValue = cancelledList.reduce((s, e) => s + (e.plan_price_cents || 0), 0);
+        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (e.net_price_cents || e.plan_price_cents || 0), 0);
+        const totalCancelledValue = cancelledList.reduce((s, e) => s + (e.net_price_cents || e.plan_price_cents || 0), 0);
         const netValue = totalNewValue - totalCancelledValue;
         const fmtCurrency2 = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -690,7 +691,7 @@ export default function Reports() {
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
                       </div>
-                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency2(item.plan_price_cents || 0)}</span>
+                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency2(item.net_price_cents || item.plan_price_cents || 0)}</span>
                     </div>
                   ))}
                 </div>
@@ -709,11 +710,64 @@ export default function Reports() {
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
                       </div>
-                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency2(item.plan_price_cents || 0)}</span>
+                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency2(item.net_price_cents || item.plan_price_cents || 0)}</span>
                     </div>
                   ))}
                 </div>
               </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Grafico Saldo Liquido Mensal */}
+      {(newEnrollmentsList.length > 0 || cancelledList.length > 0) && (() => {
+        const months6 = filteredEnrollment.map(m => ({
+          month: (() => { const [y, mo] = m.month.split('-'); const ms = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']; return `${ms[parseInt(mo)-1]}/${y.slice(2)}`; })(),
+          Matriculas: (m.new_enrollments || 0) * (filteredFinancial.find(f => f.month === m.month)?.recebido_cents || 0) / Math.max(filteredFinancial.find(f => f.month === m.month)?.paid_count || 1, 1) / 100,
+        }));
+        // Simpler: use enrollment data directly
+        const fmtC = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const newPerMonth = newEnrollmentsList.reduce((acc: Record<string, number>, e) => {
+          const m = e.created_at?.substring(0, 7);
+          if (m) acc[m] = (acc[m] || 0) + (e.net_price_cents || e.plan_price_cents || 0);
+          return acc;
+        }, {});
+        const cancelledPerMonth = cancelledList.reduce((acc: Record<string, number>, e) => {
+          const m = e.cancelled_at?.substring(0, 7);
+          if (m) acc[m] = (acc[m] || 0) + (e.net_price_cents || e.plan_price_cents || 0);
+          return acc;
+        }, {});
+        const allMonths = [...new Set([...Object.keys(newPerMonth), ...Object.keys(cancelledPerMonth)])].sort();
+        const saldoData = allMonths.map(m => {
+          const ms = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+          const [y, mo] = m.split('-');
+          return {
+            month: `${ms[parseInt(mo)-1]}/${y.slice(2)}`,
+            Matriculas: (newPerMonth[m] || 0) / 100,
+            Cancelamentos: (cancelledPerMonth[m] || 0) / 100,
+            Saldo: ((newPerMonth[m] || 0) - (cancelledPerMonth[m] || 0)) / 100,
+          };
+        });
+
+        return (
+          <section className="rpt-chart-section" style={{ marginTop: '1.5rem' }}>
+            <h3 className="rpt-section-title"><FontAwesomeIcon icon={faChartLine} /> Saldo Liquido Mensal (R$)</h3>
+            <div className="rpt-chart-wrap">
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={saldoData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
+                    tickFormatter={(v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`} />
+                  <Tooltip formatter={(value: number, name: string) => [formatCurrency(value * 100), name]} />
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
+                  <Bar dataKey="Matriculas" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
+                  <Bar dataKey="Cancelamentos" fill="#F87171" radius={[6, 6, 0, 0]} barSize={20} />
+                  <Line type="monotone" dataKey="Saldo" stroke="#667eea" strokeWidth={3}
+                    dot={{ fill: '#667eea', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
+                </ComposedChart>
+              </ResponsiveContainer>
             </div>
           </section>
         );
@@ -915,8 +969,8 @@ export default function Reports() {
 
       {/* Old impacto financeiro - removed, now between Row 1 and Row 2 */}
       {false && (() => {
-        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (e.plan_price_cents || 0), 0);
-        const totalCancelledValue = cancelledList.reduce((s, e) => s + (e.plan_price_cents || 0), 0);
+        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (e.net_price_cents || e.plan_price_cents || 0), 0);
+        const totalCancelledValue = cancelledList.reduce((s, e) => s + (e.net_price_cents || e.plan_price_cents || 0), 0);
         const netValue = totalNewValue - totalCancelledValue;
         const fmtCurrency = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -957,7 +1011,7 @@ export default function Reports() {
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
                       </div>
-                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency(item.plan_price_cents || 0)}</span>
+                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency(item.net_price_cents || item.plan_price_cents || 0)}</span>
                     </div>
                   ))}
                 </div>
@@ -976,7 +1030,7 @@ export default function Reports() {
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
                       </div>
-                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency(item.plan_price_cents || 0)}</span>
+                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency(item.net_price_cents || item.plan_price_cents || 0)}</span>
                     </div>
                   ))}
                 </div>

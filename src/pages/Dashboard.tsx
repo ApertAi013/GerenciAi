@@ -1461,10 +1461,23 @@ export default function Dashboard() {
                     <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
                       tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
+                    <Tooltip content={({ active, payload, label }: any) => {
+                      if (!active || !payload?.length) return null;
+                      return (
+                        <div className="dash-chart-tooltip">
+                          <p className="dash-chart-tooltip-title">{label}</p>
+                          {payload.map((entry: any, i: number) => (
+                            <p key={i} className="dash-chart-tooltip-row" style={{ color: entry.color }}>
+                              <span className="dash-chart-tooltip-dot" style={{ background: entry.color }} />
+                              {entry.name}: <strong>{formatReais(entry.value)}</strong>
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    }} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
-                    <Bar dataKey="Matriculas" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
-                    <Bar dataKey="Cancelamentos" fill="#F87171" radius={[6, 6, 0, 0]} barSize={20} />
+                    <Bar dataKey="Matriculas" name="Matriculas (R$)" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
+                    <Bar dataKey="Cancelamentos" name="Cancelamentos (R$)" fill="#F87171" radius={[6, 6, 0, 0]} barSize={20} />
                     <Line type="monotone" dataKey="Saldo" stroke="#667eea" strokeWidth={3}
                       dot={{ fill: '#667eea', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
                   </ComposedChart>

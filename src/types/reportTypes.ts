@@ -166,6 +166,7 @@ export interface CancelledEnrollment {
   student_email?: string;
   plan_name: string;
   plan_price_cents?: number;
+  net_price_cents?: number;
 }
 
 export interface NewEnrollment {
