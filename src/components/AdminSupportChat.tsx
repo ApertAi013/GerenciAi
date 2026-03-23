@@ -102,7 +102,7 @@ export default function AdminSupportChat() {
   const loadGestors = async () => {
     setLoadingGestors(true);
     try {
-      const res = await api.get('/api/admin/monitoring/gestores');
+      const res = await api.get('/api/support-chat/admin/users');
       setGestors(res.data?.data || []);
     } catch { /* silent */ }
     finally { setLoadingGestors(false); }
