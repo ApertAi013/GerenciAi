@@ -710,13 +710,38 @@ export default function TrialStudents() {
                   }
                 )}
               </h3>
-              <p className="trial-metric-label">Receita das Conversões</p>
+              <p className="trial-metric-label">Receita Mensal Recorrente</p>
             </div>
             <div className="trial-metric-icon converted">
               <DollarSign />
             </div>
           </div>
+          <span className="trial-metric-change positive">dos convertidos</span>
         </div>
+
+        {metrics.converted_students > 0 && (
+          <div className="trial-metric-card">
+            <div className="trial-metric-header">
+              <div>
+                <h3 className="trial-metric-value">
+                  R${' '}
+                  {(safeNumber(metrics.total_conversion_value_cents) / metrics.converted_students / 100).toLocaleString(
+                    'pt-BR',
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }
+                  )}
+                </h3>
+                <p className="trial-metric-label">Ticket Medio</p>
+              </div>
+              <div className="trial-metric-icon rate">
+                <TrendingUp />
+              </div>
+            </div>
+            <span className="trial-metric-change positive">por aluno convertido</span>
+          </div>
+        )}
 
         {(metrics as any).total_with_attendance > 0 && (
           <div className="trial-metric-card">
