@@ -111,23 +111,15 @@ export default function AdminSupportChat() {
   const handleStartChat = async (userId: number) => {
     setStartingChat(true);
     try {
-      const res = await api.post(`/api/support-chat/admin/start/${userId}`, {});
-      const convId = res.data?.data?.conversation_id;
-      if (convId) {
-        setShowNewChat(false);
-        await loadConversations();
-        // Find and select the conversation
-        const conv = conversations.find(c => c.user_id === userId);
-        if (conv) setSelectedConv(conv);
-        else {
-          // Reload and try again
-          const res2 = await api.get('/api/support-chat/admin/conversations');
-          const data = res2.data?.data || [];
-          setConversations(data);
-          const found = data.find((c: any) => c.user_id === userId);
-          if (found) setSelectedConv(found);
-        }
-      }
+      await api.post(`/api/support-chat/admin/start/${userId}`, {});
+      setShowNewChat(false);
+      // Reload conversations and find the one we just created
+      const res = await api.get('/api/support-chat/admin/conversations');
+      const data = res.data?.data || [];
+      setConversations(data);
+      setTotalUnread(data.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0));
+      const found = data.find((c: any) => c.user_id === userId);
+      if (found) setSelectedConv(found);
     } catch { /* silent */ }
     finally { setStartingChat(false); }
   };
