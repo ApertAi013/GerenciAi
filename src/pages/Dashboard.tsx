@@ -410,11 +410,15 @@ export default function Dashboard() {
         const d = e.created_at || e.start_date;
         return d && d.substring(0, 7) === key;
       }).length;
+      const cancelamentos = srcEnrollments.filter(e => {
+        return e.status === 'cancelada' && e.updated_at && e.updated_at.substring(0, 7) === key;
+      }).length;
       return {
         month: label.charAt(0).toUpperCase() + label.slice(1),
         faturado,
         recebido,
         matriculas,
+        cancelamentos,
       };
     });
   }, [invoices, enrollments, filteredInvoices, filteredEnrollments, selectedModality]);
@@ -997,8 +1001,10 @@ export default function Dashboard() {
               <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
               <Bar yAxisId="left" dataKey="faturado" name="Faturado" fill="#C7D2FE" radius={[6, 6, 0, 0]} barSize={24} />
               <Bar yAxisId="left" dataKey="recebido" name="Recebido" fill="#34D399" radius={[6, 6, 0, 0]} barSize={24} />
-              <Line yAxisId="right" type="monotone" dataKey="matriculas" name="Matrículas" stroke="#F58A25" strokeWidth={3}
+              <Line yAxisId="right" type="monotone" dataKey="matriculas" name="Matriculas" stroke="#F58A25" strokeWidth={3}
                 dot={{ fill: '#F58A25', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
+              <Line yAxisId="right" type="monotone" dataKey="cancelamentos" name="Cancelamentos" stroke="#8B5CF6" strokeWidth={3}
+                dot={{ fill: '#8B5CF6', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} strokeDasharray="6 3" />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
