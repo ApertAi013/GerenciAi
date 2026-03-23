@@ -720,7 +720,7 @@ export default function Reports() {
       })()}
 
       {/* Row 2: Novas vs Canceladas + Clientes Ativos */}
-      <div className="rpt-grid-2">
+      <div className="rpt-grid-2" style={{ marginTop: '2rem' }}>
         <section className="rpt-panel">
           <div className="rpt-panel-top">
             <h3 className="rpt-panel-title">

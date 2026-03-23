@@ -1424,6 +1424,57 @@ export default function Dashboard() {
         </div>
       </section>
 
+      {/* ── Impacto Financeiro ── */}
+      {enrollments.length > 0 && (() => {
+        const months = getLastMonths(6);
+        const newByMonth = months.map(({ key }) => enrollments.filter(e => (e.created_at || e.start_date)?.substring(0, 7) === key).length);
+        const cancelledByMonth = months.map(({ key }) => enrollments.filter(e => e.status === 'cancelada' && e.updated_at?.substring(0, 7) === key).length);
+        const newValueByMonth = months.map(({ key }) => enrollments.filter(e => (e.created_at || e.start_date)?.substring(0, 7) === key).reduce((s, e) => s + (Number(e.plan_price_cents) || 0), 0) / 100);
+        const cancelledValueByMonth = months.map(({ key }) => enrollments.filter(e => e.status === 'cancelada' && e.updated_at?.substring(0, 7) === key).reduce((s, e) => s + (Number(e.plan_price_cents) || 0), 0) / 100);
+
+        const totalNew = enrollments.filter(e => e.status === 'ativa' || e.status === 'cancelada').reduce((s, e) => s + (Number(e.plan_price_cents) || 0), 0);
+        const totalCancelled = enrollments.filter(e => e.status === 'cancelada').reduce((s, e) => s + (Number(e.plan_price_cents) || 0), 0);
+        const net = totalNew - totalCancelled;
+
+        const liquidChartData = months.map(({ key, label }, i) => ({
+          month: label.charAt(0).toUpperCase() + label.slice(1),
+          Matriculas: newValueByMonth[i],
+          Cancelamentos: cancelledValueByMonth[i],
+          Saldo: newValueByMonth[i] - cancelledValueByMonth[i],
+        }));
+
+        return (
+          <>
+            <section className="dash-panel chart-panel">
+              <div className="dash-panel-top">
+                <h3 className="dash-panel-title">
+                  <FontAwesomeIcon icon={faChartLine} /> Saldo Liquido Mensal
+                </h3>
+                <button className="dash-link" onClick={() => navigate('/relatorios')}>
+                  Relatorios <FontAwesomeIcon icon={faArrowRight} />
+                </button>
+              </div>
+              <div className="dash-chart-wrap">
+                <ResponsiveContainer width="100%" height={250}>
+                  <ComposedChart data={liquidChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: isDark ? '#a0a0a0' : '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false}
+                      tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
+                    <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
+                    <Bar dataKey="Matriculas" fill="#34D399" radius={[6, 6, 0, 0]} barSize={20} />
+                    <Bar dataKey="Cancelamentos" fill="#F87171" radius={[6, 6, 0, 0]} barSize={20} />
+                    <Line type="monotone" dataKey="Saldo" stroke="#667eea" strokeWidth={3}
+                      dot={{ fill: '#667eea', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          </>
+        );
+      })()}
+
       {/* ── Inadimplentes ── */}
       {overdueInvoices.length > 0 && (
         <section className="dash-panel overdue-panel">
