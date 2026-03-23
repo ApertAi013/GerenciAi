@@ -56,7 +56,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
   const handleSwitchRole = async (role: string) => {
     try {
-      await api.post('/api/auth/switch-role', { role });
+      const res = await api.post('/api/auth/switch-role', { role });
+      const updatedUser = res.data?.data?.user;
+      if (updatedUser) {
+        // Update store and localStorage before reload
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
       setShowRoleMenu(false);
       window.location.reload();
     } catch {
