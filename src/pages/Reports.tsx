@@ -651,8 +651,8 @@ export default function Reports() {
 
       {/* Impacto Financeiro: Matriculas vs Cancelamentos */}
       {(newEnrollmentsList.length > 0 || cancelledList.length > 0) && (() => {
-        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (e.net_price_cents || e.plan_price_cents || 0), 0);
-        const totalCancelledValue = cancelledList.reduce((s, e) => s + (e.net_price_cents || e.plan_price_cents || 0), 0);
+        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (Number(e.net_price_cents ?? e.plan_price_cents ?? 0)), 0);
+        const totalCancelledValue = cancelledList.reduce((s, e) => s + (Number(e.net_price_cents ?? e.plan_price_cents ?? 0)), 0);
         const netValue = totalNewValue - totalCancelledValue;
         const fmtCurrency2 = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -691,7 +691,7 @@ export default function Reports() {
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
                       </div>
-                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency2(item.net_price_cents || item.plan_price_cents || 0)}</span>
+                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency2(Number(item.net_price_cents ?? item.plan_price_cents ?? 0))}</span>
                     </div>
                   ))}
                 </div>
@@ -710,7 +710,7 @@ export default function Reports() {
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
                       </div>
-                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency2(item.net_price_cents || item.plan_price_cents || 0)}</span>
+                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency2(Number(item.net_price_cents ?? item.plan_price_cents ?? 0))}</span>
                     </div>
                   ))}
                 </div>
@@ -954,8 +954,8 @@ export default function Reports() {
 
       {/* Old impacto financeiro - removed, now between Row 1 and Row 2 */}
       {false && (() => {
-        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (e.net_price_cents || e.plan_price_cents || 0), 0);
-        const totalCancelledValue = cancelledList.reduce((s, e) => s + (e.net_price_cents || e.plan_price_cents || 0), 0);
+        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (Number(e.net_price_cents ?? e.plan_price_cents ?? 0)), 0);
+        const totalCancelledValue = cancelledList.reduce((s, e) => s + (Number(e.net_price_cents ?? e.plan_price_cents ?? 0)), 0);
         const netValue = totalNewValue - totalCancelledValue;
         const fmtCurrency = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -996,7 +996,7 @@ export default function Reports() {
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
                       </div>
-                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency(item.net_price_cents || item.plan_price_cents || 0)}</span>
+                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency(Number(item.net_price_cents ?? item.plan_price_cents ?? 0))}</span>
                     </div>
                   ))}
                 </div>
@@ -1015,7 +1015,7 @@ export default function Reports() {
                         <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
                       </div>
-                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency(item.net_price_cents || item.plan_price_cents || 0)}</span>
+                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency(Number(item.net_price_cents ?? item.plan_price_cents ?? 0))}</span>
                     </div>
                   ))}
                 </div>

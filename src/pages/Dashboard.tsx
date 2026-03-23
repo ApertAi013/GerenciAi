@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { api } from '../services/api';
 import {
   faUsers,
   faUserPlus,
@@ -25,6 +26,7 @@ import {
   faFilter,
   faTimes,
   faGift,
+  faCog,
   faChevronLeft,
   faChevronRight as faChevronRightSolid,
 } from '@fortawesome/free-solid-svg-icons';
@@ -147,6 +149,36 @@ export default function Dashboard() {
   // Filter state
   const [selectedModality, setSelectedModality] = useState<number | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string>('current');
+
+  // Dashboard customization
+  const [showCustomize, setShowCustomize] = useState(false);
+  const defaultPanels = ['kpis', 'faturamento', 'saldo_liquido', 'vagas', 'niveis', 'agenda', 'avisos', 'inadimplentes'];
+  const [visiblePanels, setVisiblePanels] = useState<string[]>(defaultPanels);
+
+  useEffect(() => {
+    api.get('/api/auth/dashboard-config').then(res => {
+      const cfg = res.data?.data?.config;
+      if (cfg?.panels) setVisiblePanels(cfg.panels);
+    }).catch(() => {});
+  }, []);
+
+  const saveDashboardConfig = async (panels: string[]) => {
+    setVisiblePanels(panels);
+    try { await api.put('/api/auth/dashboard-config', { config: { panels } }); } catch {}
+  };
+
+  const panelOptions = [
+    { id: 'kpis', label: 'KPIs (Alunos, Receita, Turmas)' },
+    { id: 'faturamento', label: 'Faturamento Mensal' },
+    { id: 'saldo_liquido', label: 'Saldo Liquido Mensal' },
+    { id: 'vagas', label: 'Vagas por Turma' },
+    { id: 'niveis', label: 'Niveis dos Alunos' },
+    { id: 'agenda', label: 'Mini Agenda' },
+    { id: 'avisos', label: 'Avisos' },
+    { id: 'inadimplentes', label: 'Inadimplentes' },
+  ];
+
+  const isPanelVisible = (id: string) => visiblePanels.includes(id);
   const [customRange, setCustomRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   // Period filter helper
@@ -823,8 +855,53 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Filtros ── */}
-      <div className="dash-filter-bar">
+      {/* ── Filtros + Customizar ── */}
+      <div className="dash-filter-bar" style={{ position: 'relative' }}>
+        <button
+          onClick={() => setShowCustomize(!showCustomize)}
+          style={{
+            background: isDark ? '#262626' : '#f3f4f6', border: `1px solid ${isDark ? '#444' : '#e5e7eb'}`,
+            borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+            color: isDark ? '#ccc' : '#555', fontSize: '0.85rem', fontWeight: 500, marginRight: 8,
+          }}
+        >
+          <FontAwesomeIcon icon={faCog} /> Personalizar
+        </button>
+
+        {showCustomize && (
+          <div style={{
+            position: 'absolute', top: '100%', left: 0, zIndex: 50, marginTop: 8,
+            background: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, padding: 16,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)', border: `1px solid ${isDark ? '#333' : '#e5e7eb'}`,
+            minWidth: 280,
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: 12, color: isDark ? '#eee' : '#333' }}>Paineis visiveis</div>
+            {panelOptions.map(opt => (
+              <label key={opt.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', cursor: 'pointer',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={visiblePanels.includes(opt.id)}
+                  onChange={() => {
+                    const next = visiblePanels.includes(opt.id)
+                      ? visiblePanels.filter(p => p !== opt.id)
+                      : [...visiblePanels, opt.id];
+                    saveDashboardConfig(next);
+                  }}
+                  style={{ accentColor: '#667eea', width: 16, height: 16 }}
+                />
+                <span style={{ fontSize: '0.85rem', color: isDark ? '#ccc' : '#333' }}>{opt.label}</span>
+              </label>
+            ))}
+            <button
+              onClick={() => setShowCustomize(false)}
+              style={{ marginTop: 12, width: '100%', padding: '8px', borderRadius: 8, border: 'none', background: '#667eea', color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Fechar
+            </button>
+          </div>
+        )}
         <div className="dash-filter-chips">
           {selectedPeriod !== 'current' && (
             <span className="dash-filter-chip active">
