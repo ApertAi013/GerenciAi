@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faCircleExclamation, faCircleInfo, faCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faUserMinus, faPen, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { useNotifications } from '../../hooks/useNotifications';
 
 export default function NotificationsWidget() {
@@ -7,6 +7,11 @@ export default function NotificationsWidget() {
 
   const getIcon = (type: string) => {
     switch (type) {
+      case 'trial_booking': return faUserPlus;
+      case 'trial_cancellation': return faTimesCircle;
+      case 'enrollment_created': return faUserPlus;
+      case 'enrollment_cancelled': return faUserMinus;
+      case 'enrollment_updated': return faPen;
       case 'warning': return faCircleExclamation;
       case 'success': return faCircleCheck;
       default: return faCircleInfo;
@@ -15,6 +20,11 @@ export default function NotificationsWidget() {
 
   const getColor = (type: string) => {
     switch (type) {
+      case 'trial_booking': return '#8b5cf6';
+      case 'trial_cancellation': return '#ef4444';
+      case 'enrollment_created': return '#10b981';
+      case 'enrollment_cancelled': return '#ef4444';
+      case 'enrollment_updated': return '#f59e0b';
       case 'warning': return '#f5576c';
       case 'success': return '#38f9d7';
       default: return '#667eea';

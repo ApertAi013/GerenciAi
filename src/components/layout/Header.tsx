@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faCalendarCheck, faBuilding, faExchangeAlt, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faBell, faChevronDown, faUser, faGear, faRightFromBracket, faSearch, faCircleExclamation, faCircleInfo, faCircleCheck, faUserPlus, faUserMinus, faCalendarCheck, faBuilding, faExchangeAlt, faMoon, faSun, faPen, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import { studentService } from '../../services/studentService';
@@ -196,6 +196,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'trial_booking': return faUserPlus;
+      case 'trial_cancellation': return faTimesCircle;
+      case 'enrollment_created': return faUserPlus;
+      case 'enrollment_cancelled': return faUserMinus;
+      case 'enrollment_updated': return faPen;
       case 'court_booking': return faCalendarCheck;
       case 'warning': return faCircleExclamation;
       case 'success': return faCircleCheck;
@@ -206,6 +210,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const getNotificationColor = (type: string) => {
     switch (type) {
       case 'trial_booking': return '#8b5cf6';
+      case 'trial_cancellation': return '#ef4444';
+      case 'enrollment_created': return '#10b981';
+      case 'enrollment_cancelled': return '#ef4444';
+      case 'enrollment_updated': return '#f59e0b';
       case 'court_booking': return '#f59e0b';
       case 'warning': return '#f5576c';
       case 'success': return '#10b981';
