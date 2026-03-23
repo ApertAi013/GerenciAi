@@ -750,13 +750,13 @@ export default function Reports() {
           </div>
           <div className="rpt-chart-wrap">
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={activeChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+              <LineChart data={activeChartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#262626' : '#E5E7EB'} vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6B7280' }} axisLine={{ stroke: isDark ? '#262626' : '#E5E7EB' }} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip content={<ChartTooltipContent />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
-                <Bar dataKey="Ativos" fill="#8B5CF6" radius={[6, 6, 0, 0]} barSize={24} />
-              </BarChart>
+                <Tooltip content={<ChartTooltipContent />} cursor={{ stroke: isDark ? '#444' : '#ddd' }} />
+                <Line type="monotone" dataKey="Ativos" stroke="#8B5CF6" strokeWidth={3} dot={{ fill: '#8B5CF6', r: 5, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7, strokeWidth: 2, stroke: '#fff' }} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </section>
