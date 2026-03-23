@@ -666,12 +666,17 @@ export default function Financial() {
     return new Date(dateOnly + 'T00:00:00').toLocaleDateString('pt-BR');
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, enrollmentStatus?: string) => {
+    if (status === 'cancelada') {
+      if (enrollmentStatus === 'cancelada') {
+        return <span className="status-badge status-cancelled" title="Matricula cancelada - aluno saiu da turma">Matr. Cancelada</span>;
+      }
+      return <span className="status-badge status-cancelled" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #f59e0b' }} title="Somente a fatura foi cancelada - aluno permanece na turma">Fatura Cancelada</span>;
+    }
     const statusMap: Record<string, { label: string; class: string }> = {
       aberta: { label: 'Aberta', class: 'status-open' },
       paga: { label: 'Paga', class: 'status-paid' },
       vencida: { label: 'Vencida', class: 'status-overdue' },
-      cancelada: { label: 'Fatura Cancelada', class: 'status-cancelled' },
       estornada: { label: 'Estornada', class: 'status-refunded' },
     };
     const info = statusMap[status] || { label: status, class: '' };
@@ -1318,7 +1323,7 @@ export default function Financial() {
                             : undefined
                         }
                       >
-                        {getStatusBadge(invoice.status)}
+                        {getStatusBadge(invoice.status, (invoice as any).enrollment_status)}
                       </span>
                     </td>
                     )}
