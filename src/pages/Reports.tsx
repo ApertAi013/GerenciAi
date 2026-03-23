@@ -494,86 +494,6 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Matriculas vs Cancelamentos - Tabelas comparativas */}
-      {(newEnrollmentsList.length > 0 || cancelledList.length > 0) && (() => {
-        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (e.plan_price_cents || 0), 0);
-        const totalCancelledValue = cancelledList.reduce((s, e) => s + (e.plan_price_cents || 0), 0);
-        const netValue = totalNewValue - totalCancelledValue;
-        const fmtCurrency = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-        return (
-          <div className="rpt-comparison-section">
-            <div className="rpt-comparison-header">
-              <h3 className="rpt-section-title"><FontAwesomeIcon icon={faChartLine} /> Impacto Financeiro: Matriculas vs Cancelamentos</h3>
-            </div>
-
-            {/* Summary cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ background: isDark ? '#0d2818' : '#f0fdf4', borderRadius: 12, padding: '1rem', border: `1px solid ${isDark ? '#16a34a30' : '#bbf7d0'}` }}>
-                <div style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600, marginBottom: 4 }}>Novas Matriculas</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a' }}>{fmtCurrency(totalNewValue)}</div>
-                <div style={{ fontSize: '0.75rem', color: isDark ? '#888' : '#666' }}>{newEnrollmentsList.length} aluno(s) /mes</div>
-              </div>
-              <div style={{ background: isDark ? '#2a0a0a' : '#fef2f2', borderRadius: 12, padding: '1rem', border: `1px solid ${isDark ? '#dc262630' : '#fecaca'}` }}>
-                <div style={{ fontSize: '0.8rem', color: '#dc2626', fontWeight: 600, marginBottom: 4 }}>Cancelamentos</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>{fmtCurrency(totalCancelledValue)}</div>
-                <div style={{ fontSize: '0.75rem', color: isDark ? '#888' : '#666' }}>{cancelledList.length} aluno(s) /mes</div>
-              </div>
-              <div style={{ background: isDark ? '#1a1a2e' : '#f0f0ff', borderRadius: 12, padding: '1rem', border: `1px solid ${isDark ? '#667eea30' : '#c7d2fe'}` }}>
-                <div style={{ fontSize: '0.8rem', color: '#667eea', fontWeight: 600, marginBottom: 4 }}>Saldo Liquido</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: netValue >= 0 ? '#16a34a' : '#dc2626' }}>{netValue >= 0 ? '+' : ''}{fmtCurrency(netValue)}</div>
-                <div style={{ fontSize: '0.75rem', color: isDark ? '#888' : '#666' }}>{netValue >= 0 ? 'crescimento' : 'reducao'} mensal</div>
-              </div>
-            </div>
-
-            {/* Two tables side by side */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              {/* New Enrollments Table */}
-              <div style={{ background: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, border: `1px solid ${isDark ? '#262626' : '#e5e7eb'}`, overflow: 'hidden' }}>
-                <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${isDark ? '#262626' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.9rem' }}>Matriculados ({newEnrollmentsList.length})</span>
-                  <span style={{ fontWeight: 700, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency(totalNewValue)}/mes</span>
-                </div>
-                <div style={{ maxHeight: 250, overflowY: 'auto' }}>
-                  {newEnrollmentsList.length === 0 ? (
-                    <div style={{ padding: '1.5rem', textAlign: 'center', color: '#999', fontSize: '0.85rem' }}>Nenhuma matricula no periodo</div>
-                  ) : newEnrollmentsList.map(item => (
-                    <div key={item.id} style={{ padding: '0.6rem 1rem', borderBottom: `1px solid ${isDark ? '#1f1f1f' : '#f3f4f6'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
-                      </div>
-                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency(item.plan_price_cents || 0)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Cancelled Table */}
-              <div style={{ background: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, border: `1px solid ${isDark ? '#262626' : '#e5e7eb'}`, overflow: 'hidden' }}>
-                <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${isDark ? '#262626' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.9rem' }}>Cancelados ({cancelledList.length})</span>
-                  <span style={{ fontWeight: 700, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency(totalCancelledValue)}/mes</span>
-                </div>
-                <div style={{ maxHeight: 250, overflowY: 'auto' }}>
-                  {cancelledList.length === 0 ? (
-                    <div style={{ padding: '1.5rem', textAlign: 'center', color: '#999', fontSize: '0.85rem' }}>Nenhum cancelamento no periodo</div>
-                  ) : cancelledList.map(item => (
-                    <div key={item.id} style={{ padding: '0.6rem 1rem', borderBottom: `1px solid ${isDark ? '#1f1f1f' : '#f3f4f6'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
-                      </div>
-                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency(item.plan_price_cents || 0)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
       {/* Payment Curve */}
       {paymentCurve.length > 0 && (() => {
         const CURVE_COLORS = ['#10B981', '#3B82F6', '#9CA3AF', '#D1D5DB'];
@@ -921,6 +841,79 @@ export default function Reports() {
           )}
         </section>
       </div>
+
+      {/* Impacto Financeiro: Matriculas vs Cancelamentos */}
+      {(newEnrollmentsList.length > 0 || cancelledList.length > 0) && (() => {
+        const totalNewValue = newEnrollmentsList.reduce((s, e) => s + (e.plan_price_cents || 0), 0);
+        const totalCancelledValue = cancelledList.reduce((s, e) => s + (e.plan_price_cents || 0), 0);
+        const netValue = totalNewValue - totalCancelledValue;
+        const fmtCurrency = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        return (
+          <section className="rpt-chart-section" style={{ marginTop: '2rem' }}>
+            <h3 className="rpt-section-title"><FontAwesomeIcon icon={faChartLine} /> Impacto Financeiro: Matriculas vs Cancelamentos</h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ background: isDark ? '#0d2818' : '#f0fdf4', borderRadius: 12, padding: '1rem', border: `1px solid ${isDark ? '#16a34a30' : '#bbf7d0'}` }}>
+                <div style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600, marginBottom: 4 }}>Novas Matriculas</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#16a34a' }}>{fmtCurrency(totalNewValue)}</div>
+                <div style={{ fontSize: '0.75rem', color: isDark ? '#888' : '#666' }}>{newEnrollmentsList.length} aluno(s) /mes</div>
+              </div>
+              <div style={{ background: isDark ? '#2a0a0a' : '#fef2f2', borderRadius: 12, padding: '1rem', border: `1px solid ${isDark ? '#dc262630' : '#fecaca'}` }}>
+                <div style={{ fontSize: '0.8rem', color: '#dc2626', fontWeight: 600, marginBottom: 4 }}>Cancelamentos</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#dc2626' }}>{fmtCurrency(totalCancelledValue)}</div>
+                <div style={{ fontSize: '0.75rem', color: isDark ? '#888' : '#666' }}>{cancelledList.length} aluno(s) /mes</div>
+              </div>
+              <div style={{ background: isDark ? '#1a1a2e' : '#f0f0ff', borderRadius: 12, padding: '1rem', border: `1px solid ${isDark ? '#667eea30' : '#c7d2fe'}` }}>
+                <div style={{ fontSize: '0.8rem', color: '#667eea', fontWeight: 600, marginBottom: 4 }}>Saldo Liquido</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: netValue >= 0 ? '#16a34a' : '#dc2626' }}>{netValue >= 0 ? '+' : ''}{fmtCurrency(netValue)}</div>
+                <div style={{ fontSize: '0.75rem', color: isDark ? '#888' : '#666' }}>{netValue >= 0 ? 'crescimento' : 'reducao'} mensal</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ background: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, border: `1px solid ${isDark ? '#262626' : '#e5e7eb'}`, overflow: 'hidden' }}>
+                <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${isDark ? '#262626' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.9rem' }}>Matriculados ({newEnrollmentsList.length})</span>
+                  <span style={{ fontWeight: 700, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency(totalNewValue)}/mes</span>
+                </div>
+                <div style={{ maxHeight: 250, overflowY: 'auto' }}>
+                  {newEnrollmentsList.length === 0 ? (
+                    <div style={{ padding: '1.5rem', textAlign: 'center', color: '#999', fontSize: '0.85rem' }}>Nenhuma matricula no periodo</div>
+                  ) : newEnrollmentsList.map(item => (
+                    <div key={item.id} style={{ padding: '0.6rem 1rem', borderBottom: `1px solid ${isDark ? '#1f1f1f' : '#f3f4f6'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
+                      </div>
+                      <span style={{ fontWeight: 600, color: '#16a34a', fontSize: '0.85rem' }}>{fmtCurrency(item.plan_price_cents || 0)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ background: isDark ? '#1a1a1a' : '#fff', borderRadius: 12, border: `1px solid ${isDark ? '#262626' : '#e5e7eb'}`, overflow: 'hidden' }}>
+                <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${isDark ? '#262626' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.9rem' }}>Cancelados ({cancelledList.length})</span>
+                  <span style={{ fontWeight: 700, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency(totalCancelledValue)}/mes</span>
+                </div>
+                <div style={{ maxHeight: 250, overflowY: 'auto' }}>
+                  {cancelledList.length === 0 ? (
+                    <div style={{ padding: '1.5rem', textAlign: 'center', color: '#999', fontSize: '0.85rem' }}>Nenhum cancelamento no periodo</div>
+                  ) : cancelledList.map(item => (
+                    <div key={item.id} style={{ padding: '0.6rem 1rem', borderBottom: `1px solid ${isDark ? '#1f1f1f' : '#f3f4f6'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isDark ? '#eee' : '#333' }}>{item.student_name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#888' }}>{item.plan_name}</div>
+                      </div>
+                      <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.85rem' }}>{fmtCurrency(item.plan_price_cents || 0)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Popup de Canceladas */}
       {showCancelled && (
