@@ -481,14 +481,21 @@ export default function Financial() {
     }
   };
 
-  const handleReactivateInvoice = async (invoiceId: number) => {
-    if (!confirm('Deseja reativar esta fatura? Ela voltara para aberta ou vencida dependendo da data de vencimento.')) return;
+  const [reactivateInvoiceId, setReactivateInvoiceId] = useState<number | null>(null);
+  const [reactivating, setReactivating] = useState(false);
+
+  const confirmReactivateInvoice = async () => {
+    if (!reactivateInvoiceId) return;
+    setReactivating(true);
     try {
-      await financialService.reactivateInvoice(invoiceId);
+      await financialService.reactivateInvoice(reactivateInvoiceId);
       toast.success('Fatura reativada!');
+      setReactivateInvoiceId(null);
       loadInvoices();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Erro ao reativar fatura');
+    } finally {
+      setReactivating(false);
     }
   };
 
@@ -1371,7 +1378,7 @@ export default function Financial() {
                             {invoice.enrollment_status !== 'cancelada' && (
                               <button
                                 className="btn-action"
-                                onClick={() => handleReactivateInvoice(invoice.id)}
+                                onClick={() => setReactivateInvoiceId(invoice.id)}
                                 title="Reativar fatura"
                                 style={{ backgroundColor: '#10B981', color: 'white', borderRadius: 6, border: 'none', padding: '4px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
                               >
@@ -1787,6 +1794,36 @@ export default function Financial() {
                 disabled={submitting || !selectedLevelId || selectedLevelId === levelEditInvoice.level_id}
               >
                 {submitting ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Reactivate Invoice Modal */}
+      {reactivateInvoiceId && (
+        <div className="modal-overlay" onClick={() => !reactivating && setReactivateInvoiceId(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420, padding: '1.5rem' }}>
+            <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>Reativar Fatura</h3>
+            <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem' }}>
+              Deseja reativar esta fatura?
+            </p>
+            <p style={{ margin: '0 0 1.5rem', color: '#888', fontSize: '0.85rem' }}>
+              A fatura voltara para <strong>aberta</strong> ou <strong>vencida</strong> dependendo da data de vencimento. O aluno permanece na turma e a cobranca sera retomada.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setReactivateInvoiceId(null)}
+                disabled={reactivating}
+                className="btn-secondary"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmReactivateInvoice}
+                disabled={reactivating}
+                style={{ padding: '0.6rem 1.25rem', borderRadius: 8, border: 'none', background: '#10B981', color: '#fff', fontWeight: 600, cursor: reactivating ? 'wait' : 'pointer' }}
+              >
+                {reactivating ? 'Reativando...' : 'Reativar Fatura'}
               </button>
             </div>
           </div>
