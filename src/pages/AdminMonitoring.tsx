@@ -15,6 +15,7 @@ import {
   faFileInvoiceDollar,
   faArrowUp,
   faPlay,
+  faComments,
 } from '@fortawesome/free-solid-svg-icons';
 import toast from 'react-hot-toast';
 import {
@@ -36,6 +37,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { monitoringService } from '../services/monitoringService';
 import UserManagement from '../components/UserManagement';
+import AdminSupportChat from '../components/AdminSupportChat';
 import AdminBilling from '../components/AdminBilling';
 import type { BillingSubTab } from '../components/AdminBilling';
 import type {
@@ -57,7 +59,7 @@ const COLORS = {
 export default function AdminMonitoring() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  type MainTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades' | 'metricas' | 'usuarios';
+  type MainTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades' | 'metricas' | 'usuarios' | 'suporte';
   const [mainTab, setMainTab] = useState<MainTab>('dashboard');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'gcp' | 'health'>('dashboard');
   const [loading, setLoading] = useState(true);
@@ -294,7 +296,13 @@ export default function AdminMonitoring() {
           className={`tab ${mainTab === 'usuarios' ? 'active' : ''}`}
           onClick={() => setMainTab('usuarios')}
         >
-          <FontAwesomeIcon icon={faCog} /> Usuários
+          <FontAwesomeIcon icon={faCog} /> Usuarios
+        </button>
+        <button
+          className={`tab ${mainTab === 'suporte' ? 'active' : ''}`}
+          onClick={() => setMainTab('suporte')}
+        >
+          <FontAwesomeIcon icon={faComments} /> Suporte
         </button>
       </div>
 
@@ -744,6 +752,9 @@ export default function AdminMonitoring() {
         {/* Usuarios Tab - User Management */}
         {mainTab === 'usuarios' && (
           <UserManagement />
+        )}
+        {mainTab === 'suporte' && (
+          <AdminSupportChat />
         )}
       </div>
     </div>
