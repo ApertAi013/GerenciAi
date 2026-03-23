@@ -5,7 +5,6 @@ import Header from './Header';
 import QuickEditStudentModal from '../QuickEditStudentModal';
 import PaymentBlockedOverlay from '../PaymentBlockedOverlay';
 import LaraChat from '../lara/LaraChat';
-import SupportChatWidget from '../SupportChatWidget';
 import { useAuthStore } from '../../store/authStore';
 import '../../styles/Layout.css';
 
@@ -54,7 +53,6 @@ export default function Layout() {
         />
       )}
       <LaraChat />
-      <SupportChatWidget />
       {showMobileBanner && (
         <div className="mobile-app-banner">
           <div className="mobile-app-banner-content">

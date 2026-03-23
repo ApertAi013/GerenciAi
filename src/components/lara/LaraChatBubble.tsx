@@ -6,9 +6,10 @@ interface Props {
   isOpen: boolean;
   onClick: () => void;
   isDark: boolean;
+  supportUnread?: number;
 }
 
-export default function LaraChatBubble({ isOpen, onClick, isDark }: Props) {
+export default function LaraChatBubble({ isOpen, onClick, isDark, supportUnread = 0 }: Props) {
   const [showTooltip, setShowTooltip] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -91,6 +92,34 @@ export default function LaraChatBubble({ isOpen, onClick, isDark }: Props) {
         </div>
       )}
 
+      {/* Support unread badge - positioned to the left of the bubble */}
+      {supportUnread > 0 && !isOpen && (
+        <div
+          onClick={onClick}
+          style={{
+            position: 'fixed' as const,
+            bottom: 30,
+            right: 80,
+            zIndex: 1000,
+            background: '#667eea',
+            color: '#fff',
+            borderRadius: 20,
+            padding: '6px 12px',
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(102,126,234,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            animation: 'laraTooltipIn 0.4s ease-out',
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', display: 'inline-block' }} />
+          {supportUnread} nova{supportUnread > 1 ? 's' : ''} do suporte
+        </div>
+      )}
+
       <button
         className={`lara-bubble${isOpen ? ' open' : ''}`}
         onClick={onClick}
@@ -110,6 +139,17 @@ export default function LaraChatBubble({ isOpen, onClick, isDark }: Props) {
             transition: 'all 0.2s ease',
           }}
         />
+        {supportUnread > 0 && isOpen && (
+          <span style={{
+            position: 'absolute' as const, top: -4, left: -4,
+            background: '#667eea', color: '#fff',
+            fontSize: 10, fontWeight: 700, borderRadius: '50%',
+            width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '2px solid white',
+          }}>
+            {supportUnread}
+          </span>
+        )}
       </button>
     </>
   );

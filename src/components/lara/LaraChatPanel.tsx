@@ -19,11 +19,14 @@ interface Props {
   onBack: () => void;
   onReset: () => void;
   onClose: () => void;
+  onOpenSupport?: () => void;
+  supportUnread?: number;
 }
 
 export default function LaraChatPanel({
   messages, context, isDark, isTyping, isClosing, categories,
   onSendMessage, onCategoryClick, onOptionClick, onBack, onReset, onClose,
+  onOpenSupport, supportUnread = 0,
 }: Props) {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -111,6 +114,31 @@ export default function LaraChatPanel({
         {isTyping && <LaraTypingIndicator isDark={isDark} />}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Support chat button */}
+      {onOpenSupport && (
+        <button
+          onClick={onOpenSupport}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            padding: '8px 16px', margin: '0 12px',
+            background: isDark ? '#2a2a3a' : '#f0f0ff',
+            border: `1px solid ${isDark ? '#444' : '#ddd'}`,
+            borderRadius: 10, cursor: 'pointer',
+            color: '#667eea', fontSize: 13, fontWeight: 600,
+          }}
+        >
+          Falar com Suporte
+          {supportUnread > 0 && (
+            <span style={{
+              background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 700,
+              borderRadius: 10, padding: '1px 6px', minWidth: 18, textAlign: 'center',
+            }}>
+              {supportUnread}
+            </span>
+          )}
+        </button>
+      )}
 
       {/* Input */}
       <form
