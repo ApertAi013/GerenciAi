@@ -291,16 +291,16 @@ export default function Rentals() {
     if (!dateString) return 'Data inválida';
 
     try {
-      // Tenta diferentes formatos de data
       let date: Date;
 
-      // Se já for um timestamp ou objeto Date
-      if (!isNaN(Date.parse(dateString))) {
-        date = new Date(dateString);
+      // Se for formato YYYY-MM-DD (prioridade: evitar timezone UTC)
+      if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        date = new Date(dateString + 'T12:00:00');
       }
-      // Se for formato YYYY-MM-DD
-      else if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        date = new Date(dateString + 'T00:00:00');
+      // Se for formato YYYY-MM-DDT... (ISO com timezone)
+      else if (dateString.match(/^\d{4}-\d{2}-\d{2}T/)) {
+        const datePart = dateString.substring(0, 10);
+        date = new Date(datePart + 'T12:00:00');
       }
       // Se for formato DD/MM/YYYY
       else if (dateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
