@@ -27,7 +27,8 @@ export default function LiveMatchAnimation({
     : category === 'volei' ? 'volei'
     : 'volei'; // default
 
-  const animUrl = `/animations/${animFile}.html?embed=true&team1=${encodeURIComponent(team1Name)}&team2=${encodeURIComponent(team2Name)}&score1=${team1Score}&score2=${team2Score}`;
+  const backendUrl = import.meta.env.VITE_API_URL || 'https://gerenciai-backend-798546007335.us-east1.run.app';
+  const animUrl = `${backendUrl}/public/animations/${animFile}.html?embed=true&team1=${encodeURIComponent(team1Name)}&team2=${encodeURIComponent(team2Name)}&score1=${team1Score}&score2=${team2Score}`;
 
   // Send score updates via postMessage
   useEffect(() => {
