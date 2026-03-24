@@ -179,8 +179,8 @@ export default function Enrollments() {
       const searchLower = studentSearch.toLowerCase();
       const filtered = students.filter(
         (student) =>
-          student.full_name.toLowerCase().includes(searchLower) ||
-          student.cpf.includes(searchLower) ||
+          student.full_name?.toLowerCase().includes(searchLower) ||
+          (student.cpf && student.cpf.includes(searchLower)) ||
           (student.email && student.email.toLowerCase().includes(searchLower))
       );
       setFilteredStudents(filtered);
@@ -230,10 +230,13 @@ export default function Enrollments() {
       if (selectedStudent && (selectedStudent.level_name || selectedStudent.level)) {
         const studentLevel = selectedStudent.level_name || selectedStudent.level;
         filtered = filtered.filter((cls) => {
-          if (cls.allowed_levels && cls.allowed_levels.length > 0) {
-            return cls.allowed_levels.includes(studentLevel!);
+          let levels = cls.allowed_levels;
+          if (!levels || (Array.isArray(levels) && levels.length === 0)) return true;
+          if (typeof levels === 'string') {
+            try { levels = JSON.parse(levels); } catch { return true; }
           }
-          return true;
+          if (!Array.isArray(levels) || levels.length === 0) return true;
+          return levels.includes(studentLevel!);
         });
       }
 
