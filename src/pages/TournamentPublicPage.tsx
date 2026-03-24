@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router';
+import LiveMatchAnimation from '../components/LiveMatchAnimation';
 import '../styles/TournamentPublic.css';
 
 // ─── API base URL (same pattern as PublicTournamentRegistration) ───
@@ -406,6 +407,15 @@ export default function TournamentPublicPage() {
                     </div>
                   </div>
                 </div>
+                {/* 3D Animation */}
+                <LiveMatchAnimation
+                  category={category}
+                  team1Name={match.team1_name || 'Time A'}
+                  team2Name={match.team2_name || 'Time B'}
+                  team1Score={match.team1_score ?? 0}
+                  team2Score={match.team2_score ?? 0}
+                  isLive={true}
+                />
               </div>
             ))}
           </div>
