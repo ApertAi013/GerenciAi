@@ -20,17 +20,15 @@ export default function LiveMatchAnimation({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevScoresRef = useRef({ a: team1Score, b: team2Score });
 
-  // Build animation URL
   const animFile = category === 'beach_tennis' ? 'beach_tennis'
     : category === 'futevolei' ? 'futevolei'
     : category === 'futebol' ? 'futebol'
     : category === 'volei' ? 'volei'
-    : 'volei'; // default
+    : 'volei';
 
   const backendUrl = import.meta.env.VITE_API_URL || 'https://gerenciai-backend-798546007335.us-east1.run.app';
   const animUrl = `${backendUrl}/public/animations/${animFile}.html?embed=true&team1=${encodeURIComponent(team1Name)}&team2=${encodeURIComponent(team2Name)}&score1=${team1Score}&score2=${team2Score}`;
 
-  // Send score updates via postMessage
   useEffect(() => {
     if (!iframeRef.current?.contentWindow) return;
 
@@ -53,49 +51,21 @@ export default function LiveMatchAnimation({
   if (!isLive || !category) return null;
 
   return (
-    <div style={{
-      width: '100%',
-      aspectRatio: '16/9',
-      maxHeight: '400px',
-      borderRadius: '12px',
-      overflow: 'hidden',
-      border: '1px solid rgba(255,255,255,0.1)',
-      background: 'transparent',
-      position: 'relative',
-    }}>
-      <iframe
-        ref={iframeRef}
-        src={animUrl}
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
-        }}
-        title="Match Animation"
-        allow="autoplay"
-      />
-      <div style={{
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        background: 'rgba(239,68,68,0.9)',
-        color: '#fff',
-        padding: '2px 8px',
-        borderRadius: 4,
-        fontSize: '0.7rem',
-        fontWeight: 700,
-        letterSpacing: '0.05em',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-      }}>
-        <span style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: '#fff',
-          animation: 'pulse 1.5s infinite',
-        }} />
-        AO VIVO
-      </div>
-    </div>
+    <iframe
+      ref={iframeRef}
+      src={animUrl}
+      style={{
+        width: '100%',
+        height: '400px',
+        border: 'none',
+        background: 'transparent',
+        display: 'block',
+        marginTop: '-10px',
+      }}
+      title="Match Animation"
+      allow="autoplay"
+      // @ts-ignore
+      allowtransparency="true"
+    />
   );
 }

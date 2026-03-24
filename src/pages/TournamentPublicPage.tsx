@@ -332,14 +332,14 @@ export default function TournamentPublicPage() {
         {/* Header */}
         <header className="tp-header">
           <div className="tp-arena-showcase">
-            {tournament.image_url ? (
-              <img src={tournament.image_url} alt={tournament.arena_name || tournament.title} className="tp-arena-logo" />
+            {(tournament.arena_logo || tournament.image_url) ? (
+              <img src={tournament.arena_logo || tournament.image_url} alt={tournament.display_name || tournament.arena_name || tournament.title} className="tp-arena-logo" />
             ) : (
               <div className="tp-arena-initials">
-                {(tournament.arena_name || 'A').substring(0, 2).toUpperCase()}
+                {(tournament.display_name || tournament.arena_name || 'A').substring(0, 2).toUpperCase()}
               </div>
             )}
-            <div className="tp-arena-name">{tournament.arena_name}</div>
+            <div className="tp-arena-name">{tournament.display_name || tournament.arena_name}</div>
           </div>
 
           <h1 className="tp-title">{tournament.title}</h1>
@@ -416,23 +416,23 @@ export default function TournamentPublicPage() {
                     {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && ` R${match.round_number}`}
                   </span>
                 </div>
-                <div className="tp-live-match-row">
-                  <div className="tp-live-team">
-                    <div className="tp-live-team-color" style={{ background: '#3B82F6' }} />
-                    <div className={`tp-live-team-name ${match.winner_id === match.team1_id ? 'winner' : ''}`}>
+                <div className="tp-live-match-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '1.5rem 1rem' }}>
+                  <div style={{ flex: 1, textAlign: 'right' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>
                       {match.team1_name || 'A definir'}
                     </div>
+                    <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
                   </div>
-                  <div className="tp-live-score-divider">
-                    <span className="tp-live-score tp-live-score-t1">{match.team1_score ?? 0}</span>
-                    <span className="tp-live-vs">VS</span>
-                    <span className="tp-live-score tp-live-score-t2">{match.team2_score ?? 0}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                    <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{match.team1_score ?? 0}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>x</span>
+                    <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{match.team2_score ?? 0}</span>
                   </div>
-                  <div className="tp-live-team">
-                    <div className="tp-live-team-color" style={{ background: '#EF4444' }} />
-                    <div className={`tp-live-team-name ${match.winner_id === match.team2_id ? 'winner' : ''}`}>
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>
                       {match.team2_name || 'A definir'}
                     </div>
+                    <div style={{ width: 40, height: 3, background: '#EF4444', borderRadius: 2 }} />
                   </div>
                 </div>
                 {/* Match details */}
