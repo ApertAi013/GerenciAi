@@ -344,10 +344,10 @@ export default function Login() {
           </div>
         ) : availableRoles ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 0.5rem', fontSize: '1.1rem' }}>
+            <h3 style={{ textAlign: 'center', margin: '0 0 0.5rem', fontSize: '1.1rem', color: theme === 'dark' ? '#f0f0f0' : '#1a1a1a' }}>
               Como deseja entrar?
             </h3>
-            <p style={{ textAlign: 'center', color: '#888', fontSize: '0.9rem', margin: 0 }}>
+            <p style={{ textAlign: 'center', color: theme === 'dark' ? '#999' : '#888', fontSize: '0.9rem', margin: 0 }}>
               Sua conta possui mais de um perfil. Selecione:
             </p>
             {availableRoles.map((r: any, i: number) => (
@@ -368,15 +368,24 @@ export default function Login() {
                 onMouseLeave={(e) => { (e.target as HTMLElement).style.background = 'transparent'; }}
               >
                 <span style={{
-                  width: 40, height: 40, borderRadius: '50%', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem',
-                  background: r.role === 'gestor' ? '#667eea20' : '#f59e0b20',
+                  width: 42, height: 42, borderRadius: '50%', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  background: r.role === 'gestor' ? '#667eea18' : '#f59e0b18',
+                  flexShrink: 0,
                 }}>
-                  {r.role === 'gestor' ? '🏟' : '🎓'}
+                  {r.role === 'gestor' ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={theme === 'dark' ? '#a0b0ff' : '#667eea'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={theme === 'dark' ? '#fbbf24' : '#d97706'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                  )}
                 </span>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{r.label}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#888' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.95rem', color: theme === 'dark' ? '#f0f0f0' : '#1a1a1a' }}>{r.label}</div>
+                  <div style={{ fontSize: '0.8rem', color: theme === 'dark' ? '#999' : '#888' }}>
                     {r.role === 'gestor' ? 'Gerenciar sua arena' : 'Acessar como instrutor'}
                   </div>
                 </div>
