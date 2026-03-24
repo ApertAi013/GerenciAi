@@ -92,12 +92,15 @@ interface TournamentData {
     third_place_match: boolean;
     num_groups?: number;
     group_stage_completed?: boolean;
+    pairing_mode?: 'fixed' | 'dynamic_single' | 'dynamic_per_round';
   };
   teams: TournamentTeam[];
   matches: TournamentMatch[];
   live_matches: TournamentMatch[];
   podium: PodiumEntry[];
   groups?: TournamentGroup[];
+  individual_players?: { id: number; player_name: string; side: 'left' | 'right' }[];
+  generated_pairs?: { team_name: string; left_player: string; right_player: string }[];
 }
 
 type SportCategory = 'volei' | 'futevolei' | 'futebol' | 'beach_tennis' | null;
@@ -295,7 +298,7 @@ export default function TournamentPublicPage() {
     );
   }
 
-  const { tournament, teams, matches, live_matches, podium, groups } = data;
+  const { tournament, teams, matches, live_matches, podium, groups, individual_players, generated_pairs } = data;
   const category: SportCategory = (tournament.category as SportCategory) || detectCategory(tournament.title, tournament.description);
   const isLive = tournament.status === 'live';
   const isFinished = tournament.status === 'finished';
@@ -394,6 +397,17 @@ export default function TournamentPublicPage() {
             <p className="tp-description">{tournament.description}</p>
           )}
         </header>
+
+        {/* Dynamic Duo Drawing Section */}
+        {tournament.pairing_mode && tournament.pairing_mode !== 'fixed' && (
+          <DynamicPairingSection
+            individualPlayers={individual_players || []}
+            generatedPairs={generated_pairs || []}
+            bracketGenerated={tournament.bracket_generated}
+            pairingMode={tournament.pairing_mode}
+            teamSize={tournament.team_size}
+          />
+        )}
 
         {/* Live matches - always at top when they exist */}
         {live_matches && live_matches.length > 0 && (
@@ -826,62 +840,278 @@ function MatchCard({ match }: { match: TournamentMatch }) {
 
 // ─── Bracket View ───
 function BracketView({ bracketGroups }: { bracketGroups: Record<string, TournamentMatch[][]> }) {
-  // Separate bracket types for layout
   const winnersRounds = bracketGroups['winners'];
   const losersRounds = bracketGroups['losers'];
-  const otherKeys = Object.keys(bracketGroups).filter(k => k !== 'winners' && k !== 'losers');
-  // Sort others: third_place, grand_final
-  const otherOrder = ['third_place', 'grand_final'];
-  otherKeys.sort((a, b) => {
-    return (otherOrder.indexOf(a) === -1 ? 99 : otherOrder.indexOf(a)) - (otherOrder.indexOf(b) === -1 ? 99 : otherOrder.indexOf(b));
-  });
+  const grandFinalRounds = bracketGroups['grand_final'];
+  const thirdPlaceRounds = bracketGroups['third_place'];
 
-  const renderBracketBlock = (bracketType: string, rounds: typeof winnersRounds) => {
-    if (!rounds) return null;
-    return (
-      <div key={bracketType}>
-        <div className="tp-bracket-type-label">
-          {BRACKET_TYPE_LABELS[bracketType] || bracketType}
-          <span className={`tp-bracket-type-tag ${BRACKET_TYPE_TAG[bracketType] || ''}`}>
-            {bracketType === 'winners' ? 'W' : bracketType === 'losers' ? 'L' : bracketType === 'grand_final' ? 'GF' : '3P'}
-          </span>
-        </div>
-        <div className="tp-bracket-rounds">
-          {rounds.map((roundMatches, idx) => (
-            <div key={idx} className="tp-bracket-round">
-              <div className="tp-bracket-round-label">
-                {bracketType === 'grand_final' || bracketType === 'third_place'
-                  ? (bracketType === 'grand_final' ? 'Final' : '3o Lugar')
-                  : `Rodada ${idx + 1}`}
-              </div>
-              {roundMatches.map(match => (
-                <MatchCard key={match.id} match={match} />
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+  const getWinnersLabel = (idx: number, total: number) => {
+    if (total <= 2) {
+      if (idx === total - 1) return 'Semifinal';
+      return `Rodada ${idx + 1}`;
+    }
+    if (idx === total - 1) return 'Semifinal';
+    if (idx === total - 2) return 'Semi WB';
+    if (total >= 4 && idx === total - 3) return 'Quartas';
+    return `Rodada ${idx + 1}`;
+  };
+
+  const getLosersLabel = (idx: number, total: number) => {
+    if (idx === total - 1) return 'Semifinal';
+    return `Rodada ${idx + 1}`;
   };
 
   return (
     <div className="tp-bracket-section">
-      {/* Winners and Losers side by side */}
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+      {/* Layout: Winners → Center (Finals) ← Losers (mirrored) */}
+      <div className="tp-bracket-layout">
+        {/* Winners bracket (left, normal direction) */}
         {winnersRounds && (
-          <div style={{ flex: 1, minWidth: '300px' }}>
-            {renderBracketBlock('winners', winnersRounds)}
+          <div className="tp-bracket-half">
+            <div className="tp-bracket-type-label">
+              {BRACKET_TYPE_LABELS['winners']}
+              <span className="tp-bracket-type-tag winners">W</span>
+            </div>
+            <div className="tp-bracket-rounds">
+              {winnersRounds.map((roundMatches, idx) => (
+                <div key={idx} className="tp-bracket-round">
+                  <div className="tp-bracket-round-label">
+                    {getWinnersLabel(idx, winnersRounds.length)}
+                  </div>
+                  {roundMatches.map(match => (
+                    <MatchCard key={match.id} match={match} />
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         )}
+
+        {/* Center: Grand Final & 3rd Place */}
+        {(grandFinalRounds || thirdPlaceRounds) && (
+          <div className="tp-bracket-center">
+            {grandFinalRounds && grandFinalRounds[0] && grandFinalRounds[0].map(match => (
+              <div key={match.id}>
+                <div className="tp-bracket-round-label" style={{ color: '#EAB308', fontWeight: 700 }}>Final</div>
+                <MatchCard match={match} />
+              </div>
+            ))}
+            {thirdPlaceRounds && thirdPlaceRounds[0] && thirdPlaceRounds[0].map(match => (
+              <div key={match.id}>
+                <div className="tp-bracket-round-label" style={{ color: '#d97706' }}>3o Lugar</div>
+                <MatchCard match={match} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Losers bracket (right, MIRRORED = reversed order) */}
         {losersRounds && (
-          <div style={{ flex: 1, minWidth: '300px' }}>
-            {renderBracketBlock('losers', losersRounds)}
+          <div className="tp-bracket-half tp-bracket-half-mirrored">
+            <div className="tp-bracket-type-label" style={{ textAlign: 'right' }}>
+              {BRACKET_TYPE_LABELS['losers']}
+              <span className="tp-bracket-type-tag losers">L</span>
+            </div>
+            <div className="tp-bracket-rounds tp-bracket-rounds-mirrored">
+              {[...losersRounds].reverse().map((roundMatches, revIdx) => {
+                const actualIdx = losersRounds.length - 1 - revIdx;
+                return (
+                  <div key={actualIdx} className="tp-bracket-round">
+                    <div className="tp-bracket-round-label">
+                      {getLosersLabel(actualIdx, losersRounds.length)}
+                    </div>
+                    {roundMatches.map(match => (
+                      <MatchCard key={match.id} match={match} />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
-      {/* Grand Final, Third Place below */}
-      {otherKeys.map(bracketType => renderBracketBlock(bracketType, bracketGroups[bracketType]))}
+
+      {/* Fallback for formats without losers (single elimination) */}
+      {!losersRounds && (grandFinalRounds || thirdPlaceRounds) && (
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
+          {grandFinalRounds && grandFinalRounds[0] && grandFinalRounds[0].map(m => (
+            <div key={m.id}>
+              <div className="tp-bracket-round-label" style={{ color: '#EAB308', fontWeight: 700 }}>Final</div>
+              <MatchCard match={m} />
+            </div>
+          ))}
+          {thirdPlaceRounds && thirdPlaceRounds[0] && thirdPlaceRounds[0].map(m => (
+            <div key={m.id}>
+              <div className="tp-bracket-round-label" style={{ color: '#d97706' }}>3o Lugar</div>
+              <MatchCard match={m} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+// ─── Dynamic Pairing Section (animated duo drawing) ───
+function DynamicPairingSection({
+  individualPlayers,
+  generatedPairs,
+  bracketGenerated,
+  pairingMode,
+  teamSize,
+}: {
+  individualPlayers: { id: number; player_name: string; side: 'left' | 'right' }[];
+  generatedPairs: { team_name: string; left_player: string; right_player: string }[];
+  bracketGenerated: boolean;
+  pairingMode: string;
+  teamSize: number;
+}) {
+  const [revealedPairs, setRevealedPairs] = useState<number>(0);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const [shuffleActive, setShuffleActive] = useState(false);
+  const prevPairsCount = useRef(generatedPairs.length);
+
+  const leftPlayers = individualPlayers.filter(p => p.side === 'left');
+  const rightPlayers = individualPlayers.filter(p => p.side === 'right');
+  const hasPairs = generatedPairs.length > 0;
+
+  // Auto-trigger reveal animation when pairs appear (from polling)
+  useEffect(() => {
+    if (generatedPairs.length > 0 && prevPairsCount.current === 0) {
+      setShuffleActive(true);
+      setRevealedPairs(0);
+      setTimeout(() => {
+        setShuffleActive(false);
+        setIsRevealing(true);
+        let i = 0;
+        const interval = setInterval(() => {
+          i++;
+          setRevealedPairs(i);
+          if (i >= generatedPairs.length) {
+            clearInterval(interval);
+            setIsRevealing(false);
+          }
+        }, 800);
+      }, 2500);
+    }
+    prevPairsCount.current = generatedPairs.length;
+  }, [generatedPairs.length]);
+
+  // Nothing relevant to show
+  if (individualPlayers.length === 0 && generatedPairs.length === 0) return null;
+
+  return (
+    <div className="tp-pairing-section">
+      <h2 className="tp-section-title">
+        <ShuffleIcon /> Sorteio de Duplas
+        <span className="tp-pairing-mode-badge">
+          {pairingMode === 'dynamic_single' ? 'Unico' : 'Por Rodada'}
+        </span>
+      </h2>
+
+      {/* Players awaiting draw */}
+      {!hasPairs && individualPlayers.length > 0 && (
+        <div className="tp-pairing-players">
+          <div className="tp-pairing-side tp-pairing-left">
+            <div className="tp-pairing-side-label">
+              <span className="tp-pairing-side-dot left" />
+              Lado Esquerdo ({leftPlayers.length})
+            </div>
+            <div className="tp-pairing-player-list">
+              {leftPlayers.map((p, i) => (
+                <div
+                  key={p.id}
+                  className="tp-pairing-player-card left"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                >
+                  <span className="tp-pairing-player-number">{i + 1}</span>
+                  <span className="tp-pairing-player-name">{p.player_name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="tp-pairing-vs">
+            <div className="tp-pairing-vs-icon">
+              <ShuffleIcon size={32} />
+            </div>
+            <div className="tp-pairing-vs-text">Aguardando sorteio...</div>
+          </div>
+
+          <div className="tp-pairing-side tp-pairing-right">
+            <div className="tp-pairing-side-label">
+              <span className="tp-pairing-side-dot right" />
+              Lado Direito ({rightPlayers.length})
+            </div>
+            <div className="tp-pairing-player-list">
+              {rightPlayers.map((p, i) => (
+                <div
+                  key={p.id}
+                  className="tp-pairing-player-card right"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                >
+                  <span className="tp-pairing-player-number">{i + 1}</span>
+                  <span className="tp-pairing-player-name">{p.player_name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shuffle animation overlay */}
+      {shuffleActive && (
+        <div className="tp-pairing-shuffle-overlay">
+          <div className="tp-pairing-shuffle-spinner" />
+          <div className="tp-pairing-shuffle-text">Sorteando duplas...</div>
+        </div>
+      )}
+
+      {/* Revealed pairs */}
+      {hasPairs && (
+        <div className="tp-pairing-results">
+          <div className="tp-pairing-pairs-grid">
+            {generatedPairs.map((pair, idx) => {
+              const isVisible = revealedPairs > idx || (!isRevealing && !shuffleActive);
+              return (
+                <div
+                  key={idx}
+                  className={`tp-pairing-pair-card ${isVisible ? 'revealed' : 'hidden'}`}
+                  style={{ transitionDelay: `${idx * 0.15}s` }}
+                >
+                  <div className="tp-pairing-pair-number">Dupla {idx + 1}</div>
+                  <div className="tp-pairing-pair-players">
+                    <span className="tp-pairing-pair-player left">{pair.left_player}</span>
+                    <span className="tp-pairing-pair-ampersand">&</span>
+                    <span className="tp-pairing-pair-player right">{pair.right_player}</span>
+                  </div>
+                  <div className="tp-pairing-pair-team-name">{pair.team_name}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {bracketGenerated && (
+            <div className="tp-pairing-bracket-ready">
+              <span className="tp-pairing-bracket-ready-icon">&#9989;</span>
+              Confrontos sorteados! Veja a chave na aba "Chave".
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ShuffleIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 3 21 3 21 8" />
+      <line x1="4" y1="20" x2="21" y2="3" />
+      <polyline points="21 16 21 21 16 21" />
+      <line x1="15" y1="15" x2="21" y2="21" />
+      <line x1="4" y1="4" x2="9" y2="9" />
+    </svg>
   );
 }
 

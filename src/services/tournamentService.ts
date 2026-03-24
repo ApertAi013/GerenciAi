@@ -38,6 +38,7 @@ export interface Tournament {
   points_draw?: number;
   points_loss?: number;
   group_stage_completed?: boolean;
+  pairing_mode?: 'fixed' | 'dynamic_single' | 'dynamic_per_round';
 }
 
 export interface TournamentTeam {
@@ -181,8 +182,8 @@ export const tournamentService = {
     return response.data;
   },
 
-  async approveTeam(tournamentId: number, teamId: number): Promise<{ status: string; message: string }> {
-    const response = await api.put(`/api/tournaments/${tournamentId}/teams/${teamId}/approve`);
+  async approveTeam(tournamentId: number, teamId: number, side?: 'left' | 'right'): Promise<{ status: string; message: string }> {
+    const response = await api.put(`/api/tournaments/${tournamentId}/teams/${teamId}/approve`, side ? { side } : {});
     return response.data;
   },
 
@@ -249,6 +250,27 @@ export const tournamentService = {
   // Rankings
   async getRankings(): Promise<{ status: string; data: TournamentRanking[] }> {
     const response = await api.get('/api/tournaments/rankings');
+    return response.data;
+  },
+
+  // Individual players (dynamic pairing)
+  async getIndividualPlayers(tournamentId: number): Promise<any> {
+    const response = await api.get(`/api/tournaments/${tournamentId}/players`);
+    return response.data;
+  },
+
+  async addIndividualPlayer(tournamentId: number, data: { player_name: string; side: 'left' | 'right'; student_id?: number }): Promise<any> {
+    const response = await api.post(`/api/tournaments/${tournamentId}/players`, data);
+    return response.data;
+  },
+
+  async removeIndividualPlayer(tournamentId: number, playerId: number): Promise<any> {
+    const response = await api.delete(`/api/tournaments/${tournamentId}/players/${playerId}`);
+    return response.data;
+  },
+
+  async generatePairs(tournamentId: number, mode: string, roundNumber?: number): Promise<any> {
+    const response = await api.post(`/api/tournaments/${tournamentId}/generate-pairs`, { mode, round_number: roundNumber });
     return response.data;
   },
 };

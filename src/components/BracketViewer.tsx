@@ -44,14 +44,19 @@ function MatchCard({ match, onClick, interactive }: { match: TournamentMatch; on
 }
 
 export default function BracketViewer({ winners, losers, grandFinal, thirdPlace, onMatchClick, interactive }: BracketViewerProps) {
-  const getRoundLabel = (bracketType: string, roundIndex: number, totalRounds: number) => {
-    if (bracketType === 'winners') {
-      if (roundIndex === totalRounds - 1) return 'Final';
-      if (roundIndex === totalRounds - 2) return 'Semifinal';
+  const getWinnersLabel = (roundIndex: number, totalRounds: number) => {
+    if (totalRounds <= 2) {
+      if (roundIndex === totalRounds - 1) return 'Semifinal';
       return `Rodada ${roundIndex + 1}`;
     }
-    if (roundIndex === totalRounds - 1) return 'Final';
-    if (roundIndex === totalRounds - 2) return 'Semifinal';
+    if (roundIndex === totalRounds - 1) return 'Semifinal';
+    if (roundIndex === totalRounds - 2) return 'Semi WB';
+    if (totalRounds >= 4 && roundIndex === totalRounds - 3) return 'Quartas';
+    return `Rodada ${roundIndex + 1}`;
+  };
+
+  const getLosersLabel = (roundIndex: number, totalRounds: number) => {
+    if (roundIndex === totalRounds - 1) return 'Semifinal';
     return `Rodada ${roundIndex + 1}`;
   };
 
@@ -59,18 +64,18 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
 
   return (
     <div className="bracket-container">
-      {/* Winners and Losers side by side */}
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-        {/* Winners Bracket */}
+      {/* Main layout: Winners → Center (Finals) ← Losers (mirrored) */}
+      <div className="bracket-main-layout">
+        {/* Winners Bracket (left, flows left→right) */}
         {winners && winners.length > 0 && (
-          <div style={{ flex: 1, minWidth: '300px' }}>
+          <div className="bracket-half bracket-winners-half">
             <div className="bracket-section">
-              <div className="bracket-section-title">Chave Principal</div>
+              <div className="bracket-section-title">CHAVE PRINCIPAL</div>
               <div className="bracket-rounds">
                 {winners.map((round, roundIdx) => (
                   <div key={`wb-${roundIdx}`} className="bracket-round">
                     <div className="bracket-round-label">
-                      {getRoundLabel('winners', roundIdx, winners.length)}
+                      {getWinnersLabel(roundIdx, winners.length)}
                     </div>
                     {round && round.map(match => (
                       <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} />
@@ -82,56 +87,82 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
           </div>
         )}
 
-        {/* Losers Bracket */}
+        {/* Center: Grand Final & 3rd Place */}
+        {(grandFinal || thirdPlace) && (
+          <div className="bracket-center">
+            {grandFinal && (
+              <div className="bracket-section">
+                <div className="bracket-grand-final">
+                  <div>
+                    <div className="bracket-gf-label">Grande Final</div>
+                    <MatchCard match={grandFinal} onClick={onMatchClick} interactive={interactive} />
+                  </div>
+                </div>
+              </div>
+            )}
+            {thirdPlace && (
+              <div className="bracket-section">
+                <div className="bracket-grand-final">
+                  <div>
+                    <div className="bracket-gf-label" style={{ color: '#d97706' }}>Disputa de 3º Lugar</div>
+                    <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Losers Bracket (right, flows right→left = MIRRORED) */}
         {hasLosers && (
-          <div style={{ flex: 1, minWidth: '300px' }}>
+          <div className="bracket-half bracket-losers-half">
             <div className="bracket-section">
-              <div className="bracket-section-title">Chave dos Perdedores</div>
-              <div className="bracket-rounds">
-                {losers.map((round, roundIdx) => (
-                  round && round.length > 0 ? (
-                    <div key={`lb-${roundIdx}`} className="bracket-round">
+              <div className="bracket-section-title">CHAVE DOS PERDEDORES</div>
+              <div className="bracket-rounds bracket-rounds-mirrored">
+                {[...losers].reverse().map((round, revIdx) => {
+                  const actualIdx = losers.length - 1 - revIdx;
+                  return round && round.length > 0 ? (
+                    <div key={`lb-${actualIdx}`} className="bracket-round">
                       <div className="bracket-round-label">
-                        {getRoundLabel('losers', roundIdx, losers.length)}
+                        {getLosersLabel(actualIdx, losers.length)}
                       </div>
                       {round.map(match => (
                         <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} />
                       ))}
                     </div>
-                  ) : null
-                ))}
+                  ) : null;
+                })}
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Grand Final & Third Place below */}
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-        {/* Grand Final */}
-        {grandFinal && (
-          <div className="bracket-section">
-            <div className="bracket-grand-final">
-              <div>
-                <div className="bracket-gf-label">Grande Final</div>
-                <MatchCard match={grandFinal} onClick={onMatchClick} interactive={interactive} />
+      {/* Fallback: Grand Final & 3rd Place below if no losers bracket */}
+      {!hasLosers && (grandFinal || thirdPlace) && (
+        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {grandFinal && (
+            <div className="bracket-section">
+              <div className="bracket-grand-final">
+                <div>
+                  <div className="bracket-gf-label">Grande Final</div>
+                  <MatchCard match={grandFinal} onClick={onMatchClick} interactive={interactive} />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Third Place */}
-        {thirdPlace && (
-          <div className="bracket-section">
-            <div className="bracket-grand-final">
-              <div>
-                <div className="bracket-gf-label" style={{ color: '#d97706' }}>Disputa de 3º Lugar</div>
-                <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} />
+          )}
+          {thirdPlace && (
+            <div className="bracket-section">
+              <div className="bracket-grand-final">
+                <div>
+                  <div className="bracket-gf-label" style={{ color: '#d97706' }}>Disputa de 3º Lugar</div>
+                  <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

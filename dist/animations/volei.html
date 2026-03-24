@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volei 3D</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: transparent; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+  body.standalone { background: #080810; }
+  .score-bar { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.85); padding: 10px 24px; border-radius: 12px; border: 1px solid #333; z-index: 100; backdrop-filter: blur(10px); }
+  body.embed .score-bar { display: none; }
+  .score-bar .team { text-align: center; min-width: 70px; }
+  .score-bar .team-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
+  .score-bar .team-score { font-size: 32px; font-weight: 800; }
+  .score-bar .team-a .team-score { color: #3B82F6; }
+  .score-bar .team-b .team-score { color: #EF4444; }
+  .score-bar .vs { font-size: 13px; opacity: 0.3; font-weight: 600; }
+  #canvas-container { width: 100vw; height: 100vh; }
+  .goal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 999; pointer-events: none; opacity: 0; transition: opacity 0.15s; }
+  .goal-overlay.show { opacity: 1; }
+  .goal-text { font-size: 100px; font-weight: 900; text-shadow: 0 0 60px currentColor, 0 0 120px currentColor; animation: none; }
+  .goal-overlay.show .goal-text { animation: goalPulse 0.4s ease-out; }
+  .goal-text.blue { color: #3B82F6; }
+  .goal-text.red { color: #EF4444; }
+  @keyframes goalPulse { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="score-bar">
+  <div class="team team-a"><div class="team-name" id="name-a">Time A</div><div class="team-score" id="score-a">0</div></div>
+  <div class="vs">VS</div>
+  <div class="team team-b"><div class="team-name" id="name-b">Time B</div><div class="team-score" id="score-b">0</div></div>
+</div>
+<div id="canvas-container"></div>
+<div class="goal-overlay" id="goal-overlay"><div class="goal-text" id="goal-text">PONTO!</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+var params = new URLSearchParams(window.location.search);
+var isEmbed = params.get('embed') === 'true' || window.self !== window.top;
+document.body.className = isEmbed ? 'embed' : 'standalone';
+var team1Name = params.get('team1') || 'Time A';
+var team2Name = params.get('team2') || 'Time B';
+var scoreA = parseInt(params.get('score1') || '0');
+var scoreB = parseInt(params.get('score2') || '0');
+document.getElementById('name-a').textContent = team1Name;
+document.getElementById('name-b').textContent = team2Name;
+document.getElementById('score-a').textContent = scoreA;
+document.getElementById('score-b').textContent = scoreB;
+
+function createSandTexture(isOuter) {
+  var c = document.createElement('canvas'); c.width = 256; c.height = 256;
+  var ctx = c.getContext('2d');
+  ctx.fillStyle = isOuter ? '#b8963a' : '#d4a843'; ctx.fillRect(0, 0, 256, 256);
+  for (var n = 0; n < 2000; n++) {
+    var nx = Math.random() * 256, ny = Math.random() * 256, s = Math.random();
+    ctx.fillStyle = s > 0.5 ? 'rgba(220,190,110,' + (0.1 + s * 0.15) + ')' : 'rgba(150,120,60,' + (0.1 + s * 0.15) + ')';
+    ctx.fillRect(nx, ny, 1 + Math.random() * 2, 1 + Math.random() * 2);
+  }
+  var tex = new THREE.CanvasTexture(c); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex;
+}
+function createVolleyballTexture() {
+  var c = document.createElement('canvas'); c.width = 512; c.height = 256;
+  var ctx = c.getContext('2d');
+  ctx.fillStyle = '#fffde0'; ctx.fillRect(0, 0, 512, 256);
+  var cols = ['#cc2222', '#2244aa', '#ddaa00'];
+  for (var s = 0; s < 3; s++) {
+    ctx.strokeStyle = cols[s]; ctx.lineWidth = 14;
+    var off = s * 170;
+    ctx.beginPath(); ctx.moveTo(off, 0); ctx.bezierCurveTo(off + 60, 85, off + 40, 170, off + 100, 256); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(off + 8, 0); ctx.bezierCurveTo(off + 68, 85, off + 48, 170, off + 108, 256); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 2;
+  for (var i = 0; i < 8; i++) { var x = i * 64; ctx.beginPath(); ctx.moveTo(x, 0); ctx.quadraticCurveTo(x + 30, 128, x, 256); ctx.stroke(); }
+  var tex = new THREE.CanvasTexture(c); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex;
+}
+
+function createCapsulePlayer(jerseyColor, height) {
+  height = height || 1.5;
+  var group = new THREE.Group();
+  var bodyMat = new THREE.MeshStandardMaterial({ color: jerseyColor, roughness: 0.35, metalness: 0.0 });
+  var headR = height * 0.15, neckR = height * 0.04, neckH = height * 0.03;
+  var chestW = height * 0.12, waistW = height * 0.08, torsoH = height * 0.22;
+  var hipR = height * 0.09, legRTop = height * 0.055, legRBot = height * 0.04, legH = height * 0.28;
+  var armRTop = height * 0.04, armRBot = height * 0.03, armH = height * 0.24;
+  var handR = height * 0.035, footW = height * 0.045, footD = height * 0.08, legGap = height * 0.06;
+  var footY = height * 0.03, legBot = footY + height * 0.03, legTop = legBot + legH;
+  var hipY = legTop + hipR * 0.3, torsoBot = hipY, torsoTop = torsoBot + torsoH;
+  var neckBot = torsoTop, neckTop = neckBot + neckH, headY = neckTop + headR * 0.9, shoulderY = torsoTop - torsoH * 0.08;
+
+  group.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(headR, 24, 16), bodyMat), { position: new THREE.Vector3(0, headY, 0), castShadow: true }));
+  group.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(neckR, neckR, neckH + headR * 0.3, 12), bodyMat), { position: new THREE.Vector3(0, neckBot + neckH * 0.5, 0) }));
+  var torso = new THREE.Mesh(new THREE.CylinderGeometry(chestW, waistW, torsoH, 16), bodyMat);
+  torso.position.y = torsoBot + torsoH * 0.5; torso.castShadow = true; group.add(torso);
+  var hips = new THREE.Mesh(new THREE.SphereGeometry(hipR, 14, 10), bodyMat);
+  hips.position.y = hipY; hips.scale.set(1.1, 0.6, 0.8); group.add(hips);
+
+  var legGeo = new THREE.CylinderGeometry(legRTop, legRBot, legH, 10);
+  var legLPivot = new THREE.Group(); legLPivot.position.set(-legGap, legTop, 0);
+  legLPivot.add(Object.assign(new THREE.Mesh(legGeo, bodyMat), { position: new THREE.Vector3(0, -legH * 0.5, 0), castShadow: true }));
+  legLPivot.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(legRTop * 1.05, 8, 6), bodyMat), { position: new THREE.Vector3(0, -legH * 0.45, 0) }));
+  var fL = new THREE.Mesh(new THREE.SphereGeometry(footW, 10, 8), bodyMat); fL.position.set(0, -legH, footD * 0.2); fL.scale.set(1, 0.55, 1.8); legLPivot.add(fL);
+  group.add(legLPivot);
+  var legRPivot = new THREE.Group(); legRPivot.position.set(legGap, legTop, 0);
+  legRPivot.add(Object.assign(new THREE.Mesh(legGeo, bodyMat), { position: new THREE.Vector3(0, -legH * 0.5, 0), castShadow: true }));
+  legRPivot.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(legRTop * 1.05, 8, 6), bodyMat), { position: new THREE.Vector3(0, -legH * 0.45, 0) }));
+  var fR = new THREE.Mesh(new THREE.SphereGeometry(footW, 10, 8), bodyMat); fR.position.set(0, -legH, footD * 0.2); fR.scale.set(1, 0.55, 1.8); legRPivot.add(fR);
+  group.add(legRPivot);
+
+  var armGeo = new THREE.CylinderGeometry(armRTop, armRBot, armH, 10);
+  var armLPivot = new THREE.Group(); armLPivot.position.set(-chestW - armRTop * 0.8, shoulderY, 0);
+  armLPivot.add(new THREE.Mesh(new THREE.SphereGeometry(armRTop * 1.3, 8, 6), bodyMat));
+  armLPivot.add(Object.assign(new THREE.Mesh(armGeo, bodyMat), { position: new THREE.Vector3(0, -armH * 0.5, 0), castShadow: true }));
+  armLPivot.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(handR, 10, 8), bodyMat), { position: new THREE.Vector3(0, -armH - handR * 0.3, 0) }));
+  armLPivot.rotation.z = 0.12; group.add(armLPivot);
+  var armRPivot = new THREE.Group(); armRPivot.position.set(chestW + armRTop * 0.8, shoulderY, 0);
+  armRPivot.add(new THREE.Mesh(new THREE.SphereGeometry(armRTop * 1.3, 8, 6), bodyMat));
+  armRPivot.add(Object.assign(new THREE.Mesh(armGeo, bodyMat), { position: new THREE.Vector3(0, -armH * 0.5, 0), castShadow: true }));
+  armRPivot.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(handR, 10, 8), bodyMat), { position: new THREE.Vector3(0, -armH - handR * 0.3, 0) }));
+  armRPivot.rotation.z = -0.12; group.add(armRPivot);
+
+  group.userData = { legL: legLPivot, legR: legRPivot, armL: armLPivot, armR: armRPivot, head: group.children[0], body: torso, playerHeight: height, baseY: 0 };
+  return group;
+}
+
+function animatePlayer(player, time, idx, isActive, celebrationState) {
+  if (celebrationState === 'happy') {
+    var jp = time * 10 + idx * 1.5; player.position.y = (player.userData.baseY || 0) + Math.abs(Math.sin(jp)) * 0.35;
+    player.userData.armL.rotation.x = -2.0 + Math.sin(jp * 0.7) * 0.2; player.userData.armR.rotation.x = -2.0 + Math.sin(jp * 0.7 + 0.5) * 0.2;
+    player.userData.armL.rotation.z = 0.4; player.userData.armR.rotation.z = -0.4;
+    player.userData.legL.rotation.x = Math.sin(jp) * 0.15; player.userData.legR.rotation.x = -Math.sin(jp) * 0.15;
+    player.rotation.y += 0.03; return;
+  }
+  if (celebrationState === 'sad') {
+    player.position.y = (player.userData.baseY || 0);
+    player.userData.armL.rotation.x = 0.15; player.userData.armR.rotation.x = 0.15;
+    player.userData.armL.rotation.z = 0.35; player.userData.armR.rotation.z = -0.35;
+    player.userData.legL.rotation.x = 0; player.userData.legR.rotation.x = 0;
+    if (player.userData.head) player.userData.head.rotation.x = 0.3; return;
+  }
+  if (player.userData.head) player.userData.head.rotation.x = 0;
+  var speed = isActive ? 7 : 2.5, legAmp = isActive ? 0.5 : 0.1, armAmp = isActive ? 0.4 : 0.08;
+  var phase = time * speed + idx * 2.1;
+  player.userData.legL.rotation.x = Math.sin(phase) * legAmp; player.userData.legR.rotation.x = -Math.sin(phase) * legAmp;
+  player.userData.armL.rotation.x = Math.sin(phase + Math.PI) * armAmp; player.userData.armR.rotation.x = -Math.sin(phase + Math.PI) * armAmp;
+  player.userData.armL.rotation.z = 0.15; player.userData.armR.rotation.z = -0.15;
+  player.position.y = (player.userData.baseY || 0) + Math.abs(Math.sin(phase)) * 0.03;
+}
+
+function createParticles(scene, count, bounds, c1, c2) {
+  var ps = [], g = new THREE.Group(), geo = new THREE.SphereGeometry(0.015, 4, 4);
+  for (var i = 0; i < count; i++) {
+    var m = new THREE.MeshBasicMaterial({ color: Math.random() > 0.5 ? c1 : c2, transparent: true, opacity: 0.15 + Math.random() * 0.2 });
+    var p = new THREE.Mesh(geo, m); p.position.set((Math.random()-0.5)*bounds.x, Math.random()*bounds.y+0.5, (Math.random()-0.5)*bounds.z);
+    p.userData = { vy: 0.002+Math.random()*0.005, vx: (Math.random()-0.5)*0.003, vz: (Math.random()-0.5)*0.003, maxY: bounds.y+1 };
+    g.add(p); ps.push(p);
+  }
+  scene.add(g); return ps;
+}
+function animPs(ps, t) { for (var i=0;i<ps.length;i++) { var p=ps[i]; p.position.y+=p.userData.vy; p.position.x+=p.userData.vx+Math.sin(t*0.5+i)*0.001; p.position.z+=p.userData.vz+Math.cos(t*0.3+i)*0.001; if(p.position.y>p.userData.maxY){p.position.y=0.2;p.position.x=(Math.random()-0.5)*20;p.position.z=(Math.random()-0.5)*20;} } }
+function createBurst(scene) { var pool=[],geo=new THREE.SphereGeometry(0.03,4,4),g=new THREE.Group(); for(var i=0;i<30;i++){var m=new THREE.MeshBasicMaterial({color:0xffffaa,transparent:true,opacity:0});var p=new THREE.Mesh(geo,m);p.userData={active:false,vx:0,vy:0,vz:0,life:0};g.add(p);pool.push(p);} scene.add(g); return pool; }
+function fireBurst(pool,pos,color){for(var i=0;i<pool.length;i++){var p=pool[i];p.position.copy(pos);p.material.color.setHex(color||0xffffcc);p.material.opacity=0.8;p.userData.active=true;p.userData.vx=(Math.random()-0.5)*0.15;p.userData.vy=0.05+Math.random()*0.12;p.userData.vz=(Math.random()-0.5)*0.15;p.userData.life=1.0;}}
+function animBurst(pool){for(var i=0;i<pool.length;i++){var p=pool[i];if(!p.userData.active)continue;p.position.x+=p.userData.vx;p.position.y+=p.userData.vy;p.position.z+=p.userData.vz;p.userData.vy-=0.003;p.userData.life-=0.025;p.material.opacity=Math.max(0,p.userData.life*0.8);if(p.userData.life<=0){p.userData.active=false;p.material.opacity=0;}}}
+function createContactShadow(){var g=new THREE.CircleGeometry(0.25,16);var m=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.25,depthWrite:false});var s=new THREE.Mesh(g,m);s.rotation.x=-Math.PI/2;s.position.y=0.015;return s;}
+
+function createSandCourt(w, h) {
+  var g = new THREE.Group();
+  var courtGeo = new THREE.PlaneGeometry(w, h, 64, 64); var pos = courtGeo.attributes.position; var colors = [];
+  for (var i = 0; i < pos.count; i++) { pos.setZ(i, pos.getZ(i) + (Math.random()-0.5)*0.025); colors.push(0.83+(Math.random()-0.5)*0.06, 0.66+(Math.random()-0.5)*0.06, 0.26+(Math.random()-0.5)*0.04); }
+  courtGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3)); pos.needsUpdate = true; courtGeo.computeVertexNormals();
+  var court = new THREE.Mesh(courtGeo, new THREE.MeshStandardMaterial({ map: createSandTexture(false), vertexColors: true, roughness: 0.95 }));
+  court.rotation.x = -Math.PI / 2; court.position.y = 0.01; court.receiveShadow = true; g.add(court);
+  var lm = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, emissive: 0xffffff, emissiveIntensity: 0.15 });
+  g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(w, 0.045, 0.06), lm), { position: new THREE.Vector3(0, 0.03, -h/2) }));
+  g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(w, 0.045, 0.06), lm), { position: new THREE.Vector3(0, 0.03, h/2) }));
+  g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.045, h), lm), { position: new THREE.Vector3(-w/2, 0.03, 0) }));
+  g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.045, h), lm), { position: new THREE.Vector3(w/2, 0.03, 0) }));
+  return g;
+}
+
+function createNet(width, height) {
+  var g = new THREE.Group();
+  var pm = new THREE.MeshStandardMaterial({ color: 0xCCCCCC, roughness: 0.3, metalness: 0.5 });
+  var pg = new THREE.CylinderGeometry(0.05, 0.05, height + 0.4, 12);
+  g.add(Object.assign(new THREE.Mesh(pg, pm), { position: new THREE.Vector3(0, (height+0.4)/2, -width/2), castShadow: true }));
+  g.add(Object.assign(new THREE.Mesh(pg, pm), { position: new THREE.Vector3(0, (height+0.4)/2, width/2), castShadow: true }));
+  var tm = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, emissive: 0xffffff, emissiveIntensity: 0.1 });
+  g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, width), tm), { position: new THREE.Vector3(0, height, 0) }));
+  g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.05, width), tm), { position: new THREE.Vector3(0, height*0.45, 0) }));
+  var nm = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, side: THREE.DoubleSide });
+  for (var i=0;i<=50;i++){var z=-width/2+width*(i/50);var s=new THREE.Mesh(new THREE.CylinderGeometry(0.005,0.005,height*0.55,4),nm);s.position.set(0,height*0.45+height*0.55/2,z);g.add(s);}
+  for (var j=0;j<=16;j++){var yy=height*0.45+height*0.55*(j/16);var h2=new THREE.Mesh(new THREE.CylinderGeometry(0.005,0.005,width,4),nm);h2.position.set(0,yy,0);h2.rotation.x=Math.PI/2;g.add(h2);}
+  return g;
+}
+
+// Scene setup
+var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: isEmbed }); renderer.setSize(window.innerWidth, window.innerHeight); if (!isEmbed) renderer.setClearColor(0x080810, 1);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+var scene = new THREE.Scene(); scene.background = new THREE.Color(0x080810); scene.fog = new THREE.Fog(0x080810, 10, 18);
+var camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100); camera.position.set(7, 5, 7);
+
+scene.add(new THREE.AmbientLight(0x505878, 0.5));
+scene.add(new THREE.HemisphereLight(0x87CEEB, 0xD4A843, 0.35));
+var dl = new THREE.DirectionalLight(0xffeedd, 1.3); dl.position.set(5, 12, 5); dl.castShadow = true;
+dl.shadow.mapSize.set(2048, 2048); dl.shadow.camera.near = 1; dl.shadow.camera.far = 30;
+dl.shadow.camera.left = -10; dl.shadow.camera.right = 10; dl.shadow.camera.top = 10; dl.shadow.camera.bottom = -10;
+dl.shadow.bias = -0.001; scene.add(dl);
+var wl = new THREE.PointLight(0xff8844, 0.4, 20); wl.position.set(-5, 3, -4); scene.add(wl);
+
+scene.add(createSandCourt(8, 5));
+scene.add(createNet(5, 2.24));
+
+var dust = createParticles(scene, 40, { x: 14, y: 5, z: 14 }, 0xd4a843, 0xc49a3a);
+var burst = createBurst(scene);
+
+var players = [], pShadows = [];
+var pPos = [{ x: -3, z: 0, team: 'a' }, { x: -1.2, z: 0, team: 'a' }, { x: 1.2, z: 0, team: 'b' }, { x: 3, z: 0, team: 'b' }];
+for (var pi = 0; pi < pPos.length; pi++) {
+  var pp = pPos[pi]; var pl = createCapsulePlayer(pp.team === 'a' ? 0x3B82F6 : 0xEF4444, 1.6);
+  pl.position.set(pp.x, 0, pp.z); pl.userData.baseX = pp.x; pl.userData.baseZ = pp.z; pl.userData.team = pp.team;
+  scene.add(pl); players.push(pl);
+  var cs = createContactShadow(); cs.position.set(pp.x, 0.015, pp.z); scene.add(cs); pShadows.push(cs);
+}
+
+var vTex = createVolleyballTexture();
+var ballGeo = new THREE.SphereGeometry(0.12, 28, 20);
+var ball = new THREE.Mesh(ballGeo, new THREE.MeshStandardMaterial({ map: vTex, color: 0xffffff, roughness: 0.35, metalness: 0.05, emissive: 0xFFFFE0, emissiveIntensity: 0.12 }));
+ball.castShadow = true; scene.add(ball);
+var ballShadow = createContactShadow(); ballShadow.scale.set(0.6, 0.6, 0.6); scene.add(ballShadow);
+
+// Rally state machine (3-touch volleyball)
+var rally = { phase: 'receive', team: 'a', touches: 3, progress: 0, speed: 0.55,
+  ballStart: { x: 2, y: 3.5, z: 0 }, ballEnd: { x: -2.5, y: 2.2, z: 0 }, ballPeak: 3.5,
+  receiveTargetX: -2.5, receiveTargetZ: 0, setTargetX: -1.0, setTargetZ: 0,
+  attackTargetX: -0.5, attackTargetZ: 0, lastPhase: '', variation: null
+};
+
+function parabolaY(sy, py, ey, t) { return sy + (py - sy) * 4 * t * (1 - t) + (ey - sy) * t; }
+function playerIdx(team, role) { if (team === 'a') return role === 'back' ? 0 : 1; return role === 'front' ? 2 : 3; }
+
+var variations = [{ setZ: -1.5, attackZ: -1.2 }, { setZ: 0, attackZ: 0.3 }, { setZ: 1.5, attackZ: 1.0 }];
+
+function startPhase(phase, team) {
+  var cur = { x: ball.position.x, y: ball.position.y, z: ball.position.z };
+  rally.phase = phase; rally.team = team; rally.progress = 0;
+  if (phase === 'receive') {
+    var v = variations[Math.floor(Math.random() * variations.length)]; rally.variation = v;
+    var rand = Math.random(); rally.touches = rand < 0.2 ? 1 : rand < 0.5 ? 2 : 3;
+    rally.receiveTargetX = team === 'a' ? -2.5 : 2.5; rally.receiveTargetZ = (Math.random()-0.5)*2;
+    if (rally.touches === 1) {
+      rally.ballStart = cur; rally.ballEnd = { x: (team==='a'?2.5:-2.5), y: 1.5, z: (Math.random()-0.5)*2 }; rally.ballPeak = 3.8; rally.speed = 0.5;
+    } else {
+      rally.setTargetX = team === 'a' ? -1.0 : 1.0; rally.setTargetZ = v.setZ * 0.6;
+      rally.ballStart = cur; rally.ballEnd = { x: rally.setTargetX, y: 2.2, z: rally.setTargetZ }; rally.ballPeak = Math.max(cur.y+0.3, 3.2); rally.speed = 0.55;
+    }
+  } else if (phase === 'set') {
+    var v = rally.variation || variations[0];
+    if (rally.touches === 2) { rally.ballStart = cur; rally.ballEnd = { x: (team==='a'?2.2:-2.2), y: 1.5, z: (Math.random()-0.5)*2 }; rally.ballPeak = 4.0; rally.speed = 0.5; }
+    else { rally.attackTargetX = team==='a'?-0.5:0.5; rally.attackTargetZ = v.attackZ; rally.ballStart = cur; rally.ballEnd = { x: rally.attackTargetX, y: 3.0, z: v.attackZ }; rally.ballPeak = 4.2; rally.speed = 0.45; }
+  } else if (phase === 'attack') {
+    rally.ballStart = cur; rally.ballEnd = { x: (team==='a'?2.2+Math.random()*0.5:-2.2-Math.random()*0.5), y: 1.5, z: (Math.random()-0.5)*2 }; rally.ballPeak = 3.5; rally.speed = 0.8;
+  }
+}
+startPhase('receive', 'a');
+
+var clock = new THREE.Clock();
+var gameState = { celebrating: false, celebrateTeam: null, startTime: 0 };
+var camState = { x: 7, y: 4.5, z: 7, lx: 0, ly: 1.2, lz: 0 };
+function lerpCam(cam, tx, ty, tz, lx, ly, lz, sp) {
+  sp = sp || 0.025; camState.x += (tx-camState.x)*sp; camState.y += (ty-camState.y)*sp; camState.z += (tz-camState.z)*sp;
+  camState.lx += (lx-camState.lx)*sp; camState.ly += (ly-camState.ly)*sp; camState.lz += (lz-camState.lz)*sp;
+  cam.position.set(camState.x, camState.y, camState.z); cam.lookAt(camState.lx, camState.ly, camState.lz);
+}
+
+function showOverlay(team) {
+  var ov = document.getElementById('goal-overlay'), txt = document.getElementById('goal-text');
+  txt.className = 'goal-text ' + (team === 'a' ? 'blue' : 'red'); txt.textContent = 'PONTO!';
+  ov.classList.remove('show'); void ov.offsetWidth; ov.classList.add('show');
+  setTimeout(function() { ov.classList.remove('show'); }, 1200);
+}
+
+window.triggerEvent = function(team, type) {
+  if (team !== 'a' && team !== 'b') return; if (type !== 'point') return; if (gameState.celebrating) return;
+  gameState.celebrating = true; gameState.celebrateTeam = team; gameState.startTime = clock.getElapsedTime();
+  if (team === 'a') scoreA++; else scoreB++;
+  document.getElementById('score-a').textContent = scoreA; document.getElementById('score-b').textContent = scoreB;
+  showOverlay(team);
+};
+window.addEventListener('message', function(e) { try { var d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; if (d.type === 'point') window.triggerEvent(d.team, d.type); if (d.type === 'score') { if (d.score1 !== undefined) { scoreA = d.score1; document.getElementById('score-a').textContent = scoreA; } if (d.score2 !== undefined) { scoreB = d.score2; document.getElementById('score-b').textContent = scoreB; } } } catch(err) {} });
+
+function animate() {
+  requestAnimationFrame(animate);
+  var time = clock.getElapsedTime();
+  animPs(dust, time); animBurst(burst);
+
+  if (gameState.celebrating) {
+    var elapsed = time - gameState.startTime;
+    if (elapsed > 3.0) { gameState.celebrating = false; startPhase('receive', Math.random() > 0.5 ? 'a' : 'b'); }
+    else {
+      ball.position.y = Math.max(0.12, ball.position.y - 0.06);
+      for (var i = 0; i < players.length; i++) { animatePlayer(players[i], time, i, false, players[i].userData.team === gameState.celebrateTeam ? 'happy' : 'sad'); pShadows[i].position.x = players[i].position.x; pShadows[i].position.z = players[i].position.z; }
+      ballShadow.position.x = ball.position.x; ballShadow.position.z = ball.position.z;
+      var tx = 7.5*Math.cos(time*0.1), tz = 7.5*Math.sin(time*0.1), ty = 4.5+Math.sin(time*0.15)*0.5;
+      lerpCam(camera, tx, ty, tz, 0, 1.2, 0, 0.04); renderer.render(scene, camera); return;
+    }
+  }
+
+  rally.progress += 0.016 * rally.speed; if (rally.progress > 1.0) rally.progress = 1.0;
+  var rawT = rally.progress, t = rawT * rawT * (3 - 2 * rawT);
+  var bs = rally.ballStart, be = rally.ballEnd;
+  var backIdx = playerIdx(rally.team, 'back'), frontIdx = playerIdx(rally.team, 'front');
+  if (rally.phase === 'receive' && rally.touches > 1) { be.x = players[frontIdx].position.x; be.z = players[frontIdx].position.z; }
+  else if (rally.phase === 'set' && rally.touches === 3) { be.x = players[backIdx].position.x; be.z = players[backIdx].position.z; }
+
+  ball.position.x = bs.x + (be.x - bs.x) * t; ball.position.z = bs.z + (be.z - bs.z) * t;
+  ball.position.y = Math.max(0.5, parabolaY(bs.y, rally.ballPeak, be.y, t));
+  ball.rotation.x += 0.08 * rally.speed; ball.rotation.z += 0.04;
+
+  if (rally.phase !== rally.lastPhase) { fireBurst(burst, ball.position, 0xffffcc); rally.lastPhase = rally.phase; }
+
+  if (rally.progress >= 1.0) {
+    if (rally.phase === 'receive') { if (rally.touches === 1) startPhase('receive', rally.team === 'a' ? 'b' : 'a'); else startPhase('set', rally.team); }
+    else if (rally.phase === 'set') { if (rally.touches === 2) startPhase('receive', rally.team === 'a' ? 'b' : 'a'); else startPhase('attack', rally.team); }
+    else if (rally.phase === 'attack') startPhase('receive', rally.team === 'a' ? 'b' : 'a');
+  }
+
+  ballShadow.position.x = ball.position.x; ballShadow.position.z = ball.position.z;
+  ballShadow.material.opacity = Math.max(0.05, 0.25 - ball.position.y * 0.04); ballShadow.scale.setScalar(0.4 + ball.position.y * 0.05);
+
+  for (var i = 0; i < players.length; i++) {
+    var pl = players[i], phase = rally.phase;
+    var targetX = pl.userData.baseX + Math.sin(time*1.2+i*2.5)*0.15, targetZ = pl.userData.baseZ + Math.cos(time+i*3)*0.12, poseType = 'idle';
+    if (i === backIdx && phase === 'receive') { targetX = rally.receiveTargetX; targetZ = rally.receiveTargetZ; poseType = 'manchete'; }
+    else if (i === frontIdx && phase === 'receive' && rally.touches > 1) { targetX = rally.setTargetX; targetZ = rally.setTargetZ; poseType = 'ready'; }
+    else if (i === frontIdx && phase === 'set') { targetX = rally.setTargetX; targetZ = rally.setTargetZ || 0; poseType = 'set'; }
+    else if (i === backIdx && phase === 'set' && rally.touches === 3) { targetX = rally.attackTargetX; targetZ = rally.attackTargetZ; poseType = 'running'; }
+    else if (i === backIdx && phase === 'attack') { targetX = rally.attackTargetX; targetZ = rally.attackTargetZ; poseType = 'spike'; }
+    else if (i === frontIdx && phase === 'attack') { var az = rally.attackTargetZ||0; targetX = (rally.team==='a')?-2.5:2.5; targetZ = -az*0.8; poseType = 'ready'; }
+
+    var isA = (i<2); if(isA){targetX=Math.min(targetX,-0.4);targetX=Math.max(targetX,-4);}else{targetX=Math.max(targetX,0.4);targetX=Math.min(targetX,4);}
+    targetZ = Math.max(-2.5, Math.min(2.5, targetZ));
+    pl.position.x += (targetX - pl.position.x) * 0.08; pl.position.z += (targetZ - pl.position.z) * 0.08;
+    var tmI = isA?(i===0?1:0):(i===2?3:2); var tm=players[tmI]; var dx=pl.position.x-tm.position.x, dz=pl.position.z-tm.position.z, dist=Math.sqrt(dx*dx+dz*dz);
+    if(dist<0.6&&dist>0.01){var push=(0.6-dist)*0.5;pl.position.x+=(dx/dist)*push;pl.position.z+=(dz/dist)*push;}
+    if(isA)pl.position.x=Math.max(-4,Math.min(-0.4,pl.position.x)); else pl.position.x=Math.max(0.4,Math.min(4,pl.position.x));
+    pl.position.z=Math.max(-2.5,Math.min(2.5,pl.position.z));
+    pl.lookAt(ball.position.x, pl.position.y, ball.position.z);
+
+    if(poseType==='manchete'){pl.userData.armL.rotation.x=0.7;pl.userData.armR.rotation.x=0.7;pl.userData.armL.rotation.z=-0.3;pl.userData.armR.rotation.z=0.3;pl.userData.legL.rotation.x=0.2;pl.userData.legR.rotation.x=0.2;pl.position.y=Math.sin(t*Math.PI)*0.05;}
+    else if(poseType==='set'){pl.userData.armL.rotation.x=-2;pl.userData.armR.rotation.x=-2;pl.userData.armL.rotation.z=0.3;pl.userData.armR.rotation.z=-0.3;pl.position.y=0.12;pl.userData.legL.rotation.x=-0.05;pl.userData.legR.rotation.x=-0.05;}
+    else if(poseType==='running'){var rp=time*8+i;pl.userData.legL.rotation.x=Math.sin(rp)*0.5;pl.userData.legR.rotation.x=-Math.sin(rp)*0.5;pl.userData.armL.rotation.x=-Math.sin(rp)*0.4;pl.userData.armR.rotation.x=Math.sin(rp)*0.4;pl.userData.armL.rotation.z=0.15;pl.userData.armR.rotation.z=-0.15;pl.position.y=Math.abs(Math.sin(rp))*0.06;}
+    else if(poseType==='spike'){var jT=Math.min(t*1.3,1);pl.position.y=Math.sin(jT*Math.PI);pl.userData.armR.rotation.x=-2.5+jT*4.5;pl.userData.armR.rotation.z=-0.2;pl.userData.armL.rotation.x=-1+jT*0.5;pl.userData.armL.rotation.z=0.5;pl.userData.legL.rotation.x=-0.3*Math.sin(jT*Math.PI);pl.userData.legR.rotation.x=-0.25*Math.sin(jT*Math.PI);}
+    else if(poseType==='ready'){pl.userData.armL.rotation.x=0.3;pl.userData.armR.rotation.x=0.3;pl.userData.armL.rotation.z=0.2;pl.userData.armR.rotation.z=-0.2;pl.userData.legL.rotation.x=0.1;pl.userData.legR.rotation.x=0.1;pl.position.y=Math.sin(time*3+i)*0.02;}
+    else{pl.position.y=0;animatePlayer(pl,time,i,false,null);}
+    pShadows[i].position.x = pl.position.x; pShadows[i].position.z = pl.position.z;
+  }
+
+  var tx = 7.5*Math.cos(time*0.1), tz = 7.5*Math.sin(time*0.1), ty = 4.5+Math.sin(time*0.15)*0.5;
+  lerpCam(camera, tx, ty, tz, 0, 1.2, 0, 0.04);
+  renderer.render(scene, camera);
+}
+window.addEventListener('resize', function() { renderer.setSize(window.innerWidth, window.innerHeight); camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); });
+animate();
+</script>
+</body>
+</html>

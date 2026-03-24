@@ -55,6 +55,7 @@ function CreateModal({ editingTournament, onClose, onSave }: {
   const [pointsLoss, setPointsLoss] = useState(String(editingTournament?.points_loss ?? 0));
   const [category, setCategory] = useState(editingTournament?.category || '');
   const [isPublic, setIsPublic] = useState(editingTournament?.is_public || false);
+  const [pairingMode, setPairingMode] = useState(editingTournament?.pairing_mode || 'fixed');
 
   const handleSubmit = async () => {
     if (!title.trim() || !tournamentDate) {
@@ -79,6 +80,7 @@ function CreateModal({ editingTournament, onClose, onSave }: {
       formData.append('third_place_match', String(thirdPlaceMatch));
       if (category) formData.append('category', category);
       formData.append('is_public', String(isPublic));
+      if (Number(teamSize) > 1) formData.append('pairing_mode', pairingMode);
       if (format === 'group_stage') {
         formData.append('num_groups', numGroups);
         formData.append('teams_per_group', teamsPerGroup);
@@ -162,6 +164,21 @@ function CreateModal({ editingTournament, onClose, onSave }: {
               </select>
             </div>
           </div>
+          {Number(teamSize) > 1 && (
+            <div className="mm-field">
+              <label>Formacao de Equipes</label>
+              <select value={pairingMode} onChange={e => setPairingMode(e.target.value)}>
+                <option value="fixed">Duplas pre-prontas</option>
+                <option value="dynamic_single">Sorteio de duplas (unico)</option>
+                <option value="dynamic_per_round">Sorteio de duplas (por rodada)</option>
+              </select>
+              <small style={{ color: '#888', marginTop: 4 }}>
+                {pairingMode === 'fixed' && 'Inscreva as duplas ja formadas'}
+                {pairingMode === 'dynamic_single' && 'Inscreva jogadores individuais. Duplas serao sorteadas uma vez.'}
+                {pairingMode === 'dynamic_per_round' && 'Duplas novas sorteadas a cada rodada. Nunca repetem.'}
+              </small>
+            </div>
+          )}
           <div className="mm-field">
             <label>Formato</label>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -354,6 +371,14 @@ export default function Torneios() {
       setSelectedTournament(res.data);
       setDetailTab('info');
       setBracketData(null);
+      // Load individual players if dynamic pairing
+      if (res.data.pairing_mode && res.data.pairing_mode !== 'fixed') {
+        loadIndividualPlayers(res.data.id);
+      } else {
+        setIndividualPlayers([]);
+        setGeneratedPairs([]);
+        setPairsGenerated(false);
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro ao carregar torneio');
     }
@@ -519,6 +544,66 @@ export default function Torneios() {
   // ─── Team management ───
   const [newTeamName, setNewTeamName] = useState('');
 
+  // ─── Individual players (dynamic pairing) ───
+  const [individualPlayers, setIndividualPlayers] = useState<any[]>([]);
+  const [newPlayerNameLeft, setNewPlayerNameLeft] = useState('');
+  const [newPlayerNameRight, setNewPlayerNameRight] = useState('');
+  const [generatedPairs, setGeneratedPairs] = useState<any[]>([]);
+  const [pairsGenerated, setPairsGenerated] = useState(false);
+
+  const loadIndividualPlayers = async (tournamentId: number) => {
+    try {
+      const res = await tournamentService.getIndividualPlayers(tournamentId);
+      setIndividualPlayers(res.data?.players || res.data || []);
+      setGeneratedPairs(res.data?.pairs || []);
+      setPairsGenerated((res.data?.pairs || []).length > 0);
+    } catch {
+      setIndividualPlayers([]);
+    }
+  };
+
+  const handleAddIndividualPlayer = async (side: 'left' | 'right') => {
+    if (!selectedTournament) return;
+    const name = side === 'left' ? newPlayerNameLeft.trim() : newPlayerNameRight.trim();
+    if (!name) return;
+    try {
+      await tournamentService.addIndividualPlayer(selectedTournament.id, { player_name: name, side });
+      if (side === 'left') setNewPlayerNameLeft('');
+      else setNewPlayerNameRight('');
+      toast.success('Jogador adicionado!');
+      loadIndividualPlayers(selectedTournament.id);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao adicionar jogador');
+    }
+  };
+
+  const handleRemoveIndividualPlayer = async (playerId: number) => {
+    if (!selectedTournament) return;
+    try {
+      await tournamentService.removeIndividualPlayer(selectedTournament.id, playerId);
+      toast.success('Jogador removido');
+      loadIndividualPlayers(selectedTournament.id);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao remover jogador');
+    }
+  };
+
+  const handleGeneratePairs = async () => {
+    if (!selectedTournament) return;
+    try {
+      const res = await tournamentService.generatePairs(selectedTournament.id, selectedTournament.pairing_mode || 'dynamic_single');
+      toast.success('Duplas sorteadas com sucesso!');
+      setGeneratedPairs(res.data?.pairs || []);
+      setPairsGenerated(true);
+      // Refresh tournament data (teams are now created)
+      const tRes = await tournamentService.getTournament(selectedTournament.id);
+      setSelectedTournament(tRes.data);
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao sortear duplas');
+    }
+  };
+
   const handleAddTeam = async () => {
     if (!selectedTournament || !newTeamName.trim()) return;
     try {
@@ -549,17 +634,28 @@ export default function Torneios() {
     }
   };
 
-  const handleApproveTeam = async (teamId: number) => {
+  // ─── Approve with side selection (dynamic pairing) ───
+  const [approveModalTeamId, setApproveModalTeamId] = useState<number | null>(null);
+  const [approveSide, setApproveSide] = useState<'left' | 'right'>('left');
+
+  const handleApproveTeam = async (teamId: number, side?: 'left' | 'right') => {
     if (!selectedTournament) return;
     try {
-      await tournamentService.approveTeam(selectedTournament.id, teamId);
+      await tournamentService.approveTeam(selectedTournament.id, teamId, side);
       toast.success('Equipe aprovada!');
+      setApproveModalTeamId(null);
       const tRes = await tournamentService.getTournament(selectedTournament.id);
       setSelectedTournament(tRes.data);
+      // Reload individual players if dynamic pairing
+      if (selectedTournament.pairing_mode && selectedTournament.pairing_mode !== 'fixed') {
+        loadIndividualPlayers(selectedTournament.id);
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro');
     }
   };
+
+  const isDynamicPairing = selectedTournament?.pairing_mode && selectedTournament.pairing_mode !== 'fixed';
 
   const copyRegistrationLink = () => {
     if (!selectedTournament?.registration_token) return;
@@ -924,68 +1020,229 @@ export default function Torneios() {
               {/* Teams tab */}
               {detailTab === 'teams' && (
                 <div>
-                  {!selectedTournament.bracket_generated && (
-                    <div className="torneio-add-team">
-                      <input
-                        placeholder={selectedTournament.team_size === 1 ? 'Nome do jogador...' : 'Nome da equipe...'}
-                        value={newTeamName}
-                        onChange={e => setNewTeamName(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleAddTeam()}
-                      />
-                      <button className="torneio-btn-primary" onClick={handleAddTeam} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
-                        <FontAwesomeIcon icon={faPlus} /> Adicionar
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="torneio-teams-list">
-                    {selectedTournament.teams?.map(team => (
-                      <div key={team.id} className="torneio-team-item">
-                        <div className="torneio-team-info">
-                          <span className="torneio-team-seed">{team.seed}</span>
-                          <div>
-                            <span className="torneio-team-name">{team.name || `Equipe ${team.seed}`}</span>
-                            {team.members && team.members.length > 0 && (
-                              <div className="torneio-team-members">
-                                {team.members.map(m => m.name).filter(Boolean).join(', ')}
+                  {selectedTournament.pairing_mode && selectedTournament.pairing_mode !== 'fixed' ? (
+                    /* ─── Dynamic pairing: individual players management ─── */
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                        <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                          {selectedTournament.pairing_mode === 'dynamic_single'
+                            ? 'Sorteio de duplas (unico) — inscreva jogadores individuais'
+                            : 'Sorteio de duplas (por rodada) — duplas novas a cada rodada'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        {/* Left side */}
+                        <div style={{ flex: 1 }}>
+                          <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: 700, color: '#3b82f6' }}>Lado Esquerdo</h4>
+                          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                            <input
+                              placeholder="Nome do jogador..."
+                              value={newPlayerNameLeft}
+                              onChange={e => setNewPlayerNameLeft(e.target.value)}
+                              onKeyDown={e => e.key === 'Enter' && handleAddIndividualPlayer('left')}
+                              style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.9rem' }}
+                            />
+                            <button
+                              onClick={() => handleAddIndividualPlayer('left')}
+                              style={{ padding: '8px 12px', borderRadius: 8, border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}
+                            >
+                              +
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {individualPlayers.filter((p: any) => p.side === 'left').map((p: any) => (
+                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{p.player_name}</span>
+                                <button
+                                  onClick={() => handleRemoveIndividualPlayer(p.id)}
+                                  style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+                                >
+                                  x
+                                </button>
                               </div>
+                            ))}
+                            {individualPlayers.filter((p: any) => p.side === 'left').length === 0 && (
+                              <div style={{ padding: '16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Nenhum jogador</div>
                             )}
                           </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {team.status === 'registered' && (
-                            <button className="torneio-btn-success" style={{ padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => handleApproveTeam(team.id)}>
-                              <FontAwesomeIcon icon={faCheck} /> Aprovar
+
+                        {/* Right side */}
+                        <div style={{ flex: 1 }}>
+                          <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: 700, color: '#ef4444' }}>Lado Direito</h4>
+                          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                            <input
+                              placeholder="Nome do jogador..."
+                              value={newPlayerNameRight}
+                              onChange={e => setNewPlayerNameRight(e.target.value)}
+                              onKeyDown={e => e.key === 'Enter' && handleAddIndividualPlayer('right')}
+                              style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.9rem' }}
+                            />
+                            <button
+                              onClick={() => handleAddIndividualPlayer('right')}
+                              style={{ padding: '8px 12px', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}
+                            >
+                              +
                             </button>
-                          )}
-                          <span className="torneio-team-status" style={{
-                            background: team.status === 'approved' || team.status === 'active' ? '#dcfce7' : team.status === 'registered' ? '#fef3c7' : team.status === 'champion' ? '#fef08a' : '#f1f5f9',
-                            color: team.status === 'approved' || team.status === 'active' ? '#16a34a' : team.status === 'registered' ? '#d97706' : team.status === 'champion' ? '#a16207' : '#64748b',
-                          }}>
-                            {team.status === 'approved' ? 'Aprovado' : team.status === 'registered' ? 'Pendente' : team.status === 'active' ? 'Ativo' : team.status === 'champion' ? 'Campeão' : team.status === 'runner_up' ? 'Vice' : team.status === 'third_place' ? '3º Lugar' : team.status === 'eliminated_winners' ? 'Na Repescagem' : team.status === 'eliminated_losers' ? 'Eliminado' : team.status}
-                          </span>
-                          {!selectedTournament.bracket_generated && (
-                            <button style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => handleRemoveTeam(team.id)}>
-                              <FontAwesomeIcon icon={faTimes} />
-                            </button>
-                          )}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {individualPlayers.filter((p: any) => p.side === 'right').map((p: any) => (
+                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{p.player_name}</span>
+                                <button
+                                  onClick={() => handleRemoveIndividualPlayer(p.id)}
+                                  style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+                                >
+                                  x
+                                </button>
+                              </div>
+                            ))}
+                            {individualPlayers.filter((p: any) => p.side === 'right').length === 0 && (
+                              <div style={{ padding: '16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Nenhum jogador</div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
 
-                  {selectedTournament.teams && selectedTournament.teams.length >= 2 && !selectedTournament.bracket_generated && (
-                    <div style={{ marginTop: 20, textAlign: 'center' }}>
-                      <button className="torneio-btn-primary" onClick={handleGenerateBracket} style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: '10px', border: 'none', cursor: 'pointer' }}>
-                        <FontAwesomeIcon icon={faTrophy} /> Gerar Chave do Torneio
-                      </button>
+                      {/* Generated pairs display */}
+                      {pairsGenerated && generatedPairs.length > 0 && (
+                        <div style={{ marginTop: 20, padding: 16, background: 'rgba(16,185,129,0.06)', borderRadius: 12, border: '1px solid rgba(16,185,129,0.2)' }}>
+                          <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: 700, color: '#10b981' }}>Duplas Sorteadas</h4>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {generatedPairs.map((pair: any, idx: number) => (
+                              <div key={idx} style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--bg-primary, #fff)', border: '1px solid var(--border-color, #e2e8f0)', fontSize: '0.88rem' }}>
+                                <strong>{pair.team_name || `Dupla ${idx + 1}`}</strong>
+                                {pair.left_player && pair.right_player && (
+                                  <span style={{ color: '#64748b' }}> — {pair.left_player} + {pair.right_player}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                        {individualPlayers.length >= 2 && !selectedTournament.bracket_generated && (
+                          <button className="torneio-btn-primary" onClick={handleGeneratePairs} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
+                            <FontAwesomeIcon icon={faUsers} /> Sortear Duplas
+                          </button>
+                        )}
+                        {pairsGenerated && !selectedTournament.bracket_generated && (
+                          <button className="torneio-btn-primary" onClick={handleGenerateBracket} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', background: '#10b981' }}>
+                            <FontAwesomeIcon icon={faTrophy} /> Sortear Confrontos
+                          </button>
+                        )}
+                        {selectedTournament.bracket_generated && (
+                          <button className="torneio-btn-outline" onClick={handleGenerateBracket} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+                            Regenerar Chave
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Also show generated teams below if they exist */}
+                      {selectedTournament.teams && selectedTournament.teams.length > 0 && (
+                        <div style={{ marginTop: 20 }}>
+                          <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: 600 }}>Equipes no Torneio</h4>
+                          <div className="torneio-teams-list">
+                            {selectedTournament.teams.map(team => (
+                              <div key={team.id} className="torneio-team-item">
+                                <div className="torneio-team-info">
+                                  <span className="torneio-team-seed">{team.seed}</span>
+                                  <div>
+                                    <span className="torneio-team-name">{team.name || `Equipe ${team.seed}`}</span>
+                                    {team.members && team.members.length > 0 && (
+                                      <div className="torneio-team-members">
+                                        {team.members.map(m => m.name).filter(Boolean).join(', ')}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <span className="torneio-team-status" style={{
+                                  background: team.status === 'approved' || team.status === 'active' ? '#dcfce7' : team.status === 'champion' ? '#fef08a' : '#f1f5f9',
+                                  color: team.status === 'approved' || team.status === 'active' ? '#16a34a' : team.status === 'champion' ? '#a16207' : '#64748b',
+                                }}>
+                                  {team.status === 'approved' ? 'Aprovado' : team.status === 'active' ? 'Ativo' : team.status === 'champion' ? 'Campeao' : team.status === 'runner_up' ? 'Vice' : team.status === 'third_place' ? '3o Lugar' : team.status}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {selectedTournament.bracket_generated && (
-                    <div style={{ marginTop: 20, textAlign: 'center' }}>
-                      <button className="torneio-btn-outline" onClick={handleGenerateBracket} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
-                        Regenerar Chave
-                      </button>
+                  ) : (
+                    /* ─── Fixed pairing: original teams management ─── */
+                    <div>
+                      {!selectedTournament.bracket_generated && (
+                        <div className="torneio-add-team">
+                          <input
+                            placeholder={selectedTournament.team_size === 1 ? 'Nome do jogador...' : 'Nome da equipe...'}
+                            value={newTeamName}
+                            onChange={e => setNewTeamName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleAddTeam()}
+                          />
+                          <button className="torneio-btn-primary" onClick={handleAddTeam} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
+                            <FontAwesomeIcon icon={faPlus} /> Adicionar
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="torneio-teams-list">
+                        {selectedTournament.teams?.map(team => (
+                          <div key={team.id} className="torneio-team-item">
+                            <div className="torneio-team-info">
+                              <span className="torneio-team-seed">{team.seed}</span>
+                              <div>
+                                <span className="torneio-team-name">{team.name || `Equipe ${team.seed}`}</span>
+                                {team.members && team.members.length > 0 && (
+                                  <div className="torneio-team-members">
+                                    {team.members.map(m => m.name).filter(Boolean).join(', ')}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              {team.status === 'registered' && (
+                                isDynamicPairing ? (
+                                  <button className="torneio-btn-success" style={{ padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => { setApproveModalTeamId(team.id); setApproveSide('left'); }}>
+                                    <FontAwesomeIcon icon={faCheck} /> Aprovar (lado)
+                                  </button>
+                                ) : (
+                                  <button className="torneio-btn-success" style={{ padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => handleApproveTeam(team.id)}>
+                                    <FontAwesomeIcon icon={faCheck} /> Aprovar
+                                  </button>
+                                )
+                              )}
+                              <span className="torneio-team-status" style={{
+                                background: team.status === 'approved' || team.status === 'active' ? '#dcfce7' : team.status === 'registered' ? '#fef3c7' : team.status === 'champion' ? '#fef08a' : '#f1f5f9',
+                                color: team.status === 'approved' || team.status === 'active' ? '#16a34a' : team.status === 'registered' ? '#d97706' : team.status === 'champion' ? '#a16207' : '#64748b',
+                              }}>
+                                {team.status === 'approved' ? 'Aprovado' : team.status === 'registered' ? 'Pendente' : team.status === 'active' ? 'Ativo' : team.status === 'champion' ? 'Campeao' : team.status === 'runner_up' ? 'Vice' : team.status === 'third_place' ? '3o Lugar' : team.status === 'eliminated_winners' ? 'Na Repescagem' : team.status === 'eliminated_losers' ? 'Eliminado' : team.status}
+                              </span>
+                              {!selectedTournament.bracket_generated && (
+                                <button style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => handleRemoveTeam(team.id)}>
+                                  <FontAwesomeIcon icon={faTimes} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {selectedTournament.teams && selectedTournament.teams.length >= 2 && !selectedTournament.bracket_generated && (
+                        <div style={{ marginTop: 20, textAlign: 'center' }}>
+                          <button className="torneio-btn-primary" onClick={handleGenerateBracket} style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: '10px', border: 'none', cursor: 'pointer' }}>
+                            <FontAwesomeIcon icon={faTrophy} /> Gerar Chave do Torneio
+                          </button>
+                        </div>
+                      )}
+                      {selectedTournament.bracket_generated && (
+                        <div style={{ marginTop: 20, textAlign: 'center' }}>
+                          <button className="torneio-btn-outline" onClick={handleGenerateBracket} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+                            Regenerar Chave
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1227,6 +1484,59 @@ export default function Torneios() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approve with Side Selection Modal (dynamic pairing) */}
+      {approveModalTeamId && selectedTournament && (
+        <div className="mm-overlay" onClick={() => setApproveModalTeamId(null)}>
+          <div className="mm-modal mm-modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
+              <h3>Aprovar Jogador — Escolher Lado</h3>
+              <button className="mm-close" onClick={() => setApproveModalTeamId(null)}>&times;</button>
+            </div>
+            <div className="mm-content">
+              <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: 16 }}>
+                Esse torneio usa sorteio dinâmico de duplas. Escolha o lado para este jogador:
+              </p>
+
+              {/* Current sides count */}
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                <div style={{ flex: 1, padding: '10px', borderRadius: 10, background: approveSide === 'left' ? 'rgba(59,130,246,0.1)' : 'var(--bg-secondary, #f8fafc)', border: approveSide === 'left' ? '2px solid #3b82f6' : '2px solid var(--border-color, #e2e8f0)', cursor: 'pointer', textAlign: 'center' }}
+                  onClick={() => setApproveSide('left')}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#3b82f6', textTransform: 'uppercase', marginBottom: 4 }}>Esquerdo</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{individualPlayers.filter(p => p.side === 'left').length}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>jogadores</div>
+                </div>
+                <div style={{ flex: 1, padding: '10px', borderRadius: 10, background: approveSide === 'right' ? 'rgba(239,68,68,0.1)' : 'var(--bg-secondary, #f8fafc)', border: approveSide === 'right' ? '2px solid #ef4444' : '2px solid var(--border-color, #e2e8f0)', cursor: 'pointer', textAlign: 'center' }}
+                  onClick={() => setApproveSide('right')}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', marginBottom: 4 }}>Direito</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{individualPlayers.filter(p => p.side === 'right').length}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>jogadores</div>
+                </div>
+              </div>
+
+              {/* Show current players in each side */}
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                <div style={{ flex: 1 }}>
+                  {individualPlayers.filter(p => p.side === 'left').map((p: any) => (
+                    <div key={p.id} style={{ fontSize: '0.8rem', padding: '3px 8px', borderRadius: 6, background: 'rgba(59,130,246,0.06)', marginBottom: 3, color: '#64748b' }}>{p.player_name}</div>
+                  ))}
+                </div>
+                <div style={{ flex: 1 }}>
+                  {individualPlayers.filter(p => p.side === 'right').map((p: any) => (
+                    <div key={p.id} style={{ fontSize: '0.8rem', padding: '3px 8px', borderRadius: 6, background: 'rgba(239,68,68,0.06)', marginBottom: 3, color: '#64748b' }}>{p.player_name}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="mm-footer">
+              <button className="mm-btn mm-btn-secondary" onClick={() => setApproveModalTeamId(null)}>Cancelar</button>
+              <button className="mm-btn mm-btn-primary" onClick={() => handleApproveTeam(approveModalTeamId, approveSide)}>
+                <FontAwesomeIcon icon={faCheck} /> Aprovar no lado {approveSide === 'left' ? 'esquerdo' : 'direito'}
+              </button>
             </div>
           </div>
         </div>
