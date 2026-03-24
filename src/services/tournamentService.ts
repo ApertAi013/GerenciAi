@@ -24,6 +24,9 @@ export interface Tournament {
   finished_at?: string;
   winner_team_id?: number;
   team_count?: number;
+  category?: string;
+  is_public?: boolean;
+  public_token?: string;
   created_at: string;
   updated_at: string;
   // Group stage fields

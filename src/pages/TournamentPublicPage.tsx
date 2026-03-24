@@ -1,0 +1,828 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router';
+import '../styles/TournamentPublic.css';
+
+// ─── API base URL (same pattern as PublicTournamentRegistration) ───
+const API_URL = import.meta.env.VITE_API_URL || 'https://gerenciai-backend-798546007335.us-east1.run.app';
+
+// ─── Types ───
+interface TournamentTeam {
+  id: number;
+  name: string;
+  seed: number;
+  status: string;
+  wins: number;
+  losses: number;
+  total_points_scored: number;
+  total_points_conceded: number;
+  members?: { name: string; is_captain: boolean }[];
+}
+
+interface TournamentMatch {
+  id: number;
+  tournament_id: number;
+  bracket_type: 'winners' | 'losers' | 'grand_final' | 'third_place' | 'group';
+  round_number: number;
+  position: number;
+  match_number: number;
+  team1_id?: number;
+  team2_id?: number;
+  winner_id?: number;
+  loser_id?: number;
+  team1_score?: number;
+  team2_score?: number;
+  team1_name?: string;
+  team2_name?: string;
+  is_bye: boolean;
+  status: 'pending' | 'live' | 'completed';
+  court_name?: string;
+  scheduled_time?: string;
+  group_id?: number;
+  group_name?: string;
+}
+
+interface GroupStanding {
+  team_id: number;
+  team_name: string;
+  position: number;
+  matches_played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points: number;
+  points_for: number;
+  points_against: number;
+  point_diff: number;
+  advances: boolean;
+}
+
+interface TournamentGroup {
+  id: number;
+  group_name: string;
+  group_number: number;
+  standings: GroupStanding[];
+  matches: TournamentMatch[];
+}
+
+interface PodiumEntry {
+  place: number;
+  team_id: number;
+  team_name: string;
+  wins: number;
+  losses: number;
+}
+
+interface TournamentData {
+  tournament: {
+    id: number;
+    title: string;
+    description?: string;
+    image_url?: string;
+    tournament_date: string;
+    start_time?: string;
+    tournament_end_date?: string;
+    location?: string;
+    format: 'double_elimination' | 'single_elimination' | 'group_stage';
+    team_size: number;
+    status: string;
+    category?: string;
+    arena_name?: string;
+    bracket_generated: boolean;
+    third_place_match: boolean;
+    num_groups?: number;
+    group_stage_completed?: boolean;
+  };
+  teams: TournamentTeam[];
+  matches: TournamentMatch[];
+  live_matches: TournamentMatch[];
+  podium: PodiumEntry[];
+  groups?: TournamentGroup[];
+}
+
+type SportCategory = 'volei' | 'futevolei' | 'futebol' | 'beach_tennis' | null;
+
+// ─── Sport category detection ───
+function detectCategory(title: string, description?: string): SportCategory {
+  const text = `${title} ${description || ''}`.toLowerCase();
+  if (text.match(/beach\s?t[eê]nis|bt\b/)) return 'beach_tennis';
+  if (text.match(/futev[oô]lei|ftv|ftvl/)) return 'futevolei';
+  if (text.match(/futebol|societ|soccer|fut\b/)) return 'futebol';
+  if (text.match(/v[oô]lei|volleyball/)) return 'volei';
+  return null;
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  volei: 'Volei',
+  futevolei: 'Futevolei',
+  futebol: 'Futebol',
+  beach_tennis: 'Beach Tennis',
+};
+
+const CATEGORY_ICONS: Record<string, string> = {
+  volei: '\uD83C\uDFD0',
+  futevolei: '\u26BD',
+  futebol: '\u26BD',
+  beach_tennis: '\uD83C\uDFBE',
+};
+
+const FORMAT_LABELS: Record<string, string> = {
+  double_elimination: 'Dupla Eliminatoria',
+  single_elimination: 'Eliminatoria Simples',
+  group_stage: 'Fase de Grupos',
+};
+
+// ─── Helper: group matches by bracket_type then round ───
+function groupMatchesByBracket(matches: TournamentMatch[]) {
+  const brackets: Record<string, TournamentMatch[][]> = {};
+
+  for (const m of matches) {
+    if (m.is_bye) continue;
+    const bt = m.bracket_type;
+    if (!brackets[bt]) brackets[bt] = [];
+    const roundIdx = m.round_number - 1;
+    while (brackets[bt].length <= roundIdx) brackets[bt].push([]);
+    brackets[bt][roundIdx].push(m);
+  }
+
+  // Sort matches within each round by position
+  for (const bt of Object.keys(brackets)) {
+    for (const round of brackets[bt]) {
+      round.sort((a, b) => a.position - b.position);
+    }
+  }
+
+  return brackets;
+}
+
+const BRACKET_TYPE_LABELS: Record<string, string> = {
+  winners: 'Chave Principal',
+  losers: 'Repescagem',
+  grand_final: 'Grande Final',
+  third_place: 'Disputa 3o Lugar',
+  group: 'Fase de Grupos',
+};
+
+const BRACKET_TYPE_TAG: Record<string, string> = {
+  winners: 'winners',
+  losers: 'losers',
+  grand_final: 'final',
+  third_place: 'final',
+  group: 'winners',
+};
+
+// ═══════════════════════════════════════════════════════════
+// COMPONENT
+// ═══════════════════════════════════════════════════════════
+
+export default function TournamentPublicPage() {
+  const { token } = useParams<{ token: string }>();
+  const [data, setData] = useState<TournamentData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'overview' | 'bracket' | 'teams' | 'matches'>('overview');
+
+  // ─── Fetch full tournament data ───
+  const fetchData = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/tournaments/public/live/${token}`);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Torneio nao encontrado');
+      }
+      const json = await res.json();
+      if (json.status === 'success') {
+        setData(json.data);
+      } else {
+        throw new Error(json.message || 'Erro ao carregar torneio');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Erro ao carregar');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // ─── Polling for live match scores ───
+  useEffect(() => {
+    if (!data || !token) return;
+    if (data.tournament.status === 'finished' || data.tournament.status === 'cancelled') return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/tournaments/public/live/${token}/match`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.status === 'success' && json.data) {
+          setData(prev => {
+            if (!prev) return prev;
+            const liveMatches: TournamentMatch[] = json.data.live_matches || [];
+            const updatedMatches = prev.matches.map(m => {
+              const updated = liveMatches.find(lm => lm.id === m.id);
+              return updated || m;
+            });
+            // Also check if any matches finished / new ones started
+            return {
+              ...prev,
+              live_matches: liveMatches,
+              matches: updatedMatches,
+              // Update tournament status if returned
+              tournament: json.data.tournament_status
+                ? { ...prev.tournament, status: json.data.tournament_status }
+                : prev.tournament,
+            };
+          });
+
+          // If tournament just finished, do a full refresh
+          if (json.data.tournament_status === 'finished') {
+            fetchData();
+          }
+        }
+      } catch {
+        // Silently ignore polling errors
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [data, token, fetchData]);
+
+  // ─── Loading state ───
+  if (loading) {
+    return (
+      <div className="tp-page">
+        <div className="tp-loading">
+          <div className="tp-loading-spinner" />
+          <span className="tp-loading-text">Carregando torneio...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Error state ───
+  if (error || !data) {
+    return (
+      <div className="tp-page">
+        <div className="tp-error">
+          <div className="tp-error-icon">{'\uD83C\uDFC6'}</div>
+          <div className="tp-error-title">Torneio nao encontrado</div>
+          <div className="tp-error-msg">{error || 'O link pode estar incorreto ou o torneio nao esta mais disponivel.'}</div>
+        </div>
+      </div>
+    );
+  }
+
+  const { tournament, teams, matches, live_matches, podium, groups } = data;
+  const category: SportCategory = (tournament.category as SportCategory) || detectCategory(tournament.title, tournament.description);
+  const isLive = tournament.status === 'live';
+  const isFinished = tournament.status === 'finished';
+  const bracketGroups = groupMatchesByBracket(matches.filter(m => m.bracket_type !== 'group'));
+  const nonByeMatches = matches.filter(m => !m.is_bye);
+
+  // Format dates
+  const startDate = new Date(tournament.tournament_date).toLocaleDateString('pt-BR', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  });
+  const endDate = tournament.tournament_end_date
+    ? new Date(tournament.tournament_end_date).toLocaleDateString('pt-BR', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      })
+    : null;
+
+  return (
+    <div className="tp-page">
+      <div className="tp-container">
+        {/* Branding */}
+        <div className="tp-branding">
+          <a className="tp-brand-logo" href="https://arenai.com.br" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 32 32" fill="none">
+              <rect width="32" height="32" rx="8" fill="#F58A25" />
+              <path d="M8 22L16 10L24 22H8Z" fill="white" opacity="0.9" />
+            </svg>
+            ArenAi
+          </a>
+          <span className="tp-brand-powered">
+            {tournament.arena_name || 'Powered by ArenAi'}
+          </span>
+        </div>
+
+        {/* Header */}
+        <header className="tp-header">
+          {tournament.image_url && (
+            <img src={tournament.image_url} alt={tournament.title} className="tp-header-image" />
+          )}
+
+          <h1 className="tp-title">{tournament.title}</h1>
+
+          <div className="tp-meta">
+            <span className="tp-meta-item">
+              <CalendarIcon />
+              {startDate}{endDate && endDate !== startDate ? ` - ${endDate}` : ''}
+              {tournament.start_time ? ` as ${tournament.start_time}` : ''}
+            </span>
+            {tournament.location && (
+              <span className="tp-meta-item">
+                <MapPinIcon />
+                {tournament.location}
+              </span>
+            )}
+            <span className="tp-meta-item">
+              <UsersIcon />
+              {teams.length} {tournament.team_size === 1 ? 'jogadores' : 'equipes'}
+            </span>
+          </div>
+
+          <div className="tp-badges">
+            {isLive && (
+              <span className="tp-badge tp-badge-live">
+                <span className="tp-live-dot" />
+                AO VIVO
+              </span>
+            )}
+            {isFinished && (
+              <span className="tp-badge tp-badge-finished">
+                ENCERRADO
+              </span>
+            )}
+            {!isLive && !isFinished && (
+              <span className="tp-badge tp-badge-upcoming">
+                EM BREVE
+              </span>
+            )}
+            {category && (
+              <span className="tp-badge tp-badge-category">
+                {CATEGORY_ICONS[category]} {CATEGORY_LABELS[category]}
+              </span>
+            )}
+            <span className="tp-badge tp-badge-format">
+              {FORMAT_LABELS[tournament.format] || tournament.format}
+              {tournament.team_size > 1 && ` ${tournament.team_size}x${tournament.team_size}`}
+            </span>
+          </div>
+
+          {tournament.description && (
+            <p className="tp-description">{tournament.description}</p>
+          )}
+        </header>
+
+        {/* Live matches - always at top when they exist */}
+        {live_matches && live_matches.length > 0 && (
+          <div className="tp-live-section">
+            <h2 className="tp-section-title">
+              <span className="tp-live-dot" /> Ao Vivo Agora
+            </h2>
+            {live_matches.map(match => (
+              <div key={match.id} className="tp-live-card" style={{ marginBottom: 16 }}>
+                <div className="tp-live-card-header">
+                  <span className="tp-live-card-badge">
+                    <span className="tp-live-dot" />
+                    AO VIVO
+                  </span>
+                  <span className="tp-live-card-info">
+                    #{match.match_number}
+                    {match.court_name ? ` - ${match.court_name}` : ''}
+                    {' - '}
+                    {BRACKET_TYPE_LABELS[match.bracket_type] || match.bracket_type}
+                    {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && ` R${match.round_number}`}
+                  </span>
+                </div>
+                <div className="tp-live-match-row">
+                  <div className="tp-live-team">
+                    <div className={`tp-live-team-name ${match.winner_id === match.team1_id ? 'winner' : ''}`}>
+                      {match.team1_name || 'A definir'}
+                    </div>
+                  </div>
+                  <div className="tp-live-score-divider">
+                    <span className="tp-live-score">{match.team1_score ?? 0}</span>
+                    <span className="tp-live-vs">VS</span>
+                    <span className="tp-live-score">{match.team2_score ?? 0}</span>
+                  </div>
+                  <div className="tp-live-team">
+                    <div className={`tp-live-team-name ${match.winner_id === match.team2_id ? 'winner' : ''}`}>
+                      {match.team2_name || 'A definir'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Podium - show when tournament is finished and podium data exists */}
+        {isFinished && podium && podium.length > 0 && (
+          <div className="tp-podium-section">
+            <h2 className="tp-section-title">
+              {'\uD83C\uDFC6'} Podio
+            </h2>
+            <div className="tp-podium">
+              {/* 2nd place (left) */}
+              {podium.find(p => p.place === 2) && (
+                <div className="tp-podium-place tp-podium-2nd">
+                  <div className="tp-podium-avatar">{'\uD83E\uDD48'}</div>
+                  <div className="tp-podium-team-name">
+                    {podium.find(p => p.place === 2)!.team_name}
+                  </div>
+                  <div className="tp-podium-record">
+                    {podium.find(p => p.place === 2)!.wins}V - {podium.find(p => p.place === 2)!.losses}D
+                  </div>
+                  <div className="tp-podium-block">2</div>
+                </div>
+              )}
+              {/* 1st place (center) */}
+              {podium.find(p => p.place === 1) && (
+                <div className="tp-podium-place tp-podium-1st">
+                  <div className="tp-podium-avatar">{'\uD83C\uDFC6'}</div>
+                  <div className="tp-podium-team-name">
+                    {podium.find(p => p.place === 1)!.team_name}
+                  </div>
+                  <div className="tp-podium-record">
+                    {podium.find(p => p.place === 1)!.wins}V - {podium.find(p => p.place === 1)!.losses}D
+                  </div>
+                  <div className="tp-podium-block">1</div>
+                </div>
+              )}
+              {/* 3rd place (right) */}
+              {podium.find(p => p.place === 3) && (
+                <div className="tp-podium-place tp-podium-3rd">
+                  <div className="tp-podium-avatar">{'\uD83E\uDD49'}</div>
+                  <div className="tp-podium-team-name">
+                    {podium.find(p => p.place === 3)!.team_name}
+                  </div>
+                  <div className="tp-podium-record">
+                    {podium.find(p => p.place === 3)!.wins}V - {podium.find(p => p.place === 3)!.losses}D
+                  </div>
+                  <div className="tp-podium-block">3</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="tp-tabs">
+          <button
+            className={`tp-tab ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Visao Geral
+          </button>
+          <button
+            className={`tp-tab ${activeTab === 'bracket' ? 'active' : ''}`}
+            onClick={() => setActiveTab('bracket')}
+          >
+            Chave
+          </button>
+          <button
+            className={`tp-tab ${activeTab === 'teams' ? 'active' : ''}`}
+            onClick={() => setActiveTab('teams')}
+          >
+            {tournament.team_size === 1 ? 'Jogadores' : 'Equipes'} ({teams.length})
+          </button>
+          <button
+            className={`tp-tab ${activeTab === 'matches' ? 'active' : ''}`}
+            onClick={() => setActiveTab('matches')}
+          >
+            Jogos ({nonByeMatches.length})
+          </button>
+        </div>
+
+        {/* ─── Tab: Overview ─── */}
+        {activeTab === 'overview' && (
+          <div>
+            {/* Groups section for group_stage format */}
+            {tournament.format === 'group_stage' && groups && groups.length > 0 && (
+              <>
+                <h2 className="tp-section-title">Grupos</h2>
+                <div className="tp-groups-grid">
+                  {groups.map(group => (
+                    <div key={group.id} className="tp-group-card">
+                      <div className="tp-group-name">{group.group_name}</div>
+                      <table className="tp-group-table">
+                        <thead>
+                          <tr>
+                            <th style={{ width: 36 }}>#</th>
+                            <th>Equipe</th>
+                            <th>J</th>
+                            <th>V</th>
+                            <th>E</th>
+                            <th>D</th>
+                            <th>Pts</th>
+                            <th>Saldo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.standings.map(s => (
+                            <tr key={s.team_id} className={s.advances ? 'advances' : ''}>
+                              <td><span className="tp-group-pos">{s.position}</span></td>
+                              <td>{s.team_name}</td>
+                              <td>{s.matches_played}</td>
+                              <td>{s.wins}</td>
+                              <td>{s.draws}</td>
+                              <td>{s.losses}</td>
+                              <td className="tp-group-pts">{s.points}</td>
+                              <td>
+                                <span className={`tp-group-diff ${s.point_diff > 0 ? 'positive' : s.point_diff < 0 ? 'negative' : 'zero'}`}>
+                                  {s.point_diff > 0 ? '+' : ''}{s.point_diff}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Quick bracket preview */}
+            {Object.keys(bracketGroups).length > 0 && (
+              <>
+                <h2 className="tp-section-title">
+                  Chave {tournament.format === 'group_stage' && tournament.group_stage_completed ? '(Mata-Mata)' : ''}
+                </h2>
+                <BracketView bracketGroups={bracketGroups} />
+              </>
+            )}
+
+            {/* Recent/upcoming matches */}
+            {nonByeMatches.length > 0 && (
+              <>
+                <h2 className="tp-section-title">Jogos Recentes</h2>
+                <div className="tp-matches-list">
+                  {nonByeMatches
+                    .filter(m => m.status === 'live' || m.status === 'completed')
+                    .sort((a, b) => {
+                      const order = { live: 0, completed: 1, pending: 2 };
+                      return (order[a.status] ?? 1) - (order[b.status] ?? 1) || b.match_number - a.match_number;
+                    })
+                    .slice(0, 12)
+                    .map(match => (
+                      <MatchCard key={match.id} match={match} />
+                    ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ─── Tab: Bracket ─── */}
+        {activeTab === 'bracket' && (
+          <div>
+            {tournament.format === 'group_stage' && groups && groups.length > 0 && (
+              <>
+                <h2 className="tp-section-title">Fase de Grupos</h2>
+                <div className="tp-groups-grid" style={{ marginBottom: 32 }}>
+                  {groups.map(group => (
+                    <div key={group.id} className="tp-group-card">
+                      <div className="tp-group-name">{group.group_name}</div>
+                      <table className="tp-group-table">
+                        <thead>
+                          <tr>
+                            <th style={{ width: 36 }}>#</th>
+                            <th>Equipe</th>
+                            <th>J</th>
+                            <th>V</th>
+                            <th>E</th>
+                            <th>D</th>
+                            <th>Pts</th>
+                            <th>Saldo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.standings.map(s => (
+                            <tr key={s.team_id} className={s.advances ? 'advances' : ''}>
+                              <td><span className="tp-group-pos">{s.position}</span></td>
+                              <td>{s.team_name}</td>
+                              <td>{s.matches_played}</td>
+                              <td>{s.wins}</td>
+                              <td>{s.draws}</td>
+                              <td>{s.losses}</td>
+                              <td className="tp-group-pts">{s.points}</td>
+                              <td>
+                                <span className={`tp-group-diff ${s.point_diff > 0 ? 'positive' : s.point_diff < 0 ? 'negative' : 'zero'}`}>
+                                  {s.point_diff > 0 ? '+' : ''}{s.point_diff}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {Object.keys(bracketGroups).length > 0 ? (
+              <>
+                {tournament.format === 'group_stage' && (
+                  <h2 className="tp-section-title">Fase Eliminatoria</h2>
+                )}
+                <BracketView bracketGroups={bracketGroups} />
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: 16, opacity: 0.4 }}>{'\uD83C\uDFC6'}</div>
+                <p style={{ fontSize: '1rem', fontWeight: 600 }}>Chave ainda nao gerada</p>
+                <p style={{ fontSize: '0.85rem', marginTop: 8 }}>A chave sera gerada quando o torneio comecar.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ─── Tab: Teams ─── */}
+        {activeTab === 'teams' && (
+          <div>
+            <div className="tp-teams-grid">
+              {[...teams]
+                .sort((a, b) => {
+                  // Champion first, then runner_up, then third_place, then by seed
+                  const statusOrder: Record<string, number> = {
+                    champion: 0, runner_up: 1, third_place: 2,
+                  };
+                  const aOrder = statusOrder[a.status] ?? 10;
+                  const bOrder = statusOrder[b.status] ?? 10;
+                  if (aOrder !== bOrder) return aOrder - bOrder;
+                  return a.seed - b.seed;
+                })
+                .map(team => {
+                  const isChampion = team.status === 'champion';
+                  const isRunnerUp = team.status === 'runner_up';
+                  const isThird = team.status === 'third_place';
+                  return (
+                    <div
+                      key={team.id}
+                      className={`tp-team-card ${isChampion ? 'champion' : isRunnerUp ? 'runner-up' : isThird ? 'third' : ''}`}
+                    >
+                      <div className="tp-team-seed">{team.seed}</div>
+                      <div className="tp-team-info">
+                        <div className="tp-team-name">{team.name}</div>
+                        <div className="tp-team-stats">
+                          {team.wins}V - {team.losses}D
+                          {team.total_points_scored > 0 && ` | ${team.total_points_scored} pts`}
+                        </div>
+                      </div>
+                      {isChampion && <span className="tp-team-medal">{'\uD83E\uDD47'}</span>}
+                      {isRunnerUp && <span className="tp-team-medal">{'\uD83E\uDD48'}</span>}
+                      {isThird && <span className="tp-team-medal">{'\uD83E\uDD49'}</span>}
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {/* ─── Tab: Matches ─── */}
+        {activeTab === 'matches' && (
+          <div>
+            <div className="tp-matches-list">
+              {nonByeMatches
+                .sort((a, b) => {
+                  const order = { live: 0, pending: 1, completed: 2 };
+                  return (order[a.status] ?? 1) - (order[b.status] ?? 1) || a.match_number - b.match_number;
+                })
+                .map(match => (
+                  <MatchCard key={match.id} match={match} />
+                ))}
+            </div>
+            {nonByeMatches.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
+                <p style={{ fontSize: '1rem', fontWeight: 600 }}>Nenhum jogo disponivel</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="tp-footer">
+          <p className="tp-footer-text">
+            Gerenciado com{' '}
+            <a className="tp-footer-link" href="https://arenai.com.br" target="_blank" rel="noopener noreferrer">
+              ArenAi
+            </a>
+            {' '} - Sistema de gestao para arenas esportivas
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUB-COMPONENTS
+// ═══════════════════════════════════════════════════════════
+
+// ─── Match Card ───
+function MatchCard({ match }: { match: TournamentMatch }) {
+  const isLive = match.status === 'live';
+  const isCompleted = match.status === 'completed';
+  const bracketLabel = BRACKET_TYPE_LABELS[match.bracket_type] || match.bracket_type;
+
+  return (
+    <div className={`tp-match-card ${isLive ? 'live' : isCompleted ? 'completed' : ''}`}>
+      <div className="tp-match-header">
+        <span className="tp-match-number">
+          #{match.match_number} - {bracketLabel}
+          {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && ` R${match.round_number}`}
+        </span>
+        {isLive && (
+          <span className="tp-match-status live">
+            <span className="tp-live-dot" style={{ width: 6, height: 6 }} />
+            AO VIVO
+          </span>
+        )}
+        {isCompleted && <span className="tp-match-status completed">FINALIZADA</span>}
+        {!isLive && !isCompleted && <span className="tp-match-status pending">PENDENTE</span>}
+      </div>
+      <div className={`tp-match-team-row ${match.winner_id && match.winner_id === match.team1_id ? 'winner' : ''} ${!match.team1_name ? 'tbd' : ''}`}>
+        <span className="tp-match-team-name">{match.team1_name || 'A definir'}</span>
+        <span className="tp-match-team-score">
+          {match.team1_score !== null && match.team1_score !== undefined ? match.team1_score : '-'}
+        </span>
+      </div>
+      <div className={`tp-match-team-row ${match.winner_id && match.winner_id === match.team2_id ? 'winner' : ''} ${!match.team2_name ? 'tbd' : ''}`}>
+        <span className="tp-match-team-name">{match.team2_name || 'A definir'}</span>
+        <span className="tp-match-team-score">
+          {match.team2_score !== null && match.team2_score !== undefined ? match.team2_score : '-'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Bracket View ───
+function BracketView({ bracketGroups }: { bracketGroups: Record<string, TournamentMatch[][]> }) {
+  // Render order: winners, losers, third_place, grand_final
+  const order = ['winners', 'losers', 'third_place', 'grand_final'];
+  const sortedKeys = Object.keys(bracketGroups).sort((a, b) => {
+    return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b));
+  });
+
+  return (
+    <div className="tp-bracket-section">
+      {sortedKeys.map(bracketType => {
+        const rounds = bracketGroups[bracketType];
+        return (
+          <div key={bracketType}>
+            <div className="tp-bracket-type-label">
+              {BRACKET_TYPE_LABELS[bracketType] || bracketType}
+              <span className={`tp-bracket-type-tag ${BRACKET_TYPE_TAG[bracketType] || ''}`}>
+                {bracketType === 'winners' ? 'W' : bracketType === 'losers' ? 'L' : bracketType === 'grand_final' ? 'GF' : '3P'}
+              </span>
+            </div>
+            <div className="tp-bracket-rounds">
+              {rounds.map((roundMatches, idx) => (
+                <div key={idx} className="tp-bracket-round">
+                  <div className="tp-bracket-round-label">
+                    {bracketType === 'grand_final' || bracketType === 'third_place'
+                      ? (bracketType === 'grand_final' ? 'Final' : '3o Lugar')
+                      : `Rodada ${idx + 1}`}
+                  </div>
+                  {roundMatches.map(match => (
+                    <MatchCard key={match.id} match={match} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Inline SVG Icons (no external dependency) ───
+function CalendarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function MapPinIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}

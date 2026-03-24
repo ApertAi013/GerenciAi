@@ -53,6 +53,8 @@ function CreateModal({ editingTournament, onClose, onSave }: {
   const [pointsWin, setPointsWin] = useState(String(editingTournament?.points_win ?? 3));
   const [pointsDraw, setPointsDraw] = useState(String(editingTournament?.points_draw ?? 1));
   const [pointsLoss, setPointsLoss] = useState(String(editingTournament?.points_loss ?? 0));
+  const [category, setCategory] = useState(editingTournament?.category || '');
+  const [isPublic, setIsPublic] = useState(editingTournament?.is_public || false);
 
   const handleSubmit = async () => {
     if (!title.trim() || !tournamentDate) {
@@ -75,6 +77,8 @@ function CreateModal({ editingTournament, onClose, onSave }: {
       formData.append('require_approval', String(requireApproval));
       formData.append('show_scores_to_students', String(showScores));
       formData.append('third_place_match', String(thirdPlaceMatch));
+      if (category) formData.append('category', category);
+      formData.append('is_public', String(isPublic));
       if (format === 'group_stage') {
         formData.append('num_groups', numGroups);
         formData.append('teams_per_group', teamsPerGroup);
@@ -136,15 +140,27 @@ function CreateModal({ editingTournament, onClose, onSave }: {
             <label>Localização</label>
             <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="Ex: Arena Beach Sports" />
           </div>
-          <div className="mm-field">
-            <label>Tamanho da Equipe</label>
-            <select value={teamSize} onChange={e => setTeamSize(e.target.value)}>
-              <option value="1">Individual (1x1)</option>
-              <option value="2">Dupla (2x2)</option>
-              <option value="3">Trio (3x3)</option>
-              <option value="4">Quarteto (4x4)</option>
-              <option value="5">Quinteto (5x5)</option>
-            </select>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="mm-field">
+              <label>Tamanho da Equipe</label>
+              <select value={teamSize} onChange={e => setTeamSize(e.target.value)}>
+                <option value="1">Individual (1x1)</option>
+                <option value="2">Dupla (2x2)</option>
+                <option value="3">Trio (3x3)</option>
+                <option value="4">Quarteto (4x4)</option>
+                <option value="5">Quinteto (5x5)</option>
+              </select>
+            </div>
+            <div className="mm-field">
+              <label>Categoria</label>
+              <select value={category} onChange={e => setCategory(e.target.value)}>
+                <option value="">Auto-detectar</option>
+                <option value="beach_tennis">Beach Tennis</option>
+                <option value="volei">Vôlei</option>
+                <option value="futevolei">Futevôlei</option>
+                <option value="futebol">Futebol</option>
+              </select>
+            </div>
           </div>
           <div className="mm-field">
             <label>Formato</label>
@@ -272,6 +288,10 @@ function CreateModal({ editingTournament, onClose, onSave }: {
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
               <input type="checkbox" checked={thirdPlaceMatch} onChange={e => setThirdPlaceMatch(e.target.checked)} />
               Disputa de 3º lugar
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} />
+              Torneio Público (gera link ao vivo para espectadores)
             </label>
           </div>
         </div>
@@ -546,6 +566,13 @@ export default function Torneios() {
     const url = `${window.location.origin}/torneio/${selectedTournament.registration_token}`;
     navigator.clipboard.writeText(url);
     toast.success('Link copiado!');
+  };
+
+  const copyPublicLink = () => {
+    if (!selectedTournament?.public_token) return;
+    const url = `${window.location.origin}/torneio/live/${selectedTournament.public_token}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Link público copiado!');
   };
 
   // ─── Filtered tournaments ───
@@ -877,6 +904,17 @@ export default function Torneios() {
                       <input readOnly value={`${window.location.origin}/torneio/${selectedTournament.registration_token}`} />
                       <button className="torneio-link-copy" onClick={copyRegistrationLink}>
                         <FontAwesomeIcon icon={faCopy} /> Copiar
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Public live link */}
+                  {selectedTournament.public_token && (
+                    <div className="torneio-link-box" style={{ marginTop: 8 }}>
+                      <FontAwesomeIcon icon={faLink} style={{ color: '#F58A25' }} />
+                      <input readOnly value={`${window.location.origin}/torneio/live/${selectedTournament.public_token}`} style={{ color: '#F58A25' }} />
+                      <button className="torneio-link-copy" onClick={copyPublicLink} style={{ background: '#F58A25', color: '#fff' }}>
+                        <FontAwesomeIcon icon={faCopy} /> Link Público
                       </button>
                     </div>
                   )}
