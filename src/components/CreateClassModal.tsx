@@ -100,15 +100,12 @@ export default function CreateClassModal({
     }
   };
 
-  // Se editando e o location não bate com nenhuma quadra, habilitar texto livre
+  // Se editando, sempre mostra select (com opção do valor atual se não bate com quadras)
   useEffect(() => {
-    if (editClass && editClass.location && courts.length > 0) {
-      const matchesCourt = courts.some(c => c.name === editClass.location);
-      if (!matchesCourt) {
-        setUseCustomLocation(true);
-      }
+    if (editClass) {
+      setUseCustomLocation(false);
     }
-  }, [editClass, courts]);
+  }, [editClass]);
 
   // Aplicar dados pré-preenchidos da agenda
   useEffect(() => {
@@ -542,45 +539,24 @@ export default function CreateClassModal({
           <div className="mm-field-row">
             <div className="mm-field">
               <label htmlFor="location">Local (Quadra)</label>
-              {courts.length > 0 && !useCustomLocation ? (
-                <>
-                  <select
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => {
-                      if (e.target.value === '__custom__') {
-                        setUseCustomLocation(true);
-                        setFormData({ ...formData, location: '' });
-                      } else {
-                        setFormData({ ...formData, location: e.target.value });
-                      }
-                    }}
-                  >
-                    <option value="">Selecione a quadra</option>
-                    {courts.map(c => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
-                    ))}
-                    <option value="__custom__">Outro local...</option>
-                  </select>
-                </>
-              ) : (
-                <>
-                  <input
-                    id="location"
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    placeholder="Ex: Quadra 1"
-                  />
-                  {courts.length > 0 && (
-                    <small
-                      style={{ color: 'var(--accent)', cursor: 'pointer', marginTop: '0.25rem', display: 'block' }}
-                      onClick={() => { setUseCustomLocation(false); setFormData({ ...formData, location: '' }); }}
-                    >
-                      Selecionar quadra cadastrada
-                    </small>
+              {courts.length > 0 ? (
+                <select
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                >
+                  <option value="">Selecione a quadra</option>
+                  {courts.map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                  {formData.location && !courts.some(c => c.name === formData.location) && (
+                    <option value={formData.location}>{formData.location} (antiga)</option>
                   )}
-                </>
+                </select>
+              ) : (
+                <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'var(--bg-warning, #FFF3CD)', border: '1px solid var(--border-warning, #FFD966)', color: 'var(--text-warning, #856404)', fontSize: '0.85rem' }}>
+                  Nenhuma quadra cadastrada. <a href="/quadras" style={{ fontWeight: 600, color: 'inherit', textDecoration: 'underline' }}>Cadastre suas quadras</a> antes de criar turmas.
+                </div>
               )}
             </div>
 
