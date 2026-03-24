@@ -216,6 +216,7 @@ export default function Enrollments() {
 
   // Filter classes based on student level, availability, and search
   useEffect(() => {
+    try {
     if (classesWithDetails.length > 0) {
       let filtered = classesWithDetails;
 
@@ -261,6 +262,7 @@ export default function Enrollments() {
 
       setFilteredClasses(filtered);
     }
+    } catch (err) { console.error('Erro ao filtrar turmas:', err); setFilteredClasses(classesWithDetails); }
   }, [classesWithDetails, searchQuery, showOnlyAvailable, formData.student_id, formData.plan_id, plans]);
 
   const loadData = async () => {
@@ -499,7 +501,7 @@ export default function Enrollments() {
   const handleClassToggle = (classId: number) => {
     setFormData(prev => ({
       ...prev,
-      class_ids: prev.class_ids.includes(classId)
+      class_ids: (prev.class_ids || []).includes(classId)
         ? prev.class_ids.filter(id => id !== classId)
         : [...prev.class_ids, classId]
     }));
@@ -1116,7 +1118,7 @@ export default function Enrollments() {
                               const capacity = cls.capacity || 0;
                               const available = capacity - enrolled;
                               const isFull = enrolled >= capacity;
-                              const isSelected = formData.class_ids.includes(cls.id);
+                              const isSelected = (formData.class_ids || []).includes(cls.id);
 
                               return (
                                 <div
@@ -1398,7 +1400,7 @@ export function EditEnrollmentModal({
   const handleClassToggle = (classId: number) => {
     setFormData((prev) => ({
       ...prev,
-      class_ids: prev.class_ids.includes(classId)
+      class_ids: (prev.class_ids || []).includes(classId)
         ? prev.class_ids.filter((id) => id !== classId)
         : [...prev.class_ids, classId],
     }));
@@ -1872,7 +1874,7 @@ export function EditEnrollmentModal({
                         dayClasses.map((cls) => {
                           const enrolled = cls.enrolled_count || 0;
                           const capacity = cls.capacity || 0;
-                          const isSelected = formData.class_ids.includes(cls.id);
+                          const isSelected = (formData.class_ids || []).includes(cls.id);
                           // Se o aluno já está na turma (turma original), não conta ele na ocupação
                           const isOriginalClass = enrollment.class_ids?.includes(cls.id) || false;
                           const effectiveEnrolled = isOriginalClass ? enrolled - 1 : enrolled;
