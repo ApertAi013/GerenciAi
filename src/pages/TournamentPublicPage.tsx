@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router';
 import LiveMatchAnimation from '../components/LiveMatchAnimation';
 import '../styles/TournamentPublic.css';
@@ -181,6 +181,8 @@ export default function TournamentPublicPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'bracket' | 'teams' | 'matches'>('overview');
+  const [scoreOverlay, setScoreOverlay] = useState<{show: boolean, team: string, text: string, color: string} | null>(null);
+  const prevScoresRef = useRef<Map<number, {t1: number, t2: number}>>(new Map());
 
   // ─── Fetch full tournament data ───
   const fetchData = useCallback(async () => {
@@ -219,17 +221,34 @@ export default function TournamentPublicPage() {
         if (!res.ok) return;
         const json = await res.json();
         if (json.status === 'success' && json.data) {
+          const newLiveMatches: TournamentMatch[] = json.data.live_matches || [];
+
+          // Check for score changes and trigger overlay
+          const currentCategory: SportCategory = data.tournament.category as SportCategory || detectCategory(data.tournament.title, data.tournament.description);
+          for (const match of newLiveMatches) {
+            const prev = prevScoresRef.current.get(match.id);
+            if (prev) {
+              if ((match.team1_score ?? 0) > prev.t1) {
+                setScoreOverlay({ show: true, team: match.team1_name || 'Time A', text: currentCategory === 'futebol' ? 'GOOOL!' : 'PONTO!', color: '#3B82F6' });
+                setTimeout(() => setScoreOverlay(null), 2000);
+              } else if ((match.team2_score ?? 0) > prev.t2) {
+                setScoreOverlay({ show: true, team: match.team2_name || 'Time B', text: currentCategory === 'futebol' ? 'GOOOL!' : 'PONTO!', color: '#EF4444' });
+                setTimeout(() => setScoreOverlay(null), 2000);
+              }
+            }
+            prevScoresRef.current.set(match.id, { t1: match.team1_score ?? 0, t2: match.team2_score ?? 0 });
+          }
+
           setData(prev => {
             if (!prev) return prev;
-            const liveMatches: TournamentMatch[] = json.data.live_matches || [];
             const updatedMatches = prev.matches.map(m => {
-              const updated = liveMatches.find(lm => lm.id === m.id);
+              const updated = newLiveMatches.find(lm => lm.id === m.id);
               return updated || m;
             });
             // Also check if any matches finished / new ones started
             return {
               ...prev,
-              live_matches: liveMatches,
+              live_matches: newLiveMatches,
               matches: updatedMatches,
               // Update tournament status if returned
               tournament: json.data.tournament_status
@@ -312,9 +331,16 @@ export default function TournamentPublicPage() {
 
         {/* Header */}
         <header className="tp-header">
-          {tournament.image_url && (
-            <img src={tournament.image_url} alt={tournament.title} className="tp-header-image" />
-          )}
+          <div className="tp-arena-showcase">
+            {tournament.image_url ? (
+              <img src={tournament.image_url} alt={tournament.arena_name || tournament.title} className="tp-arena-logo" />
+            ) : (
+              <div className="tp-arena-initials">
+                {(tournament.arena_name || 'A').substring(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="tp-arena-name">{tournament.arena_name}</div>
+          </div>
 
           <h1 className="tp-title">{tournament.title}</h1>
 
@@ -392,20 +418,44 @@ export default function TournamentPublicPage() {
                 </div>
                 <div className="tp-live-match-row">
                   <div className="tp-live-team">
+                    <div className="tp-live-team-color" style={{ background: '#3B82F6' }} />
                     <div className={`tp-live-team-name ${match.winner_id === match.team1_id ? 'winner' : ''}`}>
                       {match.team1_name || 'A definir'}
                     </div>
                   </div>
                   <div className="tp-live-score-divider">
-                    <span className="tp-live-score">{match.team1_score ?? 0}</span>
+                    <span className="tp-live-score tp-live-score-t1">{match.team1_score ?? 0}</span>
                     <span className="tp-live-vs">VS</span>
-                    <span className="tp-live-score">{match.team2_score ?? 0}</span>
+                    <span className="tp-live-score tp-live-score-t2">{match.team2_score ?? 0}</span>
                   </div>
                   <div className="tp-live-team">
+                    <div className="tp-live-team-color" style={{ background: '#EF4444' }} />
                     <div className={`tp-live-team-name ${match.winner_id === match.team2_id ? 'winner' : ''}`}>
                       {match.team2_name || 'A definir'}
                     </div>
                   </div>
+                </div>
+                {/* Match details */}
+                <div className="tp-live-match-details">
+                  <span className="tp-live-detail-item">
+                    Jogo #{match.match_number}
+                  </span>
+                  <span className="tp-live-detail-separator" />
+                  <span className="tp-live-detail-item">
+                    {BRACKET_TYPE_LABELS[match.bracket_type] || match.bracket_type}
+                  </span>
+                  {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && (
+                    <>
+                      <span className="tp-live-detail-separator" />
+                      <span className="tp-live-detail-item">Rodada {match.round_number}</span>
+                    </>
+                  )}
+                  {match.court_name && (
+                    <>
+                      <span className="tp-live-detail-separator" />
+                      <span className="tp-live-detail-item">{match.court_name}</span>
+                    </>
+                  )}
                 </div>
                 {/* 3D Animation */}
                 <LiveMatchAnimation
@@ -717,6 +767,16 @@ export default function TournamentPublicPage() {
             {' '} - Sistema de gestao para arenas esportivas
           </p>
         </div>
+
+        {/* Score overlay */}
+        {scoreOverlay && (
+          <div className="tp-score-overlay">
+            <div className="tp-score-overlay-text" style={{ color: scoreOverlay.color }}>
+              {scoreOverlay.text}
+            </div>
+            <div className="tp-score-overlay-team">{scoreOverlay.team}</div>
+          </div>
+        )}
       </div>
     </div>
   );
