@@ -6,8 +6,10 @@
 <title>Volei 3D</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #080810; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+  body { background: transparent; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+  body.standalone { background: #080810; }
   .score-bar { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.85); padding: 10px 24px; border-radius: 12px; border: 1px solid #333; z-index: 100; backdrop-filter: blur(10px); }
+  body.embed .score-bar { display: none; }
   .score-bar .team { text-align: center; min-width: 70px; }
   .score-bar .team-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
   .score-bar .team-score { font-size: 32px; font-weight: 800; }
@@ -36,6 +38,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 var params = new URLSearchParams(window.location.search);
+var isEmbed = params.get('embed') === 'true' || window.self !== window.top;
+document.body.className = isEmbed ? 'embed' : 'standalone';
 var team1Name = params.get('team1') || 'Time A';
 var team2Name = params.get('team2') || 'Time B';
 var scoreA = parseInt(params.get('score1') || '0');
@@ -191,7 +195,7 @@ function createNet(width, height) {
 }
 
 // Scene setup
-var renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(window.innerWidth, window.innerHeight);
+var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: isEmbed }); renderer.setSize(window.innerWidth, window.innerHeight); if (!isEmbed) renderer.setClearColor(0x080810, 1);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
 document.getElementById('canvas-container').appendChild(renderer.domElement);

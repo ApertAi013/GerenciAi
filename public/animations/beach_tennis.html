@@ -6,8 +6,10 @@
 <title>Beach Tennis 3D</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #080810; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+  body { background: transparent; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+  body.standalone { background: #080810; }
   .score-bar { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.85); padding: 10px 24px; border-radius: 12px; border: 1px solid #333; z-index: 100; backdrop-filter: blur(10px); }
+  body.embed .score-bar { display: none; }
   .score-bar .team { text-align: center; min-width: 70px; }
   .score-bar .team-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
   .score-bar .team-score { font-size: 32px; font-weight: 800; }
