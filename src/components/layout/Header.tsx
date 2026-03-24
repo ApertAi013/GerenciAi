@@ -200,6 +200,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
       case 'enrollment_created': return faUserPlus;
       case 'enrollment_cancelled': return faUserMinus;
       case 'enrollment_updated': return faPen;
+      case 'class_makeup': return faCalendarCheck;
       case 'court_booking': return faCalendarCheck;
       case 'warning': return faCircleExclamation;
       case 'success': return faCircleCheck;
@@ -214,6 +215,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
       case 'enrollment_created': return '#10b981';
       case 'enrollment_cancelled': return '#ef4444';
       case 'enrollment_updated': return '#f59e0b';
+      case 'class_makeup': return '#f59e0b';
       case 'court_booking': return '#f59e0b';
       case 'warning': return '#f5576c';
       case 'success': return '#10b981';
