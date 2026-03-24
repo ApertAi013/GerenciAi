@@ -27,7 +27,7 @@ export default function LiveMatchAnimation({
     : category === 'volei' ? 'volei'
     : 'volei'; // default
 
-  const animUrl = `/animations/${animFile}.html?team1=${encodeURIComponent(team1Name)}&team2=${encodeURIComponent(team2Name)}&score1=${team1Score}&score2=${team2Score}`;
+  const animUrl = `/animations/${animFile}.html?embed=true&team1=${encodeURIComponent(team1Name)}&team2=${encodeURIComponent(team2Name)}&score1=${team1Score}&score2=${team2Score}`;
 
   // Send score updates via postMessage
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function LiveMatchAnimation({
       borderRadius: '12px',
       overflow: 'hidden',
       border: '1px solid rgba(255,255,255,0.1)',
-      background: '#080810',
+      background: 'transparent',
       position: 'relative',
     }}>
       <iframe

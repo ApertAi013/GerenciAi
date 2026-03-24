@@ -45,6 +45,8 @@
 <script>
 // URL params
 var params = new URLSearchParams(window.location.search);
+var isEmbed = params.get('embed') === 'true' || window.self !== window.top;
+document.body.className = isEmbed ? 'embed' : 'standalone';
 var team1Name = params.get('team1') || 'Time A';
 var team2Name = params.get('team2') || 'Time B';
 var scoreA = parseInt(params.get('score1') || '0');
@@ -268,7 +270,7 @@ function lerpCam(cam, tx, ty, tz, lx, ly, lz, speed) {
 }
 
 // ========== SCENE SETUP ==========
-var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: isEmbed }); if (!isEmbed) renderer.setClearColor(0x080810, 1);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
