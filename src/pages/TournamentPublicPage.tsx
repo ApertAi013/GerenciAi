@@ -826,41 +826,61 @@ function MatchCard({ match }: { match: TournamentMatch }) {
 
 // ─── Bracket View ───
 function BracketView({ bracketGroups }: { bracketGroups: Record<string, TournamentMatch[][]> }) {
-  // Render order: winners, losers, third_place, grand_final
-  const order = ['winners', 'losers', 'third_place', 'grand_final'];
-  const sortedKeys = Object.keys(bracketGroups).sort((a, b) => {
-    return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b));
+  // Separate bracket types for layout
+  const winnersRounds = bracketGroups['winners'];
+  const losersRounds = bracketGroups['losers'];
+  const otherKeys = Object.keys(bracketGroups).filter(k => k !== 'winners' && k !== 'losers');
+  // Sort others: third_place, grand_final
+  const otherOrder = ['third_place', 'grand_final'];
+  otherKeys.sort((a, b) => {
+    return (otherOrder.indexOf(a) === -1 ? 99 : otherOrder.indexOf(a)) - (otherOrder.indexOf(b) === -1 ? 99 : otherOrder.indexOf(b));
   });
+
+  const renderBracketBlock = (bracketType: string, rounds: typeof winnersRounds) => {
+    if (!rounds) return null;
+    return (
+      <div key={bracketType}>
+        <div className="tp-bracket-type-label">
+          {BRACKET_TYPE_LABELS[bracketType] || bracketType}
+          <span className={`tp-bracket-type-tag ${BRACKET_TYPE_TAG[bracketType] || ''}`}>
+            {bracketType === 'winners' ? 'W' : bracketType === 'losers' ? 'L' : bracketType === 'grand_final' ? 'GF' : '3P'}
+          </span>
+        </div>
+        <div className="tp-bracket-rounds">
+          {rounds.map((roundMatches, idx) => (
+            <div key={idx} className="tp-bracket-round">
+              <div className="tp-bracket-round-label">
+                {bracketType === 'grand_final' || bracketType === 'third_place'
+                  ? (bracketType === 'grand_final' ? 'Final' : '3o Lugar')
+                  : `Rodada ${idx + 1}`}
+              </div>
+              {roundMatches.map(match => (
+                <MatchCard key={match.id} match={match} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="tp-bracket-section">
-      {sortedKeys.map(bracketType => {
-        const rounds = bracketGroups[bracketType];
-        return (
-          <div key={bracketType}>
-            <div className="tp-bracket-type-label">
-              {BRACKET_TYPE_LABELS[bracketType] || bracketType}
-              <span className={`tp-bracket-type-tag ${BRACKET_TYPE_TAG[bracketType] || ''}`}>
-                {bracketType === 'winners' ? 'W' : bracketType === 'losers' ? 'L' : bracketType === 'grand_final' ? 'GF' : '3P'}
-              </span>
-            </div>
-            <div className="tp-bracket-rounds">
-              {rounds.map((roundMatches, idx) => (
-                <div key={idx} className="tp-bracket-round">
-                  <div className="tp-bracket-round-label">
-                    {bracketType === 'grand_final' || bracketType === 'third_place'
-                      ? (bracketType === 'grand_final' ? 'Final' : '3o Lugar')
-                      : `Rodada ${idx + 1}`}
-                  </div>
-                  {roundMatches.map(match => (
-                    <MatchCard key={match.id} match={match} />
-                  ))}
-                </div>
-              ))}
-            </div>
+      {/* Winners and Losers side by side */}
+      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+        {winnersRounds && (
+          <div style={{ flex: 1, minWidth: '300px' }}>
+            {renderBracketBlock('winners', winnersRounds)}
           </div>
-        );
-      })}
+        )}
+        {losersRounds && (
+          <div style={{ flex: 1, minWidth: '300px' }}>
+            {renderBracketBlock('losers', losersRounds)}
+          </div>
+        )}
+      </div>
+      {/* Grand Final, Third Place below */}
+      {otherKeys.map(bracketType => renderBracketBlock(bracketType, bracketGroups[bracketType]))}
     </div>
   );
 }

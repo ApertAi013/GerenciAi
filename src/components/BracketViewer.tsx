@@ -55,71 +55,83 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
     return `Rodada ${roundIndex + 1}`;
   };
 
+  const hasLosers = losers && losers.length > 0 && losers.some(r => r && r.length > 0);
+
   return (
     <div className="bracket-container">
-      {/* Winners Bracket */}
-      {winners && winners.length > 0 && (
-        <div className="bracket-section">
-          <div className="bracket-section-title">Chave dos Vencedores</div>
-          <div className="bracket-rounds">
-            {winners.map((round, roundIdx) => (
-              <div key={`wb-${roundIdx}`} className="bracket-round">
-                <div className="bracket-round-label">
-                  {getRoundLabel('winners', roundIdx, winners.length)}
-                </div>
-                {round && round.map(match => (
-                  <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} />
+      {/* Winners and Losers side by side */}
+      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+        {/* Winners Bracket */}
+        {winners && winners.length > 0 && (
+          <div style={{ flex: 1, minWidth: '300px' }}>
+            <div className="bracket-section">
+              <div className="bracket-section-title">Chave Principal</div>
+              <div className="bracket-rounds">
+                {winners.map((round, roundIdx) => (
+                  <div key={`wb-${roundIdx}`} className="bracket-round">
+                    <div className="bracket-round-label">
+                      {getRoundLabel('winners', roundIdx, winners.length)}
+                    </div>
+                    {round && round.map(match => (
+                      <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} />
+                    ))}
+                  </div>
                 ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Grand Final */}
-      {grandFinal && (
-        <div className="bracket-section">
-          <div className="bracket-grand-final">
-            <div>
-              <div className="bracket-gf-label">Grande Final</div>
-              <MatchCard match={grandFinal} onClick={onMatchClick} interactive={interactive} />
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Losers Bracket */}
-      {losers && losers.length > 0 && losers.some(r => r && r.length > 0) && (
-        <div className="bracket-section">
-          <div className="bracket-section-title">Chave dos Perdedores</div>
-          <div className="bracket-rounds">
-            {losers.map((round, roundIdx) => (
-              round && round.length > 0 ? (
-                <div key={`lb-${roundIdx}`} className="bracket-round">
-                  <div className="bracket-round-label">
-                    {getRoundLabel('losers', roundIdx, losers.length)}
-                  </div>
-                  {round.map(match => (
-                    <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} />
-                  ))}
-                </div>
-              ) : null
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Third Place */}
-      {thirdPlace && (
-        <div className="bracket-section">
-          <div className="bracket-grand-final">
-            <div>
-              <div className="bracket-gf-label" style={{ color: '#d97706' }}>Disputa de 3º Lugar</div>
-              <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} />
+        {/* Losers Bracket */}
+        {hasLosers && (
+          <div style={{ flex: 1, minWidth: '300px' }}>
+            <div className="bracket-section">
+              <div className="bracket-section-title">Chave dos Perdedores</div>
+              <div className="bracket-rounds">
+                {losers.map((round, roundIdx) => (
+                  round && round.length > 0 ? (
+                    <div key={`lb-${roundIdx}`} className="bracket-round">
+                      <div className="bracket-round-label">
+                        {getRoundLabel('losers', roundIdx, losers.length)}
+                      </div>
+                      {round.map(match => (
+                        <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} />
+                      ))}
+                    </div>
+                  ) : null
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Grand Final & Third Place below */}
+      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+        {/* Grand Final */}
+        {grandFinal && (
+          <div className="bracket-section">
+            <div className="bracket-grand-final">
+              <div>
+                <div className="bracket-gf-label">Grande Final</div>
+                <MatchCard match={grandFinal} onClick={onMatchClick} interactive={interactive} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Third Place */}
+        {thirdPlace && (
+          <div className="bracket-section">
+            <div className="bracket-grand-final">
+              <div>
+                <div className="bracket-gf-label" style={{ color: '#d97706' }}>Disputa de 3º Lugar</div>
+                <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
