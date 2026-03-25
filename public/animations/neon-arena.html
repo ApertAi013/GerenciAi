@@ -110,17 +110,18 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 renderer.setClearColor(0x000000, isEmbedded ? 0 : 1);
 
-// ─── Bloom ───
-const renderTarget = new THREE.WebGLRenderTarget(W, H, {
-  type: THREE.HalfFloatType,
-  format: THREE.RGBAFormat,
-});
-const composer = new EffectComposer(renderer, renderTarget);
-const renderPass = new RenderPass(scene, camera);
-renderPass.clearAlpha = isEmbedded ? 0 : 1;
-composer.addPass(renderPass);
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 1.1, 0.5, 0.18);
-composer.addPass(bloomPass);
+// ─── Bloom (only standalone — composer doesn't support true transparency) ───
+let composer = null;
+let bloomPass = null;
+if (!isEmbedded) {
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 1.1, 0.5, 0.18);
+  composer.addPass(bloomPass);
+} else {
+  // In embed mode: boost emissive materials to fake bloom effect
+  // (materials will be slightly brighter to compensate for no bloom)
+}
 
 // ─── Lighting ───
 scene.add(new THREE.AmbientLight(0x060612, 0.4));
@@ -157,12 +158,14 @@ function neonLine(pointsArr, color, thickness = 0.03) {
   const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, segs, thickness, 8, false), tubeMat);
   scene.add(tube);
 
-  const glowMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55 });
-  const glow = new THREE.Mesh(new THREE.TubeGeometry(curve, segs, thickness * 3, 8, false), glowMat);
+  const glowOpacity = isEmbedded ? 0.7 : 0.55;
+  const outerOpacity = isEmbedded ? 0.2 : 0.12;
+  const glowMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: glowOpacity });
+  const glow = new THREE.Mesh(new THREE.TubeGeometry(curve, segs, thickness * (isEmbedded ? 4 : 3), 8, false), glowMat);
   scene.add(glow);
 
-  const outerMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.12 });
-  const outer = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(4, pts.length * 6), thickness * 7, 6, false), outerMat);
+  const outerMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: outerOpacity });
+  const outer = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(4, pts.length * 6), thickness * (isEmbedded ? 9 : 7), 6, false), outerMat);
   scene.add(outer);
 
   const obj = { tube, glow, outer, tubeMat, glowMat, outerMat, originalColor: new THREE.Color(color) };
@@ -309,7 +312,7 @@ function animate() {
     }
 
     // Boost bloom briefly
-    bloomPass.strength = 1.1 + intensity * 0.8;
+    if (bloomPass) bloomPass.strength = 1.1 + intensity * 0.8;
 
     // Boost lights
     blueLight.intensity = 0.3 + intensity * 0.8;
@@ -319,7 +322,7 @@ function animate() {
   } else {
     // Restore defaults
     flashMat.opacity = 0;
-    bloomPass.strength = 1.1;
+    if (bloomPass) bloomPass.strength = 1.1;
     for (const l of allLineObjects) {
       l.glowMat.color.lerp(l.originalColor, 0.1);
       l.outerMat.color.lerp(l.originalColor, 0.1);
@@ -332,7 +335,8 @@ function animate() {
 
   if (celebTimer > 0) celebTimer -= 0.016;
 
-  composer.render();
+  if (composer) composer.render();
+  else renderer.render(scene, camera);
 }
 animate();
 
@@ -370,7 +374,7 @@ window.addEventListener('resize', () => {
   camera.aspect = W / H;
   camera.updateProjectionMatrix();
   renderer.setSize(W, H);
-  composer.setSize(W, H);
+  if (composer) composer.setSize(W, H);
 });
 
 // ─── PostMessage API (for iframe integration) ───
