@@ -69,29 +69,29 @@
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  min-width: 220px;
+  min-width: 170px;
   position: relative;
 }
 
 .bracket-round-label {
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #94a3b8;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   text-transform: uppercase;
 }
 
 .bracket-match-wrapper {
   display: flex;
   align-items: center;
-  padding: 8px 0;
+  padding: 4px 0;
   position: relative;
 }
 
 .bracket-match {
-  width: 200px;
-  border-radius: 8px;
+  width: 165px;
+  border-radius: 6px;
   overflow: visible;
   border: 1px solid #e2e8f0;
   background: #fff;
@@ -127,11 +127,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  font-size: 0.82rem;
+  padding: 4px 8px;
+  font-size: 0.75rem;
   color: #475569;
   border-bottom: 1px solid #f1f5f9;
-  min-height: 30px;
+  min-height: 26px;
   background: inherit;
 }
 
@@ -159,7 +159,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 140px;
+  max-width: 120px;
 }
 
 .bracket-match-team-name.empty {
@@ -173,9 +173,9 @@
 
 .bracket-match-team-score {
   font-weight: 700;
-  min-width: 24px;
+  min-width: 20px;
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
 }
 
 .bracket-match-number {
@@ -229,7 +229,7 @@
 }
 
 .bracket-grand-final .bracket-match {
-  width: 240px;
+  width: 190px;
   border: 2px solid #EAB308;
   box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.1);
 }
@@ -284,9 +284,17 @@
     padding: 10px;
   }
   .bracket-round {
-    min-width: 180px;
+    min-width: 150px;
   }
   .bracket-match {
-    width: 170px;
+    width: 145px;
+  }
+  .bracket-match-team {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+    min-height: 22px;
+  }
+  .bracket-match-team-name {
+    max-width: 100px;
   }
 }
