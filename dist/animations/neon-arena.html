@@ -354,12 +354,14 @@ window.score = function(team) {
   flashTeamColor = team === 1 ? new THREE.Color(0x3B82F6) : new THREE.Color(0xEF4444);
   flashTimer = 1;
 
-  // "PONTO!" overlay
-  const color = team === 1 ? '#3B82F6' : '#EF4444';
-  pointText.style.color = color;
-  pointText.textContent = 'PONTO!';
-  pointOverlay.classList.add('show');
-  setTimeout(() => pointOverlay.classList.remove('show'), 1200);
+  // "PONTO!" overlay (only in standalone, not embed — page handles its own)
+  if (!isEmbedded) {
+    const color = team === 1 ? '#3B82F6' : '#EF4444';
+    pointText.style.color = color;
+    pointText.textContent = 'PONTO!';
+    pointOverlay.classList.add('show');
+    setTimeout(() => pointOverlay.classList.remove('show'), 1200);
+  }
 };
 
 // ─── Resize ───
