@@ -990,8 +990,8 @@ function DynamicPairingSection({
   const [shuffleType, setShuffleType] = useState<'pairs' | 'bracket' | null>(null);
   const [revealedPairs, setRevealedPairs] = useState<number>(999); // start revealed
   const [isRevealing, setIsRevealing] = useState(false);
-  const prevPairsDrawRef = useRef<string | null>(null);
-  const prevBracketDrawRef = useRef<string | null>(null);
+  const prevPairsDrawRef = useRef<string | undefined>(undefined);
+  const prevBracketDrawRef = useRef<string | undefined>(undefined);
   const shuffleTimerRef = useRef<any>(null);
 
   const leftPlayers = individualPlayers.filter(p => p.side === 'left');
@@ -1000,7 +1000,8 @@ function DynamicPairingSection({
 
   // Detect pairs draw event (timestamp changed)
   useEffect(() => {
-    if (lastPairsDrawAt && prevPairsDrawRef.current !== null && lastPairsDrawAt !== prevPairsDrawRef.current) {
+    // Skip first load (undefined → initial value). Only animate on CHANGE.
+    if (lastPairsDrawAt && prevPairsDrawRef.current !== undefined && lastPairsDrawAt !== prevPairsDrawRef.current) {
       // New pairs draw detected! Start 30s shuffle animation
       setShuffleType('pairs');
       setRevealedPairs(0);
@@ -1027,7 +1028,7 @@ function DynamicPairingSection({
 
   // Detect bracket draw event (timestamp changed)
   useEffect(() => {
-    if (lastBracketDrawAt && prevBracketDrawRef.current !== null && lastBracketDrawAt !== prevBracketDrawRef.current) {
+    if (lastBracketDrawAt && prevBracketDrawRef.current !== undefined && lastBracketDrawAt !== prevBracketDrawRef.current) {
       // New bracket draw! Show shuffle animation for 30s
       setShuffleType('bracket');
 
