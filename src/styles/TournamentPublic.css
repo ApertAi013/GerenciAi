@@ -1664,6 +1664,34 @@
   z-index: 1;
 }
 
+/* Scheduled countdown */
+.tp-pairing-countdown {
+  text-align: center;
+}
+
+.tp-pairing-countdown-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 4px;
+}
+
+.tp-pairing-countdown-time {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #F58A25;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  animation: tp-countdown-pulse 1s ease-in-out infinite;
+}
+
+@keyframes tp-countdown-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 /* ─── Pair Results ─── */
 .tp-pairing-results {
   position: relative;

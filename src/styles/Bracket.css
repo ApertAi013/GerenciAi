@@ -11,7 +11,7 @@
 /* Main layout: Winners ← Center → Losers */
 .bracket-main-layout {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 6px;
   min-width: min-content;
 }
@@ -45,11 +45,15 @@
   padding-left: 4px;
 }
 
-/* Losers bracket title aligned right */
+/* Losers bracket title aligned right + offset to match winners height */
 .bracket-losers-half .bracket-section-title {
   text-align: right;
   padding-right: 4px;
   padding-left: 0;
+}
+
+.bracket-losers-half .bracket-rounds {
+  height: 100%;
 }
 
 .bracket-rounds {

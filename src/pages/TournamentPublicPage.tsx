@@ -979,6 +979,7 @@ function DynamicPairingSection({
   teamSize,
   lastPairsDrawAt,
   lastBracketDrawAt,
+  pairsRevealAt,
 }: {
   individualPlayers: { id: number; player_name: string; side: 'left' | 'right' }[];
   generatedPairs: { team_name: string; left_player: string; right_player: string }[];
@@ -987,6 +988,7 @@ function DynamicPairingSection({
   teamSize: number;
   lastPairsDrawAt: string | null;
   lastBracketDrawAt: string | null;
+  pairsRevealAt: string | null;
 }) {
   const SHUFFLE_DURATION = 30000; // 30 seconds of shuffle animation
   const [shuffleType, setShuffleType] = useState<'pairs' | 'bracket' | null>(null);
@@ -995,9 +997,65 @@ function DynamicPairingSection({
   const prevPairsDrawRef = useRef<string | undefined>(undefined);
   const prevBracketDrawRef = useRef<string | undefined>(undefined);
   const shuffleTimerRef = useRef<any>(null);
+  const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
 
   const leftPlayers = individualPlayers.filter(p => p.side === 'left');
   const rightPlayers = individualPlayers.filter(p => p.side === 'right');
+
+  // Scheduled reveal countdown
+  useEffect(() => {
+    if (!pairsRevealAt) { setCountdownSeconds(null); return; }
+    const targetTime = new Date(pairsRevealAt).getTime();
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
+      setCountdownSeconds(remaining);
+      if (remaining <= 0) {
+        // Time reached! Trigger shuffle animation
+        setCountdownSeconds(null);
+        setShuffleType('pairs');
+        setRevealedPairs(0);
+        if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
+        shuffleTimerRef.current = setTimeout(() => {
+          setShuffleType(null);
+          setIsRevealing(true);
+          let i = 0;
+          const interval = setInterval(() => {
+            i++;
+            setRevealedPairs(i);
+            if (i >= generatedPairs.length) { clearInterval(interval); setIsRevealing(false); }
+          }, 1200);
+        }, SHUFFLE_DURATION);
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [pairsRevealAt, generatedPairs.length]);
+
+  // On page load: if draw was within last 60s, show animation
+  useEffect(() => {
+    if (!lastPairsDrawAt || pairsRevealAt) return; // skip if scheduled
+    const drawAge = Date.now() - new Date(lastPairsDrawAt).getTime();
+    if (drawAge < 60000 && drawAge > 0 && generatedPairs.length > 0 && prevPairsDrawRef.current === undefined) {
+      setShuffleType('pairs');
+      setRevealedPairs(0);
+      const remainingShuffle = Math.max(5000, SHUFFLE_DURATION - drawAge);
+      if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
+      shuffleTimerRef.current = setTimeout(() => {
+        setShuffleType(null);
+        setIsRevealing(true);
+        let i = 0;
+        const interval = setInterval(() => {
+          i++;
+          setRevealedPairs(i);
+          if (i >= generatedPairs.length) { clearInterval(interval); setIsRevealing(false); }
+        }, 1200);
+      }, remainingShuffle);
+    }
+    // eslint-disable-next-line
+  }, []);
   const hasPairs = generatedPairs.length > 0;
 
   // Detect pairs draw event (timestamp changed)
@@ -1108,7 +1166,18 @@ function DynamicPairingSection({
 
           <div className="tp-pairing-vs">
             <div className="tp-pairing-vs-icon"><ShuffleIcon size={32} /></div>
-            <div className="tp-pairing-vs-text">Aguardando sorteio...</div>
+            {countdownSeconds !== null && countdownSeconds > 0 ? (
+              <div className="tp-pairing-countdown">
+                <div className="tp-pairing-countdown-label">Sorteio em</div>
+                <div className="tp-pairing-countdown-time">
+                  {Math.floor(countdownSeconds / 3600).toString().padStart(2, '0')}:
+                  {Math.floor((countdownSeconds % 3600) / 60).toString().padStart(2, '0')}:
+                  {(countdownSeconds % 60).toString().padStart(2, '0')}
+                </div>
+              </div>
+            ) : (
+              <div className="tp-pairing-vs-text">Aguardando sorteio...</div>
+            )}
           </div>
 
           <div className="tp-pairing-side tp-pairing-right">
