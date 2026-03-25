@@ -356,6 +356,24 @@ window.addEventListener('resize', () => {
   renderer.setSize(W, H);
   composer.setSize(W, H);
 });
+
+// ─── PostMessage API (for iframe integration) ───
+window.addEventListener('message', (e) => {
+  try {
+    const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+    if (data.team === 'a' || data.team === 1) score(1);
+    else if (data.team === 'b' || data.team === 2) score(2);
+  } catch {}
+});
+
+// ─── Embed mode: hide score bar if embedded ───
+if (params.get('embed') === 'true') {
+  document.querySelector('.score-bar').style.display = 'none';
+  // Apply initial scores from URL
+  const s1 = parseInt(params.get('score1') || '0');
+  const s2 = parseInt(params.get('score2') || '0');
+  scores = [s1, s2];
+}
 </script>
 </body>
 </html>

@@ -497,6 +497,7 @@ export default function TournamentPublicPage() {
                   team1Score={match.team1_score ?? 0}
                   team2Score={match.team2_score ?? 0}
                   isLive={true}
+                  teamSize={tournament.team_size}
                 />
               </div>
             ))}
