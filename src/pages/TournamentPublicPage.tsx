@@ -864,18 +864,16 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
   const thirdPlaceRounds = bracketGroups['third_place'];
 
   const getWinnersLabel = (idx: number, total: number) => {
-    if (total <= 2) {
-      if (idx === total - 1) return 'Semifinal';
-      return `Rodada ${idx + 1}`;
-    }
     if (idx === total - 1) return 'Semifinal';
     if (idx === total - 2) return 'Quartas';
     if (total >= 4 && idx === total - 3) return 'Oitavas';
+    if (total >= 5 && idx === total - 4) return '16 avos';
     return `Rodada ${idx + 1}`;
   };
 
   const getLosersLabel = (idx: number, total: number) => {
-    if (idx === total - 1) return 'Semifinal';
+    if (idx === total - 1) return 'Quartas';
+    if (idx === total - 2) return 'Quartas Repescagem';
     return `Rodada ${idx + 1}`;
   };
 

@@ -47,18 +47,16 @@ function MatchCard({ match, onClick, interactive }: { match: TournamentMatch; on
 
 export default function BracketViewer({ winners, losers, grandFinal, thirdPlace, onMatchClick, interactive }: BracketViewerProps) {
   const getWinnersLabel = (roundIndex: number, totalRounds: number) => {
-    if (totalRounds <= 2) {
-      if (roundIndex === totalRounds - 1) return 'Semifinal';
-      return `Rodada ${roundIndex + 1}`;
-    }
     if (roundIndex === totalRounds - 1) return 'Semifinal';
     if (roundIndex === totalRounds - 2) return 'Quartas';
     if (totalRounds >= 4 && roundIndex === totalRounds - 3) return 'Oitavas';
+    if (totalRounds >= 5 && roundIndex === totalRounds - 4) return '16 avos';
     return `Rodada ${roundIndex + 1}`;
   };
 
   const getLosersLabel = (roundIndex: number, totalRounds: number) => {
-    if (roundIndex === totalRounds - 1) return 'Semifinal';
+    if (roundIndex === totalRounds - 1) return 'Quartas';
+    if (roundIndex === totalRounds - 2) return 'Quartas Repescagem';
     return `Rodada ${roundIndex + 1}`;
   };
 
