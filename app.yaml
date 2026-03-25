@@ -18,6 +18,15 @@ handlers:
   http_headers:
     Cache-Control: 'public, max-age=3600'
 
+# Serve animation HTML files directly
+- url: /animations/(.+\.html)
+  static_files: dist/animations/\1
+  upload: dist/animations/.*\.html
+  secure: always
+  redirect_http_response_code: 301
+  http_headers:
+    Cache-Control: 'public, max-age=0, must-revalidate'
+
 # Serve other static files (images, favicon, etc)
 - url: /(.*\.(json|ico|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot|txt|xml))
   static_files: dist/\1
