@@ -3,8 +3,8 @@
 /* ══════════════════════════════════════════════ */
 
 .bracket-container {
-  overflow-x: auto;
-  padding: 20px;
+  overflow: auto;
+  padding: 16px;
   min-height: 300px;
 }
 
@@ -12,13 +12,12 @@
 .bracket-main-layout {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.5rem;
+  min-width: min-content;
 }
 
 .bracket-half {
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
+  flex-shrink: 0;
 }
 
 .bracket-center {
@@ -27,9 +26,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 20px 0;
-  min-width: 260px;
+  gap: 0.75rem;
+  padding: 20px 8px;
+  min-width: 200px;
 }
 
 .bracket-section {
@@ -225,7 +224,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  padding: 8px;
 }
 
 .bracket-grand-final .bracket-match {
