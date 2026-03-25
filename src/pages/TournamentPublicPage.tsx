@@ -898,9 +898,11 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
                   <div className="tp-bracket-round-label">
                     {getWinnersLabel(idx, winnersRounds.length)}
                   </div>
-                  {roundMatches.map(match => (
-                    <MatchCard key={match.id} match={match} />
-                  ))}
+                  <div className="tp-bracket-round-matches">
+                    {roundMatches.map(match => (
+                      <MatchCard key={match.id} match={match} />
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
@@ -922,9 +924,11 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
                     <div className="tp-bracket-round-label">
                       {getLosersLabel(actualIdx, losersRounds.length)}
                     </div>
-                    {roundMatches.map(match => (
-                      <MatchCard key={match.id} match={match} />
-                    ))}
+                    <div className="tp-bracket-round-matches">
+                      {roundMatches.map(match => (
+                        <MatchCard key={match.id} match={match} />
+                      ))}
+                    </div>
                   </div>
                 );
               })}
