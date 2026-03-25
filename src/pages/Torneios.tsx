@@ -329,6 +329,7 @@ export default function Torneios() {
   const [rankings, setRankings] = useState<TournamentRanking[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [rankingLimit, setRankingLimit] = useState(10);
 
   // Create/Edit modal
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -481,6 +482,23 @@ export default function Torneios() {
       fetchAll();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro');
+    }
+  };
+
+  const handleForceDeleteTournament = async () => {
+    if (!selectedTournament) return;
+    const name = prompt(`Para excluir permanentemente, digite o nome do torneio:\n"${selectedTournament.title}"`);
+    if (name !== selectedTournament.title) {
+      if (name !== null) toast.error('Nome incorreto');
+      return;
+    }
+    try {
+      const response = await (await import('../services/api')).api.delete(`/api/tournaments/${selectedTournament.id}?force=true`);
+      toast.success('Torneio excluído permanentemente');
+      setSelectedTournament(null);
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao excluir');
     }
   };
 
@@ -929,30 +947,43 @@ export default function Torneios() {
               <small>Rankings são atualizados ao final de cada torneio</small>
             </div>
           ) : (
-            <table className="torneio-ranking-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Nome</th>
-                  <th>Torneios</th>
-                  <th>Vitórias</th>
-                  <th>Derrotas</th>
-                  <th>Pontos</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rankings.map((r, i) => (
-                  <tr key={r.id}>
-                    <td><span className="torneio-ranking-pos">{i + 1}º</span></td>
-                    <td>{r.student_name || r.external_name || '-'}</td>
-                    <td>{r.tournaments_played}</td>
-                    <td>{r.matches_won}</td>
-                    <td>{r.matches_lost}</td>
-                    <td><strong>{r.ranking_points}</strong></td>
+            <>
+              <table className="torneio-ranking-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Nome</th>
+                    <th>Torneios</th>
+                    <th>Vitórias</th>
+                    <th>Derrotas</th>
+                    <th>Pontos</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rankings.slice(0, rankingLimit).map((r, i) => (
+                    <tr key={r.id}>
+                      <td><span className="torneio-ranking-pos">{i + 1}º</span></td>
+                      <td>{r.student_name || r.external_name || '-'}</td>
+                      <td>{r.tournaments_played}</td>
+                      <td>{r.matches_won}</td>
+                      <td>{r.matches_lost}</td>
+                      <td><strong>{r.ranking_points}</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {rankingLimit < rankings.length && (
+                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                  <button
+                    className="torneio-btn-outline"
+                    onClick={() => setRankingLimit(l => l + 10)}
+                    style={{ padding: '8px 24px', borderRadius: 8, border: '1px solid var(--border-color, #e2e8f0)', cursor: 'pointer', fontSize: '0.85rem' }}
+                  >
+                    Ver mais ({rankings.length - rankingLimit} restantes)
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -1034,9 +1065,15 @@ export default function Torneios() {
                         {selectedTournament.status === 'live' && (
                           <button className="torneio-btn-danger" onClick={handleFinishTournament}><FontAwesomeIcon icon={faStop} /> Finalizar</button>
                         )}
-                        {selectedTournament.status !== 'live' && selectedTournament.status !== 'finished' && (
+                        {selectedTournament.status !== 'live' && selectedTournament.status !== 'finished' && selectedTournament.status !== 'cancelled' && (
                           <button className="torneio-btn-danger" onClick={handleDeleteTournament}><FontAwesomeIcon icon={faTimes} /> Cancelar</button>
                         )}
+                        <button
+                          onClick={handleForceDeleteTournament}
+                          style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '0.78rem', opacity: 0.7 }}
+                        >
+                          Excluir permanentemente
+                        </button>
                       </div>
                     </div>
                   </div>
