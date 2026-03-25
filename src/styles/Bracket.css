@@ -52,8 +52,10 @@
   padding-left: 0;
 }
 
-.bracket-losers-half .bracket-rounds {
-  height: 100%;
+.bracket-losers-half {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .bracket-rounds {
