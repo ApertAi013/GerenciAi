@@ -93,6 +93,8 @@ interface TournamentData {
     num_groups?: number;
     group_stage_completed?: boolean;
     pairing_mode?: 'fixed' | 'dynamic_single' | 'dynamic_per_round';
+    last_pairs_draw_at?: string | null;
+    last_bracket_draw_at?: string | null;
   };
   teams: TournamentTeam[];
   matches: TournamentMatch[];
@@ -273,6 +275,18 @@ export default function TournamentPublicPage() {
     return () => clearInterval(interval);
   }, [data, token, fetchData]);
 
+  // ─── Full data polling (detect draws, bracket changes, new teams) ───
+  useEffect(() => {
+    if (!data || !token) return;
+    if (data.tournament.status === 'finished' || data.tournament.status === 'cancelled') return;
+
+    const fullInterval = setInterval(() => {
+      fetchData();
+    }, 10000);
+
+    return () => clearInterval(fullInterval);
+  }, [data, token, fetchData]);
+
   // ─── Loading state ───
   if (loading) {
     return (
@@ -406,6 +420,8 @@ export default function TournamentPublicPage() {
             bracketGenerated={tournament.bracket_generated}
             pairingMode={tournament.pairing_mode}
             teamSize={tournament.team_size}
+            lastPairsDrawAt={tournament.last_pairs_draw_at || null}
+            lastBracketDrawAt={tournament.last_bracket_draw_at || null}
           />
         )}
 
@@ -959,29 +975,41 @@ function DynamicPairingSection({
   bracketGenerated,
   pairingMode,
   teamSize,
+  lastPairsDrawAt,
+  lastBracketDrawAt,
 }: {
   individualPlayers: { id: number; player_name: string; side: 'left' | 'right' }[];
   generatedPairs: { team_name: string; left_player: string; right_player: string }[];
   bracketGenerated: boolean;
   pairingMode: string;
   teamSize: number;
+  lastPairsDrawAt: string | null;
+  lastBracketDrawAt: string | null;
 }) {
-  const [revealedPairs, setRevealedPairs] = useState<number>(0);
+  const SHUFFLE_DURATION = 30000; // 30 seconds of shuffle animation
+  const [shuffleType, setShuffleType] = useState<'pairs' | 'bracket' | null>(null);
+  const [revealedPairs, setRevealedPairs] = useState<number>(999); // start revealed
   const [isRevealing, setIsRevealing] = useState(false);
-  const [shuffleActive, setShuffleActive] = useState(false);
-  const prevPairsCount = useRef(generatedPairs.length);
+  const prevPairsDrawRef = useRef<string | null>(null);
+  const prevBracketDrawRef = useRef<string | null>(null);
+  const shuffleTimerRef = useRef<any>(null);
 
   const leftPlayers = individualPlayers.filter(p => p.side === 'left');
   const rightPlayers = individualPlayers.filter(p => p.side === 'right');
   const hasPairs = generatedPairs.length > 0;
 
-  // Auto-trigger reveal animation when pairs appear (from polling)
+  // Detect pairs draw event (timestamp changed)
   useEffect(() => {
-    if (generatedPairs.length > 0 && prevPairsCount.current === 0) {
-      setShuffleActive(true);
+    if (lastPairsDrawAt && prevPairsDrawRef.current !== null && lastPairsDrawAt !== prevPairsDrawRef.current) {
+      // New pairs draw detected! Start 30s shuffle animation
+      setShuffleType('pairs');
       setRevealedPairs(0);
-      setTimeout(() => {
-        setShuffleActive(false);
+      setIsRevealing(false);
+
+      if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
+      shuffleTimerRef.current = setTimeout(() => {
+        setShuffleType(null);
+        // Start revealing pairs one by one
         setIsRevealing(true);
         let i = 0;
         const interval = setInterval(() => {
@@ -991,14 +1019,35 @@ function DynamicPairingSection({
             clearInterval(interval);
             setIsRevealing(false);
           }
-        }, 800);
-      }, 2500);
+        }, 1200);
+      }, SHUFFLE_DURATION);
     }
-    prevPairsCount.current = generatedPairs.length;
-  }, [generatedPairs.length]);
+    prevPairsDrawRef.current = lastPairsDrawAt;
+  }, [lastPairsDrawAt, generatedPairs.length]);
+
+  // Detect bracket draw event (timestamp changed)
+  useEffect(() => {
+    if (lastBracketDrawAt && prevBracketDrawRef.current !== null && lastBracketDrawAt !== prevBracketDrawRef.current) {
+      // New bracket draw! Show shuffle animation for 30s
+      setShuffleType('bracket');
+
+      if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
+      shuffleTimerRef.current = setTimeout(() => {
+        setShuffleType(null);
+      }, SHUFFLE_DURATION);
+    }
+    prevBracketDrawRef.current = lastBracketDrawAt;
+  }, [lastBracketDrawAt]);
+
+  // Cleanup timers
+  useEffect(() => {
+    return () => {
+      if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
+    };
+  }, []);
 
   // Nothing relevant to show
-  if (individualPlayers.length === 0 && generatedPairs.length === 0) return null;
+  if (individualPlayers.length === 0 && generatedPairs.length === 0 && !shuffleType) return null;
 
   return (
     <div className="tp-pairing-section">
@@ -1009,8 +1058,35 @@ function DynamicPairingSection({
         </span>
       </h2>
 
-      {/* Players awaiting draw */}
-      {!hasPairs && individualPlayers.length > 0 && (
+      {/* Shuffle animation (30s) */}
+      {shuffleType && (
+        <div className="tp-pairing-shuffle-overlay">
+          <div className="tp-pairing-shuffle-container">
+            {/* Animated player names flying around */}
+            <div className="tp-pairing-shuffle-names">
+              {individualPlayers.map((p, i) => (
+                <span
+                  key={p.id}
+                  className={`tp-pairing-shuffle-name ${p.side}`}
+                  style={{ animationDelay: `${i * 0.2}s`, animationDuration: `${1.5 + Math.random()}s` }}
+                >
+                  {p.player_name}
+                </span>
+              ))}
+            </div>
+            <div className="tp-pairing-shuffle-spinner" />
+            <div className="tp-pairing-shuffle-text">
+              {shuffleType === 'pairs' ? 'Sorteando duplas...' : 'Sorteando confrontos...'}
+            </div>
+            <div className="tp-pairing-shuffle-countdown">
+              <ShuffleCountdown duration={SHUFFLE_DURATION} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Players awaiting draw (no pairs yet, no shuffle happening) */}
+      {!hasPairs && !shuffleType && individualPlayers.length > 0 && (
         <div className="tp-pairing-players">
           <div className="tp-pairing-side tp-pairing-left">
             <div className="tp-pairing-side-label">
@@ -1019,11 +1095,7 @@ function DynamicPairingSection({
             </div>
             <div className="tp-pairing-player-list">
               {leftPlayers.map((p, i) => (
-                <div
-                  key={p.id}
-                  className="tp-pairing-player-card left"
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                >
+                <div key={p.id} className="tp-pairing-player-card left" style={{ animationDelay: `${i * 0.1}s` }}>
                   <span className="tp-pairing-player-number">{i + 1}</span>
                   <span className="tp-pairing-player-name">{p.player_name}</span>
                 </div>
@@ -1032,9 +1104,7 @@ function DynamicPairingSection({
           </div>
 
           <div className="tp-pairing-vs">
-            <div className="tp-pairing-vs-icon">
-              <ShuffleIcon size={32} />
-            </div>
+            <div className="tp-pairing-vs-icon"><ShuffleIcon size={32} /></div>
             <div className="tp-pairing-vs-text">Aguardando sorteio...</div>
           </div>
 
@@ -1045,11 +1115,7 @@ function DynamicPairingSection({
             </div>
             <div className="tp-pairing-player-list">
               {rightPlayers.map((p, i) => (
-                <div
-                  key={p.id}
-                  className="tp-pairing-player-card right"
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                >
+                <div key={p.id} className="tp-pairing-player-card right" style={{ animationDelay: `${i * 0.1}s` }}>
                   <span className="tp-pairing-player-number">{i + 1}</span>
                   <span className="tp-pairing-player-name">{p.player_name}</span>
                 </div>
@@ -1059,20 +1125,12 @@ function DynamicPairingSection({
         </div>
       )}
 
-      {/* Shuffle animation overlay */}
-      {shuffleActive && (
-        <div className="tp-pairing-shuffle-overlay">
-          <div className="tp-pairing-shuffle-spinner" />
-          <div className="tp-pairing-shuffle-text">Sorteando duplas...</div>
-        </div>
-      )}
-
-      {/* Revealed pairs */}
-      {hasPairs && (
+      {/* Revealed pairs (after shuffle or if already drawn) */}
+      {hasPairs && !shuffleType && (
         <div className="tp-pairing-results">
           <div className="tp-pairing-pairs-grid">
             {generatedPairs.map((pair, idx) => {
-              const isVisible = revealedPairs > idx || (!isRevealing && !shuffleActive);
+              const isVisible = revealedPairs > idx;
               return (
                 <div
                   key={idx}
@@ -1101,6 +1159,23 @@ function DynamicPairingSection({
       )}
     </div>
   );
+}
+
+// Countdown component for shuffle animation
+function ShuffleCountdown({ duration }: { duration: number }) {
+  const [remaining, setRemaining] = useState(Math.ceil(duration / 1000));
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRemaining(r => {
+        if (r <= 1) { clearInterval(interval); return 0; }
+        return r - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <span>{remaining}s</span>;
 }
 
 function ShuffleIcon({ size = 16 }: { size?: number }) {
