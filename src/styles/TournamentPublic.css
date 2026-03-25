@@ -710,7 +710,7 @@
 
 .tp-bracket-rounds {
   display: flex;
-  gap: 20px;
+  gap: 8px;
   min-width: min-content;
 }
 
@@ -736,26 +736,26 @@
 }
 
 .tp-bracket-round {
-  min-width: 220px;
+  min-width: 155px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .tp-bracket-round-label {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   text-align: center;
 }
 
 .tp-match-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
+  border-radius: 7px;
   overflow: hidden;
   transition: all 0.2s ease;
 }
@@ -783,19 +783,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
+  padding: 3px 8px;
   background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .tp-match-number {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   color: #64748b;
   font-weight: 600;
 }
 
 .tp-match-status {
-  font-size: 0.65rem;
+  font-size: 0.58rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -820,7 +820,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: 4px 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   transition: background 0.15s;
 }
@@ -834,13 +834,13 @@
 }
 
 .tp-match-team-name {
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 500;
   color: #cbd5e1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 170px;
+  max-width: 110px;
 }
 
 .tp-match-team-row.winner .tp-match-team-name {
@@ -854,11 +854,11 @@
 }
 
 .tp-match-team-score {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #e2e8f0;
   font-variant-numeric: tabular-nums;
-  min-width: 20px;
+  min-width: 18px;
   text-align: right;
 }
 
@@ -1251,11 +1251,16 @@
   }
 
   .tp-bracket-rounds {
-    gap: 16px;
+    gap: 6px;
   }
 
   .tp-bracket-round {
-    min-width: 200px;
+    min-width: 130px;
+  }
+
+  .tp-match-team-name {
+    max-width: 85px;
+    font-size: 0.65rem;
   }
 
   .tp-matches-list {
