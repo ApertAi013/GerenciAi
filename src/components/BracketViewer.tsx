@@ -11,12 +11,14 @@ interface BracketViewerProps {
 }
 
 function MatchCard({ match, onClick, interactive }: { match: TournamentMatch; onClick?: (m: TournamentMatch) => void; interactive?: boolean }) {
-  const isClickable = interactive && match.status !== 'completed' && !match.is_bye && match.team1_id && match.team2_id;
+  const hasBothTeams = !!match.team1_id && !!match.team2_id;
+  const isClickable = interactive && match.status !== 'completed' && !match.is_bye && hasBothTeams;
+  const isReadyToPlay = hasBothTeams && match.status === 'pending' && !match.is_bye;
 
   return (
     <div className="bracket-match-wrapper">
       <div
-        className={`bracket-match ${match.status} ${match.is_bye ? 'bye' : ''} ${isClickable ? 'clickable' : ''}`}
+        className={`bracket-match ${match.status} ${match.is_bye ? 'bye' : ''} ${isClickable ? 'clickable' : ''} ${isReadyToPlay ? 'ready-to-play' : ''}`}
         onClick={() => isClickable && onClick?.(match)}
       >
         <span className="bracket-match-number">#{match.match_number}</span>

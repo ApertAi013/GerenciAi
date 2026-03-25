@@ -29,7 +29,7 @@
 .mm-modal-sm { max-width: 420px; }
 .mm-modal-md { max-width: 560px; }
 .mm-modal-lg { max-width: 780px; }
-.mm-modal-xl { max-width: 98vw; max-width: min(98vw, 1600px); max-height: 95vh; }
+.mm-modal-xl { max-width: 99vw; width: 99vw; max-height: 97vh; }
 
 .mm-modal-xl .mm-content {
   padding: 1rem;
