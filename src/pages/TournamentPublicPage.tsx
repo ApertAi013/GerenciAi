@@ -991,122 +991,67 @@ function DynamicPairingSection({
   lastBracketDrawAt: string | null;
   pairsRevealAt: string | null;
 }) {
-  const SHUFFLE_DURATION = 30000; // 30 seconds of shuffle animation
+  const SHUFFLE_MS = 10000; // 10 seconds
   const [shuffleType, setShuffleType] = useState<'pairs' | 'bracket' | null>(null);
-  const [revealedPairs, setRevealedPairs] = useState<number>(999); // start revealed
-  const [isRevealing, setIsRevealing] = useState(false);
+  const [revealedPairs, setRevealedPairs] = useState<number>(999);
   const prevPairsDrawRef = useRef<string | undefined>(undefined);
   const prevBracketDrawRef = useRef<string | undefined>(undefined);
-  const shuffleTimerRef = useRef<any>(null);
-  const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
+  const timerRef = useRef<any>(null);
 
   const leftPlayers = individualPlayers.filter(p => p.side === 'left');
   const rightPlayers = individualPlayers.filter(p => p.side === 'right');
-
-  // Scheduled reveal countdown
-  useEffect(() => {
-    if (!pairsRevealAt) { setCountdownSeconds(null); return; }
-    const targetTime = new Date(pairsRevealAt).getTime();
-
-    const tick = () => {
-      const remaining = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
-      setCountdownSeconds(remaining);
-      if (remaining <= 0) {
-        // Time reached! Trigger shuffle animation
-        setCountdownSeconds(null);
-        setShuffleType('pairs');
-        setRevealedPairs(0);
-        if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
-        shuffleTimerRef.current = setTimeout(() => {
-          setShuffleType(null);
-          setIsRevealing(true);
-          let i = 0;
-          const interval = setInterval(() => {
-            i++;
-            setRevealedPairs(i);
-            if (i >= generatedPairs.length) { clearInterval(interval); setIsRevealing(false); }
-          }, 1200);
-        }, SHUFFLE_DURATION);
-      }
-    };
-
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [pairsRevealAt, generatedPairs.length]);
-
-  // On page load: if draw was within last 60s, show animation
-  useEffect(() => {
-    if (!lastPairsDrawAt || pairsRevealAt) return; // skip if scheduled
-    const drawAge = Date.now() - new Date(lastPairsDrawAt).getTime();
-    if (drawAge < 60000 && drawAge > 0 && generatedPairs.length > 0 && prevPairsDrawRef.current === undefined) {
-      setShuffleType('pairs');
-      setRevealedPairs(0);
-      const remainingShuffle = Math.max(5000, SHUFFLE_DURATION - drawAge);
-      if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
-      shuffleTimerRef.current = setTimeout(() => {
-        setShuffleType(null);
-        setIsRevealing(true);
-        let i = 0;
-        const interval = setInterval(() => {
-          i++;
-          setRevealedPairs(i);
-          if (i >= generatedPairs.length) { clearInterval(interval); setIsRevealing(false); }
-        }, 1200);
-      }, remainingShuffle);
-    }
-    // eslint-disable-next-line
-  }, []);
   const hasPairs = generatedPairs.length > 0;
 
-  // Detect pairs draw event (timestamp changed)
+  // Scheduled reveal countdown
+  const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
   useEffect(() => {
-    // Skip first load (undefined → initial value). Only animate on CHANGE.
-    if (lastPairsDrawAt && prevPairsDrawRef.current !== undefined && lastPairsDrawAt !== prevPairsDrawRef.current) {
-      // New pairs draw detected! Start 30s shuffle animation
-      setShuffleType('pairs');
-      setRevealedPairs(0);
-      setIsRevealing(false);
+    if (!pairsRevealAt) { setCountdownSeconds(null); return; }
+    const target = new Date(pairsRevealAt).getTime();
+    const tick = () => {
+      const rem = Math.max(0, Math.ceil((target - Date.now()) / 1000));
+      setCountdownSeconds(rem);
+      if (rem <= 0) startShuffle('pairs');
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [pairsRevealAt]);
 
-      if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
-      shuffleTimerRef.current = setTimeout(() => {
-        setShuffleType(null);
-        // Start revealing pairs one by one
-        setIsRevealing(true);
+  function startShuffle(type: 'pairs' | 'bracket') {
+    setShuffleType(type);
+    setRevealedPairs(0);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setShuffleType(null);
+      // Reveal pairs one by one
+      if (type === 'pairs' && generatedPairs.length > 0) {
         let i = 0;
-        const interval = setInterval(() => {
+        const iv = setInterval(() => {
           i++;
           setRevealedPairs(i);
-          if (i >= generatedPairs.length) {
-            clearInterval(interval);
-            setIsRevealing(false);
-          }
-        }, 1200);
-      }, SHUFFLE_DURATION);
+          if (i >= generatedPairs.length) clearInterval(iv);
+        }, 800);
+      }
+    }, SHUFFLE_MS);
+  }
+
+  // Detect pairs draw via polling (timestamp change)
+  useEffect(() => {
+    if (lastPairsDrawAt && prevPairsDrawRef.current !== undefined && lastPairsDrawAt !== prevPairsDrawRef.current) {
+      startShuffle('pairs');
     }
     prevPairsDrawRef.current = lastPairsDrawAt;
-  }, [lastPairsDrawAt, generatedPairs.length]);
+  }, [lastPairsDrawAt]);
 
-  // Detect bracket draw event (timestamp changed)
+  // Detect bracket draw via polling
   useEffect(() => {
     if (lastBracketDrawAt && prevBracketDrawRef.current !== undefined && lastBracketDrawAt !== prevBracketDrawRef.current) {
-      // New bracket draw! Show shuffle animation for 30s
-      setShuffleType('bracket');
-
-      if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
-      shuffleTimerRef.current = setTimeout(() => {
-        setShuffleType(null);
-      }, SHUFFLE_DURATION);
+      startShuffle('bracket');
     }
     prevBracketDrawRef.current = lastBracketDrawAt;
   }, [lastBracketDrawAt]);
 
-  // Cleanup timers
-  useEffect(() => {
-    return () => {
-      if (shuffleTimerRef.current) clearTimeout(shuffleTimerRef.current);
-    };
-  }, []);
+  useEffect(() => { return () => { if (timerRef.current) clearTimeout(timerRef.current); }; }, []);
 
   // Nothing relevant to show
   if (individualPlayers.length === 0 && generatedPairs.length === 0 && !shuffleType) return null;
@@ -1139,9 +1084,6 @@ function DynamicPairingSection({
             <div className="tp-pairing-shuffle-spinner" />
             <div className="tp-pairing-shuffle-text">
               {shuffleType === 'pairs' ? 'Sorteando duplas...' : 'Sorteando confrontos...'}
-            </div>
-            <div className="tp-pairing-shuffle-countdown">
-              <ShuffleCountdown duration={SHUFFLE_DURATION} />
             </div>
           </div>
         </div>
@@ -1232,23 +1174,6 @@ function DynamicPairingSection({
       )}
     </div>
   );
-}
-
-// Countdown component for shuffle animation
-function ShuffleCountdown({ duration }: { duration: number }) {
-  const [remaining, setRemaining] = useState(Math.ceil(duration / 1000));
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRemaining(r => {
-        if (r <= 1) { clearInterval(interval); return 0; }
-        return r - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return <span>{remaining}s</span>;
 }
 
 function ShuffleIcon({ size = 16 }: { size?: number }) {
