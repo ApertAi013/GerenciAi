@@ -991,112 +991,122 @@ function DynamicPairingSection({
   lastBracketDrawAt: string | null;
   pairsRevealAt: string | null;
 }) {
-  const SHUFFLE_MS = 10000; // 10 seconds
-  const [shuffleType, setShuffleType] = useState<'pairs' | 'bracket' | null>(null);
-  const [revealedPairs, setRevealedPairs] = useState<number>(999);
-  const prevPairsDrawRef = useRef<string | undefined>(undefined);
-  const prevBracketDrawRef = useRef<string | undefined>(undefined);
+  // State: 'idle' | 'shuffling' | 'revealing' | 'done'
+  const [phase, setPhase] = useState<'idle' | 'shuffling' | 'revealing' | 'done'>('idle');
+  const [revealCount, setRevealCount] = useState(0);
+  const prevPairsCount = useRef(generatedPairs.length);
+  const prevBracketRef = useRef(bracketGenerated);
   const timerRef = useRef<any>(null);
 
   const leftPlayers = individualPlayers.filter(p => p.side === 'left');
   const rightPlayers = individualPlayers.filter(p => p.side === 'right');
   const hasPairs = generatedPairs.length > 0;
 
-  // Scheduled reveal countdown
-  const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
+  // On first render: if pairs already exist, skip straight to done
   useEffect(() => {
-    if (!pairsRevealAt) { setCountdownSeconds(null); return; }
-    const target = new Date(pairsRevealAt).getTime();
-    const tick = () => {
-      const rem = Math.max(0, Math.ceil((target - Date.now()) / 1000));
-      setCountdownSeconds(rem);
-      if (rem <= 0) startShuffle('pairs');
-    };
-    tick();
-    const iv = setInterval(tick, 1000);
-    return () => clearInterval(iv);
-  }, [pairsRevealAt]);
+    if (hasPairs) { setPhase('done'); setRevealCount(999); }
+  }, []);
 
-  function startShuffle(type: 'pairs' | 'bracket') {
-    setShuffleType(type);
-    setRevealedPairs(0);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      setShuffleType(null);
-      // Reveal pairs one by one
-      if (type === 'pairs' && generatedPairs.length > 0) {
+  // Detect NEW pairs appearing (0 → N): start shuffle, then reveal
+  useEffect(() => {
+    if (generatedPairs.length > 0 && prevPairsCount.current === 0) {
+      // New pairs just appeared! Animate: shuffle 10s → reveal one by one
+      setPhase('shuffling');
+      setRevealCount(0);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setPhase('revealing');
         let i = 0;
         const iv = setInterval(() => {
           i++;
-          setRevealedPairs(i);
-          if (i >= generatedPairs.length) clearInterval(iv);
+          setRevealCount(i);
+          if (i >= generatedPairs.length) {
+            clearInterval(iv);
+            setTimeout(() => setPhase('done'), 500);
+          }
         }, 800);
-      }
-    }, SHUFFLE_MS);
-  }
-
-  // Detect pairs draw via polling (timestamp change)
-  useEffect(() => {
-    if (lastPairsDrawAt && prevPairsDrawRef.current !== undefined && lastPairsDrawAt !== prevPairsDrawRef.current) {
-      startShuffle('pairs');
+      }, 10000);
     }
-    prevPairsDrawRef.current = lastPairsDrawAt;
-  }, [lastPairsDrawAt]);
+    prevPairsCount.current = generatedPairs.length;
+  }, [generatedPairs.length]);
 
-  // Detect bracket draw via polling
+  // Detect bracket generated (false → true)
   useEffect(() => {
-    if (lastBracketDrawAt && prevBracketDrawRef.current !== undefined && lastBracketDrawAt !== prevBracketDrawRef.current) {
-      startShuffle('bracket');
+    if (bracketGenerated && !prevBracketRef.current) {
+      // Bracket just appeared — no long animation, just mark done
+      setPhase('done');
+      setRevealCount(999);
     }
-    prevBracketDrawRef.current = lastBracketDrawAt;
-  }, [lastBracketDrawAt]);
+    prevBracketRef.current = bracketGenerated;
+  }, [bracketGenerated]);
 
+  // Detect pairs removed (N → 0) = new round
+  useEffect(() => {
+    if (generatedPairs.length === 0 && prevPairsCount.current > 0) {
+      setPhase('idle');
+      setRevealCount(0);
+    }
+  }, [generatedPairs.length]);
+
+  // Cleanup
   useEffect(() => { return () => { if (timerRef.current) clearTimeout(timerRef.current); }; }, []);
 
-  // Nothing relevant to show
-  if (individualPlayers.length === 0 && generatedPairs.length === 0 && !shuffleType) return null;
+  // Nothing to show
+  if (individualPlayers.length === 0 && !hasPairs) return null;
+  // If bracket is generated and phase is done, show minimal
+  if (bracketGenerated && phase === 'done' && hasPairs) {
+    return (
+      <div className="tp-pairing-section">
+        <h2 className="tp-section-title">
+          <ShuffleIcon /> Duplas
+          <span className="tp-pairing-mode-badge">{pairingMode === 'dynamic_single' ? 'Unico' : 'Por Rodada'}</span>
+        </h2>
+        <div className="tp-pairing-pairs-grid">
+          {generatedPairs.map((pair, idx) => (
+            <div key={idx} className="tp-pairing-pair-card revealed">
+              <div className="tp-pairing-pair-number">Dupla {idx + 1}</div>
+              <div className="tp-pairing-pair-players">
+                <span className="tp-pairing-pair-player left">{pair.left_player}</span>
+                <span className="tp-pairing-pair-ampersand">&</span>
+                <span className="tp-pairing-pair-player right">{pair.right_player}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="tp-pairing-section">
       <h2 className="tp-section-title">
         <ShuffleIcon /> Sorteio de Duplas
-        <span className="tp-pairing-mode-badge">
-          {pairingMode === 'dynamic_single' ? 'Unico' : 'Por Rodada'}
-        </span>
+        <span className="tp-pairing-mode-badge">{pairingMode === 'dynamic_single' ? 'Unico' : 'Por Rodada'}</span>
       </h2>
 
-      {/* Shuffle animation (30s) */}
-      {shuffleType && (
+      {/* Shuffle animation — only when transitioning from 0 pairs to N pairs */}
+      {phase === 'shuffling' && (
         <div className="tp-pairing-shuffle-overlay">
           <div className="tp-pairing-shuffle-container">
-            {/* Animated player names flying around */}
             <div className="tp-pairing-shuffle-names">
               {individualPlayers.map((p, i) => (
-                <span
-                  key={p.id}
-                  className={`tp-pairing-shuffle-name ${p.side}`}
-                  style={{ animationDelay: `${i * 0.2}s`, animationDuration: `${1.5 + Math.random()}s` }}
-                >
+                <span key={p.id} className={`tp-pairing-shuffle-name ${p.side}`}
+                  style={{ animationDelay: `${i * 0.2}s`, animationDuration: `${1.5 + Math.random()}s` }}>
                   {p.player_name}
                 </span>
               ))}
             </div>
             <div className="tp-pairing-shuffle-spinner" />
-            <div className="tp-pairing-shuffle-text">
-              {shuffleType === 'pairs' ? 'Sorteando duplas...' : 'Sorteando confrontos...'}
-            </div>
+            <div className="tp-pairing-shuffle-text">Sorteando duplas...</div>
           </div>
         </div>
       )}
 
-      {/* Players awaiting draw (no pairs yet, no shuffle happening) */}
-      {!hasPairs && !shuffleType && individualPlayers.length > 0 && (
+      {/* Idle: show players awaiting draw */}
+      {phase === 'idle' && !hasPairs && individualPlayers.length > 0 && (
         <div className="tp-pairing-players">
           <div className="tp-pairing-side tp-pairing-left">
-            <div className="tp-pairing-side-label">
-              <span className="tp-pairing-side-dot left" />
-              Lado Esquerdo ({leftPlayers.length})
-            </div>
+            <div className="tp-pairing-side-label"><span className="tp-pairing-side-dot left" /> Esquerdo ({leftPlayers.length})</div>
             <div className="tp-pairing-player-list">
               {leftPlayers.map((p, i) => (
                 <div key={p.id} className="tp-pairing-player-card left" style={{ animationDelay: `${i * 0.1}s` }}>
@@ -1106,28 +1116,12 @@ function DynamicPairingSection({
               ))}
             </div>
           </div>
-
           <div className="tp-pairing-vs">
             <div className="tp-pairing-vs-icon"><ShuffleIcon size={32} /></div>
-            {countdownSeconds !== null && countdownSeconds > 0 ? (
-              <div className="tp-pairing-countdown">
-                <div className="tp-pairing-countdown-label">Sorteio em</div>
-                <div className="tp-pairing-countdown-time">
-                  {Math.floor(countdownSeconds / 3600).toString().padStart(2, '0')}:
-                  {Math.floor((countdownSeconds % 3600) / 60).toString().padStart(2, '0')}:
-                  {(countdownSeconds % 60).toString().padStart(2, '0')}
-                </div>
-              </div>
-            ) : (
-              <div className="tp-pairing-vs-text">Aguardando sorteio...</div>
-            )}
+            <div className="tp-pairing-vs-text">Aguardando sorteio...</div>
           </div>
-
           <div className="tp-pairing-side tp-pairing-right">
-            <div className="tp-pairing-side-label">
-              <span className="tp-pairing-side-dot right" />
-              Lado Direito ({rightPlayers.length})
-            </div>
+            <div className="tp-pairing-side-label"><span className="tp-pairing-side-dot right" /> Direito ({rightPlayers.length})</div>
             <div className="tp-pairing-player-list">
               {rightPlayers.map((p, i) => (
                 <div key={p.id} className="tp-pairing-player-card right" style={{ animationDelay: `${i * 0.1}s` }}>
@@ -1140,30 +1134,23 @@ function DynamicPairingSection({
         </div>
       )}
 
-      {/* Revealed pairs (after shuffle or if already drawn) */}
-      {hasPairs && !shuffleType && (
+      {/* Revealing pairs one by one */}
+      {(phase === 'revealing' || phase === 'done') && hasPairs && (
         <div className="tp-pairing-results">
           <div className="tp-pairing-pairs-grid">
-            {generatedPairs.map((pair, idx) => {
-              const isVisible = revealedPairs > idx;
-              return (
-                <div
-                  key={idx}
-                  className={`tp-pairing-pair-card ${isVisible ? 'revealed' : 'hidden'}`}
-                  style={{ transitionDelay: `${idx * 0.15}s` }}
-                >
-                  <div className="tp-pairing-pair-number">Dupla {idx + 1}</div>
-                  <div className="tp-pairing-pair-players">
-                    <span className="tp-pairing-pair-player left">{pair.left_player}</span>
-                    <span className="tp-pairing-pair-ampersand">&</span>
-                    <span className="tp-pairing-pair-player right">{pair.right_player}</span>
-                  </div>
-                  <div className="tp-pairing-pair-team-name">{pair.team_name}</div>
+            {generatedPairs.map((pair, idx) => (
+              <div key={idx} className={`tp-pairing-pair-card ${revealCount > idx ? 'revealed' : 'hidden'}`}
+                style={{ transitionDelay: `${idx * 0.15}s` }}>
+                <div className="tp-pairing-pair-number">Dupla {idx + 1}</div>
+                <div className="tp-pairing-pair-players">
+                  <span className="tp-pairing-pair-player left">{pair.left_player}</span>
+                  <span className="tp-pairing-pair-ampersand">&</span>
+                  <span className="tp-pairing-pair-player right">{pair.right_player}</span>
                 </div>
-              );
-            })}
+                <div className="tp-pairing-pair-team-name">{pair.team_name}</div>
+              </div>
+            ))}
           </div>
-
           {bracketGenerated && (
             <div className="tp-pairing-bracket-ready">
               <span className="tp-pairing-bracket-ready-icon">&#9989;</span>
