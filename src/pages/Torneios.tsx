@@ -1022,6 +1022,23 @@ export default function Torneios() {
                 </div>
               )}
 
+              {/* Per-round: "Rodada concluída" banner - visible on ALL tabs */}
+              {selectedTournament.pairing_mode === 'dynamic_per_round' && selectedTournament.bracket_generated && bracketData && (() => {
+                const allDone = [...(bracketData.winners?.flat() || []), ...(bracketData.losers?.flat() || []), bracketData.grand_final, bracketData.third_place]
+                  .filter(Boolean).filter((m: any) => !m.is_bye).every((m: any) => m.status === 'completed');
+                return allDone ? (
+                  <div style={{ padding: '14px 20px', borderRadius: 12, background: 'rgba(245,138,37,0.1)', border: '2px solid rgba(245,138,37,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '1rem', color: '#F58A25' }}>Rodada concluida!</div>
+                      <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: 2 }}>Todos os jogos terminaram. Desfaca as duplas e sorteie novamente.</div>
+                    </div>
+                    <button onClick={handleNewRound} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '1rem', background: '#F58A25', color: '#fff', whiteSpace: 'nowrap' }}>
+                      <FontAwesomeIcon icon={faUsers} /> Nova Rodada
+                    </button>
+                  </div>
+                ) : null;
+              })()}
+
               {/* Sub-tabs */}
               <div className="torneio-sub-tabs">
                 <button className={`torneio-sub-tab ${detailTab === 'info' ? 'active' : ''}`} onClick={() => setDetailTab('info')}>Detalhes</button>
