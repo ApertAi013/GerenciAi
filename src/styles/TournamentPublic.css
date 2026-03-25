@@ -671,6 +671,12 @@
   justify-content: flex-end;
 }
 
+.tp-bracket-half-mirrored {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 /* tp-bracket-center removed - finals now below brackets */
 
 .tp-bracket-type-label {
@@ -736,10 +742,11 @@
 }
 
 .tp-bracket-round {
-  min-width: 155px;
+  min-width: 135px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: space-around;
+  gap: 4px;
 }
 
 .tp-bracket-round-label {
@@ -820,7 +827,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
+  padding: 3px 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   transition: background 0.15s;
 }
@@ -834,13 +841,13 @@
 }
 
 .tp-match-team-name {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 500;
   color: #cbd5e1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 110px;
+  max-width: 95px;
 }
 
 .tp-match-team-row.winner .tp-match-team-name {
@@ -854,11 +861,11 @@
 }
 
 .tp-match-team-score {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #e2e8f0;
   font-variant-numeric: tabular-nums;
-  min-width: 18px;
+  min-width: 16px;
   text-align: right;
 }
 
@@ -1255,12 +1262,12 @@
   }
 
   .tp-bracket-round {
-    min-width: 130px;
+    min-width: 110px;
   }
 
   .tp-match-team-name {
-    max-width: 85px;
-    font-size: 0.65rem;
+    max-width: 75px;
+    font-size: 0.62rem;
   }
 
   .tp-matches-list {

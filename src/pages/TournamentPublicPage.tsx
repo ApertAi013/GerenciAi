@@ -828,10 +828,7 @@ function MatchCard({ match }: { match: TournamentMatch }) {
   return (
     <div className={`tp-match-card ${isLive ? 'live' : isCompleted ? 'completed' : ''}`}>
       <div className="tp-match-header">
-        <span className="tp-match-number">
-          #{match.match_number} - {bracketLabel}
-          {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && ` R${match.round_number}`}
-        </span>
+        <span className="tp-match-number">#{match.match_number}</span>
         {isLive && (
           <span className="tp-match-status live">
             <span className="tp-live-dot" style={{ width: 6, height: 6 }} />
