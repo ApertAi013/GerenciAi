@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Showcase - Conceitos de Animação</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
+
+  .header { text-align: center; padding: 40px 20px 20px; }
+  .header h1 { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #F58A25, #3B82F6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header p { color: #64748b; margin-top: 8px; font-size: 0.9rem; }
+
+  .concepts { display: flex; flex-direction: column; gap: 40px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+
+  .concept { border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); }
+  .concept-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .concept-header h2 { font-size: 1rem; font-weight: 700; }
+  .concept-header .tag { font-size: 0.7rem; padding: 2px 8px; border-radius: 6px; background: rgba(245,138,37,0.15); color: #F58A25; font-weight: 600; }
+
+  .concept-canvas-wrap { position: relative; width: 100%; height: 400px; background: #050508; }
+  .concept-canvas-wrap canvas { width: 100%; height: 100%; display: block; }
+
+  .concept-controls { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 12px 20px; background: rgba(0,0,0,0.3); }
+  .team-score { display: flex; align-items: center; gap: 10px; }
+  .team-label { font-size: 0.8rem; font-weight: 600; }
+  .team-label.blue { color: #3B82F6; }
+  .team-label.red { color: #EF4444; }
+  .score-num { font-size: 1.4rem; font-weight: 900; min-width: 30px; text-align: center; }
+  .btn-score { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.1rem; font-weight: 700; transition: all 0.15s; }
+  .btn-score.blue { background: #3B82F6; color: #fff; }
+  .btn-score.red { background: #EF4444; color: #fff; }
+  .btn-score:hover { transform: scale(1.15); }
+  .vs-text { font-size: 0.75rem; color: #475569; font-weight: 600; }
+
+  /* Concept 2 specific */
+  .pulse-arena { display: flex; align-items: center; justify-content: center; height: 100%; padding: 40px; }
+  .pulse-arena .pa-side { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
+  .pulse-arena .pa-name { font-size: 1.1rem; font-weight: 700; }
+  .pulse-arena .pa-score { font-size: 5rem; font-weight: 900; line-height: 1; transition: all 0.3s; }
+  .pulse-arena .pa-vs { font-size: 0.8rem; color: #334155; font-weight: 600; padding: 0 20px; }
+  .pulse-arena .pa-live { display: flex; align-items: center; gap: 6px; position: absolute; top: 0; right: 0; background: #ef4444; color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; }
+  .pulse-arena .pa-live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: paPulse 1s infinite; }
+  @keyframes paPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .pa-ring { position: absolute; border-radius: 50%; border: 2px solid; opacity: 0; pointer-events: none; }
+  @keyframes paRingExpand { 0% { transform: scale(0.5); opacity: 0.8; } 100% { transform: scale(4); opacity: 0; } }
+  .pa-mesh-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(59,130,246,0.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 50%, rgba(239,68,68,0.06) 0%, transparent 50%); }
+
+  /* Concept 5 specific */
+  #arena3d { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Showcase de Animacoes — Escolha seu favorito</h1>
+  <p>Clique nos botoes + para simular pontos e ver as animacoes</p>
+</div>
+
+<div class="concepts">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- CONCEITO 1: Neon Field Blueprint            -->
+<!-- ════════════════════════════════════════════ -->
+<div class="concept">
+  <div class="concept-header">
+    <h2>1. Neon Field Blueprint</h2>
+    <span class="tag">Canvas 2D — Leve</span>
+  </div>
+  <div class="concept-canvas-wrap">
+    <canvas id="c1"></canvas>
+  </div>
+  <div class="concept-controls">
+    <div class="team-score">
+      <span class="team-label blue">Time A</span>
+      <button class="btn-score blue" onclick="c1Score(1)">+</button>
+      <span class="score-num" id="c1s1">0</span>
+    </div>
+    <span class="vs-text">VS</span>
+    <div class="team-score">
+      <span class="score-num" id="c1s2">0</span>
+      <button class="btn-score red" onclick="c1Score(2)">+</button>
+      <span class="team-label red">Time B</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- CONCEITO 2: Pulse Arena                     -->
+<!-- ════════════════════════════════════════════ -->
+<div class="concept">
+  <div class="concept-header">
+    <h2>2. Pulse Arena</h2>
+    <span class="tag">CSS + Tipografia — Ultra leve</span>
+  </div>
+  <div class="concept-canvas-wrap" style="background: #080810;">
+    <div class="pa-mesh-bg"></div>
+    <div class="pulse-arena" id="c2arena">
+      <div class="pa-side">
+        <div class="pa-name" style="color: #60A5FA;">Time A</div>
+        <div class="pa-score" id="c2s1" style="color: #3B82F6;">0</div>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative;">
+        <div class="pa-live">AO VIVO</div>
+        <div class="pa-vs">VS</div>
+      </div>
+      <div class="pa-side">
+        <div class="pa-name" style="color: #F87171;">Time B</div>
+        <div class="pa-score" id="c2s2" style="color: #EF4444;">0</div>
+      </div>
+    </div>
+  </div>
+  <div class="concept-controls">
+    <div class="team-score">
+      <span class="team-label blue">Time A</span>
+      <button class="btn-score blue" onclick="c2Score(1)">+</button>
+      <span class="score-num" id="c2s1v">0</span>
+    </div>
+    <span class="vs-text">VS</span>
+    <div class="team-score">
+      <span class="score-num" id="c2s2v">0</span>
+      <button class="btn-score red" onclick="c2Score(2)">+</button>
+      <span class="team-label red">Time B</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- CONCEITO 3: Particle Court                  -->
+<!-- ════════════════════════════════════════════ -->
+<div class="concept">
+  <div class="concept-header">
+    <h2>3. Particle Court</h2>
+    <span class="tag">Canvas Particles — Medio</span>
+  </div>
+  <div class="concept-canvas-wrap">
+    <canvas id="c3"></canvas>
+  </div>
+  <div class="concept-controls">
+    <div class="team-score">
+      <span class="team-label blue">Time A</span>
+      <button class="btn-score blue" onclick="c3Score(1)">+</button>
+      <span class="score-num" id="c3s1">0</span>
+    </div>
+    <span class="vs-text">VS</span>
+    <div class="team-score">
+      <span class="score-num" id="c3s2">0</span>
+      <button class="btn-score red" onclick="c3Score(2)">+</button>
+      <span class="team-label red">Time B</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- CONCEITO 4: Minimal Glow                    -->
+<!-- ════════════════════════════════════════════ -->
+<div class="concept">
+  <div class="concept-header">
+    <h2>4. Minimal Glow (Recomendado)</h2>
+    <span class="tag">Canvas 2D + Glow — Equilibrado</span>
+  </div>
+  <div class="concept-canvas-wrap">
+    <canvas id="c4"></canvas>
+  </div>
+  <div class="concept-controls">
+    <div class="team-score">
+      <span class="team-label blue">Time A</span>
+      <button class="btn-score blue" onclick="c4Score(1)">+</button>
+      <span class="score-num" id="c4s1">0</span>
+    </div>
+    <span class="vs-text">VS</span>
+    <div class="team-score">
+      <span class="score-num" id="c4s2">0</span>
+      <button class="btn-score red" onclick="c4Score(2)">+</button>
+      <span class="team-label red">Time B</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- CONCEITO 5: 3D Arena                        -->
+<!-- ════════════════════════════════════════════ -->
+<div class="concept">
+  <div class="concept-header">
+    <h2>5. 3D Neon Arena</h2>
+    <span class="tag">Three.js — Premium</span>
+  </div>
+  <div class="concept-canvas-wrap" id="c5wrap">
+    <canvas id="c5"></canvas>
+  </div>
+  <div class="concept-controls">
+    <div class="team-score">
+      <span class="team-label blue">Time A</span>
+      <button class="btn-score blue" onclick="c5Score(1)">+</button>
+      <span class="score-num" id="c5s1">0</span>
+    </div>
+    <span class="vs-text">VS</span>
+    <div class="team-score">
+      <span class="score-num" id="c5s2">0</span>
+      <button class="btn-score red" onclick="c5Score(2)">+</button>
+      <span class="team-label red">Time B</span>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div style="text-align: center; padding: 40px 20px 60px; color: #475569; font-size: 0.8rem;">
+  Escolha o conceito favorito e me diga qual usar!
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ════════════════════════════════════════════════════════
+// CONCEITO 1: Neon Field Blueprint
+// ════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('c1');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  let scores = [0, 0];
+  let flash = { side: 0, t: 0 };
+  const orbs = [];
+
+  function resize() {
+    const r = canvas.parentElement.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    W = canvas.width; H = canvas.height;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    W /= devicePixelRatio; H /= devicePixelRatio;
+  }
+  resize();
+
+  // Create floating orbs
+  for (let i = 0; i < 5; i++) {
+    orbs.push({
+      x: Math.random() * 600, y: Math.random() * 300,
+      vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.4,
+      r: 8 + Math.random() * 12,
+      color: i < 3 ? 'rgba(59,130,246,' : 'rgba(239,68,68,',
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  function drawGlowLine(x1, y1, x2, y2, color, width) {
+    for (let i = 4; i >= 0; i--) {
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      ctx.lineWidth = width + i * 3;
+      ctx.strokeStyle = i === 0 ? '#fff' : color.replace('1)', (0.08 * (5 - i)) + ')');
+      ctx.stroke();
+    }
+  }
+
+  function drawGlowRect(x, y, w, h, color) {
+    drawGlowLine(x, y, x + w, y, color, 1.5);
+    drawGlowLine(x + w, y, x + w, y + h, color, 1.5);
+    drawGlowLine(x + w, y + h, x, y + h, color, 1.5);
+    drawGlowLine(x, y + h, x, y, color, 1.5);
+  }
+
+  let t = 0;
+  function draw() {
+    t += 0.016;
+    ctx.clearRect(0, 0, W, H);
+
+    const cx = W / 2, cy = H / 2;
+    const cw = W * 0.75, ch = H * 0.65;
+    const ox = cx - cw / 2, oy = cy - ch / 2;
+
+    // Flash effect
+    if (flash.t > 0) {
+      flash.t -= 0.02;
+      const alpha = flash.t * 0.15;
+      ctx.fillStyle = flash.side === 1 ? `rgba(59,130,246,${alpha})` : `rgba(239,68,68,${alpha})`;
+      if (flash.side === 1) ctx.fillRect(ox, oy, cw / 2, ch);
+      else ctx.fillRect(ox + cw / 2, oy, cw / 2, ch);
+    }
+
+    // Court outline
+    const teal = 'rgba(10,189,198,1)';
+    const magenta = 'rgba(234,0,217,1)';
+    drawGlowRect(ox, oy, cw, ch, teal);
+    // Net (center line)
+    drawGlowLine(cx, oy, cx, oy + ch, magenta, 2);
+    // Service lines
+    drawGlowLine(ox + cw * 0.25, oy, ox + cw * 0.25, oy + ch, teal, 0.5);
+    drawGlowLine(ox + cw * 0.75, oy, ox + cw * 0.75, oy + ch, teal, 0.5);
+
+    // Orbs
+    for (const o of orbs) {
+      o.x += o.vx + Math.sin(t + o.phase) * 0.3;
+      o.y += o.vy + Math.cos(t * 0.7 + o.phase) * 0.2;
+      if (o.x < ox || o.x > ox + cw) o.vx *= -1;
+      if (o.y < oy || o.y > oy + ch) o.vy *= -1;
+      o.x = Math.max(ox, Math.min(ox + cw, o.x));
+      o.y = Math.max(oy, Math.min(oy + ch, o.y));
+
+      const pulseR = o.r + Math.sin(t * 2 + o.phase) * 3;
+      const grad = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, pulseR * 2);
+      grad.addColorStop(0, o.color + '0.6)');
+      grad.addColorStop(0.5, o.color + '0.15)');
+      grad.addColorStop(1, o.color + '0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, pulseR * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Score display
+    ctx.font = '800 48px Inter, system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(59,130,246,0.9)';
+    ctx.fillText(scores[0], cx - 60, cy);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillText('x', cx, cy);
+    ctx.fillStyle = 'rgba(239,68,68,0.9)';
+    ctx.fillText(scores[1], cx + 60, cy);
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  window.c1Score = function(team) {
+    scores[team - 1]++;
+    document.getElementById('c1s' + team).textContent = scores[team - 1];
+    flash = { side: team, t: 1 };
+  };
+})();
+
+// ════════════════════════════════════════════════════════
+// CONCEITO 2: Pulse Arena
+// ════════════════════════════════════════════════════════
+(function() {
+  let scores = [0, 0];
+
+  window.c2Score = function(team) {
+    scores[team - 1]++;
+    const el = document.getElementById('c2s' + team);
+    const ctrlEl = document.getElementById('c2s' + team + 'v');
+    el.textContent = scores[team - 1];
+    ctrlEl.textContent = scores[team - 1];
+
+    // Spring animation on number
+    el.style.transform = 'scale(1.4)';
+    el.style.textShadow = team === 1 ? '0 0 40px rgba(59,130,246,0.8)' : '0 0 40px rgba(239,68,68,0.8)';
+    setTimeout(() => { el.style.transform = 'scale(1)'; el.style.textShadow = 'none'; }, 300);
+
+    // Shake
+    const arena = document.getElementById('c2arena');
+    arena.style.transform = 'translateX(4px)';
+    setTimeout(() => arena.style.transform = 'translateX(-4px)', 50);
+    setTimeout(() => arena.style.transform = 'translateX(2px)', 100);
+    setTimeout(() => arena.style.transform = 'translateX(0)', 150);
+
+    // Pulse ring
+    const ring = document.createElement('div');
+    ring.className = 'pa-ring';
+    ring.style.cssText = `width: 60px; height: 60px; left: 50%; top: 50%; margin-left: -30px; margin-top: -30px;
+      border-color: ${team === 1 ? '#3B82F6' : '#EF4444'};
+      animation: paRingExpand 0.8s ease-out forwards;`;
+    document.querySelector('.pulse-arena .pa-side:nth-child(' + (team === 1 ? 1 : 3) + ')').appendChild(ring);
+    setTimeout(() => ring.remove(), 800);
+  };
+})();
+
+// ════════════════════════════════════════════════════════
+// CONCEITO 3: Particle Court
+// ════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('c3');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  let scores = [0, 0];
+  const particles = [];
+  let burstParticles = [];
+
+  function resize() {
+    const r = canvas.parentElement.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    W = canvas.width / devicePixelRatio; H = canvas.height / devicePixelRatio;
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+  resize();
+
+  // Init particles
+  for (let i = 0; i < 120; i++) {
+    particles.push({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.3, vy: -Math.random() * 0.4 - 0.1,
+      r: 1 + Math.random() * 2,
+      color: Math.random() < 0.5 ? [59, 130, 246] : [239, 68, 68],
+      alpha: 0.1 + Math.random() * 0.3
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    const cx = W / 2, cy = H / 2;
+    const cw = W * 0.6, ch = H * 0.55;
+    const ox = cx - cw / 2, oy = cy - ch / 2;
+
+    // Draw & connect particles
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy;
+      if (p.y < -10) { p.y = H + 10; p.x = Math.random() * W; }
+      if (p.x < -10) p.x = W + 10;
+      if (p.x > W + 10) p.x = -10;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.color.join(',')},${p.alpha})`;
+      ctx.fill();
+
+      // Connect nearby
+      for (let j = i + 1; j < particles.length; j++) {
+        const q = particles[j];
+        const dx = p.x - q.x, dy = p.y - q.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+          ctx.strokeStyle = `rgba(255,255,255,${0.04 * (1 - dist / 100)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Burst particles
+    for (let i = burstParticles.length - 1; i >= 0; i--) {
+      const p = burstParticles[i];
+      p.x += p.vx; p.y += p.vy;
+      p.vy += 0.05; // gravity
+      p.life -= 0.02;
+      if (p.life <= 0) { burstParticles.splice(i, 1); continue; }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.color.join(',')},${p.life})`;
+      ctx.fill();
+    }
+
+    // Court overlay (subtle)
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(ox, oy, cw, ch);
+    ctx.beginPath(); ctx.moveTo(cx, oy); ctx.lineTo(cx, oy + ch); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Score
+    ctx.font = '800 42px Inter, system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(59,130,246,0.9)';
+    ctx.fillText(scores[0], cx - 50, cy + 4);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillText('x', cx, cy + 4);
+    ctx.fillStyle = 'rgba(239,68,68,0.9)';
+    ctx.fillText(scores[1], cx + 50, cy + 4);
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  window.c3Score = function(team) {
+    scores[team - 1]++;
+    document.getElementById('c3s' + team).textContent = scores[team - 1];
+    // Confetti burst
+    const bx = team === 1 ? W * 0.3 : W * 0.7;
+    const color = team === 1 ? [59, 130, 246] : [239, 68, 68];
+    for (let i = 0; i < 40; i++) {
+      burstParticles.push({
+        x: bx, y: H * 0.5,
+        vx: (Math.random() - 0.5) * 8,
+        vy: (Math.random() - 0.8) * 6,
+        r: 2 + Math.random() * 4,
+        color: Math.random() < 0.7 ? color : [255, 255, 255],
+        life: 1
+      });
+    }
+  };
+})();
+
+// ════════════════════════════════════════════════════════
+// CONCEITO 4: Minimal Glow (RECOMENDADO)
+// ════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('c4');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  let scores = [0, 0];
+  let shockwave = null;
+  let lineFlash = 0;
+  const orbs = [];
+
+  function resize() {
+    const r = canvas.parentElement.getBoundingClientRect();
+    canvas.width = r.width * devicePixelRatio;
+    canvas.height = r.height * devicePixelRatio;
+    W = canvas.width / devicePixelRatio; H = canvas.height / devicePixelRatio;
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+  resize();
+
+  for (let i = 0; i < 3; i++) {
+    orbs.push({
+      x: W * 0.3 + Math.random() * W * 0.4,
+      y: H * 0.3 + Math.random() * H * 0.4,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.3,
+      r: 20 + Math.random() * 15,
+      color: i < 2 ? [59, 130, 246] : [239, 68, 68],
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  let t = 0;
+  function draw() {
+    t += 0.016;
+    ctx.clearRect(0, 0, W, H);
+
+    const cx = W / 2, cy = H / 2;
+    const cw = W * 0.7, ch = H * 0.6;
+    const ox = cx - cw / 2, oy = cy - ch / 2;
+
+    // Court glow lines
+    const lineAlpha = 0.15 + lineFlash;
+    if (lineFlash > 0) lineFlash -= 0.015;
+    const lc = `rgba(10,189,198,${lineAlpha})`;
+
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = `rgba(10,189,198,${lineAlpha * 2})`;
+    ctx.strokeStyle = lc;
+    ctx.lineWidth = 1.5;
+
+    // Outer rect
+    ctx.beginPath();
+    ctx.roundRect(ox, oy, cw, ch, 4);
+    ctx.stroke();
+
+    // Net
+    ctx.lineWidth = 2;
+    ctx.shadowColor = `rgba(234,0,217,${lineAlpha * 2})`;
+    ctx.strokeStyle = `rgba(234,0,217,${lineAlpha})`;
+    ctx.beginPath(); ctx.moveTo(cx, oy + 4); ctx.lineTo(cx, oy + ch - 4); ctx.stroke();
+
+    // Service boxes
+    ctx.shadowColor = `rgba(10,189,198,${lineAlpha})`;
+    ctx.strokeStyle = `rgba(10,189,198,${lineAlpha * 0.5})`;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.roundRect(ox + 10, oy + 10, cw / 2 - 20, ch - 20, 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.roundRect(cx + 10, oy + 10, cw / 2 - 20, ch - 20, 2);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    // Orbs with trails
+    for (const o of orbs) {
+      o.x += o.vx + Math.sin(t * 0.8 + o.phase) * 0.4;
+      o.y += o.vy + Math.cos(t * 0.6 + o.phase) * 0.3;
+      if (o.x < ox + 20 || o.x > ox + cw - 20) o.vx *= -1;
+      if (o.y < oy + 20 || o.y > oy + ch - 20) o.vy *= -1;
+      o.x = Math.max(ox + 20, Math.min(ox + cw - 20, o.x));
+      o.y = Math.max(oy + 20, Math.min(oy + ch - 20, o.y));
+
+      const pr = o.r + Math.sin(t * 1.5 + o.phase) * 4;
+      const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, pr);
+      g.addColorStop(0, `rgba(${o.color.join(',')},0.35)`);
+      g.addColorStop(0.4, `rgba(${o.color.join(',')},0.08)`);
+      g.addColorStop(1, `rgba(${o.color.join(',')},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(o.x, o.y, pr, 0, Math.PI * 2); ctx.fill();
+
+      // Core
+      ctx.beginPath(); ctx.arc(o.x, o.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${o.color.join(',')},0.8)`;
+      ctx.fill();
+    }
+
+    // Shockwave
+    if (shockwave) {
+      shockwave.r += 3;
+      shockwave.alpha -= 0.02;
+      if (shockwave.alpha <= 0) { shockwave = null; }
+      else {
+        ctx.beginPath();
+        ctx.arc(shockwave.x, shockwave.y, shockwave.r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${shockwave.color.join(',')},${shockwave.alpha})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    // Score
+    ctx.font = '900 56px Inter, system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Score glow
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = 'rgba(59,130,246,0.4)';
+    ctx.fillStyle = '#3B82F6';
+    ctx.fillText(scores[0], cx - 55, cy);
+
+    ctx.shadowColor = 'rgba(255,255,255,0.1)';
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.font = '600 20px Inter';
+    ctx.fillText('x', cx, cy);
+
+    ctx.shadowColor = 'rgba(239,68,68,0.4)';
+    ctx.fillStyle = '#EF4444';
+    ctx.font = '900 56px Inter, system-ui';
+    ctx.fillText(scores[1], cx + 55, cy);
+    ctx.shadowBlur = 0;
+
+    // Team names
+    ctx.font = '600 13px Inter';
+    ctx.fillStyle = 'rgba(59,130,246,0.5)';
+    ctx.fillText('TIME A', cx - 55, cy + 36);
+    ctx.fillStyle = 'rgba(239,68,68,0.5)';
+    ctx.fillText('TIME B', cx + 55, cy + 36);
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  window.c4Score = function(team) {
+    scores[team - 1]++;
+    document.getElementById('c4s' + team).textContent = scores[team - 1];
+    lineFlash = 0.6;
+    const cx = W / 2, cy = H / 2;
+    shockwave = {
+      x: team === 1 ? cx - 55 : cx + 55, y: cy,
+      r: 10, alpha: 0.8,
+      color: team === 1 ? [59, 130, 246] : [239, 68, 68]
+    };
+  };
+})();
+
+// ════════════════════════════════════════════════════════
+// CONCEITO 5: 3D Neon Arena
+// ════════════════════════════════════════════════════════
+(function() {
+  const wrap = document.getElementById('c5wrap');
+  const canvas = document.getElementById('c5');
+  let scores = [0, 0];
+  let flashIntensity = 0;
+  let flashColor = new THREE.Color(0x3B82F6);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x050508);
+  scene.fog = new THREE.FogExp2(0x050508, 0.015);
+
+  const camera = new THREE.PerspectiveCamera(45, wrap.clientWidth / wrap.clientHeight, 0.1, 200);
+  camera.position.set(0, 18, 22);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+  // Ambient light
+  scene.add(new THREE.AmbientLight(0x111122, 0.5));
+
+  // Ground plane (dark sand)
+  const groundGeo = new THREE.PlaneGeometry(60, 40);
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x1a1510, roughness: 0.95 });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.05;
+  scene.add(ground);
+
+  // Court lines (neon glow)
+  function makeNeonLine(points, color, height) {
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({ color, linewidth: 2, transparent: true, opacity: 0.8 });
+    const line = new THREE.Line(geo, mat);
+    line.position.y = height || 0.02;
+    scene.add(line);
+    // Glow layer
+    const glowMat = new THREE.LineBasicMaterial({ color, linewidth: 4, transparent: true, opacity: 0.15 });
+    const glow = new THREE.Line(geo.clone(), glowMat);
+    glow.position.y = (height || 0.02) + 0.01;
+    scene.add(glow);
+    return line;
+  }
+
+  const cw = 16, ch = 8;
+  // Court outline
+  makeNeonLine([
+    new THREE.Vector3(-cw/2, 0, -ch/2), new THREE.Vector3(cw/2, 0, -ch/2),
+    new THREE.Vector3(cw/2, 0, ch/2), new THREE.Vector3(-cw/2, 0, ch/2),
+    new THREE.Vector3(-cw/2, 0, -ch/2)
+  ], 0x0abdc6);
+
+  // Net
+  makeNeonLine([new THREE.Vector3(0, 0, -ch/2), new THREE.Vector3(0, 0, ch/2)], 0xea00d9);
+  // Net vertical
+  const netPosts = [
+    new THREE.Vector3(0, 0, -ch/2), new THREE.Vector3(0, 2.2, -ch/2),
+    new THREE.Vector3(0, 2.2, ch/2), new THREE.Vector3(0, 0, ch/2)
+  ];
+  makeNeonLine(netPosts, 0xea00d9, 0);
+  // Net top line
+  makeNeonLine([new THREE.Vector3(0, 2.2, -ch/2), new THREE.Vector3(0, 2.2, ch/2)], 0xea00d9, 0);
+  // Net mesh lines
+  for (let z = -ch/2 + 1; z < ch/2; z += 1.5) {
+    makeNeonLine([new THREE.Vector3(0, 0.3, z), new THREE.Vector3(0, 2.1, z)], 0xea00d9, 0);
+  }
+
+  // Service lines
+  makeNeonLine([new THREE.Vector3(-cw/4, 0, -ch/2), new THREE.Vector3(-cw/4, 0, ch/2)], 0x0abdc6);
+  makeNeonLine([new THREE.Vector3(cw/4, 0, -ch/2), new THREE.Vector3(cw/4, 0, ch/2)], 0x0abdc6);
+
+  // Floating orbs
+  const orbMeshes = [];
+  const orbColors = [0x3B82F6, 0x3B82F6, 0xEF4444, 0xEF4444];
+  for (let i = 0; i < 4; i++) {
+    const geo = new THREE.SphereGeometry(0.3, 16, 16);
+    const mat = new THREE.MeshBasicMaterial({ color: orbColors[i], transparent: true, opacity: 0.6 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set((Math.random() - 0.5) * cw * 0.8, 0.8 + Math.random() * 1.5, (Math.random() - 0.5) * ch * 0.8);
+    mesh.userData = { vx: (Math.random() - 0.5) * 0.02, vz: (Math.random() - 0.5) * 0.02, phase: Math.random() * Math.PI * 2 };
+    scene.add(mesh);
+    orbMeshes.push(mesh);
+
+    // Point light from orb
+    const light = new THREE.PointLight(orbColors[i], 0.5, 8);
+    mesh.add(light);
+  }
+
+  // Flash plane
+  const flashGeo = new THREE.PlaneGeometry(60, 40);
+  const flashMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+  const flashPlane = new THREE.Mesh(flashGeo, flashMat);
+  flashPlane.rotation.x = -Math.PI / 2;
+  flashPlane.position.y = 0.1;
+  scene.add(flashPlane);
+
+  let time = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    time += 0.01;
+
+    // Orbit camera slowly
+    camera.position.x = Math.sin(time * 0.15) * 3;
+    camera.position.z = 20 + Math.cos(time * 0.15) * 3;
+    camera.lookAt(0, 0, 0);
+
+    // Move orbs
+    for (const orb of orbMeshes) {
+      const d = orb.userData;
+      orb.position.x += d.vx + Math.sin(time * 2 + d.phase) * 0.01;
+      orb.position.z += d.vz + Math.cos(time * 1.5 + d.phase) * 0.01;
+      orb.position.y = 0.8 + Math.sin(time * 1.2 + d.phase) * 0.5;
+      if (Math.abs(orb.position.x) > cw / 2 - 1) d.vx *= -1;
+      if (Math.abs(orb.position.z) > ch / 2 - 1) d.vz *= -1;
+    }
+
+    // Flash decay
+    if (flashIntensity > 0) {
+      flashIntensity -= 0.02;
+      flashMat.opacity = flashIntensity * 0.15;
+      flashMat.color = flashColor;
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.c5Score = function(team) {
+    scores[team - 1]++;
+    document.getElementById('c5s' + team).textContent = scores[team - 1];
+    flashIntensity = 1;
+    flashColor = team === 1 ? new THREE.Color(0x3B82F6) : new THREE.Color(0xEF4444);
+  };
+})();
+
+// Resize handler
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.concept-canvas-wrap canvas').forEach(c => {
+    if (c.id === 'c5') return;
+    const r = c.parentElement.getBoundingClientRect();
+    c.width = r.width * devicePixelRatio;
+    c.height = r.height * devicePixelRatio;
+  });
+});
+</script>
+</body>
+</html>
