@@ -718,6 +718,7 @@
   display: flex;
   gap: 8px;
   min-width: min-content;
+  align-items: stretch;
 }
 
 /* Finals section below brackets */
@@ -756,6 +757,10 @@
   padding-bottom: 6px;
   text-align: center;
   flex-shrink: 0;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tp-bracket-round-matches {
