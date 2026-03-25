@@ -374,6 +374,10 @@ export default function Torneios() {
       // Load individual players if dynamic pairing
       if (res.data.pairing_mode && res.data.pairing_mode !== 'fixed') {
         loadIndividualPlayers(res.data.id);
+        // Auto-load bracket for per-round mode (needed to detect all matches done)
+        if (res.data.bracket_generated) {
+          loadBracket(res.data.id);
+        }
       } else {
         setIndividualPlayers([]);
         setGeneratedPairs([]);
@@ -588,14 +592,40 @@ export default function Torneios() {
     }
   };
 
-  const handleGeneratePairs = async () => {
+  // ─── Scheduled draw modal ───
+  const [showDrawModal, setShowDrawModal] = useState(false);
+  const [drawRevealTime, setDrawRevealTime] = useState('');
+  const [drawImmediate, setDrawImmediate] = useState(true);
+
+  const handleGeneratePairsClick = () => {
+    setDrawRevealTime('');
+    setDrawImmediate(true);
+    setShowDrawModal(true);
+  };
+
+  const handleConfirmDraw = async () => {
     if (!selectedTournament) return;
+    setShowDrawModal(false);
     try {
-      const res = await tournamentService.generatePairs(selectedTournament.id, selectedTournament.pairing_mode || 'dynamic_single');
-      toast.success('Duplas sorteadas com sucesso!');
+      let revealAt: string | undefined;
+      if (!drawImmediate && drawRevealTime) {
+        // Combine today's date with the chosen time
+        const today = new Date().toISOString().split('T')[0];
+        revealAt = `${today}T${drawRevealTime}:00`;
+      }
+      const res = await tournamentService.generatePairs(
+        selectedTournament.id,
+        selectedTournament.pairing_mode || 'dynamic_single',
+        undefined,
+        revealAt
+      );
+      if (revealAt) {
+        toast.success(`Duplas sorteadas! Revelação agendada para ${drawRevealTime}`);
+      } else {
+        toast.success('Duplas sorteadas com sucesso!');
+      }
       setGeneratedPairs(res.data?.pairs || []);
       setPairsGenerated(true);
-      // Refresh tournament data (teams are now created)
       const tRes = await tournamentService.getTournament(selectedTournament.id);
       setSelectedTournament(tRes.data);
       fetchAll();
@@ -1166,7 +1196,7 @@ export default function Torneios() {
                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                               {/* Sortear Duplas: only when no pairs yet and no bracket */}
                               {individualPlayers.length >= 2 && !pairsGenerated && !selectedTournament.bracket_generated && (
-                                <button className="torneio-btn-primary" onClick={handleGeneratePairs} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
+                                <button className="torneio-btn-primary" onClick={handleGeneratePairsClick} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
                                   <FontAwesomeIcon icon={faUsers} /> Sortear Duplas
                                 </button>
                               )}
@@ -1178,7 +1208,7 @@ export default function Torneios() {
                               )}
                               {/* Re-sortear duplas: only before bracket generated */}
                               {pairsGenerated && !selectedTournament.bracket_generated && (
-                                <button className="torneio-btn-outline" onClick={handleGeneratePairs} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                <button className="torneio-btn-outline" onClick={handleGeneratePairsClick} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', cursor: 'pointer', fontSize: '0.85rem' }}>
                                   Re-sortear Duplas
                                 </button>
                               )}
@@ -1536,6 +1566,61 @@ export default function Torneios() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Draw Schedule Modal */}
+      {showDrawModal && (
+        <div className="mm-overlay" onClick={() => setShowDrawModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
+              <h3>Sortear Duplas</h3>
+              <button className="mm-close" onClick={() => setShowDrawModal(false)}>&times;</button>
+            </div>
+            <div className="mm-content">
+              <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: 16 }}>
+                As duplas serão sorteadas agora. Escolha quando revelar o resultado na página pública:
+              </p>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: 12, fontSize: '0.9rem' }}>
+                <input type="radio" checked={drawImmediate} onChange={() => setDrawImmediate(true)} />
+                <div>
+                  <strong>Revelar imediatamente</strong>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>O resultado aparece na hora na página pública</div>
+                </div>
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: 12, fontSize: '0.9rem' }}>
+                <input type="radio" checked={!drawImmediate} onChange={() => setDrawImmediate(false)} />
+                <div>
+                  <strong>Agendar revelação</strong>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>A página pública mostra countdown até a hora marcada</div>
+                </div>
+              </label>
+
+              {!drawImmediate && (
+                <div className="mm-field" style={{ marginTop: 8 }}>
+                  <label>Horário da revelação</label>
+                  <input
+                    type="time"
+                    value={drawRevealTime}
+                    onChange={e => setDrawRevealTime(e.target.value)}
+                    style={{ fontSize: '1.2rem', padding: '8px 12px', textAlign: 'center' }}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="mm-footer">
+              <button className="mm-btn mm-btn-secondary" onClick={() => setShowDrawModal(false)}>Cancelar</button>
+              <button
+                className="mm-btn mm-btn-primary"
+                onClick={handleConfirmDraw}
+                disabled={!drawImmediate && !drawRevealTime}
+              >
+                <FontAwesomeIcon icon={faUsers} /> Sortear Duplas
+              </button>
             </div>
           </div>
         </div>

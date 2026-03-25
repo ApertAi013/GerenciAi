@@ -269,8 +269,8 @@ export const tournamentService = {
     return response.data;
   },
 
-  async generatePairs(tournamentId: number, mode: string, roundNumber?: number): Promise<any> {
-    const response = await api.post(`/api/tournaments/${tournamentId}/generate-pairs`, { mode, round_number: roundNumber });
+  async generatePairs(tournamentId: number, mode: string, roundNumber?: number, revealAt?: string): Promise<any> {
+    const response = await api.post(`/api/tournaments/${tournamentId}/generate-pairs`, { mode, round_number: roundNumber, reveal_at: revealAt });
     return response.data;
   },
 

@@ -95,6 +95,7 @@ interface TournamentData {
     pairing_mode?: 'fixed' | 'dynamic_single' | 'dynamic_per_round';
     last_pairs_draw_at?: string | null;
     last_bracket_draw_at?: string | null;
+    pairs_reveal_at?: string | null;
   };
   teams: TournamentTeam[];
   matches: TournamentMatch[];
@@ -422,6 +423,7 @@ export default function TournamentPublicPage() {
             teamSize={tournament.team_size}
             lastPairsDrawAt={tournament.last_pairs_draw_at || null}
             lastBracketDrawAt={tournament.last_bracket_draw_at || null}
+            pairsRevealAt={tournament.pairs_reveal_at || null}
           />
         )}
 
@@ -903,24 +905,6 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
           </div>
         )}
 
-        {/* Center: Grand Final & 3rd Place */}
-        {(grandFinalRounds || thirdPlaceRounds) && (
-          <div className="tp-bracket-center">
-            {grandFinalRounds && grandFinalRounds[0] && grandFinalRounds[0].map(match => (
-              <div key={match.id}>
-                <div className="tp-bracket-round-label" style={{ color: '#EAB308', fontWeight: 700 }}>Final</div>
-                <MatchCard match={match} />
-              </div>
-            ))}
-            {thirdPlaceRounds && thirdPlaceRounds[0] && thirdPlaceRounds[0].map(match => (
-              <div key={match.id}>
-                <div className="tp-bracket-round-label" style={{ color: '#d97706' }}>3o Lugar</div>
-                <MatchCard match={match} />
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* Losers bracket (right, MIRRORED = reversed order) */}
         {losersRounds && (
           <div className="tp-bracket-half tp-bracket-half-mirrored">
@@ -947,8 +931,26 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
         )}
       </div>
 
+      {/* Grand Final & 3rd Place - below brackets, centered */}
+      {(grandFinalRounds || thirdPlaceRounds) && (
+        <div className="tp-bracket-finals">
+          {grandFinalRounds && grandFinalRounds[0] && grandFinalRounds[0].map(match => (
+            <div key={match.id} className="tp-bracket-final-card">
+              <div className="tp-bracket-round-label" style={{ color: '#EAB308', fontWeight: 700, fontSize: '0.85rem' }}>Grande Final</div>
+              <MatchCard match={match} />
+            </div>
+          ))}
+          {thirdPlaceRounds && thirdPlaceRounds[0] && thirdPlaceRounds[0].map(match => (
+            <div key={match.id} className="tp-bracket-final-card">
+              <div className="tp-bracket-round-label" style={{ color: '#d97706', fontSize: '0.85rem' }}>Disputa 3o Lugar</div>
+              <MatchCard match={match} />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Fallback for formats without losers (single elimination) */}
-      {!losersRounds && (grandFinalRounds || thirdPlaceRounds) && (
+      {!losersRounds && !grandFinalRounds && !thirdPlaceRounds && (grandFinalRounds || thirdPlaceRounds) && (
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
           {grandFinalRounds && grandFinalRounds[0] && grandFinalRounds[0].map(m => (
             <div key={m.id}>
