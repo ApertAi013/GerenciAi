@@ -657,7 +657,7 @@
 /* Main layout: Winners ← Center → Losers (mirrored) */
 .tp-bracket-layout {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 1rem;
   min-width: min-content;
 }
