@@ -870,8 +870,8 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
       return `Rodada ${idx + 1}`;
     }
     if (idx === total - 1) return 'Semifinal';
-    if (idx === total - 2) return 'Semi WB';
-    if (total >= 4 && idx === total - 3) return 'Quartas';
+    if (idx === total - 2) return 'Quartas';
+    if (total >= 4 && idx === total - 3) return 'Oitavas';
     return `Rodada ${idx + 1}`;
   };
 

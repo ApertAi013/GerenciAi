@@ -52,8 +52,8 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
       return `Rodada ${roundIndex + 1}`;
     }
     if (roundIndex === totalRounds - 1) return 'Semifinal';
-    if (roundIndex === totalRounds - 2) return 'Semi WB';
-    if (totalRounds >= 4 && roundIndex === totalRounds - 3) return 'Quartas';
+    if (roundIndex === totalRounds - 2) return 'Quartas';
+    if (totalRounds >= 4 && roundIndex === totalRounds - 3) return 'Oitavas';
     return `Rodada ${roundIndex + 1}`;
   };
 
