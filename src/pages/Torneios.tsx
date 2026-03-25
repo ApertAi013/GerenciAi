@@ -604,6 +604,24 @@ export default function Torneios() {
     }
   };
 
+  const handleNewRound = async () => {
+    if (!selectedTournament) return;
+    if (!confirm('Iniciar nova rodada? Isso irá desfazer todas as duplas e confrontos atuais.')) return;
+    try {
+      await tournamentService.newRound(selectedTournament.id);
+      toast.success('Nova rodada! Sorteie novas duplas.');
+      setGeneratedPairs([]);
+      setPairsGenerated(false);
+      setBracketData(null);
+      const tRes = await tournamentService.getTournament(selectedTournament.id);
+      setSelectedTournament(tRes.data);
+      loadIndividualPlayers(selectedTournament.id);
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao iniciar nova rodada');
+    }
+  };
+
   const handleAddTeam = async () => {
     if (!selectedTournament || !newTeamName.trim()) return;
     try {
@@ -1122,23 +1140,57 @@ export default function Torneios() {
                       )}
 
                       {/* Action buttons */}
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                        {individualPlayers.length >= 2 && !selectedTournament.bracket_generated && (
-                          <button className="torneio-btn-primary" onClick={handleGeneratePairs} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
-                            <FontAwesomeIcon icon={faUsers} /> Sortear Duplas
-                          </button>
-                        )}
-                        {pairsGenerated && !selectedTournament.bracket_generated && (
-                          <button className="torneio-btn-primary" onClick={handleGenerateBracket} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', background: '#10b981' }}>
-                            <FontAwesomeIcon icon={faTrophy} /> Sortear Confrontos
-                          </button>
-                        )}
-                        {selectedTournament.bracket_generated && (
-                          <button className="torneio-btn-outline" onClick={handleGenerateBracket} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
-                            Regenerar Chave
-                          </button>
-                        )}
-                      </div>
+                      {(() => {
+                        const allMatchesDone = selectedTournament.bracket_generated && bracketData &&
+                          [...(bracketData.winners?.flat() || []), ...(bracketData.losers?.flat() || []), bracketData.grand_final, bracketData.third_place]
+                            .filter(Boolean)
+                            .filter((m: any) => !m.is_bye)
+                            .every((m: any) => m.status === 'completed');
+                        const isPerRound = selectedTournament.pairing_mode === 'dynamic_per_round';
+
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                            {/* Round completed banner for per-round mode */}
+                            {isPerRound && allMatchesDone && (
+                              <div style={{ padding: '16px 20px', borderRadius: 12, background: 'rgba(245,138,37,0.08)', border: '1px solid rgba(245,138,37,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                                <div>
+                                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#F58A25' }}>Rodada concluída!</div>
+                                  <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: 2 }}>Desfaça as duplas e sorteie novamente para a próxima rodada.</div>
+                                </div>
+                                <button onClick={handleNewRound} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', background: '#F58A25', color: '#fff', whiteSpace: 'nowrap' }}>
+                                  <FontAwesomeIcon icon={faUsers} /> Nova Rodada
+                                </button>
+                              </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              {/* Sortear Duplas: only when no pairs yet and no bracket */}
+                              {individualPlayers.length >= 2 && !pairsGenerated && !selectedTournament.bracket_generated && (
+                                <button className="torneio-btn-primary" onClick={handleGeneratePairs} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
+                                  <FontAwesomeIcon icon={faUsers} /> Sortear Duplas
+                                </button>
+                              )}
+                              {/* Sortear Confrontos: only after pairs, before bracket */}
+                              {pairsGenerated && !selectedTournament.bracket_generated && (
+                                <button className="torneio-btn-primary" onClick={handleGenerateBracket} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', background: '#10b981' }}>
+                                  <FontAwesomeIcon icon={faTrophy} /> Sortear Confrontos
+                                </button>
+                              )}
+                              {/* Re-sortear duplas: only before bracket generated */}
+                              {pairsGenerated && !selectedTournament.bracket_generated && (
+                                <button className="torneio-btn-outline" onClick={handleGeneratePairs} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border-color, #e2e8f0)', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                  Re-sortear Duplas
+                                </button>
+                              )}
+                              {selectedTournament.bracket_generated && !allMatchesDone && (
+                                <button className="torneio-btn-outline" onClick={handleGenerateBracket} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+                                  Regenerar Chave
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Also show generated teams below if they exist */}
                       {selectedTournament.teams && selectedTournament.teams.length > 0 && (

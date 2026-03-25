@@ -273,4 +273,9 @@ export const tournamentService = {
     const response = await api.post(`/api/tournaments/${tournamentId}/generate-pairs`, { mode, round_number: roundNumber });
     return response.data;
   },
+
+  async newRound(tournamentId: number): Promise<any> {
+    const response = await api.post(`/api/tournaments/${tournamentId}/new-round`);
+    return response.data;
+  },
 };
