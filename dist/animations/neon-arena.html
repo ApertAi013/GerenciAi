@@ -103,15 +103,22 @@ if (isEmbedded) {
 }
 
 const camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 200);
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: isEmbedded });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setSize(W, H);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
+renderer.setClearColor(0x000000, isEmbedded ? 0 : 1);
 
 // ─── Bloom ───
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
+const renderTarget = new THREE.WebGLRenderTarget(W, H, {
+  type: THREE.HalfFloatType,
+  format: THREE.RGBAFormat,
+});
+const composer = new EffectComposer(renderer, renderTarget);
+const renderPass = new RenderPass(scene, camera);
+renderPass.clearAlpha = isEmbedded ? 0 : 1;
+composer.addPass(renderPass);
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 1.1, 0.5, 0.18);
 composer.addPass(bloomPass);
 
