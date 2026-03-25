@@ -263,8 +263,10 @@ export default function TournamentPublicPage() {
             };
           });
 
-          // If tournament just finished, do a full refresh
-          if (json.data.tournament_status === 'finished') {
+          // If a match just finished or tournament status changed, full refresh to update bracket
+          const prevLiveCount = data.live_matches?.length || 0;
+          const newLiveCount = newLiveMatches.length;
+          if (json.data.tournament_status === 'finished' || newLiveCount < prevLiveCount) {
             fetchData();
           }
         }
