@@ -1153,8 +1153,11 @@ export default function Torneios() {
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                             {individualPlayers.filter((p: any) => p.side === 'left').map((p: any) => (
-                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)' }}>
-                                <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{p.player_name}</span>
+                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: p.eliminated ? 'rgba(239,68,68,0.06)' : 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', opacity: p.eliminated ? 0.5 : 1 }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 500, textDecoration: p.eliminated ? 'line-through' : 'none' }}>
+                                  {p.player_name}
+                                  {p.total_losses > 0 && <span style={{ fontSize: '0.7rem', marginLeft: 6, color: p.total_losses >= 2 ? '#ef4444' : '#d97706' }}>{p.total_losses}D</span>}
+                                </span>
                                 <button
                                   onClick={() => handleRemoveIndividualPlayer(p.id)}
                                   style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
@@ -1189,8 +1192,11 @@ export default function Torneios() {
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                             {individualPlayers.filter((p: any) => p.side === 'right').map((p: any) => (
-                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)' }}>
-                                <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{p.player_name}</span>
+                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: p.eliminated ? 'rgba(239,68,68,0.06)' : 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', opacity: p.eliminated ? 0.5 : 1 }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 500, textDecoration: p.eliminated ? 'line-through' : 'none' }}>
+                                  {p.player_name}
+                                  {p.total_losses > 0 && <span style={{ fontSize: '0.7rem', marginLeft: 6, color: p.total_losses >= 2 ? '#ef4444' : '#d97706' }}>{p.total_losses}D</span>}
+                                </span>
                                 <button
                                   onClick={() => handleRemoveIndividualPlayer(p.id)}
                                   style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
