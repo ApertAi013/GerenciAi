@@ -876,8 +876,6 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
 
   const getLosersLabel = (idx: number, total: number) => {
     if (idx === total - 1) return 'Semifinal';
-    if (idx === total - 2) return 'Quartas';
-    if (total >= 4 && idx === total - 3) return 'Oitavas';
     return `Rodada ${idx + 1}`;
   };
 
