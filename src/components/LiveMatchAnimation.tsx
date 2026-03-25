@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 
 interface LiveMatchAnimationProps {
   category: 'volei' | 'futevolei' | 'futebol' | 'beach_tennis' | null;
@@ -22,13 +22,18 @@ export default function LiveMatchAnimation({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevScoresRef = useRef({ a: team1Score, b: team2Score });
 
-  // Futebol keeps the old animation, everything else uses neon-arena
   const isFutebol = category === 'futebol';
 
-  const animUrl = isFutebol
-    ? `${import.meta.env.VITE_API_URL || 'https://gerenciai-backend-798546007335.us-east1.run.app'}/public/animations/futebol.html?embed=true&team1=${encodeURIComponent(team1Name)}&team2=${encodeURIComponent(team2Name)}&score1=${team1Score}&score2=${team2Score}`
-    : `/animations/neon-arena.html?embed=true&team_size=${teamSize}&team1=${encodeURIComponent(team1Name)}&team2=${encodeURIComponent(team2Name)}&score1=${team1Score}&score2=${team2Score}`;
+  // URL is stable (no scores) so iframe doesn't reload on score change
+  const animUrl = useMemo(() => {
+    if (isFutebol) {
+      const base = import.meta.env.VITE_API_URL || 'https://gerenciai-backend-798546007335.us-east1.run.app';
+      return `${base}/public/animations/futebol.html?embed=true&team1=${encodeURIComponent(team1Name)}&team2=${encodeURIComponent(team2Name)}`;
+    }
+    return `/animations/neon-arena.html?embed=true&team_size=${teamSize}&team1=${encodeURIComponent(team1Name)}&team2=${encodeURIComponent(team2Name)}`;
+  }, [isFutebol, team1Name, team2Name, teamSize]);
 
+  // Send score changes via postMessage (no iframe reload)
   useEffect(() => {
     if (!iframeRef.current?.contentWindow) return;
 

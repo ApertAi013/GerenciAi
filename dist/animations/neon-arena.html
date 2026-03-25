@@ -6,7 +6,7 @@
 <title>Neon Arena</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #000; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; }
+  body { background: transparent; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; }
   #wrap { width: 100vw; height: 100vh; position: relative; }
   canvas { display: block; width: 100%; height: 100%; }
 
@@ -94,11 +94,16 @@ const canvas = document.getElementById('arena');
 let W = wrap.clientWidth, H = wrap.clientHeight;
 
 // ─── Scene ───
+const isEmbedded = params.get('embed') === 'true';
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x010108);
+if (isEmbedded) {
+  scene.background = null; // transparent for iframe
+} else {
+  scene.background = new THREE.Color(0x010108);
+}
 
 const camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 200);
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: isEmbedded });
 renderer.setSize(W, H);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -113,14 +118,16 @@ composer.addPass(bloomPass);
 // ─── Lighting ───
 scene.add(new THREE.AmbientLight(0x060612, 0.4));
 
-// ─── Ground ───
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(60, 40),
-  new THREE.MeshStandardMaterial({ color: 0x080810, roughness: 0.85, metalness: 0.05 })
-);
-ground.rotation.x = -Math.PI / 2;
-ground.position.y = -0.01;
-scene.add(ground);
+// ─── Ground (only in standalone mode, transparent in embed) ───
+if (!isEmbedded) {
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(60, 40),
+    new THREE.MeshStandardMaterial({ color: 0x080810, roughness: 0.85, metalness: 0.05 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.01;
+  scene.add(ground);
+}
 
 // ─── Court flash plane (covers entire court, used for score celebration) ───
 const flashMat = new THREE.MeshBasicMaterial({ color: 0x3B82F6, transparent: true, opacity: 0, side: THREE.DoubleSide });
