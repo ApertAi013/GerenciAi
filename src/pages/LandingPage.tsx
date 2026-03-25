@@ -17,7 +17,8 @@ import {
   faUserPlus,
   faTableTennis,
   faCreditCard,
-  faArrowRight
+  faArrowRight,
+  faTrophy
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import '../styles/LandingPage.css';
@@ -192,6 +193,12 @@ export default function LandingPage() {
                 </a>
               </li>
               <li><a href="#contato">Contato</a></li>
+              <li>
+                <a href="/torneios-publicos" className="nav-torneios" id="navTorneios">
+                  <FontAwesomeIcon icon={faTrophy} style={{ color: '#F58A25', fontSize: '0.85rem' }} />
+                  <span>Torneios</span>
+                </a>
+              </li>
             </ul>
 
             <div className="nav-buttons">

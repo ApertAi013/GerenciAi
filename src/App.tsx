@@ -54,6 +54,8 @@ import Shop from './pages/Shop'
 import Torneios from './pages/Torneios'
 import PublicTournamentRegistration from './pages/PublicTournamentRegistration'
 import TournamentPublicPage from './pages/TournamentPublicPage'
+import TournamentsDirectory from './pages/TournamentsDirectory'
+import ArenaPublicPage from './pages/ArenaPublicPage'
 import PublicStudentRegistration from './pages/PublicStudentRegistration'
 import SystemGuide from './pages/SystemGuide'
 import PrivacyPolicy from './pages/PrivacyPolicy'
@@ -119,6 +121,8 @@ export default function App() {
         <Route path="/contratar" element={<Signup />} />
         <Route path="/apertai" element={<ApertaiPromo />} />
         <Route path="/billing-blocked" element={<BillingBlocked />} />
+        <Route path="/torneios-publicos" element={<TournamentsDirectory />} />
+        <Route path="/torneios-publicos/:arenaId" element={<ArenaPublicPage />} />
         <Route path="/torneio/live/:token" element={<TournamentPublicPage />} />
         <Route path="/torneio/:registrationToken" element={<PublicTournamentRegistration />} />
         <Route path="/cadastro-aluno/:token" element={<PublicStudentRegistration />} />

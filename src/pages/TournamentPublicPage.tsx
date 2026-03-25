@@ -162,8 +162,8 @@ function groupMatchesByBracket(matches: TournamentMatch[]) {
 }
 
 const BRACKET_TYPE_LABELS: Record<string, string> = {
-  winners: 'Chave Principal',
-  losers: 'Repescagem',
+  winners: 'Vencedores',
+  losers: 'Perdedores',
   grand_final: 'Grande Final',
   third_place: 'Disputa 3o Lugar',
   group: 'Fase de Grupos',
@@ -866,17 +866,17 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
 
   const getWinnersLabel = (idx: number, total: number) => {
     if (total <= 2) {
-      if (idx === total - 1) return 'Semifinal';
+      if (idx === total - 1) return 'Quartas';
       return `Rodada ${idx + 1}`;
     }
-    if (idx === total - 1) return 'Semifinal';
-    if (idx === total - 2) return 'Quartas';
-    if (total >= 4 && idx === total - 3) return 'Oitavas';
+    if (idx === total - 1) return 'Quartas';
+    if (idx === total - 2) return 'Oitavas';
     return `Rodada ${idx + 1}`;
   };
 
   const getLosersLabel = (idx: number, total: number) => {
-    if (idx === total - 1) return 'Semifinal';
+    if (idx === total - 1) return 'Quartas Perdedores';
+    if (idx === total - 2) return 'Oitavas';
     return `Rodada ${idx + 1}`;
   };
 
