@@ -1050,9 +1050,12 @@ function DynamicPairingSection({
 
   const leftPlayers = individualPlayers.filter(p => p.side === 'left');
   const rightPlayers = individualPlayers.filter(p => p.side === 'right');
-  const hasPairs = generatedPairs.length > 0;
 
-  // On first render: if pairs already exist, skip straight to done
+  // If scheduled reveal is in the future, hide pairs from view
+  const isRevealPending = pairsRevealAt && new Date(pairsRevealAt).getTime() > Date.now();
+  const hasPairs = generatedPairs.length > 0 && !isRevealPending;
+
+  // On first render: if pairs already exist and revealed, skip straight to done
   useEffect(() => {
     if (hasPairs) { setPhase('done'); setRevealCount(999); }
   }, []);

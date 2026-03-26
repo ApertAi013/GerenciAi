@@ -1440,7 +1440,7 @@ export default function Torneios() {
 
                       {selectedTournament.teams && selectedTournament.teams.length >= 2 && !selectedTournament.bracket_generated && (
                         <div style={{ marginTop: 20, textAlign: 'center' }}>
-                          <button className="torneio-btn-primary" onClick={handleGenerateBracket} style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: '10px', border: 'none', cursor: 'pointer' }}>
+                          <button className="torneio-btn-primary" onClick={handleSortearConfrontos} style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: '10px', border: 'none', cursor: 'pointer' }}>
                             <FontAwesomeIcon icon={faTrophy} /> Gerar Chave do Torneio
                           </button>
                         </div>
