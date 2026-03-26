@@ -345,11 +345,6 @@ export default function TournamentPublicPage() {
   return (
     <div className="tp-page">
       <div className="tp-container">
-        {/* Live Draw Section — TOP OF PAGE */}
-        {tournament.live_draw_mode && tournament.live_draw_data && (
-          <LiveDrawSection drawData={tournament.live_draw_data} />
-        )}
-
         {/* Branding */}
         <div className="tp-branding">
           <a className="tp-brand-logo" href="https://arenai.com.br" target="_blank" rel="noopener noreferrer">
@@ -429,6 +424,11 @@ export default function TournamentPublicPage() {
             <p className="tp-description">{tournament.description}</p>
           )}
         </header>
+
+        {/* Live Draw Section — below tags, above pairing */}
+        {tournament.live_draw_mode && tournament.live_draw_data && (
+          <LiveDrawSection drawData={tournament.live_draw_data} teams={teams} />
+        )}
 
         {/* Dynamic Duo Drawing Section */}
         {tournament.pairing_mode && tournament.pairing_mode !== 'fixed' && (
@@ -1216,104 +1216,151 @@ function DynamicPairingSection({
 }
 
 // ─── Live Draw Section (animated match reveals) ───
-function LiveDrawSection({ drawData }: {
+function LiveDrawSection({ drawData, teams }: {
   drawData: {
     matches: { team1_id: number; team1_name: string; team2_id: number; team2_name: string; revealed: boolean }[];
     revealed_count: number;
     bye_team?: { id: number; name: string } | null;
     finished: boolean;
   };
+  teams: { id: number; name: string }[];
 }) {
   const prevRevealedRef = useRef(drawData.revealed_count);
-  const [animatingIdx, setAnimatingIdx] = useState<number | null>(null);
+  const [phase, setPhase] = useState<'idle' | 'spinning' | 'reveal' | 'fire'>('idle');
+  const [revealIdx, setRevealIdx] = useState(-1);
+  const [spinNames, setSpinNames] = useState<string[]>([]);
   const [showFireworks, setShowFireworks] = useState(false);
+  const spinRef = useRef<any>(null);
 
-  // Detect new reveal via polling (use ref to avoid stale closures)
+  // All team names for spinning effect
+  const allNames = teams.map(t => t.name);
+
   useEffect(() => {
     const prev = prevRevealedRef.current;
     if (drawData.revealed_count > prev) {
       const newIdx = drawData.revealed_count - 1;
-      setAnimatingIdx(newIdx);
-      setTimeout(() => setAnimatingIdx(null), 4000);
+      setRevealIdx(newIdx);
 
-      if (drawData.finished) {
-        setTimeout(() => setShowFireworks(true), 4500);
-        setTimeout(() => setShowFireworks(false), 9500);
-      }
+      // Phase 1: Spinning names (3.5s)
+      setPhase('spinning');
+      let spinCount = 0;
+      spinRef.current = setInterval(() => {
+        spinCount++;
+        const shuffled = [...allNames].sort(() => Math.random() - 0.5);
+        setSpinNames([shuffled[0] || '???', shuffled[1] || '???']);
+        if (spinCount > 14) { // ~3.5s at 250ms intervals
+          clearInterval(spinRef.current);
+          // Phase 2: Reveal with fire
+          setPhase('reveal');
+          setTimeout(() => {
+            setPhase('idle');
+            // If all done, show big fireworks
+            if (drawData.finished) {
+              setTimeout(() => { setShowFireworks(true); setTimeout(() => setShowFireworks(false), 6000); }, 500);
+            }
+          }, 4000);
+        }
+      }, 250);
     }
     prevRevealedRef.current = drawData.revealed_count;
-  }, [drawData.revealed_count, drawData.finished]);
+    return () => { if (spinRef.current) clearInterval(spinRef.current); };
+  }, [drawData.revealed_count, drawData.finished, allNames.length]);
+
+  const revealedMatch = revealIdx >= 0 ? drawData.matches[revealIdx] : null;
 
   return (
-    <div style={{ margin: '32px 0', padding: '28px', background: 'linear-gradient(135deg, rgba(245,138,37,0.06), rgba(239,68,68,0.04))', border: '1px solid rgba(245,138,37,0.15)', borderRadius: 20, position: 'relative', overflow: 'hidden' }}>
-      <h2 className="tp-section-title" style={{ marginBottom: 20 }}>
-        <span style={{ color: '#F58A25' }}>{'\uD83C\uDFB2'}</span> Sorteio de Confrontos Ao Vivo
+    <div style={{ margin: '24px 0', padding: '24px', background: 'linear-gradient(135deg, rgba(245,138,37,0.06), rgba(239,68,68,0.04))', border: '1px solid rgba(245,138,37,0.15)', borderRadius: 20, position: 'relative', overflow: 'hidden' }}>
+      <h2 className="tp-section-title" style={{ marginBottom: 16 }}>
+        <span style={{ color: '#F58A25' }}>{'\uD83C\uDFB2'}</span> Sorteio de Confrontos
         <span style={{ marginLeft: 10, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(239,68,68,0.1)', padding: '2px 10px', borderRadius: 12, fontSize: '0.7rem', fontWeight: 700, color: '#f87171' }}>
           <span className="tp-live-dot" style={{ width: 6, height: 6 }} /> AO VIVO
         </span>
       </h2>
 
-      {/* Match reveal animation overlay */}
-      {animatingIdx !== null && drawData.matches[animatingIdx] && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(0,0,0,0.85)', animation: 'fadeIn 0.3s ease-out',
-        }}>
-          <div style={{ textAlign: 'center', animation: 'pointPop 0.8s ease-out' }}>
-            <div style={{ fontSize: '0.85rem', color: '#F58A25', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 16 }}>
-              Confronto {animatingIdx + 1}
+      {/* ── SPINNING OVERLAY ── */}
+      {phase === 'spinning' && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
+          <div style={{ fontSize: '0.8rem', color: '#F58A25', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 4, marginBottom: 24 }}>
+            Confronto {revealIdx + 1}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 30 }}>
+            <div style={{ width: 220, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 14, overflow: 'hidden' }}>
+              <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#60A5FA', animation: 'tp-spin-text 0.15s linear infinite alternate' }}>
+                {spinNames[0] || '???'}
+              </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#3B82F6', padding: '12px 24px', background: 'rgba(59,130,246,0.1)', borderRadius: 12, border: '1px solid rgba(59,130,246,0.3)' }}>
-                {drawData.matches[animatingIdx].team1_name}
-              </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)' }}>VS</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#EF4444', padding: '12px 24px', background: 'rgba(239,68,68,0.1)', borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)' }}>
-                {drawData.matches[animatingIdx].team2_name}
-              </div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'rgba(255,255,255,0.15)' }}>VS</div>
+            <div style={{ width: 220, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 14, overflow: 'hidden' }}>
+              <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#F87171', animation: 'tp-spin-text 0.15s linear infinite alternate' }}>
+                {spinNames[1] || '???'}
+              </span>
+            </div>
+          </div>
+          <div className="tp-pairing-shuffle-spinner" style={{ marginTop: 24, width: 50, height: 50 }} />
+        </div>
+      )}
+
+      {/* ── REVEAL WITH FIRE ── */}
+      {phase === 'reveal' && revealedMatch && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
+          {/* Fire at bottom */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '30%', background: 'linear-gradient(to top, rgba(245,138,37,0.3), rgba(239,68,68,0.15), transparent)', animation: 'tp-fire-flicker 0.3s ease-in-out infinite alternate', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: '10%', right: '10%', height: '20%', background: 'linear-gradient(to top, rgba(239,68,68,0.4), transparent)', animation: 'tp-fire-flicker 0.5s ease-in-out infinite alternate-reverse', pointerEvents: 'none' }} />
+
+          <div style={{ fontSize: '0.8rem', color: '#F58A25', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 4, marginBottom: 20, animation: 'pointPop 0.6s ease-out' }}>
+            Confronto {revealIdx + 1}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 30, animation: 'pointPop 0.8s ease-out' }}>
+            <div style={{ padding: '16px 28px', background: 'rgba(59,130,246,0.12)', border: '2px solid rgba(59,130,246,0.4)', borderRadius: 16, boxShadow: '0 0 30px rgba(59,130,246,0.2)' }}>
+              <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#3B82F6', textShadow: '0 0 20px rgba(59,130,246,0.5)' }}>
+                {revealedMatch.team1_name}
+              </span>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#F58A25', textShadow: '0 0 20px rgba(245,138,37,0.5)' }}>VS</div>
+            <div style={{ padding: '16px 28px', background: 'rgba(239,68,68,0.12)', border: '2px solid rgba(239,68,68,0.4)', borderRadius: 16, boxShadow: '0 0 30px rgba(239,68,68,0.2)' }}>
+              <span style={{ fontSize: '1.6rem', fontWeight: 900, color: '#EF4444', textShadow: '0 0 20px rgba(239,68,68,0.5)' }}>
+                {revealedMatch.team2_name}
+              </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Fireworks when all done */}
+      {/* ── ALL DONE FIREWORKS ── */}
       {showFireworks && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(0,0,0,0.9)', animation: 'fadeIn 0.5s ease-out',
-        }}>
-          <div style={{ fontSize: '4rem', marginBottom: 16, animation: 'pointPop 0.8s ease-out' }}>{'\uD83D\uDD25\uD83C\uDFC6\uD83D\uDD25'}</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 30px rgba(245,138,37,0.5)' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(to top, rgba(245,138,37,0.4), rgba(239,68,68,0.2), transparent)', animation: 'tp-fire-flicker 0.4s ease-in-out infinite alternate' }} />
+          <div style={{ fontSize: '5rem', marginBottom: 16, animation: 'pointPop 0.8s ease-out' }}>{'\uD83D\uDD25\uD83C\uDFC6\uD83D\uDD25'}</div>
+          <div style={{ fontSize: '2rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 40px rgba(245,138,37,0.6)', animation: 'pointPop 1s ease-out' }}>
             Confrontos Definidos!
           </div>
-          <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 12 }}>A chave sera exibida em instantes...</div>
+          <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 16 }}>A chave sera exibida em instantes...</div>
         </div>
       )}
 
-      {/* Match cards grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+      {/* ── Match cards ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
         {drawData.matches.map((m, idx) => (
           <div key={idx} style={{
-            padding: '14px 18px', borderRadius: 12,
+            padding: '12px 16px', borderRadius: 12,
             background: m.revealed ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.02)',
             border: `1px solid ${m.revealed ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.06)'}`,
             transition: 'all 0.5s ease',
-            transform: animatingIdx === idx ? 'scale(1.05)' : 'scale(1)',
           }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: m.revealed ? '#10b981' : '#64748b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-              Confronto {idx + 1} {!m.revealed && '\u2014 Aguardando...'}
+            <div style={{ fontSize: '0.65rem', fontWeight: 700, color: m.revealed ? '#10b981' : '#64748b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+              Confronto {idx + 1} {!m.revealed && '— Aguardando...'}
             </div>
             {m.revealed ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontWeight: 700, color: '#60A5FA', fontSize: '0.9rem' }}>{m.team1_name}</span>
-                <span style={{ color: 'rgba(255,255,255,0.2)', fontWeight: 600, fontSize: '0.75rem' }}>VS</span>
-                <span style={{ fontWeight: 700, color: '#F87171', fontSize: '0.9rem' }}>{m.team2_name}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontWeight: 700, color: '#60A5FA', fontSize: '0.85rem' }}>{m.team1_name}</span>
+                <span style={{ color: 'rgba(255,255,255,0.2)', fontWeight: 600, fontSize: '0.7rem' }}>VS</span>
+                <span style={{ fontWeight: 700, color: '#F87171', fontSize: '0.85rem' }}>{m.team2_name}</span>
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ color: '#334155', fontSize: '0.9rem' }}>???</span>
-                <span style={{ color: 'rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '0.75rem' }}>VS</span>
-                <span style={{ color: '#334155', fontSize: '0.9rem' }}>???</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: '#334155', fontSize: '0.85rem' }}>???</span>
+                <span style={{ color: 'rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '0.7rem' }}>VS</span>
+                <span style={{ color: '#334155', fontSize: '0.85rem' }}>???</span>
               </div>
             )}
           </div>
@@ -1321,8 +1368,8 @@ function LiveDrawSection({ drawData }: {
       </div>
 
       {drawData.bye_team && (
-        <div style={{ marginTop: 12, padding: '8px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', fontSize: '0.8rem', color: '#64748b' }}>
-          {drawData.bye_team.name} — BYE (passa automaticamente)
+        <div style={{ marginTop: 10, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', fontSize: '0.75rem', color: '#64748b' }}>
+          {drawData.bye_team.name} — BYE
         </div>
       )}
     </div>
