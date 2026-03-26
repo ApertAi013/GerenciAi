@@ -9,6 +9,7 @@ interface Student {
   enrollmentId?: number;
   isMakeup?: boolean;
   isTrial?: boolean;
+  isAbsent?: boolean;
   level_name?: string;
 }
 
@@ -67,12 +68,12 @@ const TIME_SLOTS = generateTimeSlots();
 function DraggableStudent({ student, classId, allowedLevels, onStudentClick }: { student: Student; classId: string; allowedLevels?: string[]; onStudentClick?: (studentId: number) => void }) {
   const uniqueId = `student-${student.id}-class-${classId}`;
 
-  const isSpecial = student.isMakeup || student.isTrial;
+  const isSpecial = student.isMakeup || student.isTrial || student.isAbsent;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: uniqueId,
     data: { type: 'student', studentId: student.id, classId },
-    disabled: isSpecial // Disable dragging for makeup and trial students
+    disabled: isSpecial // Disable dragging for makeup, trial, and absent students
   });
 
   const levelMismatch = allowedLevels && allowedLevels.length > 0 && student.level_name && !allowedLevels.includes(student.level_name);
@@ -84,8 +85,17 @@ function DraggableStudent({ student, classId, allowedLevels, onStudentClick }: {
       }
     : {};
 
-  // Style for makeup students (yellow)
-  const specialStyle: React.CSSProperties = student.isMakeup
+  // Style for special students
+  const specialStyle: React.CSSProperties = student.isAbsent
+    ? {
+        backgroundColor: 'transparent',
+        color: '#94a3b8',
+        border: '1px dashed #ef4444',
+        fontWeight: 400,
+        opacity: 0.6,
+        textDecoration: 'line-through',
+      }
+    : student.isMakeup
     ? {
         backgroundColor: '#FFB300',
         color: '#1a1a1a',
@@ -103,12 +113,14 @@ function DraggableStudent({ student, classId, allowedLevels, onStudentClick }: {
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onStudentClick && !isSpecial) {
+    if (onStudentClick && !student.isMakeup && !student.isTrial) {
       onStudentClick(parseInt(student.id));
     }
   };
 
-  const chipTitle = student.isMakeup
+  const chipTitle = student.isAbsent
+    ? 'Ausente (desmarcou presença)'
+    : student.isMakeup
     ? 'Aluno de remarcação'
     : student.isTrial
     ? 'Aula experimental'
@@ -119,10 +131,11 @@ function DraggableStudent({ student, classId, allowedLevels, onStudentClick }: {
       ref={setNodeRef}
       style={{ ...baseStyle, ...specialStyle }}
       {...(isSpecial ? {} : { ...listeners, ...attributes })}
-      className={`student-chip ${isSpecial ? (student.isTrial ? 'trial' : 'makeup') : 'draggable'}`}
+      className={`student-chip ${student.isAbsent ? 'absent' : isSpecial ? (student.isTrial ? 'trial' : 'makeup') : 'draggable'}`}
       onClick={handleClick}
       title={chipTitle}
     >
+      {student.isAbsent && '✕ '}
       {student.isMakeup && '↻ '}
       {student.isTrial && '★ '}
       {levelMismatch && (

@@ -25,6 +25,7 @@ interface Student {
   enrollmentId?: number;
   isMakeup?: boolean;
   isTrial?: boolean;
+  isAbsent?: boolean;
   level_name?: string;
 }
 
@@ -258,6 +259,7 @@ export default function Schedule() {
                     enrollmentId: s.enrollment_id,
                     isMakeup: s.is_makeup === true || s.is_makeup === 1,
                     isTrial: s.is_trial === true || s.is_trial === 1,
+                    isAbsent: s.is_absent === true || s.is_absent === 1,
                     level_name: s.level_name || undefined
                   };
                 })
