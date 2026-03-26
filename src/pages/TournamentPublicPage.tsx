@@ -101,6 +101,8 @@ interface TournamentData {
       matches: { team1_id: number; team1_name: string; team2_id: number; team2_name: string; revealed: boolean }[];
       revealed_count: number;
       bye_team?: { id: number; name: string } | null;
+      bye_teams?: { id: number; name: string }[];
+      byes_revealed?: boolean;
       finished: boolean;
     } | null;
   };
@@ -1409,9 +1411,17 @@ function LiveDrawSection({ drawData, teams }: {
         ))}
       </div>
 
-      {drawData.bye_team && (
-        <div style={{ marginTop: 10, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', fontSize: '0.75rem', color: '#64748b' }}>
-          {drawData.bye_team.name} — BYE
+      {/* BYE teams */}
+      {((drawData as any).bye_teams?.length > 0 || drawData.bye_team) && (drawData as any).byes_revealed && (
+        <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 10, background: 'rgba(245,138,37,0.06)', border: '1px solid rgba(245,138,37,0.15)' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+            Passam Direto (BYE)
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {((drawData as any).bye_teams || (drawData.bye_team ? [drawData.bye_team] : [])).map((t: any) => (
+              <span key={t.id} style={{ fontSize: '0.8rem', fontWeight: 600, color: '#F58A25' }}>{t.name}</span>
+            ))}
+          </div>
         </div>
       )}
     </div>

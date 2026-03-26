@@ -440,6 +440,16 @@ export default function Torneios() {
     setLiveDrawRevealing(true);
     try {
       const res = await tournamentService.drawNextMatch(selectedTournament.id);
+
+      // If BYEs were revealed (first click), show immediately
+      if (res.data?.type === 'byes') {
+        setLiveDraw(res.data?.draw_data || null);
+        setLiveDrawRevealing(false);
+        const byeNames = (res.data.bye_teams || []).map((t: any) => t.name).join(', ');
+        toast.success(`Passam direto: ${byeNames}`);
+        return;
+      }
+
       // Wait 3s for suspense animation, then reveal
       setTimeout(() => {
         setLiveDraw(res.data?.draw_data || null);
@@ -1734,6 +1744,25 @@ export default function Torneios() {
             </div>
             <div className="mm-content">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                {/* BYE teams */}
+                {liveDraw.bye_teams?.length > 0 && (
+                  <div style={{ padding: '10px 14px', borderRadius: 10, background: liveDraw.byes_revealed ? 'rgba(245,138,37,0.08)' : 'var(--bg-secondary, #f8fafc)', border: `1px solid ${liveDraw.byes_revealed ? 'rgba(245,138,37,0.2)' : 'var(--border-color, #e2e8f0)'}` }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: liveDraw.byes_revealed ? '#F58A25' : '#94a3b8', textTransform: 'uppercase', marginBottom: 6 }}>
+                      Passam Direto (BYE) {!liveDraw.byes_revealed && '— Aguardando...'}
+                    </div>
+                    {liveDraw.byes_revealed ? (
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {liveDraw.bye_teams.map((t: any) => (
+                          <span key={t.id} style={{ fontSize: '0.85rem', fontWeight: 600, color: '#F58A25' }}>{t.name}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{liveDraw.bye_teams.length} dupla(s)</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Matches */}
                 {liveDraw.matches?.map((m: any, idx: number) => (
                   <div key={idx} style={{
                     padding: '12px 16px', borderRadius: 10,
@@ -1763,7 +1792,7 @@ export default function Torneios() {
                   fontWeight: 700, fontSize: '1.1rem',
                 }}
               >
-                {liveDrawRevealing ? 'Sorteando...' : `Sortear Proximo Confronto`}
+                {liveDrawRevealing ? 'Sorteando...' : liveDraw.bye_teams?.length > 0 && !liveDraw.byes_revealed ? 'Revelar Quem Passa Direto' : 'Sortear Proximo Confronto'}
               </button>
             </div>
             {liveDraw.matches?.every((m: any) => m.revealed) && (
