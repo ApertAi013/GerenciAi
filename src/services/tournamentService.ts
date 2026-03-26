@@ -278,4 +278,19 @@ export const tournamentService = {
     const response = await api.post(`/api/tournaments/${tournamentId}/new-round`);
     return response.data;
   },
+
+  async startLiveDraw(tournamentId: number): Promise<any> {
+    const response = await api.post(`/api/tournaments/${tournamentId}/live-draw-start`);
+    return response.data;
+  },
+
+  async drawNextMatch(tournamentId: number): Promise<any> {
+    const response = await api.post(`/api/tournaments/${tournamentId}/live-draw-next`);
+    return response.data;
+  },
+
+  async finishLiveDraw(tournamentId: number): Promise<any> {
+    const response = await api.post(`/api/tournaments/${tournamentId}/live-draw-finish`);
+    return response.data;
+  },
 };

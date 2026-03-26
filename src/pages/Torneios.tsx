@@ -408,13 +408,69 @@ export default function Torneios() {
       const res = await tournamentService.generateBracket(selectedTournament.id);
       setBracketData(res.data);
       toast.success('Chave gerada com sucesso!');
-      // Refresh tournament
       const tRes = await tournamentService.getTournament(selectedTournament.id);
       setSelectedTournament(tRes.data);
       fetchAll();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro ao gerar chave');
     }
+  };
+
+  // ─── Live Draw ───
+  const [showBracketModal, setShowBracketModal] = useState(false);
+  const [liveDraw, setLiveDraw] = useState<any>(null);
+  const [liveDrawRevealing, setLiveDrawRevealing] = useState(false);
+
+  const handleStartLiveDraw = async () => {
+    if (!selectedTournament) return;
+    setShowBracketModal(false);
+    try {
+      const res = await tournamentService.startLiveDraw(selectedTournament.id);
+      setLiveDraw(res.data?.draw_data || null);
+      toast.success('Sorteio ao vivo iniciado! Clique para sortear cada confronto.');
+      const tRes = await tournamentService.getTournament(selectedTournament.id);
+      setSelectedTournament(tRes.data);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao iniciar sorteio ao vivo');
+    }
+  };
+
+  const handleDrawNextMatch = async () => {
+    if (!selectedTournament || liveDrawRevealing) return;
+    setLiveDrawRevealing(true);
+    try {
+      const res = await tournamentService.drawNextMatch(selectedTournament.id);
+      // Wait 3s for suspense animation, then reveal
+      setTimeout(() => {
+        setLiveDraw(res.data?.draw_data || null);
+        setLiveDrawRevealing(false);
+        if (res.data?.all_revealed) {
+          toast.success('Todos os confrontos sorteados!');
+        }
+      }, 3000);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro');
+      setLiveDrawRevealing(false);
+    }
+  };
+
+  const handleFinishLiveDraw = async () => {
+    if (!selectedTournament) return;
+    try {
+      const res = await tournamentService.finishLiveDraw(selectedTournament.id);
+      setBracketData(res.data);
+      setLiveDraw(null);
+      toast.success('Chave gerada!');
+      const tRes = await tournamentService.getTournament(selectedTournament.id);
+      setSelectedTournament(tRes.data);
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao finalizar sorteio');
+    }
+  };
+
+  const handleSortearConfrontos = () => {
+    setShowBracketModal(true);
   };
 
   const handleStartTournament = async () => {
@@ -1261,8 +1317,8 @@ export default function Torneios() {
                                 </button>
                               )}
                               {/* Sortear Confrontos: only after pairs, before bracket */}
-                              {pairsGenerated && !selectedTournament.bracket_generated && (
-                                <button className="torneio-btn-primary" onClick={handleGenerateBracket} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', background: '#10b981' }}>
+                              {pairsGenerated && !selectedTournament.bracket_generated && !liveDraw && (
+                                <button className="torneio-btn-primary" onClick={handleSortearConfrontos} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', background: '#10b981' }}>
                                   <FontAwesomeIcon icon={faTrophy} /> Sortear Confrontos
                                 </button>
                               )}
@@ -1627,6 +1683,85 @@ export default function Torneios() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bracket Mode Modal (normal vs live draw) */}
+      {showBracketModal && (
+        <div className="mm-overlay" onClick={() => setShowBracketModal(false)}>
+          <div className="mm-modal mm-modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
+              <h3>Sortear Confrontos</h3>
+              <button className="mm-close" onClick={() => setShowBracketModal(false)}>&times;</button>
+            </div>
+            <div className="mm-content">
+              <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: 16 }}>
+                Escolha como sortear os confrontos:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <button onClick={handleGenerateBracket} style={{ padding: '16px', borderRadius: 12, border: '2px solid var(--border-color, #e2e8f0)', background: 'var(--bg-secondary, #f8fafc)', cursor: 'pointer', textAlign: 'left' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Sorteio Instantaneo</div>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: 4 }}>Gera toda a chave de uma vez</div>
+                </button>
+                <button onClick={handleStartLiveDraw} style={{ padding: '16px', borderRadius: 12, border: '2px solid #F58A25', background: 'rgba(245,138,37,0.06)', cursor: 'pointer', textAlign: 'left' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#F58A25' }}>Sorteio Ao Vivo</div>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: 4 }}>Sorteie um confronto por vez com animacao na pagina publica</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Draw Control Panel */}
+      {liveDraw && !liveDraw.finished && selectedTournament && (
+        <div className="mm-overlay">
+          <div className="mm-modal mm-modal-md" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
+              <h3>Sorteio Ao Vivo — {liveDraw.revealed_count || 0}/{liveDraw.matches?.length || 0}</h3>
+            </div>
+            <div className="mm-content">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                {liveDraw.matches?.map((m: any, idx: number) => (
+                  <div key={idx} style={{
+                    padding: '12px 16px', borderRadius: 10,
+                    background: m.revealed ? 'rgba(16,185,129,0.08)' : 'var(--bg-secondary, #f8fafc)',
+                    border: `1px solid ${m.revealed ? 'rgba(16,185,129,0.2)' : 'var(--border-color, #e2e8f0)'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                      {m.revealed ? `${m.team1_name} vs ${m.team2_name}` : `Confronto ${idx + 1}`}
+                    </span>
+                    {m.revealed ? (
+                      <FontAwesomeIcon icon={faCheck} style={{ color: '#10b981' }} />
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Aguardando...</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={handleDrawNextMatch}
+                disabled={liveDrawRevealing}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+                  background: liveDrawRevealing ? '#94a3b8' : '#F58A25', color: '#fff',
+                  cursor: liveDrawRevealing ? 'not-allowed' : 'pointer',
+                  fontWeight: 700, fontSize: '1.1rem',
+                }}
+              >
+                {liveDrawRevealing ? 'Sorteando...' : `Sortear Proximo Confronto`}
+              </button>
+            </div>
+            {liveDraw.matches?.every((m: any) => m.revealed) && (
+              <div className="mm-footer">
+                <button className="mm-btn mm-btn-primary" onClick={handleFinishLiveDraw}>
+                  <FontAwesomeIcon icon={faTrophy} /> Finalizar e Gerar Chave
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
