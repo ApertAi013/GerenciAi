@@ -96,6 +96,13 @@ interface TournamentData {
     last_pairs_draw_at?: string | null;
     last_bracket_draw_at?: string | null;
     pairs_reveal_at?: string | null;
+    live_draw_mode?: boolean;
+    live_draw_data?: {
+      matches: { team1_id: number; team1_name: string; team2_id: number; team2_name: string; revealed: boolean }[];
+      revealed_count: number;
+      bye_team?: { id: number; name: string } | null;
+      finished: boolean;
+    } | null;
   };
   teams: TournamentTeam[];
   matches: TournamentMatch[];
@@ -427,6 +434,11 @@ export default function TournamentPublicPage() {
             lastBracketDrawAt={tournament.last_bracket_draw_at || null}
             pairsRevealAt={tournament.pairs_reveal_at || null}
           />
+        )}
+
+        {/* Live Draw Section */}
+        {tournament.live_draw_mode && tournament.live_draw_data && (
+          <LiveDrawSection drawData={tournament.live_draw_data} />
         )}
 
         {/* Live matches - always at top when they exist */}
@@ -1194,6 +1206,121 @@ function DynamicPairingSection({
               Confrontos sorteados! Veja a chave na aba "Chave".
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Live Draw Section (animated match reveals) ───
+function LiveDrawSection({ drawData }: {
+  drawData: {
+    matches: { team1_id: number; team1_name: string; team2_id: number; team2_name: string; revealed: boolean }[];
+    revealed_count: number;
+    bye_team?: { id: number; name: string } | null;
+    finished: boolean;
+  };
+}) {
+  const [prevRevealed, setPrevRevealed] = useState(drawData.revealed_count);
+  const [animatingIdx, setAnimatingIdx] = useState<number | null>(null);
+  const [showFireworks, setShowFireworks] = useState(false);
+
+  // Detect new reveal via polling
+  useEffect(() => {
+    if (drawData.revealed_count > prevRevealed) {
+      const newIdx = drawData.revealed_count - 1;
+      setAnimatingIdx(newIdx);
+      setTimeout(() => setAnimatingIdx(null), 4000);
+
+      // If all revealed, show fireworks
+      if (drawData.finished) {
+        setTimeout(() => setShowFireworks(true), 4500);
+      }
+    }
+    setPrevRevealed(drawData.revealed_count);
+  }, [drawData.revealed_count]);
+
+  return (
+    <div style={{ margin: '32px 0', padding: '28px', background: 'linear-gradient(135deg, rgba(245,138,37,0.06), rgba(239,68,68,0.04))', border: '1px solid rgba(245,138,37,0.15)', borderRadius: 20, position: 'relative', overflow: 'hidden' }}>
+      <h2 className="tp-section-title" style={{ marginBottom: 20 }}>
+        <span style={{ color: '#F58A25' }}>{'\uD83C\uDFB2'}</span> Sorteio de Confrontos Ao Vivo
+        <span style={{ marginLeft: 10, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(239,68,68,0.1)', padding: '2px 10px', borderRadius: 12, fontSize: '0.7rem', fontWeight: 700, color: '#f87171' }}>
+          <span className="tp-live-dot" style={{ width: 6, height: 6 }} /> AO VIVO
+        </span>
+      </h2>
+
+      {/* Match reveal animation overlay */}
+      {animatingIdx !== null && drawData.matches[animatingIdx] && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.85)', animation: 'fadeIn 0.3s ease-out',
+        }}>
+          <div style={{ textAlign: 'center', animation: 'pointPop 0.8s ease-out' }}>
+            <div style={{ fontSize: '0.85rem', color: '#F58A25', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 16 }}>
+              Confronto {animatingIdx + 1}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#3B82F6', padding: '12px 24px', background: 'rgba(59,130,246,0.1)', borderRadius: 12, border: '1px solid rgba(59,130,246,0.3)' }}>
+                {drawData.matches[animatingIdx].team1_name}
+              </div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)' }}>VS</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#EF4444', padding: '12px 24px', background: 'rgba(239,68,68,0.1)', borderRadius: 12, border: '1px solid rgba(239,68,68,0.3)' }}>
+                {drawData.matches[animatingIdx].team2_name}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fireworks when all done */}
+      {showFireworks && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.9)', animation: 'fadeIn 0.5s ease-out',
+        }}>
+          <div style={{ fontSize: '4rem', marginBottom: 16, animation: 'pointPop 0.8s ease-out' }}>{'\uD83D\uDD25\uD83C\uDFC6\uD83D\uDD25'}</div>
+          <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 30px rgba(245,138,37,0.5)' }}>
+            Confrontos Definidos!
+          </div>
+          <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 12 }}>A chave sera exibida em instantes...</div>
+          {/* Auto dismiss after 5s */}
+          {setTimeout(() => setShowFireworks(false), 5000) && null}
+        </div>
+      )}
+
+      {/* Match cards grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+        {drawData.matches.map((m, idx) => (
+          <div key={idx} style={{
+            padding: '14px 18px', borderRadius: 12,
+            background: m.revealed ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.02)',
+            border: `1px solid ${m.revealed ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.06)'}`,
+            transition: 'all 0.5s ease',
+            transform: animatingIdx === idx ? 'scale(1.05)' : 'scale(1)',
+          }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: m.revealed ? '#10b981' : '#64748b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+              Confronto {idx + 1} {!m.revealed && '\u2014 Aguardando...'}
+            </div>
+            {m.revealed ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontWeight: 700, color: '#60A5FA', fontSize: '0.9rem' }}>{m.team1_name}</span>
+                <span style={{ color: 'rgba(255,255,255,0.2)', fontWeight: 600, fontSize: '0.75rem' }}>VS</span>
+                <span style={{ fontWeight: 700, color: '#F87171', fontSize: '0.9rem' }}>{m.team2_name}</span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ color: '#334155', fontSize: '0.9rem' }}>???</span>
+                <span style={{ color: 'rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '0.75rem' }}>VS</span>
+                <span style={{ color: '#334155', fontSize: '0.9rem' }}>???</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {drawData.bye_team && (
+        <div style={{ marginTop: 12, padding: '8px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', fontSize: '0.8rem', color: '#64748b' }}>
+          {drawData.bye_team.name} — BYE (passa automaticamente)
         </div>
       )}
     </div>
