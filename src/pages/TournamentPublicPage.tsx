@@ -1008,12 +1008,37 @@ function DynamicPairingSection({
     if (hasPairs) { setPhase('done'); setRevealCount(999); }
   }, []);
 
+  // Scheduled reveal: countdown + force refresh when time arrives
+  const [countdown, setCountdown] = useState<number | null>(null);
+  useEffect(() => {
+    if (!pairsRevealAt || hasPairs) { setCountdown(null); return; }
+    const target = new Date(pairsRevealAt).getTime();
+    const tick = () => {
+      const rem = Math.ceil((target - Date.now()) / 1000);
+      if (rem <= 0) {
+        setCountdown(null);
+        // Time reached — force shuffle animation (pairs will appear on next poll)
+        setPhase('shuffling');
+        setRevealCount(0);
+      } else {
+        setCountdown(rem);
+      }
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [pairsRevealAt, hasPairs]);
+
   // Detect NEW pairs appearing (0 → N): start shuffle, then reveal
   useEffect(() => {
     if (generatedPairs.length > 0 && prevPairsCount.current === 0) {
-      // New pairs just appeared! Animate: shuffle 10s → reveal one by one
-      setPhase('shuffling');
-      setRevealCount(0);
+      // If already shuffling (from scheduled countdown), go to reveal after 5s
+      // If not shuffling yet, start shuffle 10s then reveal
+      const shuffleDuration = phase === 'shuffling' ? 5000 : 10000;
+      if (phase !== 'shuffling') {
+        setPhase('shuffling');
+        setRevealCount(0);
+      }
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         setPhase('revealing');
@@ -1119,7 +1144,18 @@ function DynamicPairingSection({
           </div>
           <div className="tp-pairing-vs">
             <div className="tp-pairing-vs-icon"><ShuffleIcon size={32} /></div>
-            <div className="tp-pairing-vs-text">Aguardando sorteio...</div>
+            {countdown !== null && countdown > 0 ? (
+              <div className="tp-pairing-countdown">
+                <div className="tp-pairing-countdown-label">Sorteio em</div>
+                <div className="tp-pairing-countdown-time">
+                  {Math.floor(countdown / 3600).toString().padStart(2, '0')}:
+                  {Math.floor((countdown % 3600) / 60).toString().padStart(2, '0')}:
+                  {(countdown % 60).toString().padStart(2, '0')}
+                </div>
+              </div>
+            ) : (
+              <div className="tp-pairing-vs-text">Aguardando sorteio...</div>
+            )}
           </div>
           <div className="tp-pairing-side tp-pairing-right">
             <div className="tp-pairing-side-label"><span className="tp-pairing-side-dot right" /> Direito ({rightPlayers.length})</div>
