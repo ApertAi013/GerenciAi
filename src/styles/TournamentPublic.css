@@ -1876,8 +1876,18 @@
 }
 
 @keyframes tp-fire-flicker {
-  0% { opacity: 0.6; transform: scaleY(0.95); }
-  100% { opacity: 1; transform: scaleY(1.05); }
+  0% { opacity: 0.6; transform: scaleY(0.95) scaleX(1.02); }
+  33% { opacity: 0.9; transform: scaleY(1.08) scaleX(0.98); }
+  66% { opacity: 0.75; transform: scaleY(1.02) scaleX(1.01); }
+  100% { opacity: 1; transform: scaleY(1.05) scaleX(0.99); }
+}
+
+@keyframes tp-fire-wave {
+  0% { transform: translateX(-5%) scaleY(1); }
+  25% { transform: translateX(2%) scaleY(1.1); }
+  50% { transform: translateX(-3%) scaleY(0.95); }
+  75% { transform: translateX(4%) scaleY(1.05); }
+  100% { transform: translateX(-5%) scaleY(1); }
 }
 
 @keyframes fadeIn {

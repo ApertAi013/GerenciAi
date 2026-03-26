@@ -445,7 +445,18 @@ export default function Torneios() {
         setLiveDraw(res.data?.draw_data || null);
         setLiveDrawRevealing(false);
         if (res.data?.all_revealed) {
-          toast.success('Todos os confrontos sorteados!');
+          toast.success('Todos os confrontos sorteados! Chave gerada.');
+          // Refresh tournament data (bracket was auto-generated)
+          setTimeout(async () => {
+            const tRes = await tournamentService.getTournament(selectedTournament.id);
+            setSelectedTournament(tRes.data);
+            if (tRes.data.bracket_generated) {
+              const bRes = await tournamentService.getBracket(selectedTournament.id);
+              setBracketData(bRes.data);
+            }
+            setLiveDraw(null);
+            fetchAll();
+          }, 2000);
         }
       }, 3000);
     } catch (err: any) {
@@ -1700,12 +1711,12 @@ export default function Torneios() {
                 Escolha como sortear os confrontos:
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <button onClick={handleGenerateBracket} style={{ padding: '16px', borderRadius: 12, border: '2px solid var(--border-color, #e2e8f0)', background: 'var(--bg-secondary, #f8fafc)', cursor: 'pointer', textAlign: 'left' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Sorteio Instantaneo</div>
+                <button onClick={handleGenerateBracket} style={{ padding: '16px', borderRadius: 12, border: '2px solid var(--border-color, #334155)', background: 'var(--bg-secondary, #1a1a2e)', cursor: 'pointer', textAlign: 'left', color: 'inherit' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem' }}><FontAwesomeIcon icon={faTrophy} style={{ marginRight: 8 }} />Sorteio Instantaneo</div>
                   <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: 4 }}>Gera toda a chave de uma vez</div>
                 </button>
-                <button onClick={handleStartLiveDraw} style={{ padding: '16px', borderRadius: 12, border: '2px solid #F58A25', background: 'rgba(245,138,37,0.06)', cursor: 'pointer', textAlign: 'left' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#F58A25' }}>Sorteio Ao Vivo</div>
+                <button onClick={handleStartLiveDraw} style={{ padding: '16px', borderRadius: 12, border: '2px solid #F58A25', background: 'rgba(245,138,37,0.08)', cursor: 'pointer', textAlign: 'left', color: 'inherit' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#F58A25' }}><FontAwesomeIcon icon={faPlay} style={{ marginRight: 8 }} />Sorteio Ao Vivo</div>
                   <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: 4 }}>Sorteie um confronto por vez com animacao na pagina publica</div>
                 </button>
               </div>
@@ -1756,10 +1767,11 @@ export default function Torneios() {
               </button>
             </div>
             {liveDraw.matches?.every((m: any) => m.revealed) && (
-              <div className="mm-footer">
-                <button className="mm-btn mm-btn-primary" onClick={handleFinishLiveDraw}>
-                  <FontAwesomeIcon icon={faTrophy} /> Finalizar e Gerar Chave
-                </button>
+              <div className="mm-footer" style={{ justifyContent: 'center' }}>
+                <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 600 }}>
+                  <FontAwesomeIcon icon={faCheck} style={{ marginRight: 6 }} />
+                  Todos os confrontos sorteados! Chave gerada automaticamente.
+                </span>
               </div>
             )}
           </div>
