@@ -196,6 +196,8 @@ export default function TournamentPublicPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'bracket' | 'teams' | 'matches'>('overview');
   const [scoreOverlay, setScoreOverlay] = useState<{show: boolean, team: string, text: string, color: string} | null>(null);
   const prevScoresRef = useRef<Map<number, {t1: number, t2: number}>>(new Map());
+  const [liveDrawFireworks, setLiveDrawFireworks] = useState(false);
+  const prevLiveDrawRef = useRef(false);
 
   // ─── Fetch full tournament data ───
   const fetchData = useCallback(async () => {
@@ -424,6 +426,38 @@ export default function TournamentPublicPage() {
             <p className="tp-description">{tournament.description}</p>
           )}
         </header>
+
+        {/* Detect live draw finished → show fireworks overlay */}
+        {(() => {
+          const isLiveDraw = tournament.live_draw_mode && tournament.live_draw_data;
+          if (prevLiveDrawRef.current && !isLiveDraw) {
+            // Live draw just ended! Show fireworks
+            if (!liveDrawFireworks) {
+              setLiveDrawFireworks(true);
+              setTimeout(() => setLiveDrawFireworks(false), 7000);
+            }
+          }
+          prevLiveDrawRef.current = !!isLiveDraw;
+          return null;
+        })()}
+
+        {/* Fireworks overlay when live draw completes */}
+        {liveDrawFireworks && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', filter: 'blur(25px)' }} />
+            <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '35%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.55) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', filter: 'blur(18px)' }} />
+            <div style={{ position: 'absolute', bottom: 0, left: '5%', right: '5%', height: '22%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,220,80,0.45) 0%, rgba(245,138,37,0.15) 40%, transparent 70%)', animation: 'tp-fire-wave 2.5s ease-in-out infinite, tp-fire-flicker 1s ease-in-out infinite alternate-reverse', filter: 'blur(12px)' }} />
+            <div style={{ zIndex: 1, textAlign: 'center' }}>
+              <div style={{ marginBottom: 16, animation: 'pointPop 0.8s ease-out', filter: 'drop-shadow(0 0 20px rgba(245,138,37,0.5))' }}>
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="#F58A25" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 40px rgba(245,138,37,0.6)', animation: 'pointPop 1s ease-out' }}>
+                Confrontos Definidos!
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 16 }}>A chave sera exibida em instantes...</div>
+            </div>
+          </div>
+        )}
 
         {/* Live Draw Section — below tags, above pairing */}
         {tournament.live_draw_mode && tournament.live_draw_data && (
@@ -1303,10 +1337,10 @@ function LiveDrawSection({ drawData, teams }: {
       {/* ── REVEAL WITH FIRE ── */}
       {phase === 'reveal' && revealedMatch && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
-          {/* Fire at bottom — multiple layers for wave effect */}
-          <div style={{ position: 'absolute', bottom: 0, left: '-5%', right: '-5%', height: '35%', background: 'linear-gradient(to top, rgba(245,138,37,0.35), rgba(239,68,68,0.15), transparent)', animation: 'tp-fire-wave 2s ease-in-out infinite, tp-fire-flicker 0.4s ease-in-out infinite alternate', pointerEvents: 'none', borderRadius: '50% 50% 0 0' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '-3%', right: '-3%', height: '25%', background: 'linear-gradient(to top, rgba(239,68,68,0.45), rgba(245,138,37,0.2), transparent)', animation: 'tp-fire-wave 1.5s ease-in-out infinite reverse, tp-fire-flicker 0.3s ease-in-out infinite alternate-reverse', pointerEvents: 'none', borderRadius: '40% 40% 0 0' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '5%', right: '5%', height: '18%', background: 'linear-gradient(to top, rgba(255,200,50,0.3), transparent)', animation: 'tp-fire-wave 1.8s ease-in-out infinite, tp-fire-flicker 0.25s ease-in-out infinite alternate', pointerEvents: 'none', borderRadius: '50% 50% 0 0' }} />
+          {/* Fire — smooth blurred layers */}
+          <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '40%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.4) 0%, rgba(239,68,68,0.15) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', pointerEvents: 'none', filter: 'blur(20px)' }} />
+          <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '30%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.5) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', pointerEvents: 'none', filter: 'blur(15px)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: '5%', right: '5%', height: '20%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,220,80,0.4) 0%, rgba(245,138,37,0.15) 40%, transparent 70%)', animation: 'tp-fire-wave 2.5s ease-in-out infinite, tp-fire-flicker 1s ease-in-out infinite alternate-reverse', pointerEvents: 'none', filter: 'blur(10px)' }} />
 
           <div style={{ fontSize: '0.8rem', color: '#F58A25', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 4, marginBottom: 20, animation: 'pointPop 0.6s ease-out' }}>
             Confronto {revealIdx + 1}
@@ -1330,9 +1364,9 @@ function LiveDrawSection({ drawData, teams }: {
       {/* ── ALL DONE FIREWORKS ── */}
       {showFireworks && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
-          <div style={{ position: 'absolute', bottom: 0, left: '-5%', right: '-5%', height: '45%', background: 'linear-gradient(to top, rgba(245,138,37,0.5), rgba(239,68,68,0.25), transparent)', animation: 'tp-fire-wave 2s ease-in-out infinite, tp-fire-flicker 0.4s ease-in-out infinite alternate', borderRadius: '50% 50% 0 0', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '-3%', right: '-3%', height: '30%', background: 'linear-gradient(to top, rgba(239,68,68,0.5), rgba(255,200,50,0.2), transparent)', animation: 'tp-fire-wave 1.5s ease-in-out infinite reverse, tp-fire-flicker 0.3s ease-in-out infinite alternate-reverse', borderRadius: '40% 40% 0 0', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: '10%', right: '10%', height: '20%', background: 'linear-gradient(to top, rgba(255,220,80,0.4), transparent)', animation: 'tp-fire-wave 1.2s ease-in-out infinite, tp-fire-flicker 0.2s ease-in-out infinite alternate', borderRadius: '50% 50% 0 0', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', pointerEvents: 'none', filter: 'blur(25px)' }} />
+          <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '35%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.55) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', pointerEvents: 'none', filter: 'blur(18px)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: '5%', right: '5%', height: '22%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,220,80,0.45) 0%, rgba(245,138,37,0.15) 40%, transparent 70%)', animation: 'tp-fire-wave 2.5s ease-in-out infinite, tp-fire-flicker 1s ease-in-out infinite alternate-reverse', pointerEvents: 'none', filter: 'blur(12px)' }} />
           <div style={{ fontSize: '4rem', marginBottom: 16, animation: 'pointPop 0.8s ease-out', filter: 'drop-shadow(0 0 20px rgba(245,138,37,0.5))' }}>
             <svg width="80" height="80" viewBox="0 0 24 24" fill="#F58A25" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
           </div>
