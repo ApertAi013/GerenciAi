@@ -290,9 +290,12 @@ export default function TournamentPublicPage() {
     if (!data || !token) return;
     if (data.tournament.status === 'finished' || data.tournament.status === 'cancelled') return;
 
+    // Poll faster during live draw (2s) vs normal (10s)
+    const isLiveDraw = data.tournament.live_draw_mode;
+    const pollMs = isLiveDraw ? 2000 : 10000;
     const fullInterval = setInterval(() => {
       fetchData();
-    }, 10000);
+    }, pollMs);
 
     return () => clearInterval(fullInterval);
   }, [data, token, fetchData]);
@@ -342,6 +345,11 @@ export default function TournamentPublicPage() {
   return (
     <div className="tp-page">
       <div className="tp-container">
+        {/* Live Draw Section — TOP OF PAGE */}
+        {tournament.live_draw_mode && tournament.live_draw_data && (
+          <LiveDrawSection drawData={tournament.live_draw_data} />
+        )}
+
         {/* Branding */}
         <div className="tp-branding">
           <a className="tp-brand-logo" href="https://arenai.com.br" target="_blank" rel="noopener noreferrer">
@@ -434,11 +442,6 @@ export default function TournamentPublicPage() {
             lastBracketDrawAt={tournament.last_bracket_draw_at || null}
             pairsRevealAt={tournament.pairs_reveal_at || null}
           />
-        )}
-
-        {/* Live Draw Section */}
-        {tournament.live_draw_mode && tournament.live_draw_data && (
-          <LiveDrawSection drawData={tournament.live_draw_data} />
         )}
 
         {/* Live matches - always at top when they exist */}
@@ -1221,24 +1224,25 @@ function LiveDrawSection({ drawData }: {
     finished: boolean;
   };
 }) {
-  const [prevRevealed, setPrevRevealed] = useState(drawData.revealed_count);
+  const prevRevealedRef = useRef(drawData.revealed_count);
   const [animatingIdx, setAnimatingIdx] = useState<number | null>(null);
   const [showFireworks, setShowFireworks] = useState(false);
 
-  // Detect new reveal via polling
+  // Detect new reveal via polling (use ref to avoid stale closures)
   useEffect(() => {
-    if (drawData.revealed_count > prevRevealed) {
+    const prev = prevRevealedRef.current;
+    if (drawData.revealed_count > prev) {
       const newIdx = drawData.revealed_count - 1;
       setAnimatingIdx(newIdx);
       setTimeout(() => setAnimatingIdx(null), 4000);
 
-      // If all revealed, show fireworks
       if (drawData.finished) {
         setTimeout(() => setShowFireworks(true), 4500);
+        setTimeout(() => setShowFireworks(false), 9500);
       }
     }
-    setPrevRevealed(drawData.revealed_count);
-  }, [drawData.revealed_count]);
+    prevRevealedRef.current = drawData.revealed_count;
+  }, [drawData.revealed_count, drawData.finished]);
 
   return (
     <div style={{ margin: '32px 0', padding: '28px', background: 'linear-gradient(135deg, rgba(245,138,37,0.06), rgba(239,68,68,0.04))', border: '1px solid rgba(245,138,37,0.15)', borderRadius: 20, position: 'relative', overflow: 'hidden' }}>
@@ -1283,8 +1287,6 @@ function LiveDrawSection({ drawData }: {
             Confrontos Definidos!
           </div>
           <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 12 }}>A chave sera exibida em instantes...</div>
-          {/* Auto dismiss after 5s */}
-          {setTimeout(() => setShowFireworks(false), 5000) && null}
         </div>
       )}
 
