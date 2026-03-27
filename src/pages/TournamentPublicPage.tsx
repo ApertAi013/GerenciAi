@@ -296,7 +296,8 @@ export default function TournamentPublicPage() {
 
     // Poll faster during live draw (2s) vs normal (10s)
     const isLiveDraw = data.tournament.live_draw_mode;
-    const pollMs = isLiveDraw ? 2000 : 10000;
+    const hasStream = data.tournament.stream_mode === 'apertai';
+    const pollMs = isLiveDraw ? 2000 : hasStream ? 5000 : 10000;
     const fullInterval = setInterval(() => {
       fetchData();
     }, pollMs);
@@ -544,7 +545,7 @@ export default function TournamentPublicPage() {
                 </div>
                 {/* Stream replaces animation when Apertai is live */}
                 {data.stream && data.stream.status === 'live' && data.stream.urls ? (
-                  <HlsPlayer urls={data.stream.urls} rotate90 />
+                  <HlsPlayer urls={data.stream.urls} />
                 ) : (
                   <LiveMatchAnimation
                     category={category}
@@ -1029,7 +1030,7 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
 
 // ─── Dynamic Pairing Section (animated duo drawing) ───
 // ─── HLS Player for Apertai Stream ───
-function HlsPlayer({ urls, rotate90 }: { urls: Record<string, string>; rotate90?: boolean }) {
+function HlsPlayer({ urls }: { urls: Record<string, string> }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const cams = Object.entries(urls);
@@ -1064,36 +1065,39 @@ function HlsPlayer({ urls, rotate90 }: { urls: Record<string, string>; rotate90?
 
   return (
     <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
-      {rotate90 && (
-        <style>{`.hls-video-rotated { transform: rotate(-90deg) scale(1.78); transform-origin: center center; }`}</style>
-      )}
       <video
         ref={videoRef}
-        className={rotate90 ? 'hls-video-rotated' : ''}
-        style={{ width: '100%', aspectRatio: '16/9', background: '#000', display: 'block' }}
+        style={{ width: '100%', maxHeight: '70vh', background: '#000', display: 'block' }}
         controls
         muted
         autoPlay
         playsInline
       />
-      {cams.length > 1 && (
-        <div style={{ display: 'flex', gap: 8, padding: '10px 16px', background: 'rgba(0,0,0,0.8)' }}>
-          {cams.map(([camId, _url]) => (
-            <button
-              key={camId}
-              onClick={() => setActiveCam(camId)}
-              style={{
-                padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                background: activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)',
-                color: activeCam === camId ? '#fff' : '#94a3b8',
-                fontWeight: 600, fontSize: '0.8rem',
-              }}
-            >
-              {camId.replace('cam', 'Camera ')}
-            </button>
-          ))}
-        </div>
-      )}
+      <div style={{ display: 'flex', gap: 8, padding: '10px 16px', background: 'rgba(0,0,0,0.8)', flexWrap: 'wrap' }}>
+        {/* Go Live button */}
+        <button
+          onClick={() => { if (videoRef.current && hlsRef.current) { hlsRef.current.liveSyncPosition && (videoRef.current.currentTime = hlsRef.current.liveSyncPosition); } }}
+          style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 4 }}
+        >
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} /> AO VIVO
+        </button>
+
+        {/* Camera switch */}
+        {cams.length > 1 && cams.map(([camId, _url]) => (
+          <button
+            key={camId}
+            onClick={() => setActiveCam(camId)}
+            style={{
+              padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              background: activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)',
+              color: activeCam === camId ? '#fff' : '#94a3b8',
+              fontWeight: 600, fontSize: '0.8rem',
+            }}
+          >
+            {camId.replace('cam', 'Camera ')}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

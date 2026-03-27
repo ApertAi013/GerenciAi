@@ -331,6 +331,94 @@ function CreateModal({ editingTournament, onClose, onSave }: {
   );
 }
 
+// ─── Sponsors Tab Component ───
+function SponsorsTab({ tournamentId }: { tournamentId: number }) {
+  const [sponsors, setSponsors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState('');
+  const [isMaster, setIsMaster] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const load = async () => {
+    try {
+      const res = await tournamentService.getSponsors(tournamentId);
+      setSponsors(res.data || []);
+    } catch {} finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, [tournamentId]);
+
+  const handleAdd = async () => {
+    if (!file || !name.trim()) { toast.error('Nome e logo obrigatorios'); return; }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('name', name.trim());
+      fd.append('logo', file);
+      fd.append('is_master', String(isMaster));
+      await tournamentService.addSponsor(tournamentId, fd);
+      toast.success('Patrocinador adicionado!');
+      setName(''); setFile(null); setIsMaster(false);
+      if (fileRef.current) fileRef.current.value = '';
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao adicionar');
+    } finally { setUploading(false); }
+  };
+
+  const handleRemove = async (id: number) => {
+    if (!confirm('Remover patrocinador?')) return;
+    try {
+      await tournamentService.removeSponsor(tournamentId, id);
+      toast.success('Removido');
+      load();
+    } catch (err: any) { toast.error('Erro ao remover'); }
+  };
+
+  return (
+    <div>
+      {/* Add form */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 16, flexWrap: 'wrap' }}>
+        <div className="mm-field" style={{ flex: 1, minWidth: 150 }}>
+          <label>Nome</label>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Nike" />
+        </div>
+        <div className="mm-field" style={{ flex: 1, minWidth: 150 }}>
+          <label>Logo (PNG/JPG)</label>
+          <input ref={fileRef} type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} />
+        </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+          <input type="checkbox" checked={isMaster} onChange={e => setIsMaster(e.target.checked)} />
+          <span style={{ color: '#F58A25', fontWeight: 600 }}>Master</span>
+        </label>
+        <button onClick={handleAdd} disabled={uploading} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}>
+          {uploading ? 'Enviando...' : '+ Adicionar'}
+        </button>
+      </div>
+
+      {/* List */}
+      {loading ? <div>Carregando...</div> : sponsors.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8', fontSize: '0.85rem' }}>
+          Nenhum patrocinador adicionado
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+          {sponsors.map((s: any) => (
+            <div key={s.id} style={{ padding: 12, borderRadius: 12, border: `1px solid ${s.is_master ? 'rgba(245,138,37,0.3)' : 'var(--border-color, #e2e8f0)'}`, background: s.is_master ? 'rgba(245,138,37,0.04)' : 'var(--bg-secondary, #f8fafc)', textAlign: 'center', position: 'relative' }}>
+              {s.is_master && <span style={{ position: 'absolute', top: 6, right: 8, fontSize: '0.65rem', fontWeight: 700, color: '#F58A25', textTransform: 'uppercase' }}>Master</span>}
+              <img src={s.logo_url} alt={s.name} style={{ width: '100%', height: 80, objectFit: 'contain', marginBottom: 8 }} />
+              <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{s.name}</div>
+              <button onClick={() => handleRemove(s.id)} style={{ marginTop: 6, fontSize: '0.75rem', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer' }}>Remover</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Stream Controls Component ───
 function StreamControls({ tournamentId }: { tournamentId: number }) {
   const [session, setSession] = useState<any>(null);
@@ -449,7 +537,7 @@ export default function Torneios() {
 
   // Detail modal
   const [selectedTournament, setSelectedTournament] = useState<(Tournament & { teams?: TournamentTeam[] }) | null>(null);
-  const [detailTab, setDetailTab] = useState<'info' | 'teams' | 'groups' | 'bracket' | 'matches'>('info');
+  const [detailTab, setDetailTab] = useState<'info' | 'teams' | 'groups' | 'bracket' | 'matches' | 'sponsors'>('info');
   const [bracketData, setBracketData] = useState<BracketData | null>(null);
   const [bracketLoading, setBracketLoading] = useState(false);
 
@@ -1245,6 +1333,9 @@ export default function Torneios() {
                 <button className={`torneio-sub-tab ${detailTab === 'matches' ? 'active' : ''}`} onClick={() => { setDetailTab('matches'); if (!bracketData && selectedTournament.bracket_generated) loadBracket(selectedTournament.id); }}>
                   Jogos
                 </button>
+                <button className={`torneio-sub-tab ${detailTab === 'sponsors' ? 'active' : ''}`} onClick={() => setDetailTab('sponsors')}>
+                  Patrocinadores
+                </button>
               </div>
 
               {/* Info tab */}
@@ -1819,6 +1910,11 @@ export default function Torneios() {
                     </div>
                   )}
                 </div>
+              )}
+            </div>
+              {/* Sponsors tab */}
+              {detailTab === 'sponsors' && selectedTournament && (
+                <SponsorsTab tournamentId={selectedTournament.id} />
               )}
             </div>
           </div>

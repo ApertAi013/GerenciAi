@@ -324,4 +324,22 @@ export const tournamentService = {
     const response = await api.post('/api/stream/generate-pi-token');
     return response.data;
   },
+
+  // ─── Sponsors ───
+  async getSponsors(tournamentId: number): Promise<any> {
+    const response = await api.get(`/api/stream/sponsors/${tournamentId}`);
+    return response.data;
+  },
+
+  async addSponsor(tournamentId: number, formData: FormData): Promise<any> {
+    const response = await api.post(`/api/stream/sponsors/${tournamentId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  async removeSponsor(tournamentId: number, sponsorId: number): Promise<any> {
+    const response = await api.delete(`/api/stream/sponsors/${tournamentId}/${sponsorId}`);
+    return response.data;
+  },
 };
