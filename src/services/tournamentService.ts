@@ -215,8 +215,8 @@ export const tournamentService = {
   },
 
   // Match control
-  async startMatch(tournamentId: number, matchId: number): Promise<{ status: string; data: TournamentMatch }> {
-    const response = await api.put(`/api/tournaments/${tournamentId}/matches/${matchId}/start`);
+  async startMatch(tournamentId: number, matchId: number, data?: { stream_camera?: string }): Promise<{ status: string; data: TournamentMatch }> {
+    const response = await api.put(`/api/tournaments/${tournamentId}/matches/${matchId}/start`, data || {});
     return response.data;
   },
 

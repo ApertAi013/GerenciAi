@@ -37,6 +37,7 @@ interface TournamentMatch {
   is_bye: boolean;
   status: 'pending' | 'live' | 'completed';
   court_name?: string;
+  stream_camera?: string;
   scheduled_time?: string;
   group_id?: number;
   group_name?: string;
@@ -200,6 +201,7 @@ export default function TournamentPublicPage() {
   const prevScoresRef = useRef<Map<number, {t1: number, t2: number}>>(new Map());
   const [liveDrawFireworks, setLiveDrawFireworks] = useState(false);
   const prevLiveDrawRef = useRef(false);
+  const [activeCam, setActiveCam] = useState('cam1');
 
   // ─── Fetch full tournament data ───
   const fetchData = useCallback(async () => {
@@ -487,7 +489,20 @@ export default function TournamentPublicPage() {
             <h2 className="tp-section-title">
               <span className="tp-live-dot" /> Ao Vivo Agora
             </h2>
-            {live_matches.map(match => (
+            {/* Stream player (single instance, above match cards) */}
+            {data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls && (
+              <div style={{ marginBottom: 16 }}>
+                <HlsPlayer urls={data.stream.urls} onCameraChange={setActiveCam} />
+                {data.sponsors && data.sponsors.length > 0 && (
+                  <SponsorBar sponsors={data.sponsors} />
+                )}
+              </div>
+            )}
+            {/* Match cards - filtered by active camera when stream is active */}
+            {(data.stream && data.stream.urls
+              ? live_matches.filter(m => !m.stream_camera || m.stream_camera === activeCam)
+              : live_matches
+            ).map(match => (
               <div key={match.id} className="tp-live-card" style={{ marginBottom: 16 }}>
                 <div className="tp-live-card-header">
                   <span className="tp-live-card-badge">
@@ -497,6 +512,7 @@ export default function TournamentPublicPage() {
                   <span className="tp-live-card-info">
                     #{match.match_number}
                     {match.court_name ? ` - ${match.court_name}` : ''}
+                    {match.stream_camera ? ` - ${match.stream_camera.replace('cam', 'Cam ')}` : ''}
                     {' - '}
                     {BRACKET_TYPE_LABELS[match.bracket_type] || match.bracket_type}
                     {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && ` R${match.round_number}`}
@@ -521,7 +537,6 @@ export default function TournamentPublicPage() {
                     <div style={{ width: 40, height: 3, background: '#EF4444', borderRadius: 2 }} />
                   </div>
                 </div>
-                {/* Match details */}
                 <div className="tp-live-match-details">
                   <span className="tp-live-detail-item">
                     Jogo #{match.match_number}
@@ -543,15 +558,8 @@ export default function TournamentPublicPage() {
                     </>
                   )}
                 </div>
-                {/* Stream replaces animation when Apertai is live or sponsor */}
-                {data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls ? (
-                  <>
-                    <HlsPlayer urls={data.stream.urls} />
-                    {data.sponsors && data.sponsors.length > 0 && (
-                      <SponsorBar sponsors={data.sponsors} />
-                    )}
-                  </>
-                ) : (
+                {/* Animation only when no stream */}
+                {!(data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls) && (
                   <LiveMatchAnimation
                     category={category}
                     team1Name={match.team1_name || 'Time A'}
@@ -1035,7 +1043,7 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
 
 // ─── Dynamic Pairing Section (animated duo drawing) ───
 // ─── HLS Player for Apertai Stream ───
-function HlsPlayer({ urls }: { urls: Record<string, string> }) {
+function HlsPlayer({ urls, onCameraChange }: { urls: Record<string, string>; onCameraChange?: (cam: string) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
@@ -1137,7 +1145,7 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
               {'\u2716'}
             </button>
             {cams.length > 1 && cams.map(([camId]) => (
-              <button key={camId} onClick={(e) => { e.stopPropagation(); setActiveCam(camId); }} style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.25)')}>
+              <button key={camId} onClick={(e) => { e.stopPropagation(); setActiveCam(camId); onCameraChange?.(camId); }} style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.25)')}>
                 {camId.replace('cam', 'Cam ')}
               </button>
             ))}
@@ -1157,7 +1165,7 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
             {'\u26F6'}
           </button>
           {cams.length > 1 && cams.map(([camId]) => (
-            <button key={camId} onClick={(e) => { e.stopPropagation(); setActiveCam(camId); }} style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)')}>
+            <button key={camId} onClick={(e) => { e.stopPropagation(); setActiveCam(camId); onCameraChange?.(camId); }} style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)')}>
               {camId.replace('cam', 'Cam ')}
             </button>
           ))}
@@ -1169,56 +1177,54 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
 
 // ─── Sponsor Bar (master fixed on top, others rotating below) ───
 function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; description?: string; logo_url: string; is_master: boolean }[] }) {
-  const master = sponsors.find(s => s.is_master);
-  const others = sponsors.filter(s => !s.is_master);
+  const all = [...sponsors].sort((a, b) => (b.is_master ? 1 : 0) - (a.is_master ? 1 : 0));
   const [currentIdx, setCurrentIdx] = useState(0);
 
   useEffect(() => {
-    if (others.length <= 1) return;
-    const timer = setTimeout(() => setCurrentIdx(i => (i + 1) % others.length), 3000);
+    if (all.length <= 1) return;
+    const dur = all[currentIdx]?.is_master ? 5000 : 3000;
+    const timer = setTimeout(() => setCurrentIdx(i => (i + 1) % all.length), dur);
     return () => clearTimeout(timer);
-  }, [currentIdx, others.length]);
+  }, [currentIdx, all.length]);
 
-  if (!sponsors.length) return null;
-  const currentOther = others[currentIdx];
-
-  const renderSponsor = (s: typeof sponsors[0], size: 'lg' | 'sm') => (
-    <div key={s.id} style={{
-      display: 'flex', alignItems: 'center', gap: 14, padding: size === 'lg' ? '12px 16px' : '10px 16px',
-      background: size === 'lg' ? 'rgba(245,138,37,0.08)' : 'rgba(15,23,42,0.85)',
-      borderRadius: 14, border: size === 'lg' ? '1px solid rgba(245,138,37,0.2)' : 'none',
-      animation: size === 'sm' ? 'tpFadeIn 0.4s ease' : undefined,
-    }}>
-      <img src={s.logo_url} alt={s.name} style={{ height: size === 'lg' ? 56 : 44, maxWidth: size === 'lg' ? 140 : 110, objectFit: 'contain', flexShrink: 0 }} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
-          {s.is_master ? 'Patrocinador Master' : 'Patrocinador'}
-        </div>
-        <div style={{ fontSize: size === 'lg' ? '0.95rem' : '0.85rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {s.name}
-        </div>
-        {s.description && (
-          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {s.description}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  if (!all.length) return null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-      {master && renderSponsor(master, 'lg')}
-      {currentOther && (
-        <div style={{ position: 'relative' }}>
-          {renderSponsor(currentOther, 'sm')}
-          {others.length > 1 && (
-            <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 4 }}>
-              {others.map((s, i) => (
-                <div key={s.id} style={{ width: 5, height: 5, borderRadius: '50%', background: i === currentIdx ? '#F58A25' : 'rgba(255,255,255,0.2)', transition: 'background 0.3s' }} />
-              ))}
+    <div style={{ overflow: 'hidden', borderRadius: 14, marginTop: 8, background: 'rgba(15,23,42,0.85)', position: 'relative' }}>
+      <div style={{
+        display: 'flex', transition: 'transform 0.5s ease',
+        transform: `translateX(-${currentIdx * 100}%)`,
+      }}>
+        {all.map(s => (
+          <div key={s.id} style={{
+            minWidth: '100%', display: 'flex', alignItems: 'center', gap: 14,
+            padding: s.is_master ? '14px 16px' : '10px 16px',
+            background: s.is_master ? 'rgba(245,138,37,0.08)' : 'transparent',
+            borderBottom: s.is_master ? '2px solid rgba(245,138,37,0.3)' : 'none',
+            boxSizing: 'border-box',
+          }}>
+            <img src={s.logo_url} alt={s.name} style={{ height: s.is_master ? 52 : 40, maxWidth: s.is_master ? 130 : 100, objectFit: 'contain', flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
+                {s.is_master ? 'Patrocinador Master' : 'Patrocinador'}
+              </div>
+              <div style={{ fontSize: s.is_master ? '0.95rem' : '0.85rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {s.name}
+              </div>
+              {s.description && (
+                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {s.description}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+        ))}
+      </div>
+      {all.length > 1 && (
+        <div style={{ position: 'absolute', bottom: 4, right: 12, display: 'flex', gap: 4 }}>
+          {all.map((s, i) => (
+            <div key={s.id} style={{ width: i === currentIdx ? 16 : 5, height: 5, borderRadius: 3, background: i === currentIdx ? '#F58A25' : 'rgba(255,255,255,0.2)', transition: 'all 0.3s' }} />
+          ))}
         </div>
       )}
     </div>
