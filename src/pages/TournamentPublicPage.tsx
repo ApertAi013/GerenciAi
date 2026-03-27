@@ -1065,23 +1065,40 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
 
   return (
     <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
-      <div style={{ aspectRatio: '16/9', overflow: 'hidden', background: '#000' }}>
-      <video
-        ref={videoRef}
-        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'rotate(270deg)' }}
-        controls
-        muted
-        autoPlay
-        playsInline
-      />
+      <div style={{ aspectRatio: '16/9', overflow: 'hidden', background: 'transparent', position: 'relative', cursor: 'pointer' }}
+        onClick={() => { if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }}>
+        <video
+          ref={videoRef}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'rotate(270deg)' }}
+          muted
+          autoPlay
+          playsInline
+        />
       </div>
-      <div style={{ display: 'flex', gap: 8, padding: '10px 16px', background: 'rgba(0,0,0,0.8)', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, padding: '8px 16px', background: 'rgba(0,0,0,0.85)', flexWrap: 'wrap', alignItems: 'center' }}>
         {/* Go Live button */}
         <button
-          onClick={() => { if (videoRef.current && hlsRef.current) { hlsRef.current.liveSyncPosition && (videoRef.current.currentTime = hlsRef.current.liveSyncPosition); } }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const v = videoRef.current;
+            if (v) {
+              // Jump to live edge
+              if (v.buffered.length > 0) {
+                v.currentTime = v.buffered.end(v.buffered.length - 1) - 0.5;
+              }
+              v.play().catch(() => {});
+            }
+          }}
           style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 4 }}
         >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} /> AO VIVO
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'tpPulse 1.5s infinite' }} /> AO VIVO
+        </button>
+        {/* Play/Pause */}
+        <button
+          onClick={(e) => { e.stopPropagation(); if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }}
+          style={{ padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.8rem' }}
+        >
+          ⏯
         </button>
 
         {/* Camera switch */}
