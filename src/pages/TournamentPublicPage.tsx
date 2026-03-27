@@ -499,7 +499,7 @@ export default function TournamentPublicPage() {
                 </h2>
                 {hasStream && (
                   <a href="https://apertai.com.br" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}>
-                    Powered by <span style={{ color: '#F58A25', fontWeight: 700 }}>Apertai</span>
+                    Transmitido por <span style={{ color: '#F58A25', fontWeight: 700 }}>Apertai</span>
                   </a>
                 )}
               </div>
