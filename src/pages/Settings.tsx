@@ -1,10 +1,111 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGear, faCreditCard, faArrowRight, faSlidersH, faUsers, faChalkboardTeacher, faCheckCircle, faClock } from '@fortawesome/free-solid-svg-icons';
+import { faGear, faCreditCard, faArrowRight, faSlidersH, faUsers, faChalkboardTeacher, faCheckCircle, faClock, faVideo, faCopy, faKey } from '@fortawesome/free-solid-svg-icons';
 import { platformBillingService } from '../services/platformBillingService';
+import { tournamentService } from '../services/tournamentService';
+import { api } from '../services/api';
 import toast from 'react-hot-toast';
 import '../styles/Settings.css';
+
+function ApertaiCard() {
+  const [piToken, setPiToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    // Load current arena's pi_token
+    api.get('/api/arenas/current').then(res => {
+      setPiToken(res.data?.data?.apertai_pi_token || null);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const res = await tournamentService.generatePiToken();
+      setPiToken(res.data?.pi_token || null);
+      toast.success('Token gerado! Cole no config.json do Raspberry Pi.');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao gerar token');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const copyToken = () => {
+    if (piToken) {
+      navigator.clipboard.writeText(piToken);
+      toast.success('Token copiado!');
+    }
+  };
+
+  return (
+    <div className="settings-card" style={{ borderColor: 'rgba(245,138,37,0.2)' }}>
+      <div className="settings-card-header">
+        <h2><FontAwesomeIcon icon={faVideo} style={{ color: '#F58A25' }} /> Apertai Livestream</h2>
+      </div>
+
+      <div style={{ padding: '0 0 8px' }}>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #64748b)', marginBottom: 16 }}>
+          Transmita torneios ao vivo com cameras da arena. Configure o Raspberry Pi para conectar com o sistema.
+        </p>
+
+        {loading ? (
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Carregando...</div>
+        ) : (
+          <>
+            {/* Token section */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary, #64748b)', display: 'block', marginBottom: 6 }}>
+                <FontAwesomeIcon icon={faKey} style={{ marginRight: 4 }} /> Token do Raspberry Pi
+              </label>
+
+              {piToken ? (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    readOnly
+                    value={piToken}
+                    style={{
+                      flex: 1, padding: '8px 12px', borderRadius: 8,
+                      border: '1px solid var(--border-color, #e2e8f0)',
+                      background: 'var(--bg-secondary, #f8fafc)',
+                      fontSize: '0.8rem', fontFamily: 'monospace',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                  <button onClick={copyToken} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-secondary, #f8fafc)', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                    <FontAwesomeIcon icon={faCopy} />
+                  </button>
+                </div>
+              ) : (
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>Nenhum token gerado</p>
+              )}
+            </div>
+
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              style={{
+                padding: '10px 20px', borderRadius: 10, border: 'none',
+                background: '#F58A25', color: '#fff', cursor: 'pointer',
+                fontWeight: 600, fontSize: '0.9rem', width: '100%',
+              }}
+            >
+              {generating ? 'Gerando...' : piToken ? 'Gerar Novo Token' : 'Gerar Token do Pi'}
+            </button>
+
+            {piToken && (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 8 }}>
+                Cole esse token no setup do Raspberry Pi da arena. Cada arena tem um token unico.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -124,6 +225,9 @@ export default function Settings() {
             </div>
           )}
         </div>
+
+        {/* Apertai Livestream */}
+        <ApertaiCard />
 
         {/* Quick Links */}
         <div className="settings-card">
