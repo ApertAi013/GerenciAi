@@ -39,6 +39,7 @@ export interface Tournament {
   points_loss?: number;
   group_stage_completed?: boolean;
   pairing_mode?: 'fixed' | 'dynamic_single' | 'dynamic_per_round';
+  stream_mode?: 'none' | 'apertai';
 }
 
 export interface TournamentTeam {

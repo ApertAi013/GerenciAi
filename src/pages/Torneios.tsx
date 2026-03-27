@@ -781,9 +781,17 @@ export default function Torneios() {
   // ─── Match actions ───
   const getTournamentId = (match: TournamentMatch) => selectedTournament?.id || match.tournament_id;
 
-  const handleStartMatch = async (match: TournamentMatch, streamCamera?: string) => {
+  const handleStartMatch = async (match: TournamentMatch) => {
     const tid = getTournamentId(match);
     if (!tid) return;
+    let streamCamera: string | undefined;
+    // If tournament has stream, ask which camera/court
+    if (selectedTournament?.stream_mode === 'apertai') {
+      const cam = prompt('Em qual quadra/camera sera o jogo?\n\n1 - Camera 1\n2 - Camera 2\n\n(deixe vazio para nenhuma)');
+      if (cam === null) return; // cancelled
+      if (cam === '1') streamCamera = 'cam1';
+      else if (cam === '2') streamCamera = 'cam2';
+    }
     try {
       await tournamentService.startMatch(tid, match.id, streamCamera ? { stream_camera: streamCamera } : undefined);
       toast.success('Partida iniciada!');
@@ -1081,26 +1089,9 @@ export default function Torneios() {
             {hasBothTeams && !isCompleted && (
               <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {isPending && (
-                  (selectedTournament as any)?.stream_mode === 'apertai' ? (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <select
-                        id="start-match-camera"
-                        defaultValue=""
-                        style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-secondary, #f8fafc)', color: 'inherit', fontWeight: 600, fontSize: '0.9rem' }}
-                      >
-                        <option value="">Sem camera</option>
-                        <option value="cam1">Camera 1</option>
-                        <option value="cam2">Camera 2</option>
-                      </select>
-                      <button className="torneio-btn-success" onClick={() => { const cam = (document.getElementById('start-match-camera') as HTMLSelectElement)?.value || undefined; handleStartMatch(match, cam); }} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
-                        <FontAwesomeIcon icon={faPlay} /> Iniciar
-                      </button>
-                    </div>
-                  ) : (
-                    <button className="torneio-btn-success" onClick={() => handleStartMatch(match)} style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
-                      <FontAwesomeIcon icon={faPlay} /> Iniciar Partida
-                    </button>
-                  )
+                  <button className="torneio-btn-success" onClick={() => handleStartMatch(match)} style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
+                    <FontAwesomeIcon icon={faPlay} /> Iniciar Partida
+                  </button>
                 )}
                 <p style={{ fontSize: '0.8rem', color: '#94a3b8', textAlign: 'center', margin: '4px 0 0' }}>
                   {isLive ? 'Declarar vencedor:' : 'Ou declarar vencedor direto:'}
