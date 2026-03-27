@@ -208,7 +208,7 @@ export default function TournamentPublicPage() {
   const fetchData = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/api/tournaments/public/live/${token}`);
+      const res = await fetch(`${API_URL}/api/tournaments/public/live/${token}?_=${Date.now()}`);
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.message || 'Torneio nao encontrado');
@@ -297,10 +297,9 @@ export default function TournamentPublicPage() {
     if (!data || !token) return;
     if (data.tournament.status === 'finished' || data.tournament.status === 'cancelled') return;
 
-    // Poll faster during live draw (2s), active tournament (3s), or finished (15s)
+    // Poll fast: 2s during live draw, 3s otherwise (public page should always be reactive)
     const isLiveDraw = data.tournament.live_draw_mode;
-    const isActive = ['registration', 'ready', 'live'].includes(data.tournament.status);
-    const pollMs = isLiveDraw ? 2000 : isActive ? 3000 : 15000;
+    const pollMs = isLiveDraw ? 2000 : 3000;
     const fullInterval = setInterval(() => {
       fetchData();
     }, pollMs);
@@ -1294,6 +1293,7 @@ function DynamicPairingSection({
   lastPairsDrawAt,
   lastBracketDrawAt,
   pairsRevealAt,
+  isLiveDraw,
 }: {
   individualPlayers: { id: number; player_name: string; side: 'left' | 'right' }[];
   generatedPairs: { team_name: string; left_player: string; right_player: string }[];
@@ -1303,16 +1303,21 @@ function DynamicPairingSection({
   lastPairsDrawAt: string | null;
   lastBracketDrawAt: string | null;
   pairsRevealAt: string | null;
+  isLiveDraw?: boolean;
 }) {
-  // State: 'idle' | 'shuffling' | 'revealing' | 'done'
-  const [phase, setPhase] = useState<'idle' | 'shuffling' | 'revealing' | 'done'>('idle');
+  // State: 'idle' | 'shuffling' | 'spin-pair' | 'reveal-pair' | 'fireworks' | 'done'
+  const [phase, setPhase] = useState<'idle' | 'shuffling' | 'spin-pair' | 'reveal-pair' | 'fireworks' | 'done'>('idle');
   const [revealCount, setRevealCount] = useState(0);
+  const [currentPairIdx, setCurrentPairIdx] = useState(-1);
+  const [spinNames, setSpinNames] = useState<[string, string]>(['???', '???']);
   const prevPairsCount = useRef(generatedPairs.length);
   const prevBracketRef = useRef(bracketGenerated);
   const timerRef = useRef<any>(null);
+  const spinRef = useRef<any>(null);
 
   const leftPlayers = individualPlayers.filter(p => p.side === 'left');
   const rightPlayers = individualPlayers.filter(p => p.side === 'right');
+  const allNames = individualPlayers.map(p => p.player_name);
 
   // If scheduled reveal is in the future, hide pairs from view
   const isRevealPending = pairsRevealAt && new Date(pairsRevealAt).getTime() > Date.now();
@@ -1332,7 +1337,6 @@ function DynamicPairingSection({
       const rem = Math.ceil((target - Date.now()) / 1000);
       if (rem <= 0) {
         setCountdown(null);
-        // Time reached — force shuffle animation (pairs will appear on next poll)
         setPhase('shuffling');
         setRevealCount(0);
       } else {
@@ -1344,37 +1348,56 @@ function DynamicPairingSection({
     return () => clearInterval(iv);
   }, [pairsRevealAt, hasPairs]);
 
-  // Detect NEW pairs appearing (0 → N): start shuffle, then reveal
+  // Reveal one pair at a time with spinning animation
+  const revealNextPair = useCallback((idx: number, pairs: typeof generatedPairs) => {
+    if (idx >= pairs.length) {
+      // All pairs revealed — show fireworks
+      setPhase('fireworks');
+      setTimeout(() => setPhase('done'), 8000);
+      return;
+    }
+    setCurrentPairIdx(idx);
+    setPhase('spin-pair');
+
+    // Spin names for 3 seconds
+    let spinCount = 0;
+    if (spinRef.current) clearInterval(spinRef.current);
+    spinRef.current = setInterval(() => {
+      spinCount++;
+      const shuffledL = [...allNames].sort(() => Math.random() - 0.5);
+      const shuffledR = [...allNames].sort(() => Math.random() - 0.5);
+      setSpinNames([shuffledL[0] || '???', shuffledR[1] || '???']);
+      if (spinCount > 12) { // ~3s at 250ms
+        clearInterval(spinRef.current);
+        // Reveal this pair with fire
+        setPhase('reveal-pair');
+        setRevealCount(idx + 1);
+        // After 3.5s, move to next pair
+        timerRef.current = setTimeout(() => {
+          revealNextPair(idx + 1, pairs);
+        }, 3500);
+      }
+    }, 250);
+  }, [allNames]);
+
+  // Detect NEW pairs appearing (0 → N): start dramatic animation
   useEffect(() => {
     if (generatedPairs.length > 0 && prevPairsCount.current === 0) {
-      // If already shuffling (from scheduled countdown), go to reveal after 5s
-      // If not shuffling yet, start shuffle 10s then reveal
-      const shuffleDuration = phase === 'shuffling' ? 5000 : 10000;
-      if (phase !== 'shuffling') {
-        setPhase('shuffling');
-        setRevealCount(0);
-      }
+      setRevealCount(0);
+      setCurrentPairIdx(-1);
+      // Start with shuffle phase (names flying), then reveal one by one
+      setPhase('shuffling');
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
-        setPhase('revealing');
-        let i = 0;
-        const iv = setInterval(() => {
-          i++;
-          setRevealCount(i);
-          if (i >= generatedPairs.length) {
-            clearInterval(iv);
-            setTimeout(() => setPhase('done'), 500);
-          }
-        }, 800);
-      }, 10000);
+        revealNextPair(0, generatedPairs);
+      }, 5000); // 5s shuffle before first pair
     }
     prevPairsCount.current = generatedPairs.length;
-  }, [generatedPairs.length]);
+  }, [generatedPairs.length, revealNextPair]);
 
   // Detect bracket generated (false → true)
   useEffect(() => {
     if (bracketGenerated && !prevBracketRef.current) {
-      // Bracket just appeared — no long animation, just mark done
       setPhase('done');
       setRevealCount(999);
     }
@@ -1386,14 +1409,23 @@ function DynamicPairingSection({
     if (generatedPairs.length === 0 && prevPairsCount.current > 0) {
       setPhase('idle');
       setRevealCount(0);
+      setCurrentPairIdx(-1);
     }
   }, [generatedPairs.length]);
 
   // Cleanup
-  useEffect(() => { return () => { if (timerRef.current) clearTimeout(timerRef.current); }; }, []);
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (spinRef.current) clearInterval(spinRef.current);
+    };
+  }, []);
 
   // Nothing to show
   if (individualPlayers.length === 0 && !hasPairs) return null;
+
+  const currentPair = currentPairIdx >= 0 ? generatedPairs[currentPairIdx] : null;
+
   // If bracket is generated and phase is done, show minimal
   if (bracketGenerated && phase === 'done' && hasPairs) {
     return (
@@ -1423,22 +1455,111 @@ function DynamicPairingSection({
       <h2 className="tp-section-title">
         <ShuffleIcon /> Sorteio de Duplas
         <span className="tp-pairing-mode-badge">{pairingMode === 'dynamic_single' ? 'Unico' : 'Por Rodada'}</span>
+        {(phase === 'shuffling' || phase === 'spin-pair' || phase === 'reveal-pair') && (
+          <span style={{ marginLeft: 10, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(239,68,68,0.1)', padding: '2px 10px', borderRadius: 12, fontSize: '0.7rem', fontWeight: 700, color: '#f87171' }}>
+            <span className="tp-live-dot" style={{ width: 6, height: 6 }} /> AO VIVO
+          </span>
+        )}
       </h2>
 
-      {/* Shuffle animation — only when transitioning from 0 pairs to N pairs */}
+      {/* ── FULLSCREEN SHUFFLE — names flying around ── */}
       {phase === 'shuffling' && (
-        <div className="tp-pairing-shuffle-overlay">
-          <div className="tp-pairing-shuffle-container">
-            <div className="tp-pairing-shuffle-names">
-              {individualPlayers.map((p, i) => (
-                <span key={p.id} className={`tp-pairing-shuffle-name ${p.side}`}
-                  style={{ animationDelay: `${i * 0.2}s`, animationDuration: `${1.5 + Math.random()}s` }}>
-                  {p.player_name}
-                </span>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
+          <div style={{ fontSize: '0.8rem', color: '#F58A25', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 4, marginBottom: 24 }}>
+            Sorteio de Duplas
+          </div>
+          <div style={{ position: 'relative', width: 300, height: 200, overflow: 'hidden' }}>
+            {individualPlayers.map((p, i) => (
+              <span key={p.id} style={{
+                position: 'absolute',
+                fontSize: '1.1rem', fontWeight: 700,
+                color: p.side === 'left' ? '#60A5FA' : '#F87171',
+                animation: `tp-name-fly-${(i % 3) + 1} ${1.5 + Math.random()}s ease-in-out infinite`,
+                animationDelay: `${i * 0.2}s`,
+                left: `${10 + Math.random() * 60}%`,
+                top: `${10 + Math.random() * 70}%`,
+                textShadow: p.side === 'left' ? '0 0 10px rgba(96,165,250,0.5)' : '0 0 10px rgba(248,113,113,0.5)',
+              }}>
+                {p.player_name}
+              </span>
+            ))}
+          </div>
+          <div className="tp-pairing-shuffle-spinner" style={{ marginTop: 16, width: 40, height: 40 }} />
+          <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 12 }}>Sorteando duplas...</div>
+        </div>
+      )}
+
+      {/* ── FULLSCREEN SPIN PAIR — slot-machine for current pair ── */}
+      {phase === 'spin-pair' && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
+          <div style={{ fontSize: '0.8rem', color: '#F58A25', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 4, marginBottom: 24 }}>
+            Dupla {currentPairIdx + 1}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 30 }}>
+            <div style={{ width: 200, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 14, overflow: 'hidden' }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#60A5FA', animation: 'tp-spin-text 0.15s linear infinite alternate' }}>
+                {spinNames[0]}
+              </span>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#F58A25' }}>&</div>
+            <div style={{ width: 200, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 14, overflow: 'hidden' }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#F87171', animation: 'tp-spin-text 0.15s linear infinite alternate' }}>
+                {spinNames[1]}
+              </span>
+            </div>
+          </div>
+          <div className="tp-pairing-shuffle-spinner" style={{ marginTop: 24, width: 50, height: 50 }} />
+        </div>
+      )}
+
+      {/* ── FULLSCREEN REVEAL PAIR — with fire ── */}
+      {phase === 'reveal-pair' && currentPair && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
+          {/* Fire layers */}
+          <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '40%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.4) 0%, rgba(239,68,68,0.15) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', pointerEvents: 'none', filter: 'blur(20px)' }} />
+          <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '30%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.5) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', pointerEvents: 'none', filter: 'blur(15px)' }} />
+
+          <div style={{ fontSize: '0.8rem', color: '#F58A25', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 4, marginBottom: 20, animation: 'pointPop 0.6s ease-out', zIndex: 1 }}>
+            Dupla {currentPairIdx + 1}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 30, animation: 'pointPop 0.8s ease-out', zIndex: 1 }}>
+            <div style={{ padding: '16px 28px', background: 'rgba(59,130,246,0.12)', border: '2px solid rgba(59,130,246,0.4)', borderRadius: 16, boxShadow: '0 0 30px rgba(59,130,246,0.2)' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#3B82F6', textShadow: '0 0 20px rgba(59,130,246,0.5)' }}>
+                {currentPair.left_player}
+              </span>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#F58A25', textShadow: '0 0 20px rgba(245,138,37,0.5)' }}>&</div>
+            <div style={{ padding: '16px 28px', background: 'rgba(239,68,68,0.12)', border: '2px solid rgba(239,68,68,0.4)', borderRadius: 16, boxShadow: '0 0 30px rgba(239,68,68,0.2)' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#EF4444', textShadow: '0 0 20px rgba(239,68,68,0.5)' }}>
+                {currentPair.right_player}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FULLSCREEN FIREWORKS — all pairs defined ── */}
+      {phase === 'fireworks' && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)', overflow: 'auto' }}>
+          <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', pointerEvents: 'none', filter: 'blur(25px)' }} />
+          <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '35%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.55) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', pointerEvents: 'none', filter: 'blur(18px)' }} />
+          <div style={{ zIndex: 1, textAlign: 'center', maxWidth: 600, width: '90%' }}>
+            <div style={{ marginBottom: 12, animation: 'pointPop 0.8s ease-out', filter: 'drop-shadow(0 0 20px rgba(245,138,37,0.5))' }}>
+              <svg width="60" height="60" viewBox="0 0 24 24" fill="#F58A25" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+            </div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 40px rgba(245,138,37,0.6)', animation: 'pointPop 1s ease-out', marginBottom: 20 }}>
+              Duplas Definidas!
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, animation: 'pointPop 1.2s ease-out' }}>
+              {generatedPairs.map((pair, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 16px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12 }}>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#10b981', minWidth: 24 }}>{idx + 1}</span>
+                  <span style={{ fontWeight: 700, color: '#60A5FA', fontSize: '0.95rem', flex: 1, textAlign: 'right' }}>{pair.left_player}</span>
+                  <span style={{ color: '#F58A25', fontWeight: 700, fontSize: '0.85rem' }}>&</span>
+                  <span style={{ fontWeight: 700, color: '#F87171', fontSize: '0.95rem', flex: 1, textAlign: 'left' }}>{pair.right_player}</span>
+                </div>
               ))}
             </div>
-            <div className="tp-pairing-shuffle-spinner" />
-            <div className="tp-pairing-shuffle-text">Sorteando duplas...</div>
           </div>
         </div>
       )}
@@ -1486,13 +1607,12 @@ function DynamicPairingSection({
         </div>
       )}
 
-      {/* Revealing pairs one by one */}
-      {(phase === 'revealing' || phase === 'done') && hasPairs && (
+      {/* Done: show pairs list */}
+      {phase === 'done' && hasPairs && (
         <div className="tp-pairing-results">
           <div className="tp-pairing-pairs-grid">
             {generatedPairs.map((pair, idx) => (
-              <div key={idx} className={`tp-pairing-pair-card ${revealCount > idx ? 'revealed' : 'hidden'}`}
-                style={{ transitionDelay: `${idx * 0.15}s` }}>
+              <div key={idx} className="tp-pairing-pair-card revealed">
                 <div className="tp-pairing-pair-number">Dupla {idx + 1}</div>
                 <div className="tp-pairing-pair-players">
                   <span className="tp-pairing-pair-player left">{pair.left_player}</span>
