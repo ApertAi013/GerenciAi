@@ -297,10 +297,10 @@ export default function TournamentPublicPage() {
     if (!data || !token) return;
     if (data.tournament.status === 'finished' || data.tournament.status === 'cancelled') return;
 
-    // Poll faster during live draw (2s) vs normal (10s)
+    // Poll faster during live draw (2s), active tournament (3s), or finished (15s)
     const isLiveDraw = data.tournament.live_draw_mode;
-    const hasStream = data.tournament.stream_mode === 'apertai';
-    const pollMs = isLiveDraw ? 2000 : hasStream ? 5000 : 10000;
+    const isActive = ['registration', 'ready', 'live'].includes(data.tournament.status);
+    const pollMs = isLiveDraw ? 2000 : isActive ? 3000 : 15000;
     const fullInterval = setInterval(() => {
       fetchData();
     }, pollMs);
