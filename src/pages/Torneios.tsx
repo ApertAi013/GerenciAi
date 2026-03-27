@@ -495,9 +495,6 @@ function StreamControls({ tournamentId }: { tournamentId: number }) {
             <button onClick={handlePause} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-secondary, #1a1a2e)', color: 'inherit', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
               <FontAwesomeIcon icon={faClock} /> Pausar
             </button>
-            <button onClick={handleSponsor} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #F58A25', background: 'rgba(245,138,37,0.08)', color: '#F58A25', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
-              Patrocinadores
-            </button>
             <button onClick={handleStop} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
               <FontAwesomeIcon icon={faStop} /> Encerrar
             </button>
@@ -512,11 +509,6 @@ function StreamControls({ tournamentId }: { tournamentId: number }) {
               <FontAwesomeIcon icon={faStop} /> Encerrar
             </button>
           </>
-        )}
-        {session && session.status === 'sponsor' && (
-          <button onClick={handleSponsor} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
-            <FontAwesomeIcon icon={faPlay} /> Voltar ao Vivo
-          </button>
         )}
       </div>
     </div>

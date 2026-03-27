@@ -547,8 +547,8 @@ export default function TournamentPublicPage() {
                 {data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls ? (
                   <>
                     <HlsPlayer urls={data.stream.urls} />
-                    {data.stream.status === 'sponsor' && data.sponsors && data.sponsors.length > 0 && (
-                      <SponsorOverlay sponsors={data.sponsors} />
+                    {data.sponsors && data.sponsors.length > 0 && (
+                      <SponsorBar sponsors={data.sponsors} />
                     )}
                   </>
                 ) : (
@@ -1127,7 +1127,11 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
   return (
     <div ref={containerRef} style={{ borderRadius: isFullscreen ? 0 : 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
       <div
-        style={{ aspectRatio: isFullscreen ? undefined : '4/3', height: isFullscreen ? 'calc(100vh - 44px)' : undefined, overflow: 'hidden', background: '#000', position: 'relative', cursor: 'pointer' }}
+        style={{
+          aspectRatio: isFullscreen ? undefined : '4/3',
+          height: isFullscreen ? '100vh' : undefined,
+          overflow: 'hidden', background: '#000', position: 'relative', cursor: 'pointer',
+        }}
         onClick={() => { if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }}
       >
         <video
@@ -1137,45 +1141,54 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
           autoPlay
           playsInline
         />
+        {/* Controls overlay - inside video container in fullscreen */}
+        {isFullscreen && (
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', gap: 8, padding: '12px 16px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button onClick={(e) => { e.stopPropagation(); setReconnectKey(k => k + 1); }} style={{ ...btnStyle('#ef4444'), fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'tpPulse 1.5s infinite' }} /> AO VIVO
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} style={btnStyle('rgba(255,255,255,0.25)')}>
+              {'\u2716'}
+            </button>
+            {cams.length > 1 && cams.map(([camId]) => (
+              <button key={camId} onClick={(e) => { e.stopPropagation(); setActiveCam(camId); }} style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.25)')}>
+                {camId.replace('cam', 'Cam ')}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-      <div style={{ display: 'flex', gap: 8, padding: '8px 12px', background: 'rgba(0,0,0,0.85)', flexWrap: 'wrap', alignItems: 'center' }}>
-        <button
-          onClick={(e) => { e.stopPropagation(); setReconnectKey(k => k + 1); }}
-          style={{ ...btnStyle('#ef4444'), fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}
-        >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'tpPulse 1.5s infinite' }} /> AO VIVO
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }}
-          style={btnStyle('rgba(255,255,255,0.1)')}
-        >
-          {'\u23EF'}
-        </button>
-        <button onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} style={btnStyle('rgba(255,255,255,0.1)')}>
-          {isFullscreen ? '\u2716' : '\u26F6'}
-        </button>
-        {cams.length > 1 && cams.map(([camId]) => (
-          <button
-            key={camId}
-            onClick={() => setActiveCam(camId)}
-            style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)')}
-          >
-            {camId.replace('cam', 'Cam ')}
+      {/* Controls bar - below video when not fullscreen */}
+      {!isFullscreen && (
+        <div style={{ display: 'flex', gap: 8, padding: '8px 12px', background: 'rgba(0,0,0,0.85)', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button onClick={(e) => { e.stopPropagation(); setReconnectKey(k => k + 1); }} style={{ ...btnStyle('#ef4444'), fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'tpPulse 1.5s infinite' }} /> AO VIVO
           </button>
-        ))}
-      </div>
+          <button onClick={(e) => { e.stopPropagation(); if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }} style={btnStyle('rgba(255,255,255,0.1)')}>
+            {'\u23EF'}
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} style={btnStyle('rgba(255,255,255,0.1)')}>
+            {'\u26F6'}
+          </button>
+          {cams.length > 1 && cams.map(([camId]) => (
+            <button key={camId} onClick={(e) => { e.stopPropagation(); setActiveCam(camId); }} style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)')}>
+              {camId.replace('cam', 'Cam ')}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Sponsor Overlay (shown outside player when gestor activates) ───
-function SponsorOverlay({ sponsors }: { sponsors: { id: number; name: string; logo_url: string; is_master: boolean }[] }) {
+// ─── Sponsor Bar (always visible below player, cycles logos) ───
+function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; logo_url: string; is_master: boolean }[] }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const sorted = [...sponsors].sort((a, b) => (b.is_master ? 1 : 0) - (a.is_master ? 1 : 0));
 
   useEffect(() => {
-    if (sorted.length === 0) return;
-    const dur = sorted[currentIdx]?.is_master ? 4000 : 2500;
+    if (sorted.length <= 1) return;
+    const dur = sorted[currentIdx]?.is_master ? 5000 : 3000;
     const timer = setTimeout(() => setCurrentIdx(i => (i + 1) % sorted.length), dur);
     return () => clearTimeout(timer);
   }, [currentIdx, sorted.length]);
@@ -1185,36 +1198,30 @@ function SponsorOverlay({ sponsors }: { sponsors: { id: number; name: string; lo
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))',
-      borderRadius: 16, padding: '24px 16px', textAlign: 'center', marginTop: 8,
-      animation: 'tpFadeIn 0.5s ease',
+      display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px',
+      background: 'rgba(15,23,42,0.85)', borderRadius: 12, marginTop: 6,
     }}>
-      <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 2, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
-        {sponsor.is_master ? 'Patrocinador Master' : 'Patrocinador'}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: sponsor.is_master ? 120 : 80 }}>
-        <img
-          key={sponsor.id}
-          src={sponsor.logo_url}
-          alt={sponsor.name}
-          style={{
-            maxHeight: sponsor.is_master ? 120 : 80,
-            maxWidth: '80%',
-            objectFit: 'contain',
-            animation: 'tpFadeIn 0.5s ease',
-          }}
-        />
-      </div>
-      <div style={{ fontSize: sponsor.is_master ? '1rem' : '0.85rem', fontWeight: 700, color: '#fff', marginTop: 8 }}>
-        {sponsor.name}
+      <img
+        key={sponsor.id}
+        src={sponsor.logo_url}
+        alt={sponsor.name}
+        style={{ height: sponsor.is_master ? 36 : 28, maxWidth: 100, objectFit: 'contain', animation: 'tpFadeIn 0.4s ease' }}
+      />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
+          {sponsor.is_master ? 'Patrocinador Master' : 'Patrocinador'}
+        </div>
+        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {sponsor.name}
+        </div>
       </div>
       {sorted.length > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 12 }}>
+        <div style={{ display: 'flex', gap: 4 }}>
           {sorted.map((s, i) => (
             <div key={s.id} style={{
-              width: i === currentIdx ? 20 : 6, height: 6, borderRadius: 3,
+              width: 5, height: 5, borderRadius: '50%',
               background: i === currentIdx ? '#F58A25' : 'rgba(255,255,255,0.2)',
-              transition: 'all 0.3s ease',
+              transition: 'background 0.3s',
             }} />
           ))}
         </div>
