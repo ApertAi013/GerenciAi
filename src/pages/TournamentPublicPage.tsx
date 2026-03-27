@@ -201,6 +201,7 @@ export default function TournamentPublicPage() {
   const prevScoresRef = useRef<Map<number, {t1: number, t2: number}>>(new Map());
   const [liveDrawFireworks, setLiveDrawFireworks] = useState(false);
   const prevLiveDrawRef = useRef(false);
+  const lastDrawDataRef = useRef<any>(null);
   const [activeCam, setActiveCam] = useState('cam1');
 
   // ─── Fetch full tournament data ───
@@ -435,11 +436,15 @@ export default function TournamentPublicPage() {
         {/* Detect live draw finished → show fireworks overlay */}
         {(() => {
           const isLiveDraw = tournament.live_draw_mode && tournament.live_draw_data;
-          if (prevLiveDrawRef.current && !isLiveDraw) {
-            // Live draw just ended! Show fireworks
+          // Save draw data for fireworks display (only confrontos, not pairs)
+          if (tournament.live_draw_data && tournament.live_draw_data.matches && (tournament.live_draw_data as any).type !== 'pairs') {
+            lastDrawDataRef.current = tournament.live_draw_data;
+          }
+          if (prevLiveDrawRef.current && !isLiveDraw && lastDrawDataRef.current?.matches) {
+            // Live draw just ended! Show fireworks (only for confrontos draw, not pairs)
             if (!liveDrawFireworks) {
               setLiveDrawFireworks(true);
-              setTimeout(() => setLiveDrawFireworks(false), 7000);
+              setTimeout(() => setLiveDrawFireworks(false), 10000);
             }
           }
           prevLiveDrawRef.current = !!isLiveDraw;
@@ -448,24 +453,45 @@ export default function TournamentPublicPage() {
 
         {/* Fireworks overlay when live draw completes */}
         {liveDrawFireworks && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', filter: 'blur(25px)' }} />
-            <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '35%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.55) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', filter: 'blur(18px)' }} />
-            <div style={{ position: 'absolute', bottom: 0, left: '5%', right: '5%', height: '22%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,220,80,0.45) 0%, rgba(245,138,37,0.15) 40%, transparent 70%)', animation: 'tp-fire-wave 2.5s ease-in-out infinite, tp-fire-flicker 1s ease-in-out infinite alternate-reverse', filter: 'blur(12px)' }} />
-            <div style={{ zIndex: 1, textAlign: 'center' }}>
-              <div style={{ marginBottom: 16, animation: 'pointPop 0.8s ease-out', filter: 'drop-shadow(0 0 20px rgba(245,138,37,0.5))' }}>
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="#F58A25" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)', overflow: 'auto' }}>
+            <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', filter: 'blur(25px)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '35%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.55) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', filter: 'blur(18px)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: 0, left: '5%', right: '5%', height: '22%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,220,80,0.45) 0%, rgba(245,138,37,0.15) 40%, transparent 70%)', animation: 'tp-fire-wave 2.5s ease-in-out infinite, tp-fire-flicker 1s ease-in-out infinite alternate-reverse', filter: 'blur(12px)', pointerEvents: 'none' }} />
+            <div style={{ zIndex: 1, textAlign: 'center', maxWidth: 600, width: '90%' }}>
+              <div style={{ marginBottom: 12, animation: 'pointPop 0.8s ease-out', filter: 'drop-shadow(0 0 20px rgba(245,138,37,0.5))' }}>
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="#F58A25" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
               </div>
-              <div style={{ fontSize: '2rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 40px rgba(245,138,37,0.6)', animation: 'pointPop 1s ease-out' }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 40px rgba(245,138,37,0.6)', animation: 'pointPop 1s ease-out', marginBottom: 20 }}>
                 Confrontos Definidos!
               </div>
-              <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 16 }}>A chave sera exibida em instantes...</div>
+              {/* Matches table from saved draw data */}
+              {lastDrawDataRef.current?.matches && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, animation: 'pointPop 1.2s ease-out' }}>
+                  {lastDrawDataRef.current.matches.map((m: any, idx: number) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 16px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12 }}>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', minWidth: 24 }}>{idx + 1}</span>
+                      <span style={{ fontWeight: 700, color: '#60A5FA', fontSize: '0.95rem', flex: 1, textAlign: 'right' }}>{m.team1_name}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 700, fontSize: '0.75rem' }}>VS</span>
+                      <span style={{ fontWeight: 700, color: '#F87171', fontSize: '0.95rem', flex: 1, textAlign: 'left' }}>{m.team2_name}</span>
+                    </div>
+                  ))}
+                  {(lastDrawDataRef.current.bye_teams?.length > 0) && (
+                    <div style={{ padding: '8px 16px', background: 'rgba(245,138,37,0.08)', border: '1px solid rgba(245,138,37,0.15)', borderRadius: 12, marginTop: 4 }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#F58A25' }}>BYE: </span>
+                      <span style={{ fontSize: '0.85rem', color: '#F58A25' }}>
+                        {lastDrawDataRef.current.bye_teams.map((t: any) => t.name).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: 16 }}>A chave sera exibida em instantes...</div>
             </div>
           </div>
         )}
 
-        {/* Live Draw Section — below tags, above pairing */}
-        {tournament.live_draw_mode && tournament.live_draw_data && (
+        {/* Live Draw Section — below tags, above pairing (only for confrontos, not pairs) */}
+        {tournament.live_draw_mode && tournament.live_draw_data && (tournament.live_draw_data as any).type !== 'pairs' && (
           <LiveDrawSection drawData={tournament.live_draw_data} teams={teams} />
         )}
 
@@ -1603,17 +1629,38 @@ function LiveDrawSection({ drawData, teams }: {
 
       {/* ── ALL DONE FIREWORKS ── */}
       {showFireworks && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)', overflow: 'auto' }}>
           <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', pointerEvents: 'none', filter: 'blur(25px)' }} />
           <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '35%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.55) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', pointerEvents: 'none', filter: 'blur(18px)' }} />
           <div style={{ position: 'absolute', bottom: 0, left: '5%', right: '5%', height: '22%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,220,80,0.45) 0%, rgba(245,138,37,0.15) 40%, transparent 70%)', animation: 'tp-fire-wave 2.5s ease-in-out infinite, tp-fire-flicker 1s ease-in-out infinite alternate-reverse', pointerEvents: 'none', filter: 'blur(12px)' }} />
-          <div style={{ fontSize: '4rem', marginBottom: 16, animation: 'pointPop 0.8s ease-out', filter: 'drop-shadow(0 0 20px rgba(245,138,37,0.5))' }}>
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="#F58A25" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+          <div style={{ zIndex: 1, textAlign: 'center', maxWidth: 600, width: '90%' }}>
+            <div style={{ marginBottom: 12, animation: 'pointPop 0.8s ease-out', filter: 'drop-shadow(0 0 20px rgba(245,138,37,0.5))' }}>
+              <svg width="60" height="60" viewBox="0 0 24 24" fill="#F58A25" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+            </div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 40px rgba(245,138,37,0.6)', animation: 'pointPop 1s ease-out', marginBottom: 20 }}>
+              Confrontos Definidos!
+            </div>
+            {/* Matches table */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, animation: 'pointPop 1.2s ease-out' }}>
+              {drawData.matches.map((m, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 16px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12 }}>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', minWidth: 24 }}>{idx + 1}</span>
+                  <span style={{ fontWeight: 700, color: '#60A5FA', fontSize: '0.95rem', flex: 1, textAlign: 'right' }}>{m.team1_name}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 700, fontSize: '0.75rem' }}>VS</span>
+                  <span style={{ fontWeight: 700, color: '#F87171', fontSize: '0.95rem', flex: 1, textAlign: 'left' }}>{m.team2_name}</span>
+                </div>
+              ))}
+              {((drawData as any).bye_teams?.length > 0 || drawData.bye_team) && (
+                <div style={{ padding: '8px 16px', background: 'rgba(245,138,37,0.08)', border: '1px solid rgba(245,138,37,0.15)', borderRadius: 12, marginTop: 4 }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#F58A25' }}>BYE: </span>
+                  <span style={{ fontSize: '0.85rem', color: '#F58A25' }}>
+                    {((drawData as any).bye_teams || (drawData.bye_team ? [drawData.bye_team] : [])).map((t: any) => t.name).join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: 16 }}>A chave sera exibida em instantes...</div>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 40px rgba(245,138,37,0.6)', animation: 'pointPop 1s ease-out' }}>
-            Confrontos Definidos!
-          </div>
-          <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 16 }}>A chave sera exibida em instantes...</div>
         </div>
       )}
 
