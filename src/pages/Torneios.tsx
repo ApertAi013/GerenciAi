@@ -336,6 +336,7 @@ function SponsorsTab({ tournamentId }: { tournamentId: number }) {
   const [sponsors, setSponsors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [isMaster, setIsMaster] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -356,11 +357,12 @@ function SponsorsTab({ tournamentId }: { tournamentId: number }) {
     try {
       const fd = new FormData();
       fd.append('name', name.trim());
+      if (description.trim()) fd.append('description', description.trim());
       fd.append('logo', file);
       fd.append('is_master', String(isMaster));
       await tournamentService.addSponsor(tournamentId, fd);
       toast.success('Patrocinador adicionado!');
-      setName(''); setFile(null); setIsMaster(false);
+      setName(''); setDescription(''); setFile(null); setIsMaster(false);
       if (fileRef.current) fileRef.current.value = '';
       load();
     } catch (err: any) {
@@ -384,6 +386,10 @@ function SponsorsTab({ tournamentId }: { tournamentId: number }) {
         <div className="mm-field" style={{ flex: 1, minWidth: 150 }}>
           <label>Nome</label>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Nike" />
+        </div>
+        <div className="mm-field" style={{ flex: 1, minWidth: 200 }}>
+          <label>Descricao (opcional)</label>
+          <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Ex: Loja de esportes" />
         </div>
         <div className="mm-field" style={{ flex: 1, minWidth: 150 }}>
           <label>Logo (PNG/JPG)</label>
@@ -410,6 +416,7 @@ function SponsorsTab({ tournamentId }: { tournamentId: number }) {
               {s.is_master && <span style={{ position: 'absolute', top: 6, right: 8, fontSize: '0.65rem', fontWeight: 700, color: '#F58A25', textTransform: 'uppercase' }}>Master</span>}
               <img src={s.logo_url} alt={s.name} style={{ width: '100%', height: 80, objectFit: 'contain', marginBottom: 8 }} />
               <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{s.name}</div>
+              {s.description && <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>{s.description}</div>}
               <button onClick={() => handleRemove(s.id)} style={{ marginTop: 6, fontSize: '0.75rem', color: '#ef4444', background: 'transparent', border: 'none', cursor: 'pointer' }}>Remover</button>
             </div>
           ))}

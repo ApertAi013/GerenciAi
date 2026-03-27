@@ -1088,21 +1088,33 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
     };
   }, [activeCam, urls[activeCam], reconnectKey]);
 
-  // Stall detection: if video doesn't progress for 15s, auto-reconnect
+  // Stall + loop detection: reconnect if video stalls or loops back
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     let lastTime = v.currentTime;
+    let maxTime = 0;
     let stallCount = 0;
+    let loopCount = 0;
     const check = setInterval(() => {
-      if (v.paused || v.ended) { stallCount = 0; return; }
-      if (Math.abs(v.currentTime - lastTime) < 0.1) {
+      if (v.paused || v.ended) { stallCount = 0; loopCount = 0; return; }
+      const ct = v.currentTime;
+      // Stall: not progressing
+      if (Math.abs(ct - lastTime) < 0.1) {
         stallCount++;
         if (stallCount >= 3) { stallCount = 0; setReconnectKey(k => k + 1); }
       } else {
         stallCount = 0;
       }
-      lastTime = v.currentTime;
+      // Loop: time went backwards significantly (replaying old segment)
+      if (ct < maxTime - 5) {
+        loopCount++;
+        if (loopCount >= 2) { loopCount = 0; setReconnectKey(k => k + 1); }
+      } else {
+        loopCount = 0;
+        if (ct > maxTime) maxTime = ct;
+      }
+      lastTime = ct;
     }, 5000);
     return () => clearInterval(check);
   }, [reconnectKey]);
@@ -1125,10 +1137,11 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
   });
 
   return (
-    <div ref={containerRef} style={{ borderRadius: isFullscreen ? 0 : 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
+    <div ref={containerRef} style={{ borderRadius: isFullscreen ? 0 : 16, overflow: 'hidden', background: '#000', position: isFullscreen ? 'fixed' : 'relative', inset: isFullscreen ? 0 : undefined, zIndex: isFullscreen ? 9999 : undefined }}>
       <div
         style={{
           aspectRatio: isFullscreen ? undefined : '4/3',
+          width: isFullscreen ? '100vw' : undefined,
           height: isFullscreen ? '100vh' : undefined,
           overflow: 'hidden', background: '#000', position: 'relative', cursor: 'pointer',
         }}
@@ -1136,7 +1149,7 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
       >
         <video
           ref={videoRef}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'rotate(270deg)' }}
+          style={isFullscreen ? { position: 'absolute', top: '50%', left: '50%', width: '100vh', height: '100vw', objectFit: 'contain', display: 'block', transform: 'rotate(270deg) translate(-50%, -50%)', transformOrigin: '0 0' } : { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'rotate(270deg)' }}
           muted
           autoPlay
           playsInline
@@ -1181,49 +1194,58 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
   );
 }
 
-// ─── Sponsor Bar (always visible below player, cycles logos) ───
-function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; logo_url: string; is_master: boolean }[] }) {
+// ─── Sponsor Bar (master fixed on top, others rotating below) ───
+function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; description?: string; logo_url: string; is_master: boolean }[] }) {
+  const master = sponsors.find(s => s.is_master);
+  const others = sponsors.filter(s => !s.is_master);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const sorted = [...sponsors].sort((a, b) => (b.is_master ? 1 : 0) - (a.is_master ? 1 : 0));
 
   useEffect(() => {
-    if (sorted.length <= 1) return;
-    const dur = sorted[currentIdx]?.is_master ? 5000 : 3000;
-    const timer = setTimeout(() => setCurrentIdx(i => (i + 1) % sorted.length), dur);
+    if (others.length <= 1) return;
+    const timer = setTimeout(() => setCurrentIdx(i => (i + 1) % others.length), 3000);
     return () => clearTimeout(timer);
-  }, [currentIdx, sorted.length]);
+  }, [currentIdx, others.length]);
 
-  if (!sorted.length) return null;
-  const sponsor = sorted[currentIdx];
+  if (!sponsors.length) return null;
+  const currentOther = others[currentIdx];
+
+  const renderSponsor = (s: typeof sponsors[0], size: 'lg' | 'sm') => (
+    <div key={s.id} style={{
+      display: 'flex', alignItems: 'center', gap: 14, padding: size === 'lg' ? '12px 16px' : '10px 16px',
+      background: size === 'lg' ? 'rgba(245,138,37,0.08)' : 'rgba(15,23,42,0.85)',
+      borderRadius: 14, border: size === 'lg' ? '1px solid rgba(245,138,37,0.2)' : 'none',
+      animation: size === 'sm' ? 'tpFadeIn 0.4s ease' : undefined,
+    }}>
+      <img src={s.logo_url} alt={s.name} style={{ height: size === 'lg' ? 56 : 44, maxWidth: size === 'lg' ? 140 : 110, objectFit: 'contain', flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
+          {s.is_master ? 'Patrocinador Master' : 'Patrocinador'}
+        </div>
+        <div style={{ fontSize: size === 'lg' ? '0.95rem' : '0.85rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {s.name}
+        </div>
+        {s.description && (
+          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {s.description}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px',
-      background: 'rgba(15,23,42,0.85)', borderRadius: 12, marginTop: 6,
-    }}>
-      <img
-        key={sponsor.id}
-        src={sponsor.logo_url}
-        alt={sponsor.name}
-        style={{ height: sponsor.is_master ? 36 : 28, maxWidth: 100, objectFit: 'contain', animation: 'tpFadeIn 0.4s ease' }}
-      />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
-          {sponsor.is_master ? 'Patrocinador Master' : 'Patrocinador'}
-        </div>
-        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {sponsor.name}
-        </div>
-      </div>
-      {sorted.length > 1 && (
-        <div style={{ display: 'flex', gap: 4 }}>
-          {sorted.map((s, i) => (
-            <div key={s.id} style={{
-              width: 5, height: 5, borderRadius: '50%',
-              background: i === currentIdx ? '#F58A25' : 'rgba(255,255,255,0.2)',
-              transition: 'background 0.3s',
-            }} />
-          ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+      {master && renderSponsor(master, 'lg')}
+      {currentOther && (
+        <div style={{ position: 'relative' }}>
+          {renderSponsor(currentOther, 'sm')}
+          {others.length > 1 && (
+            <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 4 }}>
+              {others.map((s, i) => (
+                <div key={s.id} style={{ width: 5, height: 5, borderRadius: '50%', background: i === currentIdx ? '#F58A25' : 'rgba(255,255,255,0.2)', transition: 'background 0.3s' }} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
