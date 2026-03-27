@@ -1054,7 +1054,14 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
     import('hls.js').then(({ default: Hls }) => {
       if (hlsRef.current) { hlsRef.current.destroy(); }
       if (Hls.isSupported()) {
-        const hls = new Hls({ liveSyncDurationCount: 3, liveMaxLatencyDurationCount: 6, manifestLoadingMaxRetry: 6, levelLoadingMaxRetry: 6 });
+        const hls = new Hls({
+          liveSyncDurationCount: 10,        // fica ~20s atras do ao vivo (10 segmentos x 2s)
+          liveMaxLatencyDurationCount: 30,   // permite ate 60s de atraso antes de pular
+          manifestLoadingMaxRetry: 10,
+          levelLoadingMaxRetry: 10,
+          fragLoadingMaxRetry: 6,
+          liveBackBufferLength: 60,          // manter 60s de buffer passado
+        });
         hls.loadSource(url);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
