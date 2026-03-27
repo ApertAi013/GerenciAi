@@ -543,9 +543,7 @@ export default function TournamentPublicPage() {
                       Nenhuma partida nesta quadra
                     </div>
                   )}
-                  {data.sponsors && data.sponsors.length > 0 && (
-                    <SponsorBar sponsors={data.sponsors} />
-                  )}
+                  <SponsorBar sponsors={data.sponsors || []} />
                 </div>
               ) : (
                 /* No stream - show each match with animation */
@@ -1183,17 +1181,18 @@ function HlsPlayer({ urls, onCameraChange, initialCam }: { urls: Record<string, 
 
 // ─── Sponsor Bar (master fixed on top, others rotating below) ───
 function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; description?: string; logo_url: string; is_master: boolean }[] }) {
-  const all = [...sponsors].sort((a, b) => (b.is_master ? 1 : 0) - (a.is_master ? 1 : 0));
+  const sorted = [...sponsors].sort((a, b) => (b.is_master ? 1 : 0) - (a.is_master ? 1 : 0));
+  // Apertai is always the last slide
+  const all = [...sorted, { id: -1, name: 'Apertai', description: '', logo_url: '', is_master: false, _isApertai: true }] as any[];
   const [currentIdx, setCurrentIdx] = useState(0);
 
   useEffect(() => {
     if (all.length <= 1) return;
-    const dur = all[currentIdx]?.is_master ? 5000 : 3000;
+    const item = all[currentIdx];
+    const dur = item?.is_master ? 5000 : item?._isApertai ? 4000 : 3000;
     const timer = setTimeout(() => setCurrentIdx(i => (i + 1) % all.length), dur);
     return () => clearTimeout(timer);
   }, [currentIdx, all.length]);
-
-  if (!all.length) return null;
 
   return (
     <div style={{ overflow: 'hidden', borderRadius: 14, marginTop: 8, background: 'rgba(15,23,42,0.85)', position: 'relative' }}>
@@ -1201,35 +1200,58 @@ function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; descri
         display: 'flex', transition: 'transform 0.5s ease',
         transform: `translateX(-${currentIdx * 100}%)`,
       }}>
-        {all.map(s => (
-          <div key={s.id} style={{
-            minWidth: '100%', display: 'flex', alignItems: 'center', gap: 14,
-            padding: s.is_master ? '20px 20px' : '16px 20px',
-            background: s.is_master ? 'rgba(245,138,37,0.08)' : 'transparent',
-            borderBottom: s.is_master ? '2px solid rgba(245,138,37,0.3)' : 'none',
-            boxSizing: 'border-box',
-          }}>
-            <img src={s.logo_url} alt={s.name} style={{ height: s.is_master ? 100 : 70, maxWidth: s.is_master ? 200 : 160, objectFit: 'contain', flexShrink: 0 }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
-                {s.is_master ? 'Patrocinador Master' : 'Patrocinador'}
-              </div>
-              <div style={{ fontSize: s.is_master ? '1.15rem' : '1rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {s.name}
-              </div>
-              {s.description && (
-                <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {s.description}
+        {all.map((s: any) => (
+          s._isApertai ? (
+            /* Apertai branded slide */
+            <a key="apertai" href="https://apertai.com.br" target="_blank" rel="noopener noreferrer" style={{
+              minWidth: '100%', display: 'flex', alignItems: 'center', gap: 16,
+              padding: '18px 20px', boxSizing: 'border-box', textDecoration: 'none',
+              background: 'linear-gradient(135deg, rgba(240,79,40,0.12), rgba(255,107,53,0.06))',
+              borderBottom: '2px solid rgba(240,79,40,0.3)',
+            }}>
+              <img src="/apertai-logo.svg" alt="Apertai" style={{ height: 70, maxWidth: 140, objectFit: 'contain', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>
+                  Transmita seus jogos ao vivo
                 </div>
-              )}
+                <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+                  Cameras inteligentes com streaming automatico
+                </div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '5px 14px', borderRadius: 8, background: 'linear-gradient(135deg, #f04f28, #ff6b35)', color: '#fff', fontSize: '0.78rem', fontWeight: 700 }}>
+                  Conheca o Apertai
+                </div>
+              </div>
+            </a>
+          ) : (
+            <div key={s.id} style={{
+              minWidth: '100%', display: 'flex', alignItems: 'center', gap: 14,
+              padding: s.is_master ? '20px 20px' : '16px 20px',
+              background: s.is_master ? 'rgba(245,138,37,0.08)' : 'transparent',
+              borderBottom: s.is_master ? '2px solid rgba(245,138,37,0.3)' : 'none',
+              boxSizing: 'border-box',
+            }}>
+              <img src={s.logo_url} alt={s.name} style={{ height: s.is_master ? 100 : 70, maxWidth: s.is_master ? 200 : 160, objectFit: 'contain', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  {s.is_master ? 'Patrocinador Master' : 'Patrocinador'}
+                </div>
+                <div style={{ fontSize: s.is_master ? '1.15rem' : '1rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {s.name}
+                </div>
+                {s.description && (
+                  <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {s.description}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )
         ))}
       </div>
       {all.length > 1 && (
-        <div style={{ position: 'absolute', bottom: 4, right: 12, display: 'flex', gap: 4 }}>
-          {all.map((s, i) => (
-            <div key={s.id} style={{ width: i === currentIdx ? 16 : 5, height: 5, borderRadius: 3, background: i === currentIdx ? '#F58A25' : 'rgba(255,255,255,0.2)', transition: 'all 0.3s' }} />
+        <div style={{ position: 'absolute', bottom: 6, right: 12, display: 'flex', gap: 4 }}>
+          {all.map((s: any, i: number) => (
+            <div key={s.id} style={{ width: i === currentIdx ? 16 : 5, height: 5, borderRadius: 3, background: i === currentIdx ? (s._isApertai ? '#f04f28' : '#F58A25') : 'rgba(255,255,255,0.2)', transition: 'all 0.3s' }} />
           ))}
         </div>
       )}
