@@ -480,17 +480,6 @@ export default function TournamentPublicPage() {
           />
         )}
 
-        {/* Apertai Live Stream Player */}
-        {data.stream && data.stream.status === 'live' && data.stream.urls && (
-          <div style={{ margin: '24px 0' }}>
-            <h2 className="tp-section-title">
-              <span className="tp-live-dot" style={{ width: 8, height: 8, marginRight: 8 }} />
-              Transmissao ao Vivo
-            </h2>
-            <HlsPlayer urls={data.stream.urls} />
-          </div>
-        )}
-
         {/* Live matches - always at top when they exist */}
         {live_matches && live_matches.length > 0 && (
           <div className="tp-live-section">
@@ -553,16 +542,30 @@ export default function TournamentPublicPage() {
                     </>
                   )}
                 </div>
-                {/* 3D Animation */}
-                <LiveMatchAnimation
-                  category={category}
-                  team1Name={match.team1_name || 'Time A'}
-                  team2Name={match.team2_name || 'Time B'}
-                  team1Score={match.team1_score ?? 0}
-                  team2Score={match.team2_score ?? 0}
-                  isLive={true}
-                  teamSize={tournament.team_size}
-                />
+                {/* Stream or 3D Animation */}
+                {data.stream && data.stream.status === 'live' && data.stream.urls ? (
+                  <div style={{ position: 'relative' }}>
+                    <HlsPlayer urls={data.stream.urls} rotate90 />
+                    {/* Score overlay on stream */}
+                    <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', padding: '8px 20px', borderRadius: 30, zIndex: 5 }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#60A5FA' }}>{match.team1_name || 'Time A'}</span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#3B82F6' }}>{match.team1_score ?? 0}</span>
+                      <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>x</span>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#EF4444' }}>{match.team2_score ?? 0}</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#F87171' }}>{match.team2_name || 'Time B'}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <LiveMatchAnimation
+                    category={category}
+                    team1Name={match.team1_name || 'Time A'}
+                    team2Name={match.team2_name || 'Time B'}
+                    team1Score={match.team1_score ?? 0}
+                    team2Score={match.team2_score ?? 0}
+                    isLive={true}
+                    teamSize={tournament.team_size}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -1036,7 +1039,7 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
 
 // ─── Dynamic Pairing Section (animated duo drawing) ───
 // ─── HLS Player for Apertai Stream ───
-function HlsPlayer({ urls }: { urls: Record<string, string> }) {
+function HlsPlayer({ urls, rotate90 }: { urls: Record<string, string>; rotate90?: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const cams = Object.entries(urls);
@@ -1070,10 +1073,14 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
   }, [activeCam, urls]);
 
   return (
-    <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000' }}>
+    <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
+      {rotate90 && (
+        <style>{`.hls-video-rotated { transform: rotate(90deg) scale(1.78); transform-origin: center center; }`}</style>
+      )}
       <video
         ref={videoRef}
-        style={{ width: '100%', aspectRatio: '16/9', background: '#000' }}
+        className={rotate90 ? 'hls-video-rotated' : ''}
+        style={{ width: '100%', aspectRatio: '16/9', background: '#000', display: 'block' }}
         controls
         muted
         autoPlay
