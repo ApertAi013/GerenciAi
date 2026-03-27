@@ -1055,12 +1055,14 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
       if (hlsRef.current) { hlsRef.current.destroy(); }
       if (Hls.isSupported()) {
         const hls = new Hls({
-          liveSyncDurationCount: 10,        // fica ~20s atras do ao vivo (10 segmentos x 2s)
-          liveMaxLatencyDurationCount: 30,   // permite ate 60s de atraso antes de pular
-          manifestLoadingMaxRetry: 10,
-          levelLoadingMaxRetry: 10,
-          fragLoadingMaxRetry: 6,
-          liveBackBufferLength: 60,          // manter 60s de buffer passado
+          liveSyncDurationCount: 15,         // fica ~30s atras do ao vivo
+          liveMaxLatencyDurationCount: 180,  // NUNCA pula pra frente (ate 6 min de atraso OK)
+          manifestLoadingMaxRetry: 20,
+          levelLoadingMaxRetry: 20,
+          fragLoadingMaxRetry: 20,
+          liveBackBufferLength: 120,         // manter 2 min de buffer passado
+          enableWorker: true,
+          lowLatencyMode: false,             // estabilidade > latencia
         });
         hls.loadSource(url);
         hls.attachMedia(video);
@@ -1068,11 +1070,10 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
         hls.on(Hls.Events.ERROR, (_e: any, data: any) => {
           if (data.fatal) {
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              console.log('[HLS] Network error, retrying...');
               hls.startLoad();
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               hls.recoverMediaError();
-            } else {
-              retryTimeout = setTimeout(() => setReconnectKey(k => k + 1), 3000);
             }
           }
         });
@@ -1087,37 +1088,6 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     };
   }, [activeCam, urls[activeCam], reconnectKey]);
-
-  // Stall + loop detection: reconnect if video stalls or loops back
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    let lastTime = v.currentTime;
-    let maxTime = 0;
-    let stallCount = 0;
-    let loopCount = 0;
-    const check = setInterval(() => {
-      if (v.paused || v.ended) { stallCount = 0; loopCount = 0; return; }
-      const ct = v.currentTime;
-      // Stall: not progressing
-      if (Math.abs(ct - lastTime) < 0.1) {
-        stallCount++;
-        if (stallCount >= 3) { stallCount = 0; setReconnectKey(k => k + 1); }
-      } else {
-        stallCount = 0;
-      }
-      // Loop: time went backwards significantly (replaying old segment)
-      if (ct < maxTime - 5) {
-        loopCount++;
-        if (loopCount >= 2) { loopCount = 0; setReconnectKey(k => k + 1); }
-      } else {
-        loopCount = 0;
-        if (ct > maxTime) maxTime = ct;
-      }
-      lastTime = ct;
-    }, 5000);
-    return () => clearInterval(check);
-  }, [reconnectKey]);
 
   useEffect(() => {
     const onFs = () => setIsFullscreen(!!document.fullscreenElement);
