@@ -1047,8 +1047,10 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const url = urls[activeCam];
-    if (!url) return;
+    const baseUrl = urls[activeCam];
+    if (!baseUrl) return;
+    // Cache-busting: force fresh playlist on every reconnect
+    const url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}_=${Date.now()}`;
 
     let retryTimeout: any;
     import('hls.js').then(({ default: Hls }) => {
@@ -1063,6 +1065,7 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
           liveBackBufferLength: 120,         // manter 2 min de buffer passado
           enableWorker: true,
           lowLatencyMode: false,             // estabilidade > latencia
+          startPosition: -1,                 // sempre comeca do live edge
         });
         hls.loadSource(url);
         hls.attachMedia(video);
