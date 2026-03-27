@@ -57,6 +57,7 @@ export default function UserManagement() {
     password: '',
     role: 'gestor' as 'admin' | 'gestor' | 'instrutor' | 'financeiro',
     status: 'active' as 'active' | 'inactive',
+    has_apertai: false,
   });
 
   useEffect(() => {
@@ -156,6 +157,7 @@ export default function UserManagement() {
       if (editUserForm.password) updateData.password = editUserForm.password;
       if (editUserForm.role) updateData.role = editUserForm.role;
       if (editUserForm.status) updateData.status = editUserForm.status;
+      updateData.has_apertai = editUserForm.has_apertai;
 
       const response = await monitoringService.updateUser(selectedUser.id, updateData);
 
@@ -200,9 +202,10 @@ export default function UserManagement() {
     setEditUserForm({
       full_name: user.full_name,
       email: user.email,
-      password: '', // Deixar vazio, só atualiza se preencher
+      password: '',
       role: user.role,
       status: user.status,
+      has_apertai: !!(user as any).has_apertai,
     });
     setShowEditModal(true);
   };
@@ -517,6 +520,11 @@ export default function UserManagement() {
                   <option value="inactive">Inativo</option>
                 </select>
               </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem', marginTop: 8 }}>
+                <input type="checkbox" checked={editUserForm.has_apertai} onChange={e => setEditUserForm({ ...editUserForm, has_apertai: e.target.checked })} />
+                <span style={{ color: '#F58A25', fontWeight: 600 }}>Apertai Livestream</span>
+              </label>
             </div>
 
             <div className="mm-footer">
