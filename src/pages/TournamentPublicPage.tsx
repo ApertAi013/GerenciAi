@@ -1065,14 +1065,16 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
 
   return (
     <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
+      <div style={{ aspectRatio: '16/9', overflow: 'hidden', background: '#000' }}>
       <video
         ref={videoRef}
-        style={{ width: '100%', maxHeight: '70vh', background: '#000', display: 'block' }}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'rotate(270deg)' }}
         controls
         muted
         autoPlay
         playsInline
       />
+      </div>
       <div style={{ display: 'flex', gap: 8, padding: '10px 16px', background: 'rgba(0,0,0,0.8)', flexWrap: 'wrap' }}>
         {/* Go Live button */}
         <button

@@ -1916,7 +1916,6 @@ export default function Torneios() {
               {detailTab === 'sponsors' && selectedTournament && (
                 <SponsorsTab tournamentId={selectedTournament.id} />
               )}
-            </div>
           </div>
         </div>
       )}
