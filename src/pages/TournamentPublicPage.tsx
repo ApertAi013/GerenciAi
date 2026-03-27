@@ -1042,6 +1042,7 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
   const cams = Object.entries(urls);
   const [activeCam, setActiveCam] = useState(cams[0]?.[0] || 'cam1');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [reconnectKey, setReconnectKey] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -1110,8 +1111,6 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
     if (document.fullscreenElement) document.exitFullscreen();
     else containerRef.current.requestFullscreen().catch(() => {});
   };
-
-  const [reconnectKey, setReconnectKey] = useState(0);
 
   const btnStyle = (bg: string): React.CSSProperties => ({
     padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
