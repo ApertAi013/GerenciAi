@@ -542,19 +542,9 @@ export default function TournamentPublicPage() {
                     </>
                   )}
                 </div>
-                {/* Stream or 3D Animation */}
+                {/* Stream replaces animation when Apertai is live */}
                 {data.stream && data.stream.status === 'live' && data.stream.urls ? (
-                  <div style={{ position: 'relative' }}>
-                    <HlsPlayer urls={data.stream.urls} rotate90 />
-                    {/* Score overlay on stream */}
-                    <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', padding: '8px 20px', borderRadius: 30, zIndex: 5 }}>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#60A5FA' }}>{match.team1_name || 'Time A'}</span>
-                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#3B82F6' }}>{match.team1_score ?? 0}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>x</span>
-                      <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#EF4444' }}>{match.team2_score ?? 0}</span>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#F87171' }}>{match.team2_name || 'Time B'}</span>
-                    </div>
-                  </div>
+                  <HlsPlayer urls={data.stream.urls} rotate90 />
                 ) : (
                   <LiveMatchAnimation
                     category={category}
@@ -1075,7 +1065,7 @@ function HlsPlayer({ urls, rotate90 }: { urls: Record<string, string>; rotate90?
   return (
     <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
       {rotate90 && (
-        <style>{`.hls-video-rotated { transform: rotate(90deg) scale(1.78); transform-origin: center center; }`}</style>
+        <style>{`.hls-video-rotated { transform: rotate(-90deg) scale(1.78); transform-origin: center center; }`}</style>
       )}
       <video
         ref={videoRef}
