@@ -486,27 +486,41 @@ export default function TournamentPublicPage() {
         {/* Live matches - always at top when they exist */}
         {live_matches && live_matches.length > 0 && (() => {
           const hasStream = data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls;
-          const camMatch = hasStream ? live_matches.find(m => m.stream_camera === activeCam) || live_matches.find(m => !m.stream_camera) : null;
+          // Auto-select camera that has a match
+          const effectiveCam = (hasStream && !live_matches.some(m => m.stream_camera === activeCam))
+            ? (live_matches.find(m => m.stream_camera)?.stream_camera || activeCam)
+            : activeCam;
+          const camMatch = hasStream ? live_matches.find(m => m.stream_camera === effectiveCam) || live_matches.find(m => !m.stream_camera) : null;
           return (
             <div className="tp-live-section">
-              <h2 className="tp-section-title">
-                <span className="tp-live-dot" /> Ao Vivo Agora
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <h2 className="tp-section-title" style={{ margin: 0 }}>
+                  <span className="tp-live-dot" /> Ao Vivo Agora
+                </h2>
+                {hasStream && (
+                  <a href="https://apertai.com.br" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', padding: '4px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}>
+                    Powered by <span style={{ color: '#F58A25', fontWeight: 700 }}>Apertai</span>
+                  </a>
+                )}
+              </div>
               {hasStream ? (
                 <div className="tp-live-card">
-                  <HlsPlayer urls={data.stream.urls} onCameraChange={setActiveCam} />
-                  {/* Score overlay for the match on this camera */}
+                  {/* Match header above player */}
+                  {camMatch && (
+                    <div className="tp-live-card-header">
+                      <span className="tp-live-card-badge"><span className="tp-live-dot" /> AO VIVO</span>
+                      <span className="tp-live-card-info">
+                        #{camMatch.match_number}
+                        {camMatch.court_name ? ` - ${camMatch.court_name}` : ''}
+                        {' - '}{BRACKET_TYPE_LABELS[camMatch.bracket_type] || camMatch.bracket_type}
+                        {camMatch.bracket_type !== 'grand_final' && camMatch.bracket_type !== 'third_place' && ` R${camMatch.round_number}`}
+                      </span>
+                    </div>
+                  )}
+                  <HlsPlayer urls={data.stream.urls} onCameraChange={setActiveCam} initialCam={effectiveCam} />
+                  {/* Score below player */}
                   {camMatch && (
                     <>
-                      <div className="tp-live-card-header" style={{ marginTop: 0 }}>
-                        <span className="tp-live-card-badge"><span className="tp-live-dot" /> AO VIVO</span>
-                        <span className="tp-live-card-info">
-                          #{camMatch.match_number}
-                          {camMatch.court_name ? ` - ${camMatch.court_name}` : ''}
-                          {' - '}{BRACKET_TYPE_LABELS[camMatch.bracket_type] || camMatch.bracket_type}
-                          {camMatch.bracket_type !== 'grand_final' && camMatch.bracket_type !== 'third_place' && ` R${camMatch.round_number}`}
-                        </span>
-                      </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '1.2rem 1rem' }}>
                         <div style={{ flex: 1, textAlign: 'right' }}>
                           <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{camMatch.team1_name || 'A definir'}</div>
@@ -1035,12 +1049,12 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
 
 // ─── Dynamic Pairing Section (animated duo drawing) ───
 // ─── HLS Player for Apertai Stream ───
-function HlsPlayer({ urls, onCameraChange }: { urls: Record<string, string>; onCameraChange?: (cam: string) => void }) {
+function HlsPlayer({ urls, onCameraChange, initialCam }: { urls: Record<string, string>; onCameraChange?: (cam: string) => void; initialCam?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const cams = Object.entries(urls);
-  const [activeCam, setActiveCam] = useState(cams[0]?.[0] || 'cam1');
+  const [activeCam, setActiveCam] = useState(initialCam || cams[0]?.[0] || 'cam1');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [reconnectKey, setReconnectKey] = useState(0);
 
@@ -1190,21 +1204,21 @@ function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; descri
         {all.map(s => (
           <div key={s.id} style={{
             minWidth: '100%', display: 'flex', alignItems: 'center', gap: 14,
-            padding: s.is_master ? '14px 16px' : '10px 16px',
+            padding: s.is_master ? '20px 20px' : '16px 20px',
             background: s.is_master ? 'rgba(245,138,37,0.08)' : 'transparent',
             borderBottom: s.is_master ? '2px solid rgba(245,138,37,0.3)' : 'none',
             boxSizing: 'border-box',
           }}>
-            <img src={s.logo_url} alt={s.name} style={{ height: s.is_master ? 52 : 40, maxWidth: s.is_master ? 130 : 100, objectFit: 'contain', flexShrink: 0 }} />
+            <img src={s.logo_url} alt={s.name} style={{ height: s.is_master ? 100 : 70, maxWidth: s.is_master ? 200 : 160, objectFit: 'contain', flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
                 {s.is_master ? 'Patrocinador Master' : 'Patrocinador'}
               </div>
-              <div style={{ fontSize: s.is_master ? '0.95rem' : '0.85rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: s.is_master ? '1.15rem' : '1rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {s.name}
               </div>
               {s.description && (
-                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {s.description}
                 </div>
               )}
