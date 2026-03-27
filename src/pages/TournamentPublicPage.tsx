@@ -484,96 +484,88 @@ export default function TournamentPublicPage() {
         )}
 
         {/* Live matches - always at top when they exist */}
-        {live_matches && live_matches.length > 0 && (
-          <div className="tp-live-section">
-            <h2 className="tp-section-title">
-              <span className="tp-live-dot" /> Ao Vivo Agora
-            </h2>
-            {/* Stream player (single instance, above match cards) */}
-            {data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls && (
-              <div style={{ marginBottom: 16 }}>
-                <HlsPlayer urls={data.stream.urls} onCameraChange={setActiveCam} />
-                {data.sponsors && data.sponsors.length > 0 && (
-                  <SponsorBar sponsors={data.sponsors} />
-                )}
-              </div>
-            )}
-            {/* Match cards - filtered by active camera when stream is active */}
-            {(data.stream && data.stream.urls
-              ? live_matches.filter(m => !m.stream_camera || m.stream_camera === activeCam)
-              : live_matches
-            ).map(match => (
-              <div key={match.id} className="tp-live-card" style={{ marginBottom: 16 }}>
-                <div className="tp-live-card-header">
-                  <span className="tp-live-card-badge">
-                    <span className="tp-live-dot" />
-                    AO VIVO
-                  </span>
-                  <span className="tp-live-card-info">
-                    #{match.match_number}
-                    {match.court_name ? ` - ${match.court_name}` : ''}
-                    {match.stream_camera ? ` - ${match.stream_camera.replace('cam', 'Cam ')}` : ''}
-                    {' - '}
-                    {BRACKET_TYPE_LABELS[match.bracket_type] || match.bracket_type}
-                    {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && ` R${match.round_number}`}
-                  </span>
-                </div>
-                <div className="tp-live-match-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '1.5rem 1rem' }}>
-                  <div style={{ flex: 1, textAlign: 'right' }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>
-                      {match.team1_name || 'A definir'}
-                    </div>
-                    <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-                    <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{match.team1_score ?? 0}</span>
-                    <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>x</span>
-                    <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{match.team2_score ?? 0}</span>
-                  </div>
-                  <div style={{ flex: 1, textAlign: 'left' }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>
-                      {match.team2_name || 'A definir'}
-                    </div>
-                    <div style={{ width: 40, height: 3, background: '#EF4444', borderRadius: 2 }} />
-                  </div>
-                </div>
-                <div className="tp-live-match-details">
-                  <span className="tp-live-detail-item">
-                    Jogo #{match.match_number}
-                  </span>
-                  <span className="tp-live-detail-separator" />
-                  <span className="tp-live-detail-item">
-                    {BRACKET_TYPE_LABELS[match.bracket_type] || match.bracket_type}
-                  </span>
-                  {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && (
+        {live_matches && live_matches.length > 0 && (() => {
+          const hasStream = data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls;
+          const camMatch = hasStream ? live_matches.find(m => m.stream_camera === activeCam) || live_matches.find(m => !m.stream_camera) : null;
+          return (
+            <div className="tp-live-section">
+              <h2 className="tp-section-title">
+                <span className="tp-live-dot" /> Ao Vivo Agora
+              </h2>
+              {hasStream ? (
+                <div className="tp-live-card">
+                  <HlsPlayer urls={data.stream.urls} onCameraChange={setActiveCam} />
+                  {/* Score overlay for the match on this camera */}
+                  {camMatch && (
                     <>
-                      <span className="tp-live-detail-separator" />
-                      <span className="tp-live-detail-item">Rodada {match.round_number}</span>
+                      <div className="tp-live-card-header" style={{ marginTop: 0 }}>
+                        <span className="tp-live-card-badge"><span className="tp-live-dot" /> AO VIVO</span>
+                        <span className="tp-live-card-info">
+                          #{camMatch.match_number}
+                          {camMatch.court_name ? ` - ${camMatch.court_name}` : ''}
+                          {' - '}{BRACKET_TYPE_LABELS[camMatch.bracket_type] || camMatch.bracket_type}
+                          {camMatch.bracket_type !== 'grand_final' && camMatch.bracket_type !== 'third_place' && ` R${camMatch.round_number}`}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '1.2rem 1rem' }}>
+                        <div style={{ flex: 1, textAlign: 'right' }}>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{camMatch.team1_name || 'A definir'}</div>
+                          <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{camMatch.team1_score ?? 0}</span>
+                          <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>x</span>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{camMatch.team2_score ?? 0}</span>
+                        </div>
+                        <div style={{ flex: 1, textAlign: 'left' }}>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{camMatch.team2_name || 'A definir'}</div>
+                          <div style={{ width: 40, height: 3, background: '#EF4444', borderRadius: 2 }} />
+                        </div>
+                      </div>
                     </>
                   )}
-                  {match.court_name && (
-                    <>
-                      <span className="tp-live-detail-separator" />
-                      <span className="tp-live-detail-item">{match.court_name}</span>
-                    </>
+                  {!camMatch && (
+                    <div style={{ padding: '16px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+                      Nenhuma partida nesta quadra
+                    </div>
+                  )}
+                  {data.sponsors && data.sponsors.length > 0 && (
+                    <SponsorBar sponsors={data.sponsors} />
                   )}
                 </div>
-                {/* Animation only when no stream */}
-                {!(data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls) && (
-                  <LiveMatchAnimation
-                    category={category}
-                    team1Name={match.team1_name || 'Time A'}
-                    team2Name={match.team2_name || 'Time B'}
-                    team1Score={match.team1_score ?? 0}
-                    team2Score={match.team2_score ?? 0}
-                    isLive={true}
-                    teamSize={tournament.team_size}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              ) : (
+                /* No stream - show each match with animation */
+                live_matches.map(match => (
+                  <div key={match.id} className="tp-live-card" style={{ marginBottom: 16 }}>
+                    <div className="tp-live-card-header">
+                      <span className="tp-live-card-badge"><span className="tp-live-dot" /> AO VIVO</span>
+                      <span className="tp-live-card-info">
+                        #{match.match_number}{match.court_name ? ` - ${match.court_name}` : ''}{' - '}{BRACKET_TYPE_LABELS[match.bracket_type] || match.bracket_type}
+                        {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && ` R${match.round_number}`}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '1.5rem 1rem' }}>
+                      <div style={{ flex: 1, textAlign: 'right' }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{match.team1_name || 'A definir'}</div>
+                        <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                        <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{match.team1_score ?? 0}</span>
+                        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>x</span>
+                        <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{match.team2_score ?? 0}</span>
+                      </div>
+                      <div style={{ flex: 1, textAlign: 'left' }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{match.team2_name || 'A definir'}</div>
+                        <div style={{ width: 40, height: 3, background: '#EF4444', borderRadius: 2 }} />
+                      </div>
+                    </div>
+                    <LiveMatchAnimation category={category} team1Name={match.team1_name || 'Time A'} team2Name={match.team2_name || 'Time B'} team1Score={match.team1_score ?? 0} team2Score={match.team2_score ?? 0} isLive={true} teamSize={tournament.team_size} />
+                  </div>
+                ))
+              )}
+            </div>
+          );
+        })()}
 
         {/* Podium - show when tournament is finished and podium data exists */}
         {isFinished && podium && podium.length > 0 && (
