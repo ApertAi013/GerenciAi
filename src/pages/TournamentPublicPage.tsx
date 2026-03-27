@@ -480,6 +480,17 @@ export default function TournamentPublicPage() {
           />
         )}
 
+        {/* Apertai Live Stream Player */}
+        {data.stream && data.stream.status === 'live' && data.stream.urls && (
+          <div style={{ margin: '24px 0' }}>
+            <h2 className="tp-section-title">
+              <span className="tp-live-dot" style={{ width: 8, height: 8, marginRight: 8 }} />
+              Transmissao ao Vivo
+            </h2>
+            <HlsPlayer urls={data.stream.urls} />
+          </div>
+        )}
+
         {/* Live matches - always at top when they exist */}
         {live_matches && live_matches.length > 0 && (
           <div className="tp-live-section">
@@ -1024,6 +1035,72 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
 }
 
 // ─── Dynamic Pairing Section (animated duo drawing) ───
+// ─── HLS Player for Apertai Stream ───
+function HlsPlayer({ urls }: { urls: Record<string, string> }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<any>(null);
+  const cams = Object.entries(urls);
+  const [activeCam, setActiveCam] = useState(cams[0]?.[0] || 'cam1');
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const url = urls[activeCam];
+    if (!url) return;
+
+    // Dynamic import hls.js to avoid SSR issues
+    import('hls.js').then(({ default: Hls }) => {
+      if (hlsRef.current) { hlsRef.current.destroy(); }
+
+      if (Hls.isSupported()) {
+        const hls = new Hls({ liveSyncDurationCount: 3, liveMaxLatencyDurationCount: 6 });
+        hls.loadSource(url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+        hlsRef.current = hls;
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari native HLS
+        video.src = url;
+        video.play().catch(() => {});
+      }
+    });
+
+    return () => { if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; } };
+  }, [activeCam, urls]);
+
+  return (
+    <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000' }}>
+      <video
+        ref={videoRef}
+        style={{ width: '100%', aspectRatio: '16/9', background: '#000' }}
+        controls
+        muted
+        autoPlay
+        playsInline
+      />
+      {cams.length > 1 && (
+        <div style={{ display: 'flex', gap: 8, padding: '10px 16px', background: 'rgba(0,0,0,0.8)' }}>
+          {cams.map(([camId, _url]) => (
+            <button
+              key={camId}
+              onClick={() => setActiveCam(camId)}
+              style={{
+                padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)',
+                color: activeCam === camId ? '#fff' : '#94a3b8',
+                fontWeight: 600, fontSize: '0.8rem',
+              }}
+            >
+              {camId.replace('cam', 'Camera ')}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DynamicPairingSection({
   individualPlayers,
   generatedPairs,

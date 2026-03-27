@@ -293,4 +293,35 @@ export const tournamentService = {
     const response = await api.post(`/api/tournaments/${tournamentId}/live-draw-finish`);
     return response.data;
   },
+
+  // ─── Stream ───
+  async startStream(tournamentId: number): Promise<any> {
+    const response = await api.post('/api/stream/start', { tournament_id: tournamentId });
+    return response.data;
+  },
+
+  async stopStream(sessionId: number): Promise<any> {
+    const response = await api.post('/api/stream/stop', { session_id: sessionId });
+    return response.data;
+  },
+
+  async pauseStream(sessionId: number): Promise<any> {
+    const response = await api.post('/api/stream/pause', { session_id: sessionId });
+    return response.data;
+  },
+
+  async showSponsors(sessionId: number): Promise<any> {
+    const response = await api.post('/api/stream/sponsor', { session_id: sessionId });
+    return response.data;
+  },
+
+  async getStreamStatus(tournamentId: number): Promise<any> {
+    const response = await api.get(`/api/stream/status/${tournamentId}`);
+    return response.data;
+  },
+
+  async generatePiToken(): Promise<any> {
+    const response = await api.post('/api/stream/generate-pi-token');
+    return response.data;
+  },
 };

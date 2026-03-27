@@ -55,6 +55,7 @@ function CreateModal({ editingTournament, onClose, onSave }: {
   const [pointsLoss, setPointsLoss] = useState(String(editingTournament?.points_loss ?? 0));
   const [category, setCategory] = useState(editingTournament?.category || '');
   const [isPublic, setIsPublic] = useState(editingTournament?.is_public || false);
+  const [streamMode, setStreamMode] = useState((editingTournament as any)?.stream_mode || 'none');
   const [pairingMode, setPairingMode] = useState(editingTournament?.pairing_mode || 'fixed');
 
   const handleSubmit = async () => {
@@ -80,6 +81,7 @@ function CreateModal({ editingTournament, onClose, onSave }: {
       formData.append('third_place_match', String(thirdPlaceMatch));
       if (category) formData.append('category', category);
       formData.append('is_public', String(isPublic));
+      if (streamMode !== 'none') formData.append('stream_mode', streamMode);
       if (Number(teamSize) > 1) formData.append('pairing_mode', pairingMode);
       if (format === 'group_stage') {
         formData.append('num_groups', numGroups);
@@ -310,6 +312,12 @@ function CreateModal({ editingTournament, onClose, onSave }: {
               <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} />
               Torneio Público (gera link ao vivo para espectadores)
             </label>
+            {isPublic && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', marginLeft: 20 }}>
+                <input type="checkbox" checked={streamMode === 'apertai'} onChange={e => setStreamMode(e.target.checked ? 'apertai' : 'none')} />
+                <span style={{ color: '#F58A25', fontWeight: 600 }}>Transmissao ao vivo Apertai</span>
+              </label>
+            )}
           </div>
         </div>
         <div className="mm-footer">
@@ -318,6 +326,110 @@ function CreateModal({ editingTournament, onClose, onSave }: {
             {saving ? <FontAwesomeIcon icon={faSpinner} spin /> : editingTournament ? 'Salvar' : 'Criar Torneio'}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Stream Controls Component ───
+function StreamControls({ tournamentId }: { tournamentId: number }) {
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStatus = async () => {
+    try {
+      const res = await tournamentService.getStreamStatus(tournamentId);
+      setSession(res.data);
+    } catch {} finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchStatus(); const iv = setInterval(fetchStatus, 5000); return () => clearInterval(iv); }, [tournamentId]);
+
+  const handleStart = async () => {
+    try {
+      const res = await tournamentService.startStream(tournamentId);
+      toast.success('Transmissao iniciada!');
+      setSession({ ...session, id: res.data?.session_id, status: 'live' });
+    } catch (err: any) { toast.error(err.response?.data?.message || 'Erro ao iniciar'); }
+  };
+
+  const handleStop = async () => {
+    if (!session?.id || !confirm('Encerrar transmissao?')) return;
+    try {
+      await tournamentService.stopStream(session.id);
+      toast.success('Transmissao encerrada');
+      setSession(null);
+    } catch (err: any) { toast.error(err.response?.data?.message || 'Erro'); }
+  };
+
+  const handlePause = async () => {
+    if (!session?.id) return;
+    try {
+      const res = await tournamentService.pauseStream(session.id);
+      toast.success(res.message);
+      setSession({ ...session, status: res.data?.status });
+    } catch (err: any) { toast.error(err.response?.data?.message || 'Erro'); }
+  };
+
+  const handleSponsor = async () => {
+    if (!session?.id) return;
+    try {
+      const res = await tournamentService.showSponsors(session.id);
+      toast.success(res.message);
+      setSession({ ...session, status: res.data?.status });
+    } catch (err: any) { toast.error(err.response?.data?.message || 'Erro'); }
+  };
+
+  if (loading) return null;
+
+  return (
+    <div style={{ marginTop: 16, padding: '16px', borderRadius: 12, background: 'rgba(245,138,37,0.06)', border: '1px solid rgba(245,138,37,0.15)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <FontAwesomeIcon icon={faCamera} style={{ color: '#F58A25' }} />
+        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#F58A25' }}>Transmissao Apertai</span>
+        {session && session.status !== 'ended' && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', fontWeight: 700, color: session.status === 'live' ? '#ef4444' : session.status === 'paused' ? '#d97706' : '#64748b', background: session.status === 'live' ? 'rgba(239,68,68,0.1)' : 'rgba(0,0,0,0.05)', padding: '2px 8px', borderRadius: 10 }}>
+            {session.status === 'live' && <><span className="torneio-live-dot" /> AO VIVO</>}
+            {session.status === 'paused' && 'PAUSADO'}
+            {session.status === 'sponsor' && 'PATROCINADORES'}
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {(!session || session.status === 'ended') && (
+          <button onClick={handleStart} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+            <FontAwesomeIcon icon={faPlay} /> Iniciar Transmissao
+          </button>
+        )}
+        {session && session.status === 'live' && (
+          <>
+            <button onClick={handlePause} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-secondary, #1a1a2e)', color: 'inherit', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+              <FontAwesomeIcon icon={faClock} /> Pausar
+            </button>
+            <button onClick={handleSponsor} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #F58A25', background: 'rgba(245,138,37,0.08)', color: '#F58A25', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+              Patrocinadores
+            </button>
+            <button onClick={handleStop} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+              <FontAwesomeIcon icon={faStop} /> Encerrar
+            </button>
+          </>
+        )}
+        {session && session.status === 'paused' && (
+          <>
+            <button onClick={handlePause} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+              <FontAwesomeIcon icon={faPlay} /> Retomar
+            </button>
+            <button onClick={handleStop} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+              <FontAwesomeIcon icon={faStop} /> Encerrar
+            </button>
+          </>
+        )}
+        {session && session.status === 'sponsor' && (
+          <button onClick={handleSponsor} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#10b981', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+            <FontAwesomeIcon icon={faPlay} /> Voltar ao Vivo
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1169,6 +1281,11 @@ export default function Torneios() {
                           Excluir permanentemente
                         </button>
                       </div>
+
+                      {/* Apertai Stream Controls */}
+                      {(selectedTournament as any).stream_mode === 'apertai' && selectedTournament.status === 'live' && (
+                        <StreamControls tournamentId={selectedTournament.id} />
+                      )}
                     </div>
                   </div>
 
