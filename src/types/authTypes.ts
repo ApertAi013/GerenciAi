@@ -26,6 +26,7 @@ export interface User {
   business_description?: string;
   logo_url?: string;
   onboarding_completed?: boolean;
+  has_apertai?: boolean;
   arenas?: Arena[];
   current_arena_id?: number;
 }

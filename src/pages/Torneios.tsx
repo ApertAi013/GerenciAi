@@ -9,6 +9,7 @@ import { tournamentService } from '../services/tournamentService';
 import type { Tournament, TournamentTeam, BracketData, TournamentMatch, TournamentRanking, TournamentGroup } from '../services/tournamentService';
 import BracketViewer from '../components/BracketViewer';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../store/authStore';
 import '../styles/Torneios.css';
 import '../styles/Bracket.css';
 import '../styles/ModernModal.css';
@@ -54,8 +55,12 @@ function CreateModal({ editingTournament, onClose, onSave }: {
   const [pointsDraw, setPointsDraw] = useState(String(editingTournament?.points_draw ?? 1));
   const [pointsLoss, setPointsLoss] = useState(String(editingTournament?.points_loss ?? 0));
   const [category, setCategory] = useState(editingTournament?.category || '');
-  const [isPublic, setIsPublic] = useState(editingTournament?.is_public || false);
-  const [streamMode, setStreamMode] = useState((editingTournament as any)?.stream_mode || 'none');
+  const user = useAuthStore(s => s.user);
+  const isApertaiUser = !!(user as any)?.has_apertai;
+  const [isPrivate, setIsPrivate] = useState(editingTournament ? !editingTournament.is_public : false);
+  const [streamMode, setStreamMode] = useState(
+    editingTournament?.stream_mode || (isApertaiUser ? 'apertai' : 'none')
+  );
   const [pairingMode, setPairingMode] = useState(editingTournament?.pairing_mode || 'fixed');
 
   const handleSubmit = async () => {
@@ -80,7 +85,7 @@ function CreateModal({ editingTournament, onClose, onSave }: {
       formData.append('show_scores_to_students', String(showScores));
       formData.append('third_place_match', String(thirdPlaceMatch));
       if (category) formData.append('category', category);
-      formData.append('is_public', String(isPublic));
+      formData.append('is_public', String(!isPrivate));
       if (streamMode !== 'none') formData.append('stream_mode', streamMode);
       if (Number(teamSize) > 1) formData.append('pairing_mode', pairingMode);
       if (format === 'group_stage') {
@@ -309,14 +314,18 @@ function CreateModal({ editingTournament, onClose, onSave }: {
               Disputa de 3º lugar
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-              <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} />
-              Torneio Público (gera link ao vivo para espectadores)
+              <input type="checkbox" checked={isPrivate} onChange={e => setIsPrivate(e.target.checked)} />
+              Campeonato privado (nao aparece no link publico)
             </label>
-            {isPublic && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', marginLeft: 20 }}>
-                <input type="checkbox" checked={streamMode === 'apertai'} onChange={e => setStreamMode(e.target.checked ? 'apertai' : 'none')} />
-                <span style={{ color: '#F58A25', fontWeight: 600 }}>Transmissao ao vivo Apertai</span>
-              </label>
+            {isPrivate && (
+              <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)', fontSize: '0.8rem', color: '#eab308', marginLeft: 20 }}>
+                Campeonatos privados nao geram link publico e nao aparecem na pagina da arena.
+              </div>
+            )}
+            {isApertaiUser && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 20, fontSize: '0.85rem', color: '#F58A25' }}>
+                <FontAwesomeIcon icon={faCamera} /> Transmissao ao vivo Apertai ativada automaticamente
+              </div>
             )}
           </div>
         </div>
