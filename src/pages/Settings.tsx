@@ -6,6 +6,7 @@ import { platformBillingService } from '../services/platformBillingService';
 import { tournamentService } from '../services/tournamentService';
 import { api } from '../services/api';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '../store/authStore';
 import '../styles/Settings.css';
 
 function ApertaiCard() {
@@ -226,8 +227,8 @@ export default function Settings() {
           )}
         </div>
 
-        {/* Apertai Livestream */}
-        <ApertaiCard />
+        {/* Apertai Livestream — admin only */}
+        {useAuthStore.getState().user?.role === 'admin' && <ApertaiCard />}
 
         {/* Quick Links */}
         <div className="settings-card">
