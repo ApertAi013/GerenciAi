@@ -543,9 +543,14 @@ export default function TournamentPublicPage() {
                     </>
                   )}
                 </div>
-                {/* Stream replaces animation when Apertai is live */}
-                {data.stream && data.stream.status === 'live' && data.stream.urls ? (
-                  <HlsPlayer urls={data.stream.urls} />
+                {/* Stream replaces animation when Apertai is live or sponsor */}
+                {data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls ? (
+                  <>
+                    <HlsPlayer urls={data.stream.urls} />
+                    {data.stream.status === 'sponsor' && data.sponsors && data.sponsors.length > 0 && (
+                      <SponsorOverlay sponsors={data.sponsors} />
+                    )}
+                  </>
                 ) : (
                   <LiveMatchAnimation
                     category={category}
@@ -1031,42 +1036,94 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
 // ─── Dynamic Pairing Section (animated duo drawing) ───
 // ─── HLS Player for Apertai Stream ───
 function HlsPlayer({ urls }: { urls: Record<string, string> }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const cams = Object.entries(urls);
   const [activeCam, setActiveCam] = useState(cams[0]?.[0] || 'cam1');
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
     const url = urls[activeCam];
     if (!url) return;
 
-    // Dynamic import hls.js to avoid SSR issues
+    let retryTimeout: any;
     import('hls.js').then(({ default: Hls }) => {
       if (hlsRef.current) { hlsRef.current.destroy(); }
-
       if (Hls.isSupported()) {
-        const hls = new Hls({ liveSyncDurationCount: 3, liveMaxLatencyDurationCount: 6 });
+        const hls = new Hls({ liveSyncDurationCount: 3, liveMaxLatencyDurationCount: 6, manifestLoadingMaxRetry: 6, levelLoadingMaxRetry: 6 });
         hls.loadSource(url);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+        hls.on(Hls.Events.ERROR, (_e: any, data: any) => {
+          if (data.fatal) {
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              hls.startLoad();
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              hls.recoverMediaError();
+            } else {
+              retryTimeout = setTimeout(() => setReconnectKey(k => k + 1), 3000);
+            }
+          }
+        });
         hlsRef.current = hls;
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Safari native HLS
         video.src = url;
         video.play().catch(() => {});
       }
     });
+    return () => {
+      clearTimeout(retryTimeout);
+      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+    };
+  }, [activeCam, urls[activeCam], reconnectKey]);
 
-    return () => { if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; } };
-  }, [activeCam, urls[activeCam]]);
+  // Stall detection: if video doesn't progress for 15s, auto-reconnect
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    let lastTime = v.currentTime;
+    let stallCount = 0;
+    const check = setInterval(() => {
+      if (v.paused || v.ended) { stallCount = 0; return; }
+      if (Math.abs(v.currentTime - lastTime) < 0.1) {
+        stallCount++;
+        if (stallCount >= 3) { stallCount = 0; setReconnectKey(k => k + 1); }
+      } else {
+        stallCount = 0;
+      }
+      lastTime = v.currentTime;
+    }, 5000);
+    return () => clearInterval(check);
+  }, [reconnectKey]);
+
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    if (document.fullscreenElement) document.exitFullscreen();
+    else containerRef.current.requestFullscreen().catch(() => {});
+  };
+
+  const [reconnectKey, setReconnectKey] = useState(0);
+
+  const btnStyle = (bg: string): React.CSSProperties => ({
+    padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+    background: bg, color: '#fff', fontWeight: 600, fontSize: '0.8rem',
+  });
 
   return (
-    <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
-      <div style={{ aspectRatio: '16/9', overflow: 'hidden', background: 'transparent', position: 'relative', cursor: 'pointer' }}
-        onClick={() => { if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }}>
+    <div ref={containerRef} style={{ borderRadius: isFullscreen ? 0 : 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
+      <div
+        style={{ aspectRatio: isFullscreen ? undefined : '4/3', height: isFullscreen ? 'calc(100vh - 44px)' : undefined, overflow: 'hidden', background: '#000', position: 'relative', cursor: 'pointer' }}
+        onClick={() => { if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }}
+      >
         <video
           ref={videoRef}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'rotate(270deg)' }}
@@ -1075,48 +1132,87 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
           playsInline
         />
       </div>
-      <div style={{ display: 'flex', gap: 8, padding: '8px 16px', background: 'rgba(0,0,0,0.85)', flexWrap: 'wrap', alignItems: 'center' }}>
-        {/* Go Live button */}
+      <div style={{ display: 'flex', gap: 8, padding: '8px 12px', background: 'rgba(0,0,0,0.85)', flexWrap: 'wrap', alignItems: 'center' }}>
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            const v = videoRef.current;
-            if (v) {
-              // Jump to live edge
-              if (v.buffered.length > 0) {
-                v.currentTime = v.buffered.end(v.buffered.length - 1) - 0.5;
-              }
-              v.play().catch(() => {});
-            }
-          }}
-          style={{ padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 4 }}
+          onClick={(e) => { e.stopPropagation(); setReconnectKey(k => k + 1); }}
+          style={{ ...btnStyle('#ef4444'), fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}
         >
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'tpPulse 1.5s infinite' }} /> AO VIVO
         </button>
-        {/* Play/Pause */}
         <button
           onClick={(e) => { e.stopPropagation(); if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }}
-          style={{ padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.8rem' }}
+          style={btnStyle('rgba(255,255,255,0.1)')}
         >
-          ⏯
+          {'\u23EF'}
         </button>
-
-        {/* Camera switch */}
-        {cams.length > 1 && cams.map(([camId, _url]) => (
+        <button onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} style={btnStyle('rgba(255,255,255,0.1)')}>
+          {isFullscreen ? '\u2716' : '\u26F6'}
+        </button>
+        {cams.length > 1 && cams.map(([camId]) => (
           <button
             key={camId}
             onClick={() => setActiveCam(camId)}
-            style={{
-              padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)',
-              color: activeCam === camId ? '#fff' : '#94a3b8',
-              fontWeight: 600, fontSize: '0.8rem',
-            }}
+            style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)')}
           >
-            {camId.replace('cam', 'Camera ')}
+            {camId.replace('cam', 'Cam ')}
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ─── Sponsor Overlay (shown outside player when gestor activates) ───
+function SponsorOverlay({ sponsors }: { sponsors: { id: number; name: string; logo_url: string; is_master: boolean }[] }) {
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const sorted = [...sponsors].sort((a, b) => (b.is_master ? 1 : 0) - (a.is_master ? 1 : 0));
+
+  useEffect(() => {
+    if (sorted.length === 0) return;
+    const dur = sorted[currentIdx]?.is_master ? 4000 : 2500;
+    const timer = setTimeout(() => setCurrentIdx(i => (i + 1) % sorted.length), dur);
+    return () => clearTimeout(timer);
+  }, [currentIdx, sorted.length]);
+
+  if (!sorted.length) return null;
+  const sponsor = sorted[currentIdx];
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.95))',
+      borderRadius: 16, padding: '24px 16px', textAlign: 'center', marginTop: 8,
+      animation: 'tpFadeIn 0.5s ease',
+    }}>
+      <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 2, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
+        {sponsor.is_master ? 'Patrocinador Master' : 'Patrocinador'}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: sponsor.is_master ? 120 : 80 }}>
+        <img
+          key={sponsor.id}
+          src={sponsor.logo_url}
+          alt={sponsor.name}
+          style={{
+            maxHeight: sponsor.is_master ? 120 : 80,
+            maxWidth: '80%',
+            objectFit: 'contain',
+            animation: 'tpFadeIn 0.5s ease',
+          }}
+        />
+      </div>
+      <div style={{ fontSize: sponsor.is_master ? '1rem' : '0.85rem', fontWeight: 700, color: '#fff', marginTop: 8 }}>
+        {sponsor.name}
+      </div>
+      {sorted.length > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 12 }}>
+          {sorted.map((s, i) => (
+            <div key={s.id} style={{
+              width: i === currentIdx ? 20 : 6, height: 6, borderRadius: 3,
+              background: i === currentIdx ? '#F58A25' : 'rgba(255,255,255,0.2)',
+              transition: 'all 0.3s ease',
+            }} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
