@@ -1061,7 +1061,7 @@ function HlsPlayer({ urls }: { urls: Record<string, string> }) {
     });
 
     return () => { if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; } };
-  }, [activeCam, urls]);
+  }, [activeCam, urls[activeCam]]);
 
   return (
     <div style={{ borderRadius: 16, overflow: 'hidden', background: '#000', position: 'relative' }}>
