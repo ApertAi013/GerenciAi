@@ -10,7 +10,20 @@ interface BracketViewerProps {
   interactive?: boolean;
 }
 
-function MatchCard({ match, onClick, interactive }: { match: TournamentMatch; onClick?: (m: TournamentMatch) => void; interactive?: boolean }) {
+function getPlaceholder(match: TournamentMatch, slot: 1 | 2, allMatches?: TournamentMatch[]): string {
+  if (!allMatches) return 'A definir';
+  const feeder = allMatches.find(m =>
+    (slot === 1 && m.next_winner_match_id === match.id && m.next_winner_slot === 1) ||
+    (slot === 1 && m.next_loser_match_id === match.id && m.next_loser_slot === 1) ||
+    (slot === 2 && m.next_winner_match_id === match.id && m.next_winner_slot === 2) ||
+    (slot === 2 && m.next_loser_match_id === match.id && m.next_loser_slot === 2)
+  );
+  if (!feeder) return 'A definir';
+  const isWinner = feeder.next_winner_match_id === match.id && feeder.next_winner_slot === slot;
+  return isWinner ? `Venc. #${feeder.match_number}` : `Perd. #${feeder.match_number}`;
+}
+
+function MatchCard({ match, onClick, interactive, allMatches }: { match: TournamentMatch; onClick?: (m: TournamentMatch) => void; interactive?: boolean; allMatches?: TournamentMatch[] }) {
   const hasBothTeams = !!match.team1_id && !!match.team2_id;
   const isClickable = interactive && match.status !== 'completed' && !match.is_bye && hasBothTeams;
   const isReadyToPlay = hasBothTeams && match.status === 'pending' && !match.is_bye;
@@ -26,7 +39,7 @@ function MatchCard({ match, onClick, interactive }: { match: TournamentMatch; on
 
         <div className={`bracket-match-team ${match.winner_id && match.winner_id === match.team1_id ? 'winner' : ''}`}>
           <span className={`bracket-match-team-name ${!match.team1_name ? 'empty' : ''}`}>
-            {match.team1_name || 'A definir'}
+            {match.team1_name || getPlaceholder(match, 1, allMatches)}
           </span>
           {match.team1_score !== null && match.team1_score !== undefined && (
             <span className="bracket-match-team-score">{match.team1_score}</span>
@@ -34,7 +47,7 @@ function MatchCard({ match, onClick, interactive }: { match: TournamentMatch; on
         </div>
         <div className={`bracket-match-team ${match.winner_id && match.winner_id === match.team2_id ? 'winner' : ''}`}>
           <span className={`bracket-match-team-name ${!match.team2_name ? 'empty' : ''}`}>
-            {match.team2_name || 'A definir'}
+            {match.team2_name || getPlaceholder(match, 2, allMatches)}
           </span>
           {match.team2_score !== null && match.team2_score !== undefined && (
             <span className="bracket-match-team-score">{match.team2_score}</span>
@@ -62,6 +75,14 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
 
   const hasLosers = losers && losers.length > 0 && losers.some(r => r && r.length > 0);
 
+  // Collect all matches for placeholder resolution
+  const allMatches: TournamentMatch[] = [
+    ...(winners?.flat() || []),
+    ...(losers?.flat() || []),
+    ...(grandFinal ? [grandFinal] : []),
+    ...(thirdPlace ? [thirdPlace] : []),
+  ];
+
   return (
     <div className="bracket-container">
       {/* Main layout: Winners → Center (Finals) ← Losers (mirrored) */}
@@ -78,7 +99,7 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
                       {getWinnersLabel(roundIdx, winners.length)}
                     </div>
                     {round && round.map(match => (
-                      <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} />
+                      <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} allMatches={allMatches} />
                     ))}
                   </div>
                 ))}
@@ -95,7 +116,7 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
                 <div className="bracket-grand-final">
                   <div>
                     <div className="bracket-gf-label">Grande Final</div>
-                    <MatchCard match={grandFinal} onClick={onMatchClick} interactive={interactive} />
+                    <MatchCard match={grandFinal} onClick={onMatchClick} interactive={interactive} allMatches={allMatches} />
                   </div>
                 </div>
               </div>
@@ -105,7 +126,7 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
                 <div className="bracket-grand-final">
                   <div>
                     <div className="bracket-gf-label" style={{ color: '#d97706' }}>Disputa de 3º Lugar</div>
-                    <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} />
+                    <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} allMatches={allMatches} />
                   </div>
                 </div>
               </div>
@@ -127,7 +148,7 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
                         {getLosersLabel(actualIdx, losers.length)}
                       </div>
                       {round.map(match => (
-                        <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} />
+                        <MatchCard key={match.id} match={match} onClick={onMatchClick} interactive={interactive} allMatches={allMatches} />
                       ))}
                     </div>
                   ) : null;
@@ -146,7 +167,7 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
               <div className="bracket-grand-final">
                 <div>
                   <div className="bracket-gf-label">Grande Final</div>
-                  <MatchCard match={grandFinal} onClick={onMatchClick} interactive={interactive} />
+                  <MatchCard match={grandFinal} onClick={onMatchClick} interactive={interactive} allMatches={allMatches} />
                 </div>
               </div>
             </div>
@@ -156,7 +177,7 @@ export default function BracketViewer({ winners, losers, grandFinal, thirdPlace,
               <div className="bracket-grand-final">
                 <div>
                   <div className="bracket-gf-label" style={{ color: '#d97706' }}>Disputa de 3º Lugar</div>
-                  <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} />
+                  <MatchCard match={thirdPlace} onClick={onMatchClick} interactive={interactive} allMatches={allMatches} />
                 </div>
               </div>
             </div>
