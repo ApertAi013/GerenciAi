@@ -1633,17 +1633,27 @@ export default function Torneios() {
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                             {individualPlayers.filter((p: any) => p.side === 'left').map((p: any) => (
-                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: p.eliminated ? 'rgba(239,68,68,0.06)' : 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', opacity: p.eliminated ? 0.5 : 1 }}>
-                                <span style={{ fontSize: '0.9rem', fontWeight: 500, textDecoration: p.eliminated ? 'line-through' : 'none' }}>
+                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: p.eliminated ? 'rgba(239,68,68,0.06)' : p.is_seed ? 'rgba(251,191,36,0.08)' : 'var(--bg-secondary, #f8fafc)', border: `1px solid ${p.is_seed ? 'rgba(251,191,36,0.3)' : 'var(--border-color, #e2e8f0)'}`, opacity: p.eliminated ? 0.5 : 1 }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: p.is_seed ? 700 : 500, textDecoration: p.eliminated ? 'line-through' : 'none' }}>
+                                  {p.is_seed && <FontAwesomeIcon icon={faMedal} style={{ color: '#fbbf24', marginRight: 4, fontSize: '0.75rem' }} />}
                                   {p.player_name}
                                   {p.total_losses > 0 && <span style={{ fontSize: '0.7rem', marginLeft: 6, color: p.total_losses >= 2 ? '#ef4444' : '#d97706' }}>{p.total_losses}D</span>}
                                 </span>
-                                <button
-                                  onClick={() => handleRemoveIndividualPlayer(p.id)}
-                                  style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
-                                >
-                                  x
-                                </button>
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <button
+                                    onClick={async () => { await tournamentService.toggleSeed(selectedTournament!.id, p.id); loadIndividualPlayers(selectedTournament!.id); }}
+                                    title={p.is_seed ? 'Remover cabeca de chave' : 'Definir cabeca de chave'}
+                                    style={{ background: p.is_seed ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.05)', color: p.is_seed ? '#fbbf24' : '#94a3b8', border: `1px solid ${p.is_seed ? 'rgba(251,191,36,0.3)' : 'transparent'}`, borderRadius: 6, padding: '2px 6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 700 }}
+                                  >
+                                    <FontAwesomeIcon icon={faMedal} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleRemoveIndividualPlayer(p.id)}
+                                    style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+                                  >
+                                    x
+                                  </button>
+                                </div>
                               </div>
                             ))}
                             {individualPlayers.filter((p: any) => p.side === 'left').length === 0 && (
@@ -1672,17 +1682,27 @@ export default function Torneios() {
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                             {individualPlayers.filter((p: any) => p.side === 'right').map((p: any) => (
-                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: p.eliminated ? 'rgba(239,68,68,0.06)' : 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', opacity: p.eliminated ? 0.5 : 1 }}>
-                                <span style={{ fontSize: '0.9rem', fontWeight: 500, textDecoration: p.eliminated ? 'line-through' : 'none' }}>
+                              <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 8, background: p.eliminated ? 'rgba(239,68,68,0.06)' : p.is_seed ? 'rgba(251,191,36,0.08)' : 'var(--bg-secondary, #f8fafc)', border: `1px solid ${p.is_seed ? 'rgba(251,191,36,0.3)' : 'var(--border-color, #e2e8f0)'}`, opacity: p.eliminated ? 0.5 : 1 }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: p.is_seed ? 700 : 500, textDecoration: p.eliminated ? 'line-through' : 'none' }}>
+                                  {p.is_seed && <FontAwesomeIcon icon={faMedal} style={{ color: '#fbbf24', marginRight: 4, fontSize: '0.75rem' }} />}
                                   {p.player_name}
                                   {p.total_losses > 0 && <span style={{ fontSize: '0.7rem', marginLeft: 6, color: p.total_losses >= 2 ? '#ef4444' : '#d97706' }}>{p.total_losses}D</span>}
                                 </span>
-                                <button
-                                  onClick={() => handleRemoveIndividualPlayer(p.id)}
-                                  style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
-                                >
-                                  x
-                                </button>
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  <button
+                                    onClick={async () => { await tournamentService.toggleSeed(selectedTournament!.id, p.id); loadIndividualPlayers(selectedTournament!.id); }}
+                                    title={p.is_seed ? 'Remover cabeca de chave' : 'Definir cabeca de chave'}
+                                    style={{ background: p.is_seed ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.05)', color: p.is_seed ? '#fbbf24' : '#94a3b8', border: `1px solid ${p.is_seed ? 'rgba(251,191,36,0.3)' : 'transparent'}`, borderRadius: 6, padding: '2px 6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 700 }}
+                                  >
+                                    <FontAwesomeIcon icon={faMedal} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleRemoveIndividualPlayer(p.id)}
+                                    style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+                                  >
+                                    x
+                                  </button>
+                                </div>
                               </div>
                             ))}
                             {individualPlayers.filter((p: any) => p.side === 'right').length === 0 && (

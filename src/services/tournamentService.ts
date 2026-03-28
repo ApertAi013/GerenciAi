@@ -263,6 +263,11 @@ export const tournamentService = {
     return response.data;
   },
 
+  async toggleSeed(tournamentId: number, playerId: number): Promise<any> {
+    const response = await api.put(`/api/tournaments/${tournamentId}/players/${playerId}/seed`);
+    return response.data;
+  },
+
   async getViewerCount(tournamentId: number): Promise<any> {
     const response = await api.get(`/api/tournaments/${tournamentId}/viewers`);
     return response.data;
