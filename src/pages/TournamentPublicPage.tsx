@@ -584,52 +584,88 @@ export default function TournamentPublicPage() {
           );
         })()}
 
-        {/* Podium - show when tournament is finished and podium data exists */}
+        {/* Podium - modern animated cards */}
         {isFinished && podium && podium.length > 0 && (
-          <div className="tp-podium-section">
-            <h2 className="tp-section-title">
-              {'\uD83C\uDFC6'} Podio
+          <div style={{ margin: '40px 0', position: 'relative', overflow: 'hidden', padding: '40px 0 20px' }}>
+            {/* Background glow */}
+            <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+            <h2 className="tp-section-title" style={{ textAlign: 'center', marginBottom: 32 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#F58A25" stroke="none" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+              Podio
             </h2>
-            <div className="tp-podium">
-              {/* 2nd place (left) */}
-              {podium.find(p => p.place === 2) && (
-                <div className="tp-podium-place tp-podium-2nd">
-                  <div className="tp-podium-avatar">{'\uD83E\uDD48'}</div>
-                  <div className="tp-podium-team-name">
-                    {podium.find(p => p.place === 2)!.team_name}
+
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 16, maxWidth: 700, margin: '0 auto', padding: '0 16px' }}>
+              {/* 2nd place */}
+              {podium.find(p => p.place === 2) && (() => {
+                const p = podium.find(p => p.place === 2)!;
+                return (
+                  <div style={{ flex: 1, maxWidth: 200, animation: 'fadeInUp 0.8s 0.3s ease-out both' }}>
+                    <div style={{
+                      background: 'linear-gradient(180deg, rgba(148,163,184,0.15) 0%, rgba(148,163,184,0.03) 100%)',
+                      border: '2px solid rgba(148,163,184,0.25)',
+                      borderRadius: 20, padding: '24px 16px 20px', textAlign: 'center',
+                      position: 'relative', overflow: 'hidden',
+                    }}>
+                      {/* Diamond top */}
+                      <div style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 16, height: 16, background: '#94a3b8', border: '2px solid #cbd5e1' }} />
+                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #94a3b8, #cbd5e1)', margin: '8px auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', boxShadow: '0 0 20px rgba(148,163,184,0.3)' }}>2</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#e2e8f0', marginBottom: 4, wordBreak: 'break-word' }}>{p.team_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{p.wins}V - {p.losses}D</div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>Vice-Campeao</div>
+                    </div>
                   </div>
-                  <div className="tp-podium-record">
-                    {podium.find(p => p.place === 2)!.wins}V - {podium.find(p => p.place === 2)!.losses}D
+                );
+              })()}
+
+              {/* 1st place */}
+              {podium.find(p => p.place === 1) && (() => {
+                const p = podium.find(p => p.place === 1)!;
+                return (
+                  <div style={{ flex: 1, maxWidth: 220, animation: 'fadeInUp 0.8s 0.1s ease-out both' }}>
+                    <div style={{
+                      background: 'linear-gradient(180deg, rgba(245,158,11,0.18) 0%, rgba(59,130,246,0.08) 50%, rgba(59,130,246,0.03) 100%)',
+                      border: '2px solid rgba(245,158,11,0.35)',
+                      borderRadius: 24, padding: '28px 16px 24px', textAlign: 'center',
+                      position: 'relative', overflow: 'hidden',
+                      boxShadow: '0 0 40px rgba(245,158,11,0.15), 0 0 80px rgba(59,130,246,0.08)',
+                    }}>
+                      {/* Diamond top */}
+                      <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 20, height: 20, background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', border: '2px solid #fcd34d', boxShadow: '0 0 15px rgba(251,191,36,0.5)' }} />
+                      {/* Glow ring */}
+                      <div style={{ position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)', width: 160, height: 60, borderRadius: '50%', border: '2px solid rgba(59,130,246,0.2)', boxShadow: '0 0 30px rgba(59,130,246,0.15)', pointerEvents: 'none' }} />
+                      <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', margin: '10px auto 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', fontWeight: 900, color: '#1e293b', boxShadow: '0 0 30px rgba(251,191,36,0.4)', border: '3px solid #fcd34d' }}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="#1e293b" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                      </div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#fbbf24', marginBottom: 4, wordBreak: 'break-word', textShadow: '0 0 20px rgba(251,191,36,0.3)' }}>{p.team_name}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#fcd34d' }}>{p.wins}V - {p.losses}D</div>
+                      <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: 6, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 800 }}>Campeao</div>
+                    </div>
                   </div>
-                  <div className="tp-podium-block">2</div>
-                </div>
-              )}
-              {/* 1st place (center) */}
-              {podium.find(p => p.place === 1) && (
-                <div className="tp-podium-place tp-podium-1st">
-                  <div className="tp-podium-avatar">{'\uD83C\uDFC6'}</div>
-                  <div className="tp-podium-team-name">
-                    {podium.find(p => p.place === 1)!.team_name}
+                );
+              })()}
+
+              {/* 3rd place */}
+              {podium.find(p => p.place === 3) && (() => {
+                const p = podium.find(p => p.place === 3)!;
+                return (
+                  <div style={{ flex: 1, maxWidth: 200, animation: 'fadeInUp 0.8s 0.5s ease-out both' }}>
+                    <div style={{
+                      background: 'linear-gradient(180deg, rgba(217,119,6,0.12) 0%, rgba(217,119,6,0.03) 100%)',
+                      border: '2px solid rgba(217,119,6,0.25)',
+                      borderRadius: 20, padding: '24px 16px 20px', textAlign: 'center',
+                      position: 'relative', overflow: 'hidden',
+                    }}>
+                      {/* Diamond top */}
+                      <div style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 16, height: 16, background: '#d97706', border: '2px solid #fbbf24' }} />
+                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #d97706, #b45309)', margin: '8px auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: '#fff', boxShadow: '0 0 20px rgba(217,119,6,0.3)' }}>3</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#e2e8f0', marginBottom: 4, wordBreak: 'break-word' }}>{p.team_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{p.wins}V - {p.losses}D</div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>3o Lugar</div>
+                    </div>
                   </div>
-                  <div className="tp-podium-record">
-                    {podium.find(p => p.place === 1)!.wins}V - {podium.find(p => p.place === 1)!.losses}D
-                  </div>
-                  <div className="tp-podium-block">1</div>
-                </div>
-              )}
-              {/* 3rd place (right) */}
-              {podium.find(p => p.place === 3) && (
-                <div className="tp-podium-place tp-podium-3rd">
-                  <div className="tp-podium-avatar">{'\uD83E\uDD49'}</div>
-                  <div className="tp-podium-team-name">
-                    {podium.find(p => p.place === 3)!.team_name}
-                  </div>
-                  <div className="tp-podium-record">
-                    {podium.find(p => p.place === 3)!.wins}V - {podium.find(p => p.place === 3)!.losses}D
-                  </div>
-                  <div className="tp-podium-block">3</div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         )}
@@ -1150,7 +1186,7 @@ function HlsPlayer({ urls, onCameraChange, initialCam }: { urls: Record<string, 
     <div ref={containerRef} style={{ borderRadius: isFullscreen ? 0 : 16, overflow: 'hidden', background: '#000', position: isFullscreen ? 'fixed' : 'relative', inset: isFullscreen ? 0 : undefined, zIndex: isFullscreen ? 9999 : undefined }}>
       <div
         style={{
-          aspectRatio: isFullscreen ? undefined : '4/3',
+          aspectRatio: isFullscreen ? undefined : (window.innerWidth <= 768 ? '3/4' : '4/3'),
           width: isFullscreen ? '100vw' : undefined,
           height: isFullscreen ? '100vh' : undefined,
           overflow: 'hidden', background: '#000', position: 'relative', cursor: 'pointer',
@@ -1170,8 +1206,8 @@ function HlsPlayer({ urls, onCameraChange, initialCam }: { urls: Record<string, 
             <button onClick={(e) => { e.stopPropagation(); setReconnectKey(k => k + 1); }} style={{ ...btnStyle('#ef4444'), fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'tpPulse 1.5s infinite' }} /> AO VIVO
             </button>
-            <button onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} style={btnStyle('rgba(255,255,255,0.25)')}>
-              {'\u2716'}
+            <button onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} style={{ ...btnStyle('rgba(255,255,255,0.25)'), display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
             {cams.length > 1 && cams.map(([camId]) => (
               <button key={camId} onClick={(e) => { e.stopPropagation(); setActiveCam(camId); onCameraChange?.(camId); }} style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.25)')}>
@@ -1187,11 +1223,11 @@ function HlsPlayer({ urls, onCameraChange, initialCam }: { urls: Record<string, 
           <button onClick={(e) => { e.stopPropagation(); setReconnectKey(k => k + 1); }} style={{ ...btnStyle('#ef4444'), fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'tpPulse 1.5s infinite' }} /> AO VIVO
           </button>
-          <button onClick={(e) => { e.stopPropagation(); if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }} style={btnStyle('rgba(255,255,255,0.1)')}>
-            {'\u23EF'}
+          <button onClick={(e) => { e.stopPropagation(); if (videoRef.current) { videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); } }} style={{ ...btnStyle('rgba(255,255,255,0.1)'), display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           </button>
-          <button onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} style={btnStyle('rgba(255,255,255,0.1)')}>
-            {'\u26F6'}
+          <button onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} style={{ ...btnStyle('rgba(255,255,255,0.1)'), display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
           </button>
           {cams.length > 1 && cams.map(([camId]) => (
             <button key={camId} onClick={(e) => { e.stopPropagation(); setActiveCam(camId); onCameraChange?.(camId); }} style={btnStyle(activeCam === camId ? '#F58A25' : 'rgba(255,255,255,0.1)')}>
