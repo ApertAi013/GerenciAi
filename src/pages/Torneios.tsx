@@ -1641,11 +1641,22 @@ export default function Torneios() {
                                 </span>
                                 <div style={{ display: 'flex', gap: 4 }}>
                                   <button
-                                    onClick={async () => { await tournamentService.toggleSeed(selectedTournament!.id, p.id); loadIndividualPlayers(selectedTournament!.id); }}
-                                    title={p.is_seed ? 'Remover cabeca de chave' : 'Definir cabeca de chave'}
-                                    style={{ background: p.is_seed ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.05)', color: p.is_seed ? '#fbbf24' : '#94a3b8', border: `1px solid ${p.is_seed ? 'rgba(251,191,36,0.3)' : 'transparent'}`, borderRadius: 6, padding: '2px 6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 700 }}
+                                    onClick={async () => {
+                                      const action = p.is_seed ? 'remover' : 'definir';
+                                      const msg = p.is_seed
+                                        ? `Remover "${p.player_name}" como cabeca de chave?`
+                                        : `Definir "${p.player_name}" como cabeca de chave?\n\nCabecas de chave NAO serao colocados na mesma dupla no sorteio.`;
+                                      if (!confirm(msg)) return;
+                                      try {
+                                        await tournamentService.toggleSeed(selectedTournament!.id, p.id);
+                                        toast.success(p.is_seed ? 'Cabeca de chave removido' : `${p.player_name} definido como cabeca de chave`);
+                                        loadIndividualPlayers(selectedTournament!.id);
+                                      } catch (e: any) { toast.error(e.response?.data?.message || 'Erro'); }
+                                    }}
+                                    style={{ background: p.is_seed ? '#fbbf24' : 'rgba(251,191,36,0.05)', color: p.is_seed ? '#1e293b' : '#94a3b8', border: `1px solid ${p.is_seed ? '#fbbf24' : 'var(--border-color, #e2e8f0)'}`, borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 700, whiteSpace: 'nowrap' }}
                                   >
-                                    <FontAwesomeIcon icon={faMedal} />
+                                    <FontAwesomeIcon icon={faMedal} style={{ marginRight: 2 }} />
+                                    {p.is_seed ? 'Cabeca de Chave' : 'Seed'}
                                   </button>
                                   <button
                                     onClick={() => handleRemoveIndividualPlayer(p.id)}
@@ -1690,11 +1701,22 @@ export default function Torneios() {
                                 </span>
                                 <div style={{ display: 'flex', gap: 4 }}>
                                   <button
-                                    onClick={async () => { await tournamentService.toggleSeed(selectedTournament!.id, p.id); loadIndividualPlayers(selectedTournament!.id); }}
-                                    title={p.is_seed ? 'Remover cabeca de chave' : 'Definir cabeca de chave'}
-                                    style={{ background: p.is_seed ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.05)', color: p.is_seed ? '#fbbf24' : '#94a3b8', border: `1px solid ${p.is_seed ? 'rgba(251,191,36,0.3)' : 'transparent'}`, borderRadius: 6, padding: '2px 6px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 700 }}
+                                    onClick={async () => {
+                                      const action = p.is_seed ? 'remover' : 'definir';
+                                      const msg = p.is_seed
+                                        ? `Remover "${p.player_name}" como cabeca de chave?`
+                                        : `Definir "${p.player_name}" como cabeca de chave?\n\nCabecas de chave NAO serao colocados na mesma dupla no sorteio.`;
+                                      if (!confirm(msg)) return;
+                                      try {
+                                        await tournamentService.toggleSeed(selectedTournament!.id, p.id);
+                                        toast.success(p.is_seed ? 'Cabeca de chave removido' : `${p.player_name} definido como cabeca de chave`);
+                                        loadIndividualPlayers(selectedTournament!.id);
+                                      } catch (e: any) { toast.error(e.response?.data?.message || 'Erro'); }
+                                    }}
+                                    style={{ background: p.is_seed ? '#fbbf24' : 'rgba(251,191,36,0.05)', color: p.is_seed ? '#1e293b' : '#94a3b8', border: `1px solid ${p.is_seed ? '#fbbf24' : 'var(--border-color, #e2e8f0)'}`, borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 700, whiteSpace: 'nowrap' }}
                                   >
-                                    <FontAwesomeIcon icon={faMedal} />
+                                    <FontAwesomeIcon icon={faMedal} style={{ marginRight: 2 }} />
+                                    {p.is_seed ? 'Cabeca de Chave' : 'Seed'}
                                   </button>
                                   <button
                                     onClick={() => handleRemoveIndividualPlayer(p.id)}
