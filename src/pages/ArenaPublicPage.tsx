@@ -237,6 +237,62 @@ export default function ArenaPublicPage() {
               </div>
             ) : (
               <>
+                {/* Top 3 Podium */}
+                {rankings.length >= 3 && (
+                  <div style={{ position: 'relative', overflow: 'hidden', padding: '20px 0 28px', marginBottom: 20 }}>
+                    <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, maxWidth: 600, margin: '0 auto', padding: '0 12px' }}>
+                      {/* 2nd */}
+                      <div style={{ flex: 1, maxWidth: 170, animation: 'fadeInUp 0.8s 0.3s ease-out both' }}>
+                        <div style={{
+                          background: 'linear-gradient(180deg, rgba(148,163,184,0.15) 0%, rgba(148,163,184,0.03) 100%)',
+                          border: '2px solid rgba(148,163,184,0.25)', borderRadius: 18, padding: '20px 12px 16px', textAlign: 'center',
+                          position: 'relative', overflow: 'hidden',
+                        }}>
+                          <div style={{ position: 'absolute', top: -7, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 14, height: 14, background: '#94a3b8', border: '2px solid #cbd5e1' }} />
+                          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, #94a3b8, #cbd5e1)', margin: '6px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 900, color: '#1e293b', boxShadow: '0 0 15px rgba(148,163,184,0.3)' }}>2</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#e2e8f0', marginBottom: 2, wordBreak: 'break-word', lineHeight: 1.2 }}>{rankings[1].player_name}</div>
+                          <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{rankings[1].ranking_points} pts</div>
+                          <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: 2 }}>{rankings[1].matches_won}V - {rankings[1].matches_lost}D</div>
+                        </div>
+                      </div>
+                      {/* 1st */}
+                      <div style={{ flex: 1, maxWidth: 190, animation: 'fadeInUp 0.8s 0.1s ease-out both' }}>
+                        <div style={{
+                          background: 'linear-gradient(180deg, rgba(245,158,11,0.18) 0%, rgba(59,130,246,0.08) 50%, rgba(59,130,246,0.03) 100%)',
+                          border: '2px solid rgba(245,158,11,0.35)', borderRadius: 22, padding: '24px 12px 20px', textAlign: 'center',
+                          position: 'relative', overflow: 'hidden',
+                          boxShadow: '0 0 40px rgba(245,158,11,0.12), 0 0 60px rgba(59,130,246,0.06)',
+                        }}>
+                          <div style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 18, height: 18, background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', border: '2px solid #fcd34d', boxShadow: '0 0 12px rgba(251,191,36,0.5)' }} />
+                          <div style={{ position: 'absolute', bottom: -16, left: '50%', transform: 'translateX(-50%)', width: 140, height: 50, borderRadius: '50%', border: '2px solid rgba(59,130,246,0.15)', boxShadow: '0 0 20px rgba(59,130,246,0.1)', pointerEvents: 'none' }} />
+                          <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', margin: '8px auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 25px rgba(251,191,36,0.4)', border: '3px solid #fcd34d' }}>
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="#1e293b" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                          </div>
+                          <div style={{ fontSize: '1rem', fontWeight: 900, color: '#fbbf24', marginBottom: 2, wordBreak: 'break-word', textShadow: '0 0 15px rgba(251,191,36,0.3)', lineHeight: 1.2 }}>{rankings[0].player_name}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#fcd34d' }}>{rankings[0].ranking_points} pts</div>
+                          <div style={{ fontSize: '0.65rem', color: '#f59e0b', marginTop: 2 }}>{rankings[0].matches_won}V - {rankings[0].matches_lost}D</div>
+                        </div>
+                      </div>
+                      {/* 3rd */}
+                      <div style={{ flex: 1, maxWidth: 170, animation: 'fadeInUp 0.8s 0.5s ease-out both' }}>
+                        <div style={{
+                          background: 'linear-gradient(180deg, rgba(217,119,6,0.12) 0%, rgba(217,119,6,0.03) 100%)',
+                          border: '2px solid rgba(217,119,6,0.25)', borderRadius: 18, padding: '20px 12px 16px', textAlign: 'center',
+                          position: 'relative', overflow: 'hidden',
+                        }}>
+                          <div style={{ position: 'absolute', top: -7, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 14, height: 14, background: '#d97706', border: '2px solid #fbbf24' }} />
+                          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, #d97706, #b45309)', margin: '6px auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 900, color: '#fff', boxShadow: '0 0 15px rgba(217,119,6,0.3)' }}>3</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#e2e8f0', marginBottom: 2, wordBreak: 'break-word', lineHeight: 1.2 }}>{rankings[2].player_name}</div>
+                          <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{rankings[2].ranking_points} pts</div>
+                          <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: 2 }}>{rankings[2].matches_won}V - {rankings[2].matches_lost}D</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Full ranking table (starting from 4th if podium shown) */}
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                     <thead>
