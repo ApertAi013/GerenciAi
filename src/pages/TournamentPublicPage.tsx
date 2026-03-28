@@ -446,13 +446,6 @@ export default function TournamentPublicPage() {
             <p className="tp-description">{tournament.description}</p>
           )}
 
-          {/* Viewer count */}
-          {data.viewer_count && data.viewer_count > 1 && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '4px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', fontSize: '0.78rem', color: '#94a3b8' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              {data.viewer_count} assistindo
-            </div>
-          )}
         </header>
 
         {/* Podium - show prominently when tournament is finished */}

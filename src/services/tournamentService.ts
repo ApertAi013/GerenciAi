@@ -263,6 +263,11 @@ export const tournamentService = {
     return response.data;
   },
 
+  async getViewerCount(tournamentId: number): Promise<any> {
+    const response = await api.get(`/api/tournaments/${tournamentId}/viewers`);
+    return response.data;
+  },
+
   // Search students
   async searchStudents(query: string): Promise<{ status: string; data: { id: number; name: string; email: string }[] }> {
     const response = await api.get('/api/tournaments/search-students', { params: { q: query } });

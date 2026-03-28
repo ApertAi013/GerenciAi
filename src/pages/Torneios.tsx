@@ -439,6 +439,7 @@ function SponsorsTab({ tournamentId }: { tournamentId: number }) {
 function StreamControls({ tournamentId }: { tournamentId: number }) {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [viewerCount, setViewerCount] = useState(0);
 
   const fetchStatus = async () => {
     try {
@@ -447,7 +448,19 @@ function StreamControls({ tournamentId }: { tournamentId: number }) {
     } catch {} finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchStatus(); const iv = setInterval(fetchStatus, 5000); return () => clearInterval(iv); }, [tournamentId]);
+  const fetchViewers = async () => {
+    try {
+      const res = await tournamentService.getViewerCount(tournamentId);
+      setViewerCount(res.data?.viewer_count || 0);
+    } catch {}
+  };
+
+  useEffect(() => {
+    fetchStatus(); fetchViewers();
+    const iv = setInterval(fetchStatus, 5000);
+    const iv2 = setInterval(fetchViewers, 10000);
+    return () => { clearInterval(iv); clearInterval(iv2); };
+  }, [tournamentId]);
 
   const handleStart = async () => {
     try {
@@ -496,6 +509,11 @@ function StreamControls({ tournamentId }: { tournamentId: number }) {
             {session.status === 'live' && <><span className="torneio-live-dot" /> AO VIVO</>}
             {session.status === 'paused' && 'PAUSADO'}
             {session.status === 'sponsor' && 'PATROCINADORES'}
+          </span>
+        )}
+        {viewerCount > 0 && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 10 }}>
+            <FontAwesomeIcon icon={faUsers} style={{ fontSize: '0.6rem' }} /> {viewerCount} assistindo
           </span>
         )}
       </div>
