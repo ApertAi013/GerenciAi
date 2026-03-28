@@ -913,6 +913,58 @@ export default function TournamentPublicPage() {
           </div>
         )}
 
+        {/* Sponsors section (always visible when sponsors exist) */}
+        {data.sponsors && data.sponsors.length > 0 && (
+          <div style={{ margin: '40px 0 20px' }}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 2 }}>Patrocinado por</span>
+            </div>
+            {/* Master sponsors */}
+            {data.sponsors.filter((s: any) => s.is_master).map((s: any) => (
+              <div key={s.id} style={{
+                display: 'flex', alignItems: 'center', gap: 20, padding: '24px', marginBottom: 12,
+                background: 'linear-gradient(135deg, rgba(245,138,37,0.08), rgba(245,138,37,0.02))',
+                border: '1px solid rgba(245,138,37,0.15)', borderRadius: 16,
+              }}>
+                <img src={s.logo_url} alt={s.name} style={{ height: 80, maxWidth: 180, objectFit: 'contain', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.6rem', color: '#F58A25', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Patrocinador Master</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>{s.name}</div>
+                  {s.description && <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>{s.description}</div>}
+                </div>
+              </div>
+            ))}
+            {/* Regular sponsors grid */}
+            {data.sponsors.filter((s: any) => !s.is_master).length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+                {data.sponsors.filter((s: any) => !s.is_master).map((s: any) => (
+                  <div key={s.id} style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                    padding: '16px 12px', background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, textAlign: 'center',
+                  }}>
+                    <img src={s.logo_url} alt={s.name} style={{ height: 50, maxWidth: 120, objectFit: 'contain' }} />
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#e2e8f0', lineHeight: 1.2 }}>{s.name}</div>
+                    {s.description && <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>{s.description}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Apertai branding */}
+            <a href="https://apertai.com.br" target="_blank" rel="noopener noreferrer" style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '14px 20px', marginTop: 10,
+              background: 'linear-gradient(135deg, rgba(240,79,40,0.06), rgba(255,107,53,0.02))',
+              border: '1px solid rgba(240,79,40,0.12)', borderRadius: 12, textDecoration: 'none',
+            }}>
+              <img src="/apertai-logo.svg" alt="Apertai" style={{ height: 36, objectFit: 'contain', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff' }}>Transmitido por <span style={{ color: '#f04f28' }}>Apertai</span></div>
+                <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)' }}>Cameras inteligentes com streaming automatico</div>
+              </div>
+            </a>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="tp-footer">
           <p className="tp-footer-text">
