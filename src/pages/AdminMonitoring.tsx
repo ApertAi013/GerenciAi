@@ -47,7 +47,7 @@ import type {
   GCPMetrics,
   HealthCheck,
 } from '../types/monitoringTypes';
-import api from '../services/api';
+import { api } from '../services/api';
 import '../styles/AdminMonitoring.css';
 
 // Chart colors

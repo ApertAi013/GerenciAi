@@ -762,7 +762,7 @@ export default function TournamentPublicPage() {
                 <h2 className="tp-section-title">
                   Chave {tournament.format === 'group_stage' && tournament.group_stage_completed ? '(Mata-Mata)' : ''}
                 </h2>
-                <BracketView bracketGroups={bracketGroups} />
+                <BracketView bracketGroups={bracketGroups} allMatches={matches} />
               </>
             )}
 
@@ -779,7 +779,7 @@ export default function TournamentPublicPage() {
                     })
                     .slice(0, 12)
                     .map(match => (
-                      <MatchCard key={match.id} match={match} />
+                      <MatchCard key={match.id} match={match} allMatches={allMatches} />
                     ))}
                 </div>
               </>
@@ -840,7 +840,7 @@ export default function TournamentPublicPage() {
                 {tournament.format === 'group_stage' && (
                   <h2 className="tp-section-title">Fase Eliminatoria</h2>
                 )}
-                <BracketView bracketGroups={bracketGroups} />
+                <BracketView bracketGroups={bracketGroups} allMatches={matches} />
               </>
             ) : (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
@@ -904,7 +904,7 @@ export default function TournamentPublicPage() {
                   return (order[a.status] ?? 1) - (order[b.status] ?? 1) || a.match_number - b.match_number;
                 })
                 .map(match => (
-                  <MatchCard key={match.id} match={match} />
+                  <MatchCard key={match.id} match={match} allMatches={allMatches} />
                 ))}
             </div>
             {nonByeMatches.length === 0 && (
@@ -996,8 +996,22 @@ export default function TournamentPublicPage() {
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════
 
+// Helper: get placeholder text for empty team slots
+function getTeamPlaceholder(match: TournamentMatch, slot: 1 | 2, allMatches: TournamentMatch[]): string {
+  // Find which match feeds into this slot
+  const feeder = allMatches.find(m =>
+    (slot === 1 && m.next_winner_match_id === match.id && m.next_winner_slot === 1) ||
+    (slot === 1 && m.next_loser_match_id === match.id && m.next_loser_slot === 1) ||
+    (slot === 2 && m.next_winner_match_id === match.id && m.next_winner_slot === 2) ||
+    (slot === 2 && m.next_loser_match_id === match.id && m.next_loser_slot === 2)
+  );
+  if (!feeder) return 'A definir';
+  const isWinner = feeder.next_winner_match_id === match.id && feeder.next_winner_slot === slot;
+  return isWinner ? `Venc. Jogo #${feeder.match_number}` : `Perd. Jogo #${feeder.match_number}`;
+}
+
 // ─── Match Card ───
-function MatchCard({ match }: { match: TournamentMatch }) {
+function MatchCard({ match, allMatches }: { match: TournamentMatch; allMatches?: TournamentMatch[] }) {
   const isLive = match.status === 'live';
   const isCompleted = match.status === 'completed';
   const bracketLabel = BRACKET_TYPE_LABELS[match.bracket_type] || match.bracket_type;
@@ -1016,13 +1030,13 @@ function MatchCard({ match }: { match: TournamentMatch }) {
         {!isLive && !isCompleted && <span className="tp-match-status pending">PENDENTE</span>}
       </div>
       <div className={`tp-match-team-row ${match.winner_id && match.winner_id === match.team1_id ? 'winner' : ''} ${!match.team1_name ? 'tbd' : ''}`}>
-        <span className="tp-match-team-name">{match.team1_name || 'A definir'}</span>
+        <span className="tp-match-team-name">{match.team1_name || (allMatches ? getTeamPlaceholder(match, 1, allMatches) : 'A definir')}</span>
         <span className="tp-match-team-score">
           {match.team1_score !== null && match.team1_score !== undefined ? match.team1_score : '-'}
         </span>
       </div>
       <div className={`tp-match-team-row ${match.winner_id && match.winner_id === match.team2_id ? 'winner' : ''} ${!match.team2_name ? 'tbd' : ''}`}>
-        <span className="tp-match-team-name">{match.team2_name || 'A definir'}</span>
+        <span className="tp-match-team-name">{match.team2_name || (allMatches ? getTeamPlaceholder(match, 2, allMatches) : 'A definir')}</span>
         <span className="tp-match-team-score">
           {match.team2_score !== null && match.team2_score !== undefined ? match.team2_score : '-'}
         </span>
@@ -1032,7 +1046,7 @@ function MatchCard({ match }: { match: TournamentMatch }) {
 }
 
 // ─── Bracket View ───
-function BracketView({ bracketGroups }: { bracketGroups: Record<string, TournamentMatch[][]> }) {
+function BracketView({ bracketGroups, allMatches }: { bracketGroups: Record<string, TournamentMatch[][]>; allMatches?: TournamentMatch[] }) {
   const winnersRounds = bracketGroups['winners'];
   const losersRounds = bracketGroups['losers'];
   const grandFinalRounds = bracketGroups['grand_final'];
@@ -1071,7 +1085,7 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
                   </div>
                   <div className="tp-bracket-round-matches">
                     {roundMatches.map(match => (
-                      <MatchCard key={match.id} match={match} />
+                      <MatchCard key={match.id} match={match} allMatches={allMatches} />
                     ))}
                   </div>
                 </div>
@@ -1097,7 +1111,7 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
                     </div>
                     <div className="tp-bracket-round-matches">
                       {roundMatches.map(match => (
-                        <MatchCard key={match.id} match={match} />
+                        <MatchCard key={match.id} match={match} allMatches={allMatches} />
                       ))}
                     </div>
                   </div>
@@ -1114,13 +1128,13 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
           {grandFinalRounds && grandFinalRounds[0] && grandFinalRounds[0].map(match => (
             <div key={match.id} className="tp-bracket-final-card">
               <div className="tp-bracket-round-label" style={{ color: '#EAB308', fontWeight: 700, fontSize: '0.85rem' }}>Grande Final</div>
-              <MatchCard match={match} />
+              <MatchCard match={match} allMatches={allMatches} />
             </div>
           ))}
           {thirdPlaceRounds && thirdPlaceRounds[0] && thirdPlaceRounds[0].map(match => (
             <div key={match.id} className="tp-bracket-final-card">
               <div className="tp-bracket-round-label" style={{ color: '#d97706', fontSize: '0.85rem' }}>Disputa 3o Lugar</div>
-              <MatchCard match={match} />
+              <MatchCard match={match} allMatches={allMatches} />
             </div>
           ))}
         </div>
@@ -1132,13 +1146,13 @@ function BracketView({ bracketGroups }: { bracketGroups: Record<string, Tourname
           {grandFinalRounds && grandFinalRounds[0] && grandFinalRounds[0].map(m => (
             <div key={m.id}>
               <div className="tp-bracket-round-label" style={{ color: '#EAB308', fontWeight: 700 }}>Final</div>
-              <MatchCard match={m} />
+              <MatchCard match={m} allMatches={allMatches} />
             </div>
           ))}
           {thirdPlaceRounds && thirdPlaceRounds[0] && thirdPlaceRounds[0].map(m => (
             <div key={m.id}>
               <div className="tp-bracket-round-label" style={{ color: '#d97706' }}>3o Lugar</div>
-              <MatchCard match={m} />
+              <MatchCard match={m} allMatches={allMatches} />
             </div>
           ))}
         </div>

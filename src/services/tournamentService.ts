@@ -173,7 +173,7 @@ export const tournamentService = {
     return response.data;
   },
 
-  async updateTeam(tournamentId: number, teamId: number, data: { name?: string; seed?: number }): Promise<{ status: string; data: TournamentTeam }> {
+  async updateTeam(tournamentId: number, teamId: number, data: { name?: string; seed?: number; members?: { external_name: string; old_name?: string }[] }): Promise<any> {
     const response = await api.put(`/api/tournaments/${tournamentId}/teams/${teamId}`, data);
     return response.data;
   },
@@ -258,10 +258,6 @@ export const tournamentService = {
     return response.data;
   },
 
-  async updateTeam(tournamentId: number, teamId: number, data: { name?: string; members?: { external_name: string; old_name?: string }[] }): Promise<any> {
-    const response = await api.put(`/api/tournaments/${tournamentId}/teams/${teamId}`, data);
-    return response.data;
-  },
 
   async toggleSeed(tournamentId: number, playerId: number): Promise<any> {
     const response = await api.put(`/api/tournaments/${tournamentId}/players/${playerId}/seed`);
