@@ -16,6 +16,8 @@ import {
   faArrowUp,
   faPlay,
   faComments,
+  faTrophy,
+  faEye,
 } from '@fortawesome/free-solid-svg-icons';
 import toast from 'react-hot-toast';
 import {
@@ -45,6 +47,7 @@ import type {
   GCPMetrics,
   HealthCheck,
 } from '../types/monitoringTypes';
+import api from '../services/api';
 import '../styles/AdminMonitoring.css';
 
 // Chart colors
@@ -59,7 +62,9 @@ const COLORS = {
 export default function AdminMonitoring() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  type MainTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades' | 'metricas' | 'usuarios' | 'suporte';
+  type MainTab = 'dashboard' | 'gestores' | 'faturas' | 'upgrades' | 'metricas' | 'usuarios' | 'suporte' | 'torneios';
+  const [viewStats, setViewStats] = useState<any>(null);
+  const [viewStatsLoading, setViewStatsLoading] = useState(false);
   const [mainTab, setMainTab] = useState<MainTab>('dashboard');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'gcp' | 'health'>('dashboard');
   const [loading, setLoading] = useState(true);
@@ -287,6 +292,18 @@ export default function AdminMonitoring() {
           <FontAwesomeIcon icon={faArrowUp} /> Upgrades
         </button>
         <button
+          className={`tab ${mainTab === 'torneios' ? 'active' : ''}`}
+          onClick={() => {
+            setMainTab('torneios');
+            if (!viewStats) {
+              setViewStatsLoading(true);
+              api.get('/api/tournaments/admin/view-stats').then(res => setViewStats(res.data?.data)).catch(() => {}).finally(() => setViewStatsLoading(false));
+            }
+          }}
+        >
+          <FontAwesomeIcon icon={faTrophy} /> Torneios
+        </button>
+        <button
           className={`tab ${mainTab === 'metricas' ? 'active' : ''}`}
           onClick={() => setMainTab('metricas')}
         >
@@ -311,6 +328,75 @@ export default function AdminMonitoring() {
         {/* Billing tabs — controlled externally */}
         {(mainTab === 'dashboard' || mainTab === 'gestores' || mainTab === 'faturas' || mainTab === 'upgrades') && (
           <AdminBilling forcedTab={mainTab as BillingSubTab} hideTabBar />
+        )}
+
+        {/* Torneios Tab */}
+        {mainTab === 'torneios' && (
+          <div>
+            {viewStatsLoading ? (
+              <div style={{ textAlign: 'center', padding: 40 }}>Carregando...</div>
+            ) : viewStats ? (
+              <>
+                <h3 style={{ marginBottom: 16 }}><FontAwesomeIcon icon={faEye} style={{ marginRight: 8 }} />Views de Torneios</h3>
+
+                {/* Daily chart */}
+                {viewStats.daily?.length > 0 && (
+                  <div style={{ marginBottom: 24 }}>
+                    <h4 style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: 12 }}>Views Diarias (ultimos 30 dias)</h4>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={viewStats.daily.slice().reverse()}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.split('-').slice(1).join('/')} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        <Bar dataKey="views" fill="#F58A25" name="Views" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="unique_viewers" fill="#3B82F6" name="Unicos" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Tournaments table */}
+                {viewStats.tournaments?.length > 0 && (
+                  <div>
+                    <h4 style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: 12 }}>Por Torneio</h4>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Torneio</th>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Arena</th>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Gestor</th>
+                            <th style={{ padding: '8px', textAlign: 'center' }}>Status</th>
+                            <th style={{ padding: '8px', textAlign: 'right' }}>Views</th>
+                            <th style={{ padding: '8px', textAlign: 'right' }}>Unicos</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewStats.tournaments.map((t: any) => (
+                            <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                              <td style={{ padding: '8px', fontWeight: 600 }}>{t.title}</td>
+                              <td style={{ padding: '8px', color: '#94a3b8' }}>{t.arena_name || '-'}</td>
+                              <td style={{ padding: '8px', color: '#94a3b8' }}>{t.owner_name || '-'}</td>
+                              <td style={{ padding: '8px', textAlign: 'center' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: t.status === 'live' ? '#ef4444' : t.status === 'finished' ? '#10b981' : '#94a3b8' }}>
+                                  {t.status === 'live' ? 'Ao Vivo' : t.status === 'finished' ? 'Encerrado' : t.status}
+                                </span>
+                              </td>
+                              <td style={{ padding: '8px', textAlign: 'right', fontWeight: 700 }}>{t.views_total}</td>
+                              <td style={{ padding: '8px', textAlign: 'right' }}>{t.unique_viewers}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>Nenhum dado disponivel</div>
+            )}
+          </div>
         )}
 
         {/* Metricas Tab */}
