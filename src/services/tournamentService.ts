@@ -249,8 +249,9 @@ export const tournamentService = {
   },
 
   // Rankings
-  async getRankings(): Promise<{ status: string; data: TournamentRanking[] }> {
-    const response = await api.get('/api/tournaments/rankings');
+  async getRankings(teamSize?: number): Promise<any> {
+    const params = teamSize ? `?team_size=${teamSize}` : '';
+    const response = await api.get(`/api/tournaments/rankings${params}`);
     return response.data;
   },
 

@@ -25,6 +25,8 @@ export default function ArenaPublicPage() {
   const [arena, setArena] = useState<Arena | null>(null);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [rankings, setRankings] = useState<Ranking[]>([]);
+  const [rankingCategories, setRankingCategories] = useState<number[]>([]);
+  const [rankingTeamSize, setRankingTeamSize] = useState<number>(2);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [tab, setTab] = useState<'torneios' | 'ranking'>('torneios');
@@ -39,6 +41,8 @@ export default function ArenaPublicPage() {
           setArena(json.data.arena);
           setTournaments(json.data.tournaments || []);
           setRankings(json.data.rankings || []);
+          setRankingCategories(json.data.ranking_categories || []);
+          if (json.data.ranking_team_size) setRankingTeamSize(json.data.ranking_team_size);
           document.title = `${json.data.arena?.display_name || json.data.arena?.name || 'Arena'} | Torneios | ArenAi`;
         } else {
           setError(json.message || 'Arena nao encontrada');
@@ -52,17 +56,31 @@ export default function ArenaPublicPage() {
   useEffect(() => {
     if (!arenaId) return;
     const iv = setInterval(() => {
-      fetch(`${API_URL}/api/tournaments/public/arena/${arenaId}`)
+      fetch(`${API_URL}/api/tournaments/public/arena/${arenaId}?team_size=${rankingTeamSize}`)
         .then(r => r.json())
         .then(json => {
           if (json.status === 'success') {
             setTournaments(json.data.tournaments || []);
             setRankings(json.data.rankings || []);
+            if (json.data.ranking_categories) setRankingCategories(json.data.ranking_categories);
           }
         }).catch(() => {});
     }, 30000);
     return () => clearInterval(iv);
-  }, [arenaId]);
+  }, [arenaId, rankingTeamSize]);
+
+  // Fetch ranking when category changes
+  const handleCategoryChange = (size: number) => {
+    setRankingTeamSize(size);
+    setRankingLimit(15);
+    fetch(`${API_URL}/api/tournaments/public/arena/${arenaId}?team_size=${size}`)
+      .then(r => r.json())
+      .then(json => {
+        if (json.status === 'success') {
+          setRankings(json.data.rankings || []);
+        }
+      }).catch(() => {});
+  };
 
   if (loading) {
     return <div className="tp-page"><div className="tp-loading"><div className="tp-loading-spinner" /><span className="tp-loading-text">Carregando arena...</span></div></div>;
@@ -191,6 +209,27 @@ export default function ArenaPublicPage() {
         {/* Ranking tab */}
         {tab === 'ranking' && (
           <div>
+            {/* Category selector */}
+            {rankingCategories.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+                {rankingCategories.map(size => (
+                  <button
+                    key={size}
+                    onClick={() => handleCategoryChange(size)}
+                    style={{
+                      padding: '6px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                      fontWeight: 700, fontSize: '0.82rem',
+                      background: rankingTeamSize === size ? '#F58A25' : 'rgba(255,255,255,0.06)',
+                      color: rankingTeamSize === size ? '#fff' : '#94a3b8',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {size === 1 ? 'Individual' : size === 2 ? 'Duplas' : size === 3 ? 'Trios' : `${size}x${size}`}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {rankings.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
                 <p style={{ fontWeight: 600 }}>Nenhum ranking disponivel</p>

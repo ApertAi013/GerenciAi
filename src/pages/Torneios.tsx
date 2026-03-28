@@ -537,6 +537,8 @@ export default function Torneios() {
   const [tab, setTab] = useState<'tournaments' | 'live' | 'ranking'>('tournaments');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [rankings, setRankings] = useState<TournamentRanking[]>([]);
+  const [rankingCategories, setRankingCategories] = useState<number[]>([]);
+  const [rankingTeamSize, setRankingTeamSize] = useState<number>(2);
   const [initialLoading, setInitialLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [rankingLimit, setRankingLimit] = useState(10);
@@ -570,7 +572,9 @@ export default function Torneios() {
         tournamentService.getRankings(),
       ]);
       setTournaments(tourRes.data || []);
-      setRankings(rankRes.data || []);
+      const rankData = rankRes.data;
+      setRankings(rankData?.rankings || rankData || []);
+      if (rankData?.categories) setRankingCategories(rankData.categories);
     } catch (err) {
       console.error('Tournament fetch error:', err);
     }
@@ -1327,6 +1331,30 @@ export default function Torneios() {
       {/* ─── Tab: Ranking ─── */}
       {tab === 'ranking' && (
         <>
+          {/* Category selector */}
+          {rankingCategories.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+              {rankingCategories.map(size => (
+                <button
+                  key={size}
+                  onClick={async () => {
+                    setRankingTeamSize(size);
+                    setRankingLimit(10);
+                    try {
+                      const res = await tournamentService.getRankings(size);
+                      const d = res.data;
+                      setRankings(d?.rankings || d || []);
+                    } catch {}
+                  }}
+                  className={rankingTeamSize === size ? 'torneio-btn-primary' : 'torneio-btn-outline'}
+                  style={{ padding: '6px 16px', borderRadius: 10, border: rankingTeamSize === size ? 'none' : '1px solid var(--border-color, #e2e8f0)', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}
+                >
+                  {size === 1 ? 'Individual' : size === 2 ? 'Duplas' : size === 3 ? 'Trios' : `${size}x${size}`}
+                </button>
+              ))}
+            </div>
+          )}
+
           {rankings.length === 0 ? (
             <div className="torneio-empty">
               <FontAwesomeIcon icon={faMedal} />
