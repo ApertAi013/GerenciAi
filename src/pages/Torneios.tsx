@@ -1315,7 +1315,7 @@ export default function Torneios() {
             tournamentService.getTournamentMetrics().then(res => setMetrics(res.data)).catch(() => {}).finally(() => setMetricsLoading(false));
           }
         }}>
-          <FontAwesomeIcon icon={faChevronRight} style={{ marginRight: 4, fontSize: '0.7rem' }} /> Metricas
+          Metricas
         </button>
       </div>
 
@@ -1551,32 +1551,6 @@ export default function Torneios() {
                 </div>
               )}
 
-              {/* Top viewed */}
-              {metrics.top_viewed?.filter((t: any) => t.views > 0).length > 0 && (
-                <div>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 12 }}>Mais Assistidos</h3>
-                  <table className="torneio-ranking-table">
-                    <thead>
-                      <tr>
-                        <th>Torneio</th>
-                        <th>Status</th>
-                        <th>Views</th>
-                        <th>Unicos</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.top_viewed.filter((t: any) => t.views > 0).map((t: any) => (
-                        <tr key={t.id}>
-                          <td style={{ fontWeight: 600 }}>{t.title}</td>
-                          <td><span style={{ fontSize: '0.75rem', color: t.status === 'live' ? '#ef4444' : t.status === 'finished' ? '#10b981' : '#94a3b8' }}>{t.status === 'live' ? 'Ao Vivo' : t.status === 'finished' ? 'Encerrado' : t.status}</span></td>
-                          <td><strong>{t.views}</strong></td>
-                          <td>{t.unique_viewers}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </>
           ) : (
             <div className="torneio-empty">
