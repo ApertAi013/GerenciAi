@@ -199,9 +199,7 @@ export default function TournamentPublicPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'bracket' | 'teams' | 'matches'>('overview');
   const [scoreOverlay, setScoreOverlay] = useState<{show: boolean, team: string, text: string, color: string} | null>(null);
   const prevScoresRef = useRef<Map<number, {t1: number, t2: number}>>(new Map());
-  const [liveDrawFireworks, setLiveDrawFireworks] = useState(false);
   const prevLiveDrawRef = useRef(false);
-  const lastDrawDataRef = useRef<any>(null);
   const [activeCam, setActiveCam] = useState('cam1');
 
   // ─── Fetch full tournament data ───
@@ -432,62 +430,11 @@ export default function TournamentPublicPage() {
           )}
         </header>
 
-        {/* Detect live draw finished → show fireworks overlay */}
+        {/* Track live draw state for transition detection */}
         {(() => {
-          const isLiveDraw = tournament.live_draw_mode && tournament.live_draw_data;
-          // Save draw data for fireworks display (only confrontos, not pairs)
-          if (tournament.live_draw_data && tournament.live_draw_data.matches && (tournament.live_draw_data as any).type !== 'pairs') {
-            lastDrawDataRef.current = tournament.live_draw_data;
-          }
-          if (prevLiveDrawRef.current && !isLiveDraw && lastDrawDataRef.current?.matches) {
-            // Live draw just ended! Show fireworks (only for confrontos draw, not pairs)
-            if (!liveDrawFireworks) {
-              setLiveDrawFireworks(true);
-              setTimeout(() => setLiveDrawFireworks(false), 10000);
-            }
-          }
-          prevLiveDrawRef.current = !!isLiveDraw;
+          prevLiveDrawRef.current = !!(tournament.live_draw_mode && tournament.live_draw_data);
           return null;
         })()}
-
-        {/* Fireworks overlay when live draw completes */}
-        {liveDrawFireworks && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)', overflow: 'auto' }}>
-            <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', filter: 'blur(25px)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '35%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.55) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', filter: 'blur(18px)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: 0, left: '5%', right: '5%', height: '22%', background: 'radial-gradient(ellipse at 50% 100%, rgba(255,220,80,0.45) 0%, rgba(245,138,37,0.15) 40%, transparent 70%)', animation: 'tp-fire-wave 2.5s ease-in-out infinite, tp-fire-flicker 1s ease-in-out infinite alternate-reverse', filter: 'blur(12px)', pointerEvents: 'none' }} />
-            <div style={{ zIndex: 1, textAlign: 'center', maxWidth: 600, width: '90%' }}>
-              <div style={{ marginBottom: 12, animation: 'pointPop 0.8s ease-out', filter: 'drop-shadow(0 0 20px rgba(245,138,37,0.5))' }}>
-                <svg width="60" height="60" viewBox="0 0 24 24" fill="#F58A25" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-              </div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#F58A25', textTransform: 'uppercase', letterSpacing: 4, textShadow: '0 0 40px rgba(245,138,37,0.6)', animation: 'pointPop 1s ease-out', marginBottom: 20 }}>
-                Confrontos Definidos!
-              </div>
-              {/* Matches table from saved draw data */}
-              {lastDrawDataRef.current?.matches && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, animation: 'pointPop 1.2s ease-out' }}>
-                  {lastDrawDataRef.current.matches.map((m: any, idx: number) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 16px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12 }}>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', minWidth: 24 }}>{idx + 1}</span>
-                      <span style={{ fontWeight: 700, color: '#60A5FA', fontSize: '0.95rem', flex: 1, textAlign: 'right' }}>{m.team1_name}</span>
-                      <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 700, fontSize: '0.75rem' }}>VS</span>
-                      <span style={{ fontWeight: 700, color: '#F87171', fontSize: '0.95rem', flex: 1, textAlign: 'left' }}>{m.team2_name}</span>
-                    </div>
-                  ))}
-                  {(lastDrawDataRef.current.bye_teams?.length > 0) && (
-                    <div style={{ padding: '8px 16px', background: 'rgba(245,138,37,0.08)', border: '1px solid rgba(245,138,37,0.15)', borderRadius: 12, marginTop: 4 }}>
-                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#F58A25' }}>BYE: </span>
-                      <span style={{ fontSize: '0.85rem', color: '#F58A25' }}>
-                        {lastDrawDataRef.current.bye_teams.map((t: any) => t.name).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-              <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: 16 }}>A chave sera exibida em instantes...</div>
-            </div>
-          </div>
-        )}
 
         {/* Live Draw Section — below tags, above pairing (only for confrontos, not pairs) */}
         {tournament.live_draw_mode && tournament.live_draw_data && (tournament.live_draw_data as any).type !== 'pairs' && (
@@ -505,6 +452,7 @@ export default function TournamentPublicPage() {
             lastPairsDrawAt={tournament.last_pairs_draw_at || null}
             lastBracketDrawAt={tournament.last_bracket_draw_at || null}
             pairsRevealAt={tournament.pairs_reveal_at || null}
+            livePairsData={tournament.live_draw_data && (tournament.live_draw_data as any).type === 'pairs' ? tournament.live_draw_data as any : null}
           />
         )}
 
@@ -1293,7 +1241,7 @@ function DynamicPairingSection({
   lastPairsDrawAt,
   lastBracketDrawAt,
   pairsRevealAt,
-  isLiveDraw,
+  livePairsData,
 }: {
   individualPlayers: { id: number; player_name: string; side: 'left' | 'right' }[];
   generatedPairs: { team_name: string; left_player: string; right_player: string }[];
@@ -1303,17 +1251,19 @@ function DynamicPairingSection({
   lastPairsDrawAt: string | null;
   lastBracketDrawAt: string | null;
   pairsRevealAt: string | null;
-  isLiveDraw?: boolean;
+  livePairsData?: { type: string; pairs: { left_player: string; right_player: string; team_name: string; revealed: boolean }[]; revealed_count: number; finished: boolean } | null;
 }) {
-  // State: 'idle' | 'shuffling' | 'spin-pair' | 'reveal-pair' | 'fireworks' | 'done'
-  const [phase, setPhase] = useState<'idle' | 'shuffling' | 'spin-pair' | 'reveal-pair' | 'fireworks' | 'done'>('idle');
+  // State: 'idle' | 'spin-pair' | 'reveal-pair' | 'fireworks' | 'done'
+  const [phase, setPhase] = useState<'idle' | 'spin-pair' | 'reveal-pair' | 'fireworks' | 'done'>('idle');
   const [revealCount, setRevealCount] = useState(0);
   const [currentPairIdx, setCurrentPairIdx] = useState(-1);
   const [spinNames, setSpinNames] = useState<[string, string]>(['???', '???']);
   const prevPairsCount = useRef(generatedPairs.length);
+  const prevLiveRevealCount = useRef(livePairsData?.revealed_count || 0);
   const prevBracketRef = useRef(bracketGenerated);
   const timerRef = useRef<any>(null);
   const spinRef = useRef<any>(null);
+  const [showLiveFireworks, setShowLiveFireworks] = useState(false);
 
   const leftPlayers = individualPlayers.filter(p => p.side === 'left');
   const rightPlayers = individualPlayers.filter(p => p.side === 'right');
@@ -1322,10 +1272,11 @@ function DynamicPairingSection({
   // If scheduled reveal is in the future, hide pairs from view
   const isRevealPending = pairsRevealAt && new Date(pairsRevealAt).getTime() > Date.now();
   const hasPairs = generatedPairs.length > 0 && !isRevealPending;
+  const isLivePairsDraw = !!livePairsData && !livePairsData.finished;
 
-  // On first render: if pairs already exist and revealed, skip straight to done
+  // On first render: if pairs already exist and NOT in live draw, skip straight to done
   useEffect(() => {
-    if (hasPairs) { setPhase('done'); setRevealCount(999); }
+    if (hasPairs && !livePairsData) { setPhase('done'); setRevealCount(999); }
   }, []);
 
   // Scheduled reveal: countdown + force refresh when time arrives
@@ -1335,65 +1286,62 @@ function DynamicPairingSection({
     const target = new Date(pairsRevealAt).getTime();
     const tick = () => {
       const rem = Math.ceil((target - Date.now()) / 1000);
-      if (rem <= 0) {
-        setCountdown(null);
-        setPhase('shuffling');
-        setRevealCount(0);
-      } else {
-        setCountdown(rem);
-      }
+      if (rem <= 0) { setCountdown(null); } else { setCountdown(rem); }
     };
     tick();
     const iv = setInterval(tick, 1000);
     return () => clearInterval(iv);
   }, [pairsRevealAt, hasPairs]);
 
-  // Reveal one pair at a time with spinning animation
-  const revealNextPair = useCallback((idx: number, pairs: typeof generatedPairs) => {
-    if (idx >= pairs.length) {
-      // All pairs revealed — show fireworks
-      setPhase('fireworks');
-      setTimeout(() => setPhase('done'), 8000);
-      return;
-    }
-    setCurrentPairIdx(idx);
-    setPhase('spin-pair');
-
-    // Spin names for 3 seconds
-    let spinCount = 0;
-    if (spinRef.current) clearInterval(spinRef.current);
-    spinRef.current = setInterval(() => {
-      spinCount++;
-      const shuffledL = [...allNames].sort(() => Math.random() - 0.5);
-      const shuffledR = [...allNames].sort(() => Math.random() - 0.5);
-      setSpinNames([shuffledL[0] || '???', shuffledR[1] || '???']);
-      if (spinCount > 12) { // ~3s at 250ms
-        clearInterval(spinRef.current);
-        // Reveal this pair with fire
-        setPhase('reveal-pair');
-        setRevealCount(idx + 1);
-        // After 3.5s, move to next pair
-        timerRef.current = setTimeout(() => {
-          revealNextPair(idx + 1, pairs);
-        }, 3500);
-      }
-    }, 250);
-  }, [allNames]);
-
-  // Detect NEW pairs appearing (0 → N): start dramatic animation
+  // ─── LIVE PAIRS DRAW: detect new reveal from admin (like LiveDrawSection for confrontos) ───
   useEffect(() => {
+    if (!livePairsData) return;
+    const prev = prevLiveRevealCount.current;
+    const current = livePairsData.revealed_count;
+
+    if (current > prev) {
+      const newIdx = current - 1;
+      setCurrentPairIdx(newIdx);
+      setRevealCount(current);
+
+      // Phase 1: Spinning names (3s)
+      setPhase('spin-pair');
+      let spinCount = 0;
+      if (spinRef.current) clearInterval(spinRef.current);
+      spinRef.current = setInterval(() => {
+        spinCount++;
+        const shuffledL = [...allNames].sort(() => Math.random() - 0.5);
+        const shuffledR = [...allNames].sort(() => Math.random() - 0.5);
+        setSpinNames([shuffledL[0] || '???', shuffledR[1] || '???']);
+        if (spinCount > 12) {
+          clearInterval(spinRef.current);
+          // Phase 2: Reveal with fire
+          setPhase('reveal-pair');
+          setTimeout(() => {
+            setPhase('idle');
+            // If all done, show fireworks
+            if (livePairsData.finished) {
+              setShowLiveFireworks(true);
+              setTimeout(() => { setShowLiveFireworks(false); setPhase('done'); }, 8000);
+            }
+          }, 4000);
+        }
+      }, 250);
+    }
+    prevLiveRevealCount.current = current;
+    return () => { if (spinRef.current) clearInterval(spinRef.current); };
+  }, [livePairsData?.revealed_count, livePairsData?.finished, allNames.length]);
+
+  // ─── NON-LIVE: Detect NEW pairs appearing (0 → N) for instant/scheduled draws ───
+  useEffect(() => {
+    if (livePairsData) return; // Skip for live draw
     if (generatedPairs.length > 0 && prevPairsCount.current === 0) {
-      setRevealCount(0);
-      setCurrentPairIdx(-1);
-      // Start with shuffle phase (names flying), then reveal one by one
-      setPhase('shuffling');
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        revealNextPair(0, generatedPairs);
-      }, 5000); // 5s shuffle before first pair
+      // Instant reveal: just mark done immediately
+      setPhase('done');
+      setRevealCount(999);
     }
     prevPairsCount.current = generatedPairs.length;
-  }, [generatedPairs.length, revealNextPair]);
+  }, [generatedPairs.length, livePairsData]);
 
   // Detect bracket generated (false → true)
   useEffect(() => {
@@ -1406,12 +1354,12 @@ function DynamicPairingSection({
 
   // Detect pairs removed (N → 0) = new round
   useEffect(() => {
-    if (generatedPairs.length === 0 && prevPairsCount.current > 0) {
+    if (generatedPairs.length === 0 && prevPairsCount.current > 0 && !livePairsData) {
       setPhase('idle');
       setRevealCount(0);
       setCurrentPairIdx(-1);
     }
-  }, [generatedPairs.length]);
+  }, [generatedPairs.length, livePairsData]);
 
   // Cleanup
   useEffect(() => {
@@ -1422,9 +1370,11 @@ function DynamicPairingSection({
   }, []);
 
   // Nothing to show
-  if (individualPlayers.length === 0 && !hasPairs) return null;
+  if (individualPlayers.length === 0 && !hasPairs && !livePairsData) return null;
 
-  const currentPair = currentPairIdx >= 0 ? generatedPairs[currentPairIdx] : null;
+  const currentPair = livePairsData && currentPairIdx >= 0
+    ? livePairsData.pairs[currentPairIdx]
+    : currentPairIdx >= 0 ? generatedPairs[currentPairIdx] : null;
 
   // If bracket is generated and phase is done, show minimal
   if (bracketGenerated && phase === 'done' && hasPairs) {
@@ -1539,7 +1489,7 @@ function DynamicPairingSection({
       )}
 
       {/* ── FULLSCREEN FIREWORKS — all pairs defined ── */}
-      {phase === 'fireworks' && (
+      {showLiveFireworks && livePairsData && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)', overflow: 'auto' }}>
           <div style={{ position: 'absolute', bottom: -10, left: '-10%', right: '-10%', height: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(245,138,37,0.5) 0%, rgba(239,68,68,0.2) 40%, transparent 70%)', animation: 'tp-fire-wave 3s ease-in-out infinite, tp-fire-flicker 2s ease-in-out infinite', pointerEvents: 'none', filter: 'blur(25px)' }} />
           <div style={{ position: 'absolute', bottom: -5, left: '-5%', right: '-5%', height: '35%', background: 'radial-gradient(ellipse at 50% 100%, rgba(239,68,68,0.55) 0%, rgba(245,138,37,0.2) 35%, transparent 65%)', animation: 'tp-fire-wave 2s ease-in-out infinite reverse, tp-fire-flicker 1.5s ease-in-out infinite alternate', pointerEvents: 'none', filter: 'blur(18px)' }} />
@@ -1551,7 +1501,7 @@ function DynamicPairingSection({
               Duplas Definidas!
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, animation: 'pointPop 1.2s ease-out' }}>
-              {generatedPairs.map((pair, idx) => (
+              {livePairsData.pairs.map((pair, idx) => (
                 <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 16px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12 }}>
                   <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#10b981', minWidth: 24 }}>{idx + 1}</span>
                   <span style={{ fontWeight: 700, color: '#60A5FA', fontSize: '0.95rem', flex: 1, textAlign: 'right' }}>{pair.left_player}</span>
@@ -1564,8 +1514,39 @@ function DynamicPairingSection({
         </div>
       )}
 
+      {/* ── LIVE PAIRS DRAW: cards showing revealed/pending ── */}
+      {livePairsData && !showLiveFireworks && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, marginTop: 12 }}>
+          {livePairsData.pairs.map((p, idx) => (
+            <div key={idx} style={{
+              padding: '12px 16px', borderRadius: 12,
+              background: p.revealed ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.02)',
+              border: `1px solid ${p.revealed ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.06)'}`,
+              transition: 'all 0.5s ease',
+            }}>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, color: p.revealed ? '#10b981' : '#64748b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+                Dupla {idx + 1} {!p.revealed && '— Aguardando...'}
+              </div>
+              {p.revealed ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontWeight: 700, color: '#60A5FA', fontSize: '0.85rem' }}>{p.left_player}</span>
+                  <span style={{ color: '#F58A25', fontWeight: 600, fontSize: '0.75rem' }}>&</span>
+                  <span style={{ fontWeight: 700, color: '#F87171', fontSize: '0.85rem' }}>{p.right_player}</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#334155', fontSize: '0.85rem' }}>???</span>
+                  <span style={{ color: 'rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '0.75rem' }}>&</span>
+                  <span style={{ color: '#334155', fontSize: '0.85rem' }}>???</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Idle: show players awaiting draw */}
-      {phase === 'idle' && !hasPairs && individualPlayers.length > 0 && (
+      {phase === 'idle' && !hasPairs && !livePairsData && individualPlayers.length > 0 && (
         <div className="tp-pairing-players">
           <div className="tp-pairing-side tp-pairing-left">
             <div className="tp-pairing-side-label"><span className="tp-pairing-side-dot left" /> Esquerdo ({leftPlayers.length})</div>
