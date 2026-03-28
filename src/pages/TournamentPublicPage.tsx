@@ -202,11 +202,6 @@ export default function TournamentPublicPage() {
   const prevLiveDrawRef = useRef(false);
   const [activeCam, setActiveCam] = useState('cam1');
 
-  // Delayed scores for live player (60s delay to sync with HLS stream)
-  const SCORE_DELAY_MS = 60000;
-  const scoreQueueRef = useRef<{ matchId: number; t1: number; t2: number; at: number }[]>([]);
-  const [delayedScores, setDelayedScores] = useState<Map<number, { t1: number; t2: number }>>(new Map());
-
   // ─── Fetch full tournament data ───
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -246,29 +241,20 @@ export default function TournamentPublicPage() {
         if (json.status === 'success' && json.data) {
           const newLiveMatches: TournamentMatch[] = json.data.live_matches || [];
 
-          // Check for score changes — queue delayed scores for stream sync
-          const hasStream = data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls;
+          // Check for score changes and trigger overlay
           const currentCategory: SportCategory = data.tournament.category as SportCategory || detectCategory(data.tournament.title, data.tournament.description);
           for (const match of newLiveMatches) {
             const prev = prevScoresRef.current.get(match.id);
-            const newT1 = match.team1_score ?? 0;
-            const newT2 = match.team2_score ?? 0;
-            if (prev && (newT1 !== prev.t1 || newT2 !== prev.t2)) {
-              // Queue this score change with timestamp for delayed display
-              scoreQueueRef.current.push({ matchId: match.id, t1: newT1, t2: newT2, at: Date.now() });
-
-              if (!hasStream) {
-                // No stream — show overlay immediately
-                if (newT1 > prev.t1) {
-                  setScoreOverlay({ show: true, team: match.team1_name || 'Time A', text: currentCategory === 'futebol' ? 'GOOOL!' : 'PONTO!', color: '#3B82F6' });
-                  setTimeout(() => setScoreOverlay(null), 2000);
-                } else if (newT2 > prev.t2) {
-                  setScoreOverlay({ show: true, team: match.team2_name || 'Time B', text: currentCategory === 'futebol' ? 'GOOOL!' : 'PONTO!', color: '#EF4444' });
-                  setTimeout(() => setScoreOverlay(null), 2000);
-                }
+            if (prev) {
+              if ((match.team1_score ?? 0) > prev.t1) {
+                setScoreOverlay({ show: true, team: match.team1_name || 'Time A', text: currentCategory === 'futebol' ? 'GOOOL!' : 'PONTO!', color: '#3B82F6' });
+                setTimeout(() => setScoreOverlay(null), 2000);
+              } else if ((match.team2_score ?? 0) > prev.t2) {
+                setScoreOverlay({ show: true, team: match.team2_name || 'Time B', text: currentCategory === 'futebol' ? 'GOOOL!' : 'PONTO!', color: '#EF4444' });
+                setTimeout(() => setScoreOverlay(null), 2000);
               }
             }
-            prevScoresRef.current.set(match.id, { t1: newT1, t2: newT2 });
+            prevScoresRef.current.set(match.id, { t1: match.team1_score ?? 0, t2: match.team2_score ?? 0 });
           }
 
           setData(prev => {
@@ -303,55 +289,6 @@ export default function TournamentPublicPage() {
 
     return () => clearInterval(interval);
   }, [data, token, fetchData]);
-
-  // ─── Delayed score processing (60s delay to sync with HLS stream) ───
-  useEffect(() => {
-    if (!data) return;
-    const hasStream = data.stream && (data.stream.status === 'live' || data.stream.status === 'sponsor') && data.stream.urls;
-    if (!hasStream) return; // No delay needed without stream
-
-    const iv = setInterval(() => {
-      const now = Date.now();
-      const queue = scoreQueueRef.current;
-      const ready = queue.filter(q => now - q.at >= SCORE_DELAY_MS);
-      if (ready.length === 0) return;
-
-      // Remove processed items from queue
-      scoreQueueRef.current = queue.filter(q => now - q.at < SCORE_DELAY_MS);
-
-      // Apply delayed scores and trigger overlays
-      const currentCategory: SportCategory = data.tournament.category as SportCategory || detectCategory(data.tournament.title, data.tournament.description);
-      setDelayedScores(prev => {
-        const next = new Map(prev);
-        for (const item of ready) {
-          const old = next.get(item.matchId);
-          // Trigger overlay for delayed score
-          if (old) {
-            const match = data.live_matches?.find(m => m.id === item.matchId);
-            if (item.t1 > old.t1) {
-              setScoreOverlay({ show: true, team: match?.team1_name || 'Time A', text: currentCategory === 'futebol' ? 'GOOOL!' : 'PONTO!', color: '#3B82F6' });
-              setTimeout(() => setScoreOverlay(null), 2000);
-            } else if (item.t2 > old.t2) {
-              setScoreOverlay({ show: true, team: match?.team2_name || 'Time B', text: currentCategory === 'futebol' ? 'GOOOL!' : 'PONTO!', color: '#EF4444' });
-              setTimeout(() => setScoreOverlay(null), 2000);
-            }
-          }
-          next.set(item.matchId, { t1: item.t1, t2: item.t2 });
-        }
-        return next;
-      });
-    }, 1000);
-
-    return () => clearInterval(iv);
-  }, [data]);
-
-  // Helper: get score for stream player display (delayed) vs real-time
-  const getStreamScore = (match: TournamentMatch) => {
-    const delayed = delayedScores.get(match.id);
-    if (delayed) return delayed;
-    // If no delayed score yet, show 0-0 initially (will catch up after 60s)
-    return { t1: 0, t2: 0 };
-  };
 
   // ─── Full data polling (detect draws, bracket changes, new teams) ───
   useEffect(() => {
@@ -666,9 +603,9 @@ export default function TournamentPublicPage() {
                           <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{getStreamScore(camMatch).t1}</span>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{camMatch.team1_score ?? 0}</span>
                           <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>x</span>
-                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{getStreamScore(camMatch).t2}</span>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{camMatch.team2_score ?? 0}</span>
                         </div>
                         <div style={{ flex: 1, textAlign: 'left' }}>
                           <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{camMatch.team2_name || 'A definir'}</div>
@@ -696,9 +633,9 @@ export default function TournamentPublicPage() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
                         <span style={{ flex: 1, textAlign: 'right', fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>{match.team1_name || 'A definir'}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#3B82F6' }}>{getStreamScore(match).t1}</span>
+                          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#3B82F6' }}>{match.team1_score ?? 0}</span>
                           <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)' }}>x</span>
-                          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#EF4444' }}>{getStreamScore(match).t2}</span>
+                          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#EF4444' }}>{match.team2_score ?? 0}</span>
                         </div>
                         <span style={{ flex: 1, textAlign: 'left', fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>{match.team2_name || 'A definir'}</span>
                       </div>
