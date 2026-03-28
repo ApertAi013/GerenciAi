@@ -779,7 +779,7 @@ export default function TournamentPublicPage() {
                     })
                     .slice(0, 12)
                     .map(match => (
-                      <MatchCard key={match.id} match={match} allMatches={allMatches} />
+                      <MatchCard key={match.id} match={match} allMatches={matches} />
                     ))}
                 </div>
               </>
@@ -904,7 +904,7 @@ export default function TournamentPublicPage() {
                   return (order[a.status] ?? 1) - (order[b.status] ?? 1) || a.match_number - b.match_number;
                 })
                 .map(match => (
-                  <MatchCard key={match.id} match={match} allMatches={allMatches} />
+                  <MatchCard key={match.id} match={match} allMatches={matches} />
                 ))}
             </div>
             {nonByeMatches.length === 0 && (
