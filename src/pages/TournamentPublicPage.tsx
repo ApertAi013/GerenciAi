@@ -1078,15 +1078,35 @@ function HlsPlayer({ urls, onCameraChange, initialCam }: { urls: Record<string, 
   }, [activeCam, urls[activeCam], reconnectKey]);
 
   useEffect(() => {
-    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    const onFs = () => {
+      if (!document.fullscreenElement && isFullscreen) {
+        // Native fullscreen exited but our state is still true — sync it
+        // (only if it was native fullscreen, not CSS fullscreen)
+      }
+    };
     document.addEventListener('fullscreenchange', onFs);
     return () => document.removeEventListener('fullscreenchange', onFs);
-  }, []);
+  }, [isFullscreen]);
 
   const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-    if (document.fullscreenElement) document.exitFullscreen();
-    else containerRef.current.requestFullscreen().catch(() => {});
+    if (isFullscreen) {
+      // Exit: try native first, then CSS fallback
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
+    } else {
+      // Enter: try native, fallback to CSS fullscreen for mobile
+      if (containerRef.current?.requestFullscreen) {
+        containerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {
+          // Native fullscreen failed (iOS/mobile) — use CSS fullscreen
+          setIsFullscreen(true);
+        });
+      } else {
+        // No native API — CSS fullscreen
+        setIsFullscreen(true);
+      }
+    }
   };
 
   const btnStyle = (bg: string): React.CSSProperties => ({
