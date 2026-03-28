@@ -268,6 +268,11 @@ export const tournamentService = {
     return response.data;
   },
 
+  async getTournamentMetrics(): Promise<any> {
+    const response = await api.get('/api/tournaments/metrics');
+    return response.data;
+  },
+
   async getViewerCount(tournamentId: number): Promise<any> {
     const response = await api.get(`/api/tournaments/${tournamentId}/viewers`);
     return response.data;

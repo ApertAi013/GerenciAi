@@ -552,7 +552,9 @@ function StreamControls({ tournamentId }: { tournamentId: number }) {
 export default function Torneios() {
   const user = useAuthStore(s => s.user);
   const isApertaiUser = !!(user as any)?.has_apertai;
-  const [tab, setTab] = useState<'tournaments' | 'live' | 'ranking'>('tournaments');
+  const [tab, setTab] = useState<'tournaments' | 'live' | 'ranking' | 'metrics'>('tournaments');
+  const [metrics, setMetrics] = useState<any>(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [rankings, setRankings] = useState<TournamentRanking[]>([]);
   const [rankingCategories, setRankingCategories] = useState<number[]>([]);
@@ -1306,6 +1308,15 @@ export default function Torneios() {
         <button className={`torneio-tab ${tab === 'ranking' ? 'active' : ''}`} onClick={() => setTab('ranking')}>
           Ranking
         </button>
+        <button className={`torneio-tab ${tab === 'metrics' ? 'active' : ''}`} onClick={() => {
+          setTab('metrics');
+          if (!metrics) {
+            setMetricsLoading(true);
+            tournamentService.getTournamentMetrics().then(res => setMetrics(res.data)).catch(() => {}).finally(() => setMetricsLoading(false));
+          }
+        }}>
+          <FontAwesomeIcon icon={faChevronRight} style={{ marginRight: 4, fontSize: '0.7rem' }} /> Metricas
+        </button>
       </div>
 
       {/* ─── Tab: Tournaments ─── */}
@@ -1458,6 +1469,122 @@ export default function Torneios() {
             </>
           )}
         </>
+      )}
+
+      {/* ─── Tab: Metrics ─── */}
+      {tab === 'metrics' && (
+        <div>
+          {metricsLoading ? (
+            <div className="torneio-loading"><FontAwesomeIcon icon={faSpinner} spin /> Carregando metricas...</div>
+          ) : metrics ? (
+            <>
+              {/* Summary cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
+                <div style={{ padding: 16, borderRadius: 12, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 900, color: '#F58A25' }}>{metrics.overall?.total_tournaments || 0}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Torneios Criados</div>
+                </div>
+                <div style={{ padding: 16, borderRadius: 12, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 900, color: '#3B82F6' }}>{metrics.participants?.total_players || 0}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Participantes Unicos</div>
+                </div>
+                <div style={{ padding: 16, borderRadius: 12, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 900, color: '#10b981' }}>{metrics.overall?.finished_count || 0}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Finalizados</div>
+                </div>
+                <div style={{ padding: 16, borderRadius: 12, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2rem', fontWeight: 900, color: '#8B5CF6' }}>{metrics.with_sponsors || 0}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Com Patrocinador</div>
+                </div>
+              </div>
+
+              {/* By category */}
+              {metrics.by_category?.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 12 }}>Por Categoria</h3>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {metrics.by_category.map((c: any) => (
+                      <div key={c.category} style={{ padding: '12px 20px', borderRadius: 10, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', minWidth: 120 }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', marginBottom: 4 }}>{c.category || 'Sem categoria'}</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{c.count}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{c.teams || 0} equipes</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* By team size */}
+              {metrics.by_team_size?.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 12 }}>Por Formato</h3>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {metrics.by_team_size.map((s: any) => (
+                      <div key={s.team_size} style={{ padding: '12px 20px', borderRadius: 10, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 4 }}>
+                          {s.team_size === 1 ? 'Individual' : s.team_size === 2 ? 'Duplas' : s.team_size === 3 ? 'Trios' : `${s.team_size}x${s.team_size}`}
+                        </div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{s.count}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Monthly trend */}
+              {metrics.monthly?.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 12 }}>Evolucao Mensal</h3>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120, padding: '0 4px' }}>
+                    {metrics.monthly.map((m: any) => {
+                      const maxCount = Math.max(...metrics.monthly.map((x: any) => x.count));
+                      const h = maxCount > 0 ? (m.count / maxCount) * 100 : 0;
+                      return (
+                        <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 700 }}>{m.count}</div>
+                          <div style={{ width: '100%', maxWidth: 40, height: `${h}%`, minHeight: 4, background: '#F58A25', borderRadius: '4px 4px 0 0' }} />
+                          <div style={{ fontSize: '0.6rem', color: '#64748b' }}>{m.month.split('-')[1]}/{m.month.split('-')[0].slice(2)}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Top viewed */}
+              {metrics.top_viewed?.filter((t: any) => t.views > 0).length > 0 && (
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 12 }}>Mais Assistidos</h3>
+                  <table className="torneio-ranking-table">
+                    <thead>
+                      <tr>
+                        <th>Torneio</th>
+                        <th>Status</th>
+                        <th>Views</th>
+                        <th>Unicos</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metrics.top_viewed.filter((t: any) => t.views > 0).map((t: any) => (
+                        <tr key={t.id}>
+                          <td style={{ fontWeight: 600 }}>{t.title}</td>
+                          <td><span style={{ fontSize: '0.75rem', color: t.status === 'live' ? '#ef4444' : t.status === 'finished' ? '#10b981' : '#94a3b8' }}>{t.status === 'live' ? 'Ao Vivo' : t.status === 'finished' ? 'Encerrado' : t.status}</span></td>
+                          <td><strong>{t.views}</strong></td>
+                          <td>{t.unique_viewers}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="torneio-empty">
+              <FontAwesomeIcon icon={faTrophy} />
+              <p>Nenhuma metrica disponivel</p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* ─── Create/Edit Modal ─── */}
