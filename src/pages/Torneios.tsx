@@ -532,6 +532,8 @@ function StreamControls({ tournamentId }: { tournamentId: number }) {
 }
 
 export default function Torneios() {
+  const user = useAuthStore(s => s.user);
+  const isApertaiUser = !!(user as any)?.has_apertai;
   const [tab, setTab] = useState<'tournaments' | 'live' | 'ranking'>('tournaments');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [rankings, setRankings] = useState<TournamentRanking[]>([]);
@@ -706,6 +708,69 @@ export default function Torneios() {
     }
   };
 
+  const handleDrawAll = async () => {
+    if (!selectedTournament || liveDrawRevealing) return;
+    setLiveDrawRevealing(true);
+
+    const isPairs = liveDraw?.type === 'pairs';
+    const total = isPairs ? (liveDraw?.pairs?.length || 0) : (liveDraw?.matches?.length || 0);
+    const revealed = liveDraw?.revealed_count || 0;
+    const remaining = total - revealed;
+    // Also count byes step if needed
+    const needByes = !isPairs && liveDraw?.bye_teams?.length > 0 && !liveDraw?.byes_revealed;
+
+    try {
+      // Reveal byes first if needed
+      if (needByes) {
+        const byeRes = await tournamentService.drawNextMatch(selectedTournament.id);
+        setLiveDraw(byeRes.data?.draw_data || liveDraw);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
+      // Reveal all remaining items one by one with short delay
+      for (let i = 0; i < remaining; i++) {
+        const res = await tournamentService.drawNextMatch(selectedTournament.id);
+        setLiveDraw(res.data?.draw_data || liveDraw);
+
+        if (res.data?.all_revealed) {
+          // Last one - handle finish
+          setLiveDrawRevealing(false);
+          if (isPairs) {
+            toast.success('Todas as duplas sorteadas!');
+            setTimeout(async () => {
+              try { await tournamentService.finishLiveDraw(selectedTournament.id); } catch {}
+              const tRes = await tournamentService.getTournament(selectedTournament.id);
+              setSelectedTournament(tRes.data);
+              setLiveDraw(null);
+              setPairsGenerated(true);
+              fetchAll();
+            }, 10000);
+          } else {
+            toast.success('Todos os confrontos sorteados! Chave gerada.');
+            setTimeout(async () => {
+              try { await tournamentService.finishLiveDraw(selectedTournament.id); } catch {}
+              const tRes = await tournamentService.getTournament(selectedTournament.id);
+              setSelectedTournament(tRes.data);
+              if (tRes.data.bracket_generated) {
+                const bRes = await tournamentService.getBracket(selectedTournament.id);
+                setBracketData(bRes.data);
+              }
+              setLiveDraw(null);
+              fetchAll();
+            }, 12000);
+          }
+          return;
+        }
+        // Wait between reveals so public page catches each one
+        await new Promise(r => setTimeout(r, 4000));
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao sortear todos');
+    } finally {
+      setLiveDrawRevealing(false);
+    }
+  };
+
   const handleFinishLiveDraw = async () => {
     if (!selectedTournament) return;
     try {
@@ -818,7 +883,7 @@ export default function Torneios() {
     if (!tid) return;
     let streamCamera: string | undefined;
     // If tournament has stream, ask which camera/court
-    if (selectedTournament?.stream_mode === 'apertai') {
+    if (selectedTournament?.stream_mode === 'apertai' || isApertaiUser) {
       const cam = prompt('Em qual quadra/camera sera o jogo?\n\n1 - Camera 1\n2 - Camera 2\n\n(deixe vazio para nenhuma)');
       if (cam === null) return; // cancelled
       if (cam === '1') streamCamera = 'cam1';
@@ -1419,7 +1484,7 @@ export default function Torneios() {
                       </div>
 
                       {/* Apertai Stream Controls */}
-                      {(selectedTournament as any).stream_mode === 'apertai' && selectedTournament.status === 'live' && (
+                      {((selectedTournament as any).stream_mode === 'apertai' || isApertaiUser) && selectedTournament.status === 'live' && (
                         <StreamControls tournamentId={selectedTournament.id} />
                       )}
                     </div>
@@ -2065,21 +2130,36 @@ export default function Torneios() {
                 )}
               </div>
 
-              <button
-                onClick={handleDrawNextMatch}
-                disabled={liveDrawRevealing}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-                  background: liveDrawRevealing ? '#94a3b8' : '#F58A25', color: '#fff',
-                  cursor: liveDrawRevealing ? 'not-allowed' : 'pointer',
-                  fontWeight: 700, fontSize: '1.1rem',
-                }}
-              >
-                {liveDrawRevealing ? 'Sorteando...'
-                  : liveDraw.type === 'pairs' ? 'Sortear Proxima Dupla'
-                  : liveDraw.bye_teams?.length > 0 && !liveDraw.byes_revealed ? 'Revelar Quem Passa Direto'
-                  : 'Sortear Proximo Confronto'}
-              </button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={handleDrawNextMatch}
+                  disabled={liveDrawRevealing}
+                  style={{
+                    flex: 1, padding: '14px', borderRadius: 12, border: 'none',
+                    background: liveDrawRevealing ? '#94a3b8' : '#F58A25', color: '#fff',
+                    cursor: liveDrawRevealing ? 'not-allowed' : 'pointer',
+                    fontWeight: 700, fontSize: '1rem',
+                  }}
+                >
+                  {liveDrawRevealing ? 'Sorteando...'
+                    : liveDraw.type === 'pairs' ? 'Sortear Proxima Dupla'
+                    : liveDraw.bye_teams?.length > 0 && !liveDraw.byes_revealed ? 'Revelar Quem Passa Direto'
+                    : 'Sortear Proximo Confronto'}
+                </button>
+                <button
+                  onClick={handleDrawAll}
+                  disabled={liveDrawRevealing}
+                  style={{
+                    padding: '14px 20px', borderRadius: 12, border: '2px solid #F58A25',
+                    background: 'transparent', color: '#F58A25',
+                    cursor: liveDrawRevealing ? 'not-allowed' : 'pointer',
+                    fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap',
+                    opacity: liveDrawRevealing ? 0.5 : 1,
+                  }}
+                >
+                  Sortear Todos
+                </button>
+              </div>
             </div>
             {liveDraw.type === 'pairs' && liveDraw.pairs?.every((p: any) => p.revealed) && (
               <div className="mm-footer" style={{ justifyContent: 'center' }}>
