@@ -371,7 +371,7 @@ export default function TournamentPublicPage() {
           </a>
           {(tournament as any).arena_id && (
             <a
-              href={`/arena/${(tournament as any).arena_id}`}
+              href={`/torneios-publicos/${(tournament as any).arena_id}`}
               style={{ textDecoration: 'none', color: '#F58A25', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 8, border: '1px solid rgba(245,138,37,0.2)', background: 'rgba(245,138,37,0.05)' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -382,7 +382,7 @@ export default function TournamentPublicPage() {
 
         {/* Header */}
         <header className="tp-header">
-          <a href={(tournament as any).arena_id ? `/arena/${(tournament as any).arena_id}` : '#'} className="tp-arena-showcase" style={{ textDecoration: 'none', cursor: (tournament as any).arena_id ? 'pointer' : 'default' }}>
+          <a href={(tournament as any).arena_id ? `/torneios-publicos/${(tournament as any).arena_id}` : '#'} className="tp-arena-showcase" style={{ textDecoration: 'none', cursor: (tournament as any).arena_id ? 'pointer' : 'default' }}>
             {(tournament.arena_logo || tournament.image_url) ? (
               <img src={tournament.arena_logo || tournament.image_url} alt={tournament.display_name || tournament.arena_name || tournament.title} className="tp-arena-logo" />
             ) : (
