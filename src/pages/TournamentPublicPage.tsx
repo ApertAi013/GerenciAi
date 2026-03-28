@@ -1303,11 +1303,11 @@ function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; descri
                 <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
                   {s.is_master ? 'Patrocinador Master' : 'Patrocinador'}
                 </div>
-                <div style={{ fontSize: s.is_master ? '1.15rem' : '1rem', fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: s.is_master ? '1.15rem' : '1rem', fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>
                   {s.name}
                 </div>
                 {s.description && (
-                  <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', marginTop: 2, lineHeight: 1.3 }}>
                     {s.description}
                   </div>
                 )}
