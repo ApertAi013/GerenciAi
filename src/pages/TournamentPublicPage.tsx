@@ -1257,7 +1257,7 @@ function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; descri
   useEffect(() => {
     if (all.length <= 1) return;
     const item = all[currentIdx];
-    const dur = item?.is_master ? 5000 : item?._isApertai ? 4000 : 3000;
+    const dur = item?.is_master ? 12000 : item?._isApertai ? 3000 : 6000;
     const timer = setTimeout(() => setCurrentIdx(i => (i + 1) % all.length), dur);
     return () => clearTimeout(timer);
   }, [currentIdx, all.length]);
@@ -1265,7 +1265,7 @@ function SponsorBar({ sponsors }: { sponsors: { id: number; name: string; descri
   return (
     <div style={{ overflow: 'hidden', borderRadius: 14, marginTop: 8, background: 'rgba(15,23,42,0.85)', position: 'relative' }}>
       <div style={{
-        display: 'flex', transition: 'transform 0.5s ease',
+        display: 'flex', transition: 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)',
         transform: `translateX(-${currentIdx * 100}%)`,
       }}>
         {all.map((s: any) => (
