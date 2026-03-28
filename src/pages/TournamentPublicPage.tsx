@@ -494,7 +494,17 @@ export default function TournamentPublicPage() {
                   {/* Score below player */}
                   {camMatch && (
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '1.2rem 1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 16px 0' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#f87171', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span className="tp-live-dot" style={{ width: 5, height: 5 }} /> AO VIVO
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                          #{camMatch.match_number}
+                          {camMatch.stream_camera ? ` — ${camMatch.stream_camera.replace('cam', 'Quadra ')}` : ''}
+                          {camMatch.court_name ? ` — ${camMatch.court_name}` : ''}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '0.8rem 1rem 1.2rem' }}>
                         <div style={{ flex: 1, textAlign: 'right' }}>
                           <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{camMatch.team1_name || 'A definir'}</div>
                           <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
@@ -520,11 +530,11 @@ export default function TournamentPublicPage() {
                   {live_matches.filter(m => m.id !== camMatch?.id).map(match => (
                     <div key={match.id} style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#f87171', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span className="tp-live-dot" style={{ width: 5, height: 5 }} /> AO VIVO
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          Tambem ao vivo
                         </span>
                         <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                          #{match.match_number}{match.stream_camera ? ` - ${match.stream_camera.replace('cam', 'Cam ')}` : ''}{match.court_name ? ` - ${match.court_name}` : ''}
+                          #{match.match_number}{match.stream_camera ? ` — ${match.stream_camera.replace('cam', 'Quadra ')}` : ''}{match.court_name ? ` — ${match.court_name}` : ''}
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
