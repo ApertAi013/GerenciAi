@@ -1656,7 +1656,7 @@ export default function Torneios() {
                                     style={{ background: p.is_seed ? '#fbbf24' : 'rgba(251,191,36,0.05)', color: p.is_seed ? '#1e293b' : '#94a3b8', border: `1px solid ${p.is_seed ? '#fbbf24' : 'var(--border-color, #e2e8f0)'}`, borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 700, whiteSpace: 'nowrap' }}
                                   >
                                     <FontAwesomeIcon icon={faMedal} style={{ marginRight: 2 }} />
-                                    {p.is_seed ? 'Cabeca de Chave' : 'Seed'}
+                                    {p.is_seed ? 'Cabeca de Chave' : 'Cabeca de Chave'}
                                   </button>
                                   <button
                                     onClick={() => handleRemoveIndividualPlayer(p.id)}
@@ -1716,7 +1716,7 @@ export default function Torneios() {
                                     style={{ background: p.is_seed ? '#fbbf24' : 'rgba(251,191,36,0.05)', color: p.is_seed ? '#1e293b' : '#94a3b8', border: `1px solid ${p.is_seed ? '#fbbf24' : 'var(--border-color, #e2e8f0)'}`, borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 700, whiteSpace: 'nowrap' }}
                                   >
                                     <FontAwesomeIcon icon={faMedal} style={{ marginRight: 2 }} />
-                                    {p.is_seed ? 'Cabeca de Chave' : 'Seed'}
+                                    {p.is_seed ? 'Cabeca de Chave' : 'Cabeca de Chave'}
                                   </button>
                                   <button
                                     onClick={() => handleRemoveIndividualPlayer(p.id)}
