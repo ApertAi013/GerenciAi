@@ -164,6 +164,21 @@ body {
     gap: 12px;
 }
 
+.btn-torneios-mobile {
+    display: none;
+    padding: 10px 16px;
+    background: rgba(245, 138, 37, 0.15);
+    border: 2px solid #F58A25;
+    color: #F58A25;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    align-items: center;
+    gap: 6px;
+}
+
 .btn-outline {
     padding: 10px 24px;
     background: transparent;
@@ -1490,6 +1505,10 @@ body {
 
     .nav-buttons {
         gap: 8px;
+    }
+
+    .btn-torneios-mobile {
+        display: flex;
     }
 
     .btn-outline {

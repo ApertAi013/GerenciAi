@@ -202,6 +202,9 @@ export default function LandingPage() {
             </ul>
 
             <div className="nav-buttons">
+              <button className="btn-torneios-mobile" onClick={() => navigate('/torneios-publicos')}>
+                <FontAwesomeIcon icon={faTrophy} /> Torneios
+              </button>
               <button className="btn-outline" onClick={handleLoginClick}>Já sou cliente</button>
               <button className="btn-primary" onClick={handleContratar}>Contratar agora</button>
             </div>
