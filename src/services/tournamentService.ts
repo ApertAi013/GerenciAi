@@ -242,6 +242,22 @@ export const tournamentService = {
     return response.data;
   },
 
+  // Manual bracket editing
+  async undoMatchResult(tournamentId: number, matchId: number): Promise<any> {
+    const response = await api.put(`/api/tournaments/${tournamentId}/matches/${matchId}/undo`);
+    return response.data;
+  },
+
+  async manualEditMatch(tournamentId: number, matchId: number, data: { team1_score?: number; team2_score?: number; team1_id?: number; team2_id?: number }): Promise<any> {
+    const response = await api.put(`/api/tournaments/${tournamentId}/matches/${matchId}/manual-edit`, data);
+    return response.data;
+  },
+
+  async renameTeam(tournamentId: number, teamId: number, name: string): Promise<any> {
+    const response = await api.put(`/api/tournaments/${tournamentId}/teams/${teamId}`, { name });
+    return response.data;
+  },
+
   // Search students
   async searchStudents(query: string): Promise<{ status: string; data: { id: number; name: string; email: string }[] }> {
     const response = await api.get('/api/tournaments/search-students', { params: { q: query } });

@@ -634,6 +634,9 @@ export default function Torneios() {
   const [showBracketModal, setShowBracketModal] = useState(false);
   const [liveDraw, setLiveDraw] = useState<any>(null);
   const [liveDrawRevealing, setLiveDrawRevealing] = useState(false);
+  const [bracketEditMode, setBracketEditMode] = useState(false);
+  const [editMatchModal, setEditMatchModal] = useState<any>(null);
+  const [editTeamModal, setEditTeamModal] = useState<any>(null);
 
   const handleStartLiveDraw = async () => {
     if (!selectedTournament) return;
@@ -1943,14 +1946,49 @@ export default function Torneios() {
                         <small>A chave eliminatória será gerada após concluir a fase de grupos. Veja a aba "Grupos".</small>
                       </div>
                     ) : (
-                      <BracketViewer
-                        winners={bracketData.winners}
-                        losers={bracketData.losers}
-                        grandFinal={bracketData.grand_final}
-                        thirdPlace={bracketData.third_place}
-                        onMatchClick={(m) => setSelectedMatch(m)}
-                        interactive={selectedTournament.status === 'live'}
-                      />
+                      <>
+                        {/* Edit mode toggle */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, gap: 8 }}>
+                          {bracketEditMode ? (
+                            <>
+                              <span style={{ fontSize: '0.8rem', color: '#F58A25', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <FontAwesomeIcon icon={faCircle} style={{ fontSize: 6 }} /> Modo edicao ativo — clique nas partidas ou equipes para editar
+                              </span>
+                              <button
+                                onClick={() => setBracketEditMode(false)}
+                                style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border-color, #e2e8f0)', background: 'transparent', color: 'inherit', cursor: 'pointer', fontSize: '0.8rem' }}
+                              >
+                                Sair do modo edicao
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                if (confirm('ATENCAO: A edicao manual da chave pode ter efeitos irreversiveis (alterar resultados, equipes, etc). Deseja continuar?')) {
+                                  setBracketEditMode(true);
+                                }
+                              }}
+                              style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(245,138,37,0.3)', background: 'rgba(245,138,37,0.05)', color: '#F58A25', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
+                            >
+                              Alterar Chave Manualmente
+                            </button>
+                          )}
+                        </div>
+                        <BracketViewer
+                          winners={bracketData.winners}
+                          losers={bracketData.losers}
+                          grandFinal={bracketData.grand_final}
+                          thirdPlace={bracketData.third_place}
+                          onMatchClick={(m) => {
+                            if (bracketEditMode) {
+                              setEditMatchModal(m);
+                            } else {
+                              setSelectedMatch(m);
+                            }
+                          }}
+                          interactive={selectedTournament.status === 'live' || bracketEditMode}
+                        />
+                      </>
                     )
                   ) : (
                     <div className="torneio-empty">
@@ -2337,6 +2375,128 @@ export default function Torneios() {
             setLiveRefreshKey(k => k + 1);
           }
         }} />
+      )}
+
+      {/* ─── Edit Match Modal (manual bracket editing) ─── */}
+      {editMatchModal && selectedTournament && (
+        <div className="mm-overlay" onClick={() => setEditMatchModal(null)}>
+          <div className="mm-modal mm-modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
+              <h3>Editar Partida #{editMatchModal.match_number}</h3>
+              <button className="mm-close" onClick={() => setEditMatchModal(null)}>&times;</button>
+            </div>
+            <div className="mm-content">
+              <div style={{ marginBottom: 16, padding: 12, borderRadius: 10, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span
+                    style={{ fontWeight: 600, cursor: 'pointer', color: '#3B82F6', textDecoration: 'underline dotted' }}
+                    onClick={() => {
+                      if (editMatchModal.team1_id) {
+                        const name = prompt('Novo nome para a equipe:', editMatchModal.team1_name || '');
+                        if (name && name.trim()) {
+                          tournamentService.renameTeam(selectedTournament.id, editMatchModal.team1_id, name.trim()).then(() => {
+                            toast.success('Equipe renomeada!');
+                            loadBracket(selectedTournament.id);
+                            setEditMatchModal(null);
+                          }).catch((e: any) => toast.error(e.response?.data?.message || 'Erro'));
+                        }
+                      }
+                    }}
+                  >
+                    {editMatchModal.team1_name || 'A definir'}
+                  </span>
+                  <span style={{ fontWeight: 700 }}>{editMatchModal.team1_score ?? '-'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span
+                    style={{ fontWeight: 600, cursor: 'pointer', color: '#EF4444', textDecoration: 'underline dotted' }}
+                    onClick={() => {
+                      if (editMatchModal.team2_id) {
+                        const name = prompt('Novo nome para a equipe:', editMatchModal.team2_name || '');
+                        if (name && name.trim()) {
+                          tournamentService.renameTeam(selectedTournament.id, editMatchModal.team2_id, name.trim()).then(() => {
+                            toast.success('Equipe renomeada!');
+                            loadBracket(selectedTournament.id);
+                            setEditMatchModal(null);
+                          }).catch((e: any) => toast.error(e.response?.data?.message || 'Erro'));
+                        }
+                      }
+                    }}
+                  >
+                    {editMatchModal.team2_name || 'A definir'}
+                  </span>
+                  <span style={{ fontWeight: 700 }}>{editMatchModal.team2_score ?? '-'}</span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 8 }}>
+                  Status: {editMatchModal.status === 'completed' ? 'Concluida' : editMatchModal.status === 'live' ? 'Ao Vivo' : 'Pendente'}
+                  {' | '}{editMatchModal.bracket_type === 'winners' ? 'Vencedores' : editMatchModal.bracket_type === 'losers' ? 'Perdedores' : editMatchModal.bracket_type === 'grand_final' ? 'Grande Final' : editMatchModal.bracket_type}
+                </div>
+              </div>
+
+              <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 8 }}>Clique no nome de uma equipe para renomea-la.</div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* Edit scores */}
+                <button
+                  onClick={() => {
+                    const s1 = prompt('Placar equipe 1:', String(editMatchModal.team1_score ?? 0));
+                    if (s1 === null) return;
+                    const s2 = prompt('Placar equipe 2:', String(editMatchModal.team2_score ?? 0));
+                    if (s2 === null) return;
+                    tournamentService.manualEditMatch(selectedTournament.id, editMatchModal.id, {
+                      team1_score: Number(s1), team2_score: Number(s2),
+                    }).then(() => {
+                      toast.success('Placar atualizado!');
+                      loadBracket(selectedTournament.id);
+                      setEditMatchModal(null);
+                    }).catch((e: any) => toast.error(e.response?.data?.message || 'Erro'));
+                  }}
+                  style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-secondary, #f8fafc)', cursor: 'pointer', textAlign: 'left', color: 'inherit' }}
+                >
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Editar Placar</div>
+                  <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 }}>Alterar o placar desta partida</div>
+                </button>
+
+                {/* Undo match result */}
+                {editMatchModal.status === 'completed' && (
+                  <button
+                    onClick={() => {
+                      if (!confirm('Desfazer resultado desta partida? As equipes serao removidas das partidas seguintes e os stats revertidos. Esta acao nao pode ser desfeita.')) return;
+                      tournamentService.undoMatchResult(selectedTournament.id, editMatchModal.id).then((res) => {
+                        toast.success('Resultado desfeito!');
+                        setBracketData(res.data);
+                        setEditMatchModal(null);
+                      }).catch((e: any) => toast.error(e.response?.data?.message || 'Erro'));
+                    }}
+                    style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', cursor: 'pointer', textAlign: 'left', color: 'inherit' }}
+                  >
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#ef4444' }}>Desfazer Resultado</div>
+                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 }}>Reverte a partida para pendente e remove equipes das proximas partidas</div>
+                  </button>
+                )}
+
+                {/* Swap teams */}
+                {editMatchModal.status === 'pending' && editMatchModal.team1_id && editMatchModal.team2_id && (
+                  <button
+                    onClick={() => {
+                      tournamentService.manualEditMatch(selectedTournament.id, editMatchModal.id, {
+                        team1_id: editMatchModal.team2_id, team2_id: editMatchModal.team1_id,
+                      }).then(() => {
+                        toast.success('Equipes trocadas!');
+                        loadBracket(selectedTournament.id);
+                        setEditMatchModal(null);
+                      }).catch((e: any) => toast.error(e.response?.data?.message || 'Erro'));
+                    }}
+                    style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid var(--border-color, #e2e8f0)', background: 'var(--bg-secondary, #f8fafc)', cursor: 'pointer', textAlign: 'left', color: 'inherit' }}
+                  >
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Trocar Posicoes</div>
+                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 }}>Inverter equipe 1 e equipe 2 nesta partida</div>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
