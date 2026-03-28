@@ -330,7 +330,17 @@ export default function TournamentPublicPage() {
     );
   }
 
-  const { tournament, teams, matches, live_matches, podium, groups, individual_players, generated_pairs } = data;
+  const { tournament, teams, matches, live_matches, groups, individual_players, generated_pairs } = data;
+  // Convert podium from backend format { champion, runner_up, third_place } to array
+  const podiumRaw = data.podium as any;
+  const podium: PodiumEntry[] = [];
+  if (podiumRaw) {
+    if (podiumRaw.champion) podium.push({ place: 1, team_id: podiumRaw.champion.id, team_name: podiumRaw.champion.name, wins: podiumRaw.champion.wins || 0, losses: podiumRaw.champion.losses || 0 });
+    if (podiumRaw.runner_up) podium.push({ place: 2, team_id: podiumRaw.runner_up.id, team_name: podiumRaw.runner_up.name, wins: podiumRaw.runner_up.wins || 0, losses: podiumRaw.runner_up.losses || 0 });
+    if (podiumRaw.third_place) podium.push({ place: 3, team_id: podiumRaw.third_place.id, team_name: podiumRaw.third_place.name, wins: podiumRaw.third_place.wins || 0, losses: podiumRaw.third_place.losses || 0 });
+    // Also handle if it's already an array
+    if (Array.isArray(podiumRaw)) podiumRaw.forEach((p: any) => { if (p.place) podium.push(p); });
+  }
   const category: SportCategory = (tournament.category as SportCategory) || detectCategory(tournament.title, tournament.description);
   const isLive = tournament.status === 'live';
   const isFinished = tournament.status === 'finished';
@@ -429,6 +439,83 @@ export default function TournamentPublicPage() {
             <p className="tp-description">{tournament.description}</p>
           )}
         </header>
+
+        {/* Podium - show prominently when tournament is finished */}
+        {isFinished && podium && podium.length > 0 && (
+          <div style={{ margin: '0 0 24px', position: 'relative', overflow: 'hidden', padding: '40px 0 20px' }}>
+            {/* Background glow */}
+            <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+            <h2 className="tp-section-title" style={{ textAlign: 'center', marginBottom: 32 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#F58A25" stroke="none" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+              Podio
+            </h2>
+
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 16, maxWidth: 700, margin: '0 auto', padding: '0 16px' }}>
+              {/* 2nd place */}
+              {podium.find(p => p.place === 2) && (() => {
+                const p = podium.find(p => p.place === 2)!;
+                return (
+                  <div style={{ flex: 1, maxWidth: 200, animation: 'fadeInUp 0.8s 0.3s ease-out both' }}>
+                    <div style={{
+                      background: 'linear-gradient(180deg, rgba(148,163,184,0.15) 0%, rgba(148,163,184,0.03) 100%)',
+                      border: '2px solid rgba(148,163,184,0.25)', borderRadius: 20, padding: '24px 16px 20px', textAlign: 'center',
+                      position: 'relative', overflow: 'hidden',
+                    }}>
+                      <div style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 16, height: 16, background: '#94a3b8', border: '2px solid #cbd5e1' }} />
+                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #94a3b8, #cbd5e1)', margin: '8px auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', boxShadow: '0 0 20px rgba(148,163,184,0.3)' }}>2</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#e2e8f0', marginBottom: 4, wordBreak: 'break-word' }}>{p.team_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{p.wins}V - {p.losses}D</div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>Vice-Campeao</div>
+                    </div>
+                  </div>
+                );
+              })()}
+              {/* 1st place */}
+              {podium.find(p => p.place === 1) && (() => {
+                const p = podium.find(p => p.place === 1)!;
+                return (
+                  <div style={{ flex: 1, maxWidth: 220, animation: 'fadeInUp 0.8s 0.1s ease-out both' }}>
+                    <div style={{
+                      background: 'linear-gradient(180deg, rgba(245,158,11,0.18) 0%, rgba(59,130,246,0.08) 50%, rgba(59,130,246,0.03) 100%)',
+                      border: '2px solid rgba(245,158,11,0.35)', borderRadius: 24, padding: '28px 16px 24px', textAlign: 'center',
+                      position: 'relative', overflow: 'hidden',
+                      boxShadow: '0 0 40px rgba(245,158,11,0.15), 0 0 80px rgba(59,130,246,0.08)',
+                    }}>
+                      <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 20, height: 20, background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', border: '2px solid #fcd34d', boxShadow: '0 0 15px rgba(251,191,36,0.5)' }} />
+                      <div style={{ position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)', width: 160, height: 60, borderRadius: '50%', border: '2px solid rgba(59,130,246,0.2)', boxShadow: '0 0 30px rgba(59,130,246,0.15)', pointerEvents: 'none' }} />
+                      <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', margin: '10px auto 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 30px rgba(251,191,36,0.4)', border: '3px solid #fcd34d' }}>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="#1e293b" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                      </div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#fbbf24', marginBottom: 4, wordBreak: 'break-word', textShadow: '0 0 20px rgba(251,191,36,0.3)' }}>{p.team_name}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#fcd34d' }}>{p.wins}V - {p.losses}D</div>
+                      <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: 6, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 800 }}>Campeao</div>
+                    </div>
+                  </div>
+                );
+              })()}
+              {/* 3rd place */}
+              {podium.find(p => p.place === 3) && (() => {
+                const p = podium.find(p => p.place === 3)!;
+                return (
+                  <div style={{ flex: 1, maxWidth: 200, animation: 'fadeInUp 0.8s 0.5s ease-out both' }}>
+                    <div style={{
+                      background: 'linear-gradient(180deg, rgba(217,119,6,0.12) 0%, rgba(217,119,6,0.03) 100%)',
+                      border: '2px solid rgba(217,119,6,0.25)', borderRadius: 20, padding: '24px 16px 20px', textAlign: 'center',
+                      position: 'relative', overflow: 'hidden',
+                    }}>
+                      <div style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 16, height: 16, background: '#d97706', border: '2px solid #fbbf24' }} />
+                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #d97706, #b45309)', margin: '8px auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: '#fff', boxShadow: '0 0 20px rgba(217,119,6,0.3)' }}>3</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#e2e8f0', marginBottom: 4, wordBreak: 'break-word' }}>{p.team_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{p.wins}V - {p.losses}D</div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>3o Lugar</div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* Track live draw state for transition detection */}
         {(() => {
@@ -583,92 +670,6 @@ export default function TournamentPublicPage() {
             </div>
           );
         })()}
-
-        {/* Podium - modern animated cards */}
-        {isFinished && podium && podium.length > 0 && (
-          <div style={{ margin: '40px 0', position: 'relative', overflow: 'hidden', padding: '40px 0 20px' }}>
-            {/* Background glow */}
-            <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-            <h2 className="tp-section-title" style={{ textAlign: 'center', marginBottom: 32 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#F58A25" stroke="none" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-              Podio
-            </h2>
-
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 16, maxWidth: 700, margin: '0 auto', padding: '0 16px' }}>
-              {/* 2nd place */}
-              {podium.find(p => p.place === 2) && (() => {
-                const p = podium.find(p => p.place === 2)!;
-                return (
-                  <div style={{ flex: 1, maxWidth: 200, animation: 'fadeInUp 0.8s 0.3s ease-out both' }}>
-                    <div style={{
-                      background: 'linear-gradient(180deg, rgba(148,163,184,0.15) 0%, rgba(148,163,184,0.03) 100%)',
-                      border: '2px solid rgba(148,163,184,0.25)',
-                      borderRadius: 20, padding: '24px 16px 20px', textAlign: 'center',
-                      position: 'relative', overflow: 'hidden',
-                    }}>
-                      {/* Diamond top */}
-                      <div style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 16, height: 16, background: '#94a3b8', border: '2px solid #cbd5e1' }} />
-                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #94a3b8, #cbd5e1)', margin: '8px auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: '#1e293b', boxShadow: '0 0 20px rgba(148,163,184,0.3)' }}>2</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#e2e8f0', marginBottom: 4, wordBreak: 'break-word' }}>{p.team_name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{p.wins}V - {p.losses}D</div>
-                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>Vice-Campeao</div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* 1st place */}
-              {podium.find(p => p.place === 1) && (() => {
-                const p = podium.find(p => p.place === 1)!;
-                return (
-                  <div style={{ flex: 1, maxWidth: 220, animation: 'fadeInUp 0.8s 0.1s ease-out both' }}>
-                    <div style={{
-                      background: 'linear-gradient(180deg, rgba(245,158,11,0.18) 0%, rgba(59,130,246,0.08) 50%, rgba(59,130,246,0.03) 100%)',
-                      border: '2px solid rgba(245,158,11,0.35)',
-                      borderRadius: 24, padding: '28px 16px 24px', textAlign: 'center',
-                      position: 'relative', overflow: 'hidden',
-                      boxShadow: '0 0 40px rgba(245,158,11,0.15), 0 0 80px rgba(59,130,246,0.08)',
-                    }}>
-                      {/* Diamond top */}
-                      <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 20, height: 20, background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', border: '2px solid #fcd34d', boxShadow: '0 0 15px rgba(251,191,36,0.5)' }} />
-                      {/* Glow ring */}
-                      <div style={{ position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)', width: 160, height: 60, borderRadius: '50%', border: '2px solid rgba(59,130,246,0.2)', boxShadow: '0 0 30px rgba(59,130,246,0.15)', pointerEvents: 'none' }} />
-                      <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', margin: '10px auto 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', fontWeight: 900, color: '#1e293b', boxShadow: '0 0 30px rgba(251,191,36,0.4)', border: '3px solid #fcd34d' }}>
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="#1e293b" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                      </div>
-                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#fbbf24', marginBottom: 4, wordBreak: 'break-word', textShadow: '0 0 20px rgba(251,191,36,0.3)' }}>{p.team_name}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#fcd34d' }}>{p.wins}V - {p.losses}D</div>
-                      <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: 6, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 800 }}>Campeao</div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* 3rd place */}
-              {podium.find(p => p.place === 3) && (() => {
-                const p = podium.find(p => p.place === 3)!;
-                return (
-                  <div style={{ flex: 1, maxWidth: 200, animation: 'fadeInUp 0.8s 0.5s ease-out both' }}>
-                    <div style={{
-                      background: 'linear-gradient(180deg, rgba(217,119,6,0.12) 0%, rgba(217,119,6,0.03) 100%)',
-                      border: '2px solid rgba(217,119,6,0.25)',
-                      borderRadius: 20, padding: '24px 16px 20px', textAlign: 'center',
-                      position: 'relative', overflow: 'hidden',
-                    }}>
-                      {/* Diamond top */}
-                      <div style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 16, height: 16, background: '#d97706', border: '2px solid #fbbf24' }} />
-                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #d97706, #b45309)', margin: '8px auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 900, color: '#fff', boxShadow: '0 0 20px rgba(217,119,6,0.3)' }}>3</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#e2e8f0', marginBottom: 4, wordBreak: 'break-word' }}>{p.team_name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{p.wins}V - {p.losses}D</div>
-                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>3o Lugar</div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        )}
 
         {/* Tabs */}
         <div className="tp-tabs">
