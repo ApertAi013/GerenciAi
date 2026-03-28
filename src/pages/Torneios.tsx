@@ -885,17 +885,10 @@ export default function Torneios() {
   // ─── Match actions ───
   const getTournamentId = (match: TournamentMatch) => selectedTournament?.id || match.tournament_id;
 
-  const handleStartMatch = async (match: TournamentMatch) => {
+  const handleStartMatch = async (match: TournamentMatch, camera?: string) => {
     const tid = getTournamentId(match);
     if (!tid) return;
-    let streamCamera: string | undefined;
-    // If tournament has stream, ask which camera/court
-    if (selectedTournament?.stream_mode === 'apertai' || isApertaiUser) {
-      const cam = prompt('Em qual quadra/camera sera o jogo?\n\n1 - Camera 1\n2 - Camera 2\n\n(deixe vazio para nenhuma)');
-      if (cam === null) return; // cancelled
-      if (cam === '1') streamCamera = 'cam1';
-      else if (cam === '2') streamCamera = 'cam2';
-    }
+    const streamCamera = camera || undefined;
     try {
       await tournamentService.startMatch(tid, match.id, streamCamera ? { stream_camera: streamCamera } : undefined);
       toast.success('Partida iniciada!');
@@ -1145,6 +1138,8 @@ export default function Torneios() {
     const isLive = match.status === 'live';
     const isCompleted = match.status === 'completed';
     const hasBothTeams = !!match.team1_id && !!match.team2_id;
+    const hasApertai = selectedTournament?.stream_mode === 'apertai' || isApertaiUser;
+    const [matchCam, setMatchCam] = useState(match.stream_camera || '');
 
     return (
       <div className="mm-overlay" onClick={onClose}>
@@ -1158,6 +1153,7 @@ export default function Torneios() {
             {isLive && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 0', background: '#fee2e2' }}>
                 <span className="torneio-live-dot" /> <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ef4444', letterSpacing: 1 }}>AO VIVO</span>
+                {match.stream_camera && <span style={{ fontSize: '0.7rem', color: '#ef4444' }}>— {match.stream_camera.replace('cam', 'Quadra ')}</span>}
               </div>
             )}
             {isCompleted && (
@@ -1196,11 +1192,51 @@ export default function Torneios() {
               </div>
             </div>
 
+            {/* Court/Camera selector for Apertai */}
+            {hasApertai && hasBothTeams && !isCompleted && (
+              <div style={{ padding: '0 16px 12px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8', marginBottom: 6, display: 'block' }}>
+                  <FontAwesomeIcon icon={faCamera} style={{ marginRight: 4 }} /> Quadra / Camera
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {['cam1', 'cam2'].map(cam => (
+                    <button
+                      key={cam}
+                      onClick={() => setMatchCam(cam)}
+                      style={{
+                        flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                        fontWeight: 700, fontSize: '0.85rem',
+                        background: matchCam === cam ? '#F58A25' : 'var(--bg-secondary, #f8fafc)',
+                        color: matchCam === cam ? '#fff' : 'inherit',
+                        borderWidth: 2, borderStyle: 'solid',
+                        borderColor: matchCam === cam ? '#F58A25' : 'var(--border-color, #e2e8f0)',
+                      }}
+                    >
+                      {cam.replace('cam', 'Quadra ')}
+                    </button>
+                  ))}
+                </div>
+                {isPending && !matchCam && (
+                  <div style={{ fontSize: '0.75rem', color: '#F58A25', marginTop: 4 }}>Selecione a quadra para iniciar com transmissao</div>
+                )}
+              </div>
+            )}
+
             {/* Actions */}
             {hasBothTeams && !isCompleted && (
               <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {isPending && (
-                  <button className="torneio-btn-success" onClick={() => handleStartMatch(match)} style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}>
+                  <button
+                    className="torneio-btn-success"
+                    onClick={() => {
+                      if (hasApertai && !matchCam) {
+                        toast.error('Selecione a quadra/camera antes de iniciar');
+                        return;
+                      }
+                      handleStartMatch(match, matchCam || undefined);
+                    }}
+                    style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.95rem' }}
+                  >
                     <FontAwesomeIcon icon={faPlay} /> Iniciar Partida
                   </button>
                 )}
@@ -2070,7 +2106,7 @@ export default function Torneios() {
                             </div>
                             {match.status === 'pending' && match.team1_id && match.team2_id && (
                               <div className="torneio-match-actions">
-                                <button className="torneio-btn-success" onClick={() => handleStartMatch(match)}>
+                                <button className="torneio-btn-success" onClick={() => setSelectedMatch(match)}>
                                   <FontAwesomeIcon icon={faPlay} /> Iniciar
                                 </button>
                                 <button className="torneio-btn-primary" onClick={() => handleDeclareWinner(match, match.team1_id!)}>

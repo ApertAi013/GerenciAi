@@ -516,6 +516,28 @@ export default function TournamentPublicPage() {
                       Nenhuma partida nesta quadra
                     </div>
                   )}
+                  {/* Other live matches not on this camera */}
+                  {live_matches.filter(m => m.id !== camMatch?.id).map(match => (
+                    <div key={match.id} style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#f87171', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span className="tp-live-dot" style={{ width: 5, height: 5 }} /> AO VIVO
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                          #{match.match_number}{match.stream_camera ? ` - ${match.stream_camera.replace('cam', 'Cam ')}` : ''}{match.court_name ? ` - ${match.court_name}` : ''}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+                        <span style={{ flex: 1, textAlign: 'right', fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>{match.team1_name || 'A definir'}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#3B82F6' }}>{match.team1_score ?? 0}</span>
+                          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)' }}>x</span>
+                          <span style={{ fontSize: '1.5rem', fontWeight: 900, color: '#EF4444' }}>{match.team2_score ?? 0}</span>
+                        </div>
+                        <span style={{ flex: 1, textAlign: 'left', fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>{match.team2_name || 'A definir'}</span>
+                      </div>
+                    </div>
+                  ))}
                   <SponsorBar sponsors={data.sponsors || []} />
                 </div>
               ) : (
