@@ -1726,12 +1726,20 @@ export default function Torneios() {
                                     )}
                                   </div>
                                 </div>
-                                <span className="torneio-team-status" style={{
-                                  background: team.status === 'approved' || team.status === 'active' ? '#dcfce7' : team.status === 'champion' ? '#fef08a' : '#f1f5f9',
-                                  color: team.status === 'approved' || team.status === 'active' ? '#16a34a' : team.status === 'champion' ? '#a16207' : '#64748b',
-                                }}>
-                                  {team.status === 'approved' ? 'Aprovado' : team.status === 'active' ? 'Ativo' : team.status === 'champion' ? 'Campeao' : team.status === 'runner_up' ? 'Vice' : team.status === 'third_place' ? '3o Lugar' : team.status}
-                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <button
+                                    onClick={() => setEditTeamModal(team)}
+                                    style={{ background: 'rgba(245,138,37,0.08)', color: '#F58A25', border: '1px solid rgba(245,138,37,0.2)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
+                                  >
+                                    Editar
+                                  </button>
+                                  <span className="torneio-team-status" style={{
+                                    background: team.status === 'approved' || team.status === 'active' ? '#dcfce7' : team.status === 'champion' ? '#fef08a' : '#f1f5f9',
+                                    color: team.status === 'approved' || team.status === 'active' ? '#16a34a' : team.status === 'champion' ? '#a16207' : '#64748b',
+                                  }}>
+                                    {team.status === 'approved' ? 'Aprovado' : team.status === 'active' ? 'Ativo' : team.status === 'champion' ? 'Campeao' : team.status === 'runner_up' ? 'Vice' : team.status === 'third_place' ? '3o Lugar' : team.status}
+                                  </span>
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -1770,6 +1778,12 @@ export default function Torneios() {
                               </div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <button
+                                onClick={() => setEditTeamModal(team)}
+                                style={{ background: 'rgba(245,138,37,0.08)', color: '#F58A25', border: '1px solid rgba(245,138,37,0.2)', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
+                              >
+                                Editar
+                              </button>
                               {team.status === 'registered' && (
                                 isDynamicPairing ? (
                                   <button className="torneio-btn-success" style={{ padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => { setApproveModalTeamId(team.id); setApproveSide('left'); }}>
@@ -2376,6 +2390,117 @@ export default function Torneios() {
           }
         }} />
       )}
+
+      {/* ─── Edit Team Modal ─── */}
+      {editTeamModal && selectedTournament && (() => {
+        const team = editTeamModal;
+        const members = team.members || [];
+        return (
+          <div className="mm-overlay" onClick={() => setEditTeamModal(null)}>
+            <div className="mm-modal mm-modal-sm" onClick={e => e.stopPropagation()}>
+              <div className="mm-header">
+                <h3>Editar Equipe</h3>
+                <button className="mm-close" onClick={() => setEditTeamModal(null)}>&times;</button>
+              </div>
+              <div className="mm-content">
+                <div className="mm-field">
+                  <label>Nome da equipe</label>
+                  <input
+                    type="text"
+                    defaultValue={team.name || ''}
+                    id="edit-team-name"
+                    style={{ fontSize: '1rem' }}
+                  />
+                </div>
+
+                {members.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 8, display: 'block' }}>Integrantes</label>
+                    {members.map((m: any, idx: number) => (
+                      <div key={idx} className="mm-field" style={{ marginBottom: 6 }}>
+                        <input
+                          type="text"
+                          defaultValue={m.name || ''}
+                          id={`edit-member-${idx}`}
+                          placeholder={`Integrante ${idx + 1}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {members.length === 0 && selectedTournament.team_size > 1 && (
+                  <div style={{ marginTop: 12 }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 8, display: 'block' }}>Integrantes</label>
+                    {Array.from({ length: selectedTournament.team_size }, (_, idx) => (
+                      <div key={idx} className="mm-field" style={{ marginBottom: 6 }}>
+                        <input
+                          type="text"
+                          defaultValue=""
+                          id={`edit-member-${idx}`}
+                          placeholder={`Integrante ${idx + 1}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="mm-footer">
+                <button className="mm-btn mm-btn-secondary" onClick={() => setEditTeamModal(null)}>Cancelar</button>
+                <button className="mm-btn mm-btn-primary" onClick={async () => {
+                  const nameInput = document.getElementById('edit-team-name') as HTMLInputElement;
+                  const newName = nameInput?.value?.trim();
+
+                  // Collect members
+                  const memberCount = members.length || selectedTournament.team_size;
+                  const newMembers: { external_name: string; old_name?: string }[] = [];
+                  for (let i = 0; i < memberCount; i++) {
+                    const input = document.getElementById(`edit-member-${i}`) as HTMLInputElement;
+                    if (input?.value?.trim()) {
+                      newMembers.push({
+                        external_name: input.value.trim(),
+                        old_name: members[i]?.name || undefined,
+                      });
+                    }
+                  }
+
+                  // Auto-generate team name from members if team_size > 1 and name matches old pattern
+                  let finalName = newName || team.name;
+                  if (newMembers.length >= 2) {
+                    const autoName = newMembers.map(m => m.external_name).join(' & ');
+                    // If name was auto-generated (contains &), update it
+                    if (!newName || newName === team.name) {
+                      const oldMemberNames = members.map((m: any) => m.name).filter(Boolean);
+                      if (oldMemberNames.length >= 2 && team.name?.includes('&')) {
+                        finalName = autoName;
+                      }
+                    }
+                  }
+
+                  try {
+                    await tournamentService.renameTeam(selectedTournament.id, team.id, finalName);
+                    if (newMembers.length > 0) {
+                      // Update members via the updateTeam endpoint
+                      await tournamentService.updateTeam(selectedTournament.id, team.id, { members: newMembers });
+                    }
+                    toast.success('Equipe atualizada!');
+                    const tRes = await tournamentService.getTournament(selectedTournament.id);
+                    setSelectedTournament(tRes.data);
+                    if (selectedTournament.pairing_mode !== 'fixed') {
+                      loadIndividualPlayers(selectedTournament.id);
+                    }
+                    setEditTeamModal(null);
+                  } catch (err: any) {
+                    toast.error(err.response?.data?.message || 'Erro ao atualizar equipe');
+                  }
+                }}>
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ─── Edit Match Modal (manual bracket editing) ─── */}
       {editMatchModal && selectedTournament && (

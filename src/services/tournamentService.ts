@@ -258,6 +258,11 @@ export const tournamentService = {
     return response.data;
   },
 
+  async updateTeam(tournamentId: number, teamId: number, data: { name?: string; members?: { external_name: string; old_name?: string }[] }): Promise<any> {
+    const response = await api.put(`/api/tournaments/${tournamentId}/teams/${teamId}`, data);
+    return response.data;
+  },
+
   // Search students
   async searchStudents(query: string): Promise<{ status: string; data: { id: number; name: string; email: string }[] }> {
     const response = await api.get('/api/tournaments/search-students', { params: { q: query } });
