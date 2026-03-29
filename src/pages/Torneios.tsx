@@ -684,12 +684,16 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
                   <label>Posicao</label>
                   <select value={cardForm.position} onChange={e => setCardForm({ ...cardForm, position: e.target.value })}>
                     <option value="JOG">JOG</option>
+                    <option value="ESQ">ESQ</option>
+                    <option value="DIR">DIR</option>
                     <option value="ATA">ATA</option>
                     <option value="DEF">DEF</option>
-                    <option value="MEI">MEI</option>
-                    <option value="GOL">GOL</option>
-                    <option value="LIB">LIB</option>
                     <option value="PIV">PIV</option>
+                    <option value="LEV">LEV</option>
+                    <option value="LIB">LIB</option>
+                    <option value="SET">SET</option>
+                    <option value="GOL">GOL</option>
+                    <option value="MEI">MEI</option>
                   </select>
                 </div>
               </div>
