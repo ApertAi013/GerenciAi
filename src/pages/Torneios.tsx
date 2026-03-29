@@ -364,6 +364,30 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
     card_type: 'gold', photo: null as File | null,
   });
   const photoRef = useRef<HTMLInputElement>(null);
+  const [removingBg, setRemovingBg] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoPreview(URL.createObjectURL(file));
+    setCardForm(f => ({ ...f, photo: file }));
+    setRemovingBg(true);
+    try {
+      const mod = await import(/* @vite-ignore */ 'https://esm.sh/@imgly/background-removal@1.5.5');
+      const removeBg = mod.removeBackground || mod.default;
+      if (removeBg) {
+        const blob = await removeBg(file, { output: { format: 'image/png' } });
+        const noBgFile = new File([blob], 'card-no-bg.png', { type: 'image/png' });
+        setPhotoPreview(URL.createObjectURL(blob));
+        setCardForm(f => ({ ...f, photo: noBgFile }));
+        toast.success('Fundo removido!');
+      }
+    } catch (err) {
+      console.error('Erro ao remover fundo:', err);
+    }
+    setRemovingBg(false);
+  };
 
   const load = async () => {
     try {
@@ -382,6 +406,7 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
       card_type: 'gold', photo: null,
     });
     setEditingCard(null);
+    setPhotoPreview(null);
     if (photoRef.current) photoRef.current.value = '';
   };
 
@@ -733,8 +758,14 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
                 <input
                   ref={photoRef}
                   type="file" accept="image/*"
-                  onChange={e => setCardForm({ ...cardForm, photo: e.target.files?.[0] || null })}
+                  onChange={handlePhotoChange}
+                  disabled={removingBg}
                 />
+                {removingBg && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: '0.8rem', color: '#F58A25', fontWeight: 600 }}>
+                    <FontAwesomeIcon icon={faSpinner} spin /> Removendo fundo da imagem...
+                  </div>
+                )}
               </div>
 
               {/* Preview */}
@@ -743,14 +774,14 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
                 {renderFutCard({
                   id: 'preview',
                   ...cardForm,
-                  photo_url: cardForm.photo ? URL.createObjectURL(cardForm.photo) : editingCard?.photo_url || null,
+                  photo_url: photoPreview || editingCard?.photo_url || null,
                 })}
               </div>
             </div>
             <div className="mm-footer">
-              <button className="mm-btn mm-btn-secondary" onClick={() => { setShowModal(false); resetForm(); }}>Cancelar</button>
-              <button className="mm-btn mm-btn-primary" onClick={handleSave} disabled={saving}>
-                {saving ? 'Salvando...' : editingCard ? 'Salvar' : 'Criar Card'}
+              <button className="mm-btn mm-btn-secondary" onClick={() => { setShowModal(false); resetForm(); setPhotoPreview(null); }}>Cancelar</button>
+              <button className="mm-btn mm-btn-primary" onClick={handleSave} disabled={saving || removingBg}>
+                {saving ? 'Salvando...' : removingBg ? 'Aguarde a remocao do fundo...' : editingCard ? 'Salvar' : 'Criar Card'}
               </button>
             </div>
           </div>
