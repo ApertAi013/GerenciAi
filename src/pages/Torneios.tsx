@@ -420,7 +420,7 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
       fd.append('stat_blq', String(cardForm.stat_blq));
       fd.append('stat_fin', String(cardForm.stat_fin));
       fd.append('card_type', cardForm.card_type);
-      if (cardForm.photo) fd.append('photo', cardForm.photo);
+      if (cardForm.photo) fd.append('image', cardForm.photo);
       if (editingCard) {
         await tournamentService.updatePlayerCard(tournamentId, editingCard.id, fd);
         toast.success('Card atualizado!');
