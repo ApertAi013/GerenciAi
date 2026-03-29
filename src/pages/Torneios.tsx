@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus, faTrophy, faSpinner, faCalendar, faMapMarkerAlt,
-  faUsers, faPlay, faStop, faCheck, faTimes, faCopy, faLink,
+  faUsers, faUser, faPlay, faStop, faCheck, faTimes, faCopy, faLink,
   faCamera, faMedal, faChevronRight, faCircle, faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { tournamentService } from '../services/tournamentService';
