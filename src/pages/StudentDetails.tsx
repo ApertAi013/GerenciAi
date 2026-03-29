@@ -540,15 +540,18 @@ export default function StudentDetails() {
     // Remove background with AI
     setRemovingBg(true);
     try {
-      const { removeBackground } = await import('https://esm.sh/@imgly/background-removal@1.5.5' as any);
-      const blob = await removeBackground(file, { output: { format: 'image/png' } });
-      const noBgFile = new File([blob], 'card-no-bg.png', { type: 'image/png' });
-      setCardPhotoPreview(URL.createObjectURL(blob));
-      setCardForm(f => ({ ...f, photo: noBgFile }));
-      toast.success('Fundo removido!');
+      const mod = await import(/* @vite-ignore */ 'https://esm.sh/@imgly/background-removal@1.5.5');
+      const removeBg = mod.removeBackground || mod.default;
+      if (removeBg) {
+        const blob = await removeBg(file, { output: { format: 'image/png' } });
+        const noBgFile = new File([blob], 'card-no-bg.png', { type: 'image/png' });
+        setCardPhotoPreview(URL.createObjectURL(blob));
+        setCardForm(f => ({ ...f, photo: noBgFile }));
+        toast.success('Fundo removido!');
+      }
     } catch (err) {
       console.error('Erro ao remover fundo:', err);
-      // Keep original photo
+      toast.error('Nao foi possivel remover o fundo. Usando foto original.');
     }
     setRemovingBg(false);
   };
@@ -1298,8 +1301,8 @@ export default function StudentDetails() {
                 <button className="mm-btn mm-btn-danger" onClick={handleDeleteCard} style={{ marginRight: 'auto' }}><FontAwesomeIcon icon={faTrash} /> Remover Card</button>
               )}
               <button className="mm-btn mm-btn-secondary" onClick={() => setShowCardEditor(false)}>Cancelar</button>
-              <button className="mm-btn mm-btn-primary" onClick={handleSaveCard} disabled={savingCard || !cardForm.player_name.trim()}>
-                {savingCard ? 'Salvando...' : studentCard ? 'Salvar' : 'Criar Card'}
+              <button className="mm-btn mm-btn-primary" onClick={handleSaveCard} disabled={savingCard || removingBg || !cardForm.player_name.trim()}>
+                {savingCard ? 'Salvando...' : removingBg ? 'Aguarde a remocao do fundo...' : studentCard ? 'Salvar' : 'Criar Card'}
               </button>
             </div>
           </div>
