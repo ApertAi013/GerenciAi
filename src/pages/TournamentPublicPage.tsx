@@ -215,7 +215,7 @@ export default function TournamentPublicPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'bracket' | 'teams' | 'matches'>('overview');
-  const [expandedCard, setExpandedCard] = useState<PlayerCardData | null>(null);
+  const [expandedCards, setExpandedCards] = useState<PlayerCardData[]>([]);
   const [scoreOverlay, setScoreOverlay] = useState<{show: boolean, team: string, text: string, color: string} | null>(null);
   const prevScoresRef = useRef<Map<number, {t1: number, t2: number}>>(new Map());
   const prevLiveDrawRef = useRef(false);
@@ -649,7 +649,7 @@ export default function TournamentPublicPage() {
                         {getCardsForTeam(camMatch.team1_id).length > 0 && (
                           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                             {getCardsForTeam(camMatch.team1_id).map(c => (
-                              <div key={c.id} style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setExpandedCard(c)} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
+                              <div key={c.id} style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setExpandedCards([c])} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
                                 <FutCardMini card={c} size="small" />
                               </div>
                             ))}
@@ -674,7 +674,7 @@ export default function TournamentPublicPage() {
                         {getCardsForTeam(camMatch.team2_id).length > 0 && (
                           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                             {getCardsForTeam(camMatch.team2_id).map(c => (
-                              <div key={c.id} style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setExpandedCard(c)} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
+                              <div key={c.id} style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setExpandedCards([c])} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
                                 <FutCardMini card={c} size="small" />
                               </div>
                             ))}
@@ -729,7 +729,7 @@ export default function TournamentPublicPage() {
                       {getCardsForTeam(match.team1_id).length > 0 && (
                         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                           {getCardsForTeam(match.team1_id).map(c => (
-                            <div key={c.id} style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setExpandedCard(c)} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
+                            <div key={c.id} style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setExpandedCards([c])} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
                               <FutCardMini card={c} size="small" />
                             </div>
                           ))}
@@ -755,7 +755,7 @@ export default function TournamentPublicPage() {
                       {getCardsForTeam(match.team2_id).length > 0 && (
                         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                           {getCardsForTeam(match.team2_id).map(c => (
-                            <div key={c.id} style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setExpandedCard(c)} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
+                            <div key={c.id} style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setExpandedCards([c])} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
                               <FutCardMini card={c} size="small" />
                             </div>
                           ))}
@@ -972,16 +972,16 @@ export default function TournamentPublicPage() {
                       {/* FUT Cards - overlapping duo or single, clickable to expand */}
                       {teamCards.length >= 2 && (
                         <div style={{ position: 'relative', width: 160, height: 180, marginBottom: 8 }}>
-                          <div style={{ position: 'absolute', top: 0, left: 30, zIndex: 1, transform: 'scale(0.8) rotate(5deg)', opacity: 0.75, cursor: 'pointer', transition: 'transform 0.3s' }} onClick={() => setExpandedCard(teamCards[1])}>
+                          <div style={{ position: 'absolute', top: 0, left: 30, zIndex: 1, transform: 'scale(0.8) rotate(5deg)', opacity: 0.75, cursor: 'pointer', transition: 'transform 0.3s' }} onClick={() => setExpandedCards(teamCards)}>
                             <FutCardMini card={teamCards[1]} size="small" />
                           </div>
-                          <div style={{ position: 'absolute', top: 5, left: 0, zIndex: 2, cursor: 'pointer', transition: 'transform 0.3s', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }} onClick={() => setExpandedCard(teamCards[0])}>
+                          <div style={{ position: 'absolute', top: 5, left: 0, zIndex: 2, cursor: 'pointer', transition: 'transform 0.3s', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }} onClick={() => setExpandedCards(teamCards)}>
                             <FutCardMini card={teamCards[0]} size="small" />
                           </div>
                         </div>
                       )}
                       {teamCards.length === 1 && (
-                        <div style={{ marginBottom: 8, cursor: 'pointer', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))', transition: 'transform 0.3s' }} onClick={() => setExpandedCard(teamCards[0])}>
+                        <div style={{ marginBottom: 8, cursor: 'pointer', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))', transition: 'transform 0.3s' }} onClick={() => setExpandedCards(teamCards)}>
                           <FutCardMini card={teamCards[0]} size="small" />
                         </div>
                       )}
@@ -1079,51 +1079,54 @@ export default function TournamentPublicPage() {
         )}
 
         {/* Footer */}
-        {/* Expanded Card Modal */}
-        {expandedCard && (
+        {/* Expanded Card(s) Modal - supports single and duo */}
+        {expandedCards.length > 0 && (
           <div
-            onClick={() => setExpandedCard(null)}
+            onClick={() => setExpandedCards([])}
             style={{
               position: 'fixed', inset: 0, zIndex: 9999,
-              background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+              background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', animation: 'fadeIn 0.2s ease',
             }}
           >
-            <div onClick={e => e.stopPropagation()} style={{ position: 'relative', animation: 'scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
-              {/* Full size card (200x300) */}
-              <div style={{
-                width: 280, height: 420, position: 'relative',
-                backgroundImage: `url(${FUT_CARD_BG_MAP[expandedCard.card_type] || FUT_CARD_BG_MAP.gold})`,
-                backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-                fontFamily: "'Titillium Web', sans-serif",
-                filter: 'drop-shadow(0 20px 60px rgba(0,0,0,0.6))',
-              }}>
-                {(() => {
-                  const c = (FUT_CARD_TEXT_MAP[expandedCard.card_type] || FUT_CARD_TEXT_MAP.gold).top;
-                  const s = 280 / 200;
-                  return (<>
-                    <div style={{ position: 'absolute', top: 52*s, left: 32*s, fontSize: `${1.6*s}rem`, fontWeight: 900, color: c, lineHeight: 1 }}>{expandedCard.overall}</div>
-                    <div style={{ position: 'absolute', top: 82*s, left: 32*s, fontSize: `${0.65*s}rem`, fontWeight: 700, color: c, textTransform: 'uppercase', letterSpacing: 1, width: 30*s, textAlign: 'center' }}>{expandedCard.position}</div>
-                    <div style={{ position: 'absolute', top: 40*s, left: '50%', transform: 'translateX(-50%)', width: 100*s, height: 100*s, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                      {expandedCard.photo_url ? <img src={expandedCard.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} /> : <svg width={40} height={40} viewBox="0 0 24 24" fill={`${c}44`}><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>}
+            <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: expandedCards.length > 1 ? 24 : 0, alignItems: 'center', animation: 'scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+              {expandedCards.map((card, idx) => {
+                const bgImg = FUT_CARD_BG_MAP[card.card_type] || FUT_CARD_BG_MAP.gold;
+                const c = (FUT_CARD_TEXT_MAP[card.card_type] || FUT_CARD_TEXT_MAP.gold).top;
+                const s = 280 / 200;
+                return (
+                  <div key={card.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{
+                      width: 280, height: 420, position: 'relative',
+                      backgroundImage: `url(${bgImg})`,
+                      backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+                      fontFamily: "'Titillium Web', sans-serif",
+                      filter: 'drop-shadow(0 20px 60px rgba(0,0,0,0.6))',
+                      transform: expandedCards.length > 1 ? `rotate(${idx === 0 ? -3 : 3}deg)` : 'none',
+                      transition: 'transform 0.3s',
+                    }}>
+                      <div style={{ position: 'absolute', top: 52*s, left: 32*s, fontSize: `${1.6*s}rem`, fontWeight: 900, color: c, lineHeight: 1 }}>{card.overall}</div>
+                      <div style={{ position: 'absolute', top: 82*s, left: 32*s, fontSize: `${0.65*s}rem`, fontWeight: 700, color: c, textTransform: 'uppercase', letterSpacing: 1, width: 30*s, textAlign: 'center' }}>{card.position}</div>
+                      <div style={{ position: 'absolute', top: 40*s, left: '50%', transform: 'translateX(-50%)', width: 100*s, height: 100*s, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                        {card.photo_url ? <img src={card.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} /> : <svg width={40} height={40} viewBox="0 0 24 24" fill={`${c}44`}><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>}
+                      </div>
+                      <div style={{ position: 'absolute', top: 150*s, left: 0, right: 0, fontSize: `${0.78*s}rem`, fontWeight: 800, textTransform: 'uppercase', color: c, textAlign: 'center', letterSpacing: 0.5, padding: `0 ${20*s}px` }}>{card.player_name}</div>
+                      <div style={{ position: 'absolute', top: 172*s, left: 30*s, right: 30*s, height: 1, background: `${c}44` }} />
+                      <div style={{ position: 'absolute', top: 178*s, left: 25*s, right: 25*s, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 0' }}>
+                        {[{l:'ATK',v:card.stat_atk},{l:'DEF',v:card.stat_def},{l:'SAQ',v:card.stat_saq},{l:'REC',v:card.stat_rec},{l:'BLQ',v:card.stat_blq},{l:'FIN',v:card.stat_fin}].map(st => (
+                          <div key={st.l} style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center', padding: '3px 0' }}>
+                            <span style={{ fontSize: `${0.85*s}rem`, fontWeight: 800, color: c }}>{st.v}</span>
+                            <span style={{ fontSize: `${0.55*s}rem`, fontWeight: 600, color: `${c}99`, textTransform: 'uppercase' }}>{st.l}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div style={{ position: 'absolute', top: 150*s, left: 0, right: 0, fontSize: `${0.78*s}rem`, fontWeight: 800, textTransform: 'uppercase', color: c, textAlign: 'center', letterSpacing: 0.5, padding: `0 ${20*s}px` }}>{expandedCard.player_name}</div>
-                    <div style={{ position: 'absolute', top: 172*s, left: 30*s, right: 30*s, height: 1, background: `${c}44` }} />
-                    <div style={{ position: 'absolute', top: 178*s, left: 25*s, right: 25*s, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 0' }}>
-                      {[{l:'ATK',v:expandedCard.stat_atk},{l:'DEF',v:expandedCard.stat_def},{l:'SAQ',v:expandedCard.stat_saq},{l:'REC',v:expandedCard.stat_rec},{l:'BLQ',v:expandedCard.stat_blq},{l:'FIN',v:expandedCard.stat_fin}].map(st => (
-                        <div key={st.l} style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center', padding: '3px 0' }}>
-                          <span style={{ fontSize: `${0.85*s}rem`, fontWeight: 800, color: c }}>{st.v}</span>
-                          <span style={{ fontSize: `${0.55*s}rem`, fontWeight: 600, color: `${c}99`, textTransform: 'uppercase' }}>{st.l}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>);
-                })()}
-              </div>
-              {/* Close hint */}
-              <div style={{ textAlign: 'center', marginTop: 16, color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>Clique fora para fechar</div>
+                  </div>
+                );
+              })}
             </div>
+            <div style={{ position: 'fixed', bottom: 30, left: 0, right: 0, textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>Clique fora para fechar</div>
           </div>
         )}
 
