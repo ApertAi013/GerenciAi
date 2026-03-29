@@ -341,6 +341,381 @@ function CreateModal({ editingTournament, onClose, onSave }: {
 }
 
 // ─── Sponsors Tab Component ───
+// ─── Player Cards Tab (FIFA FUT style) ───
+const CARD_TYPE_COLORS: Record<string, string> = {
+  gold: '#DAA520', silver: '#C0C0C0', bronze: '#CD853F',
+  toty: '#4169E1', legend: '#3CB371', hero: '#9932CC',
+};
+const CARD_TYPE_LABELS: Record<string, string> = {
+  gold: 'Ouro', silver: 'Prata', bronze: 'Bronze',
+  toty: 'TOTY', legend: 'Lenda', hero: 'Heroi',
+};
+
+function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
+  const [cards, setCards] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingCard, setEditingCard] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  const [cardForm, setCardForm] = useState({
+    player_name: '', position: 'JOG', overall: 70,
+    stat_atk: 50, stat_def: 50, stat_saq: 50,
+    stat_rec: 50, stat_blq: 50, stat_fin: 50,
+    card_type: 'gold', photo: null as File | null,
+  });
+  const photoRef = useRef<HTMLInputElement>(null);
+
+  const load = async () => {
+    try {
+      const res = await tournamentService.getPlayerCards(tournamentId);
+      setCards(res.data || []);
+    } catch {} finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, [tournamentId]);
+
+  const resetForm = () => {
+    setCardForm({
+      player_name: '', position: 'JOG', overall: 70,
+      stat_atk: 50, stat_def: 50, stat_saq: 50,
+      stat_rec: 50, stat_blq: 50, stat_fin: 50,
+      card_type: 'gold', photo: null,
+    });
+    setEditingCard(null);
+    if (photoRef.current) photoRef.current.value = '';
+  };
+
+  const openCreate = () => { resetForm(); setShowModal(true); };
+
+  const openEdit = (card: any) => {
+    setEditingCard(card);
+    setCardForm({
+      player_name: card.player_name || '',
+      position: card.position || 'JOG',
+      overall: card.overall ?? 70,
+      stat_atk: card.stat_atk ?? 50,
+      stat_def: card.stat_def ?? 50,
+      stat_saq: card.stat_saq ?? 50,
+      stat_rec: card.stat_rec ?? 50,
+      stat_blq: card.stat_blq ?? 50,
+      stat_fin: card.stat_fin ?? 50,
+      card_type: card.card_type || 'gold',
+      photo: null,
+    });
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!cardForm.player_name.trim()) { toast.error('Nome do jogador obrigatorio'); return; }
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append('player_name', cardForm.player_name.trim());
+      fd.append('position', cardForm.position);
+      fd.append('overall', String(cardForm.overall));
+      fd.append('stat_atk', String(cardForm.stat_atk));
+      fd.append('stat_def', String(cardForm.stat_def));
+      fd.append('stat_saq', String(cardForm.stat_saq));
+      fd.append('stat_rec', String(cardForm.stat_rec));
+      fd.append('stat_blq', String(cardForm.stat_blq));
+      fd.append('stat_fin', String(cardForm.stat_fin));
+      fd.append('card_type', cardForm.card_type);
+      if (cardForm.photo) fd.append('photo', cardForm.photo);
+      if (editingCard) {
+        await tournamentService.updatePlayerCard(tournamentId, editingCard.id, fd);
+        toast.success('Card atualizado!');
+      } else {
+        await tournamentService.createPlayerCard(tournamentId, fd);
+        toast.success('Card criado!');
+      }
+      setShowModal(false);
+      resetForm();
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao salvar card');
+    } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (cardId: number) => {
+    if (!confirm('Remover este card?')) return;
+    try {
+      await tournamentService.deletePlayerCard(tournamentId, cardId);
+      toast.success('Card removido');
+      load();
+    } catch (err: any) { toast.error('Erro ao remover card'); }
+  };
+
+  const CARD_BG_MAP: Record<string, string> = {
+    gold: '/fut-cards/large-rare-gold.png',
+    silver: '/fut-cards/large-rare-silver.png',
+    bronze: '/fut-cards/large-rare-bronze.png',
+    toty: '/fut-cards/large-toty.png',
+    legend: '/fut-cards/large-legend.png',
+    hero: '/fut-cards/large-hero.png',
+    motm: '/fut-cards/large-motm.png',
+    inform: '/fut-cards/large-if-gold.png',
+  };
+
+  const CARD_TEXT_MAP: Record<string, { top: string; bottom: string }> = {
+    gold: { top: '#4a3b10', bottom: '#4a3b10' },
+    silver: { top: '#3a3a3a', bottom: '#3a3a3a' },
+    bronze: { top: '#3e2415', bottom: '#3e2415' },
+    toty: { top: '#d4af37', bottom: '#d4af37' },
+    legend: { top: '#B39428', bottom: '#B39428' },
+    hero: { top: '#fff', bottom: '#fff' },
+    motm: { top: '#fff', bottom: '#fff' },
+    inform: { top: '#d4af37', bottom: '#d4af37' },
+  };
+
+  const renderFutCard = (card: any) => {
+    const bgImg = CARD_BG_MAP[card.card_type] || CARD_BG_MAP.gold;
+    const colors = CARD_TEXT_MAP[card.card_type] || CARD_TEXT_MAP.gold;
+    return (
+      <div
+        key={card.id}
+        style={{
+          width: 200, height: 300, position: 'relative',
+          backgroundImage: `url(${bgImg})`,
+          backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+          cursor: 'pointer', transition: 'transform 0.2s',
+          fontFamily: "'Titillium Web', sans-serif",
+        }}
+        onClick={() => openEdit(card)}
+        onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+        onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+      >
+        {/* Overall */}
+        <div style={{ position: 'absolute', top: 52, left: 32, fontSize: '1.6rem', fontWeight: 900, color: colors.top, lineHeight: 1, textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
+          {card.overall}
+        </div>
+
+        {/* Position */}
+        <div style={{ position: 'absolute', top: 82, left: 32, fontSize: '0.65rem', fontWeight: 700, color: colors.top, textTransform: 'uppercase', letterSpacing: 1, width: 30, textAlign: 'center' }}>
+          {card.position}
+        </div>
+
+        {/* Player photo */}
+        <div style={{
+          position: 'absolute', top: 40, left: '50%', transform: 'translateX(-50%)',
+          width: 100, height: 100, overflow: 'hidden',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        }}>
+          {card.photo_url ? (
+            <img src={card.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+          ) : (
+            <FontAwesomeIcon icon={faUsers} style={{ fontSize: '2.5rem', color: `${colors.top}44`, marginBottom: 10 }} />
+          )}
+        </div>
+
+        {/* Player name */}
+        <div style={{
+          position: 'absolute', top: 150, left: 0, right: 0,
+          fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase',
+          color: colors.bottom, textAlign: 'center', letterSpacing: 0.5,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          padding: '0 20px',
+        }}>
+          {card.player_name}
+        </div>
+
+        {/* Divider */}
+        <div style={{ position: 'absolute', top: 170, left: 30, right: 30, height: 1, background: `${colors.bottom}44` }} />
+
+        {/* Stats 2 columns x 3 rows */}
+        <div style={{
+          position: 'absolute', top: 178, left: 25, right: 25,
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px 0',
+        }}>
+          {[
+            { label: 'ATK', val: card.stat_atk },
+            { label: 'DEF', val: card.stat_def },
+            { label: 'SAQ', val: card.stat_saq },
+            { label: 'REC', val: card.stat_rec },
+            { label: 'BLQ', val: card.stat_blq },
+            { label: 'FIN', val: card.stat_fin },
+          ].map(s => (
+            <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center', padding: '2px 0' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: colors.bottom }}>{s.val}</span>
+              <span style={{ fontSize: '0.55rem', fontWeight: 600, color: `${colors.bottom}99`, textTransform: 'uppercase', letterSpacing: 0.5 }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Delete button */}
+        <button
+          onClick={e => { e.stopPropagation(); handleDelete(card.id); }}
+          style={{
+            position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.4)',
+            border: 'none', borderRadius: 6, padding: '3px 7px', cursor: 'pointer',
+            fontSize: '0.65rem', color: '#ff6b6b', fontWeight: 600,
+          }}
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+          {cards.length} card{cards.length !== 1 ? 's' : ''} criado{cards.length !== 1 ? 's' : ''}
+        </div>
+        <button
+          onClick={openCreate}
+          style={{
+            padding: '8px 16px', borderRadius: 8, border: 'none',
+            background: '#F58A25', color: '#fff', cursor: 'pointer',
+            fontWeight: 600, fontSize: '0.85rem',
+          }}
+        >
+          <FontAwesomeIcon icon={faPlus} style={{ marginRight: 6 }} />
+          Criar Card
+        </button>
+      </div>
+
+      {/* Cards grid */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <FontAwesomeIcon icon={faSpinner} spin style={{ fontSize: '1.5rem', color: '#94a3b8' }} />
+        </div>
+      ) : cards.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>
+          <FontAwesomeIcon icon={faMedal} style={{ fontSize: '2.5rem', marginBottom: 12, opacity: 0.4 }} />
+          <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Nenhum card criado</div>
+          <div style={{ fontSize: '0.8rem', marginTop: 4 }}>Crie cards estilo FIFA FUT para os jogadores do torneio</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
+          {cards.map((card: any) => renderFutCard(card))}
+        </div>
+      )}
+
+      {/* Create/Edit modal */}
+      {showModal && (
+        <div className="mm-overlay" onClick={() => { setShowModal(false); resetForm(); }}>
+          <div className="mm-modal mm-modal-md" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
+              <h3>{editingCard ? 'Editar Card' : 'Novo Card'}</h3>
+              <button className="mm-close" onClick={() => { setShowModal(false); resetForm(); }}>&times;</button>
+            </div>
+            <div className="mm-content">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="mm-field">
+                  <label>Nome do Jogador *</label>
+                  <input
+                    value={cardForm.player_name}
+                    onChange={e => setCardForm({ ...cardForm, player_name: e.target.value })}
+                    placeholder="Ex: João Silva"
+                  />
+                </div>
+                <div className="mm-field">
+                  <label>Posicao</label>
+                  <select value={cardForm.position} onChange={e => setCardForm({ ...cardForm, position: e.target.value })}>
+                    <option value="JOG">JOG</option>
+                    <option value="ATA">ATA</option>
+                    <option value="DEF">DEF</option>
+                    <option value="MEI">MEI</option>
+                    <option value="GOL">GOL</option>
+                    <option value="LIB">LIB</option>
+                    <option value="PIV">PIV</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="mm-field">
+                  <label>Overall ({cardForm.overall})</label>
+                  <input
+                    type="range" min="1" max="99"
+                    value={cardForm.overall}
+                    onChange={e => setCardForm({ ...cardForm, overall: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="mm-field">
+                  <label>Tipo do Card</label>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {Object.entries(CARD_TYPE_COLORS).map(([type, color]) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setCardForm({ ...cardForm, card_type: type })}
+                        style={{
+                          padding: '4px 10px', borderRadius: 6, border: cardForm.card_type === type ? `2px solid ${color}` : '2px solid transparent',
+                          background: `${color}22`, color: color, fontSize: '0.7rem', fontWeight: 700,
+                          cursor: 'pointer', textTransform: 'uppercase',
+                        }}
+                      >
+                        {CARD_TYPE_LABELS[type]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div style={{ marginTop: 4 }}>
+                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary, #334155)', marginBottom: 8, display: 'block' }}>Atributos</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px 16px' }}>
+                  {[
+                    { key: 'stat_atk', label: 'ATK (Ataque)' },
+                    { key: 'stat_def', label: 'DEF (Defesa)' },
+                    { key: 'stat_saq', label: 'SAQ (Saque)' },
+                    { key: 'stat_rec', label: 'REC (Recepcao)' },
+                    { key: 'stat_blq', label: 'BLQ (Bloqueio)' },
+                    { key: 'stat_fin', label: 'FIN (Finalizacao)' },
+                  ].map(stat => (
+                    <div key={stat.key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary, #64748b)' }}>{stat.label}</span>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 800 }}>{(cardForm as any)[stat.key]}</span>
+                      </div>
+                      <input
+                        type="range" min="1" max="99"
+                        value={(cardForm as any)[stat.key]}
+                        onChange={e => setCardForm({ ...cardForm, [stat.key]: Number(e.target.value) })}
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Photo */}
+              <div className="mm-field" style={{ marginTop: 12 }}>
+                <label>Foto do Jogador (opcional)</label>
+                <input
+                  ref={photoRef}
+                  type="file" accept="image/*"
+                  onChange={e => setCardForm({ ...cardForm, photo: e.target.files?.[0] || null })}
+                />
+              </div>
+
+              {/* Preview */}
+              <div style={{ marginTop: 12, textAlign: 'center' }}>
+                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: 8 }}>Preview</label>
+                {renderFutCard({
+                  id: 'preview',
+                  ...cardForm,
+                  photo_url: cardForm.photo ? URL.createObjectURL(cardForm.photo) : editingCard?.photo_url || null,
+                })}
+              </div>
+            </div>
+            <div className="mm-footer">
+              <button className="mm-btn mm-btn-secondary" onClick={() => { setShowModal(false); resetForm(); }}>Cancelar</button>
+              <button className="mm-btn mm-btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? 'Salvando...' : editingCard ? 'Salvar' : 'Criar Card'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SponsorsTab({ tournamentId }: { tournamentId: number }) {
   const [sponsors, setSponsors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -569,7 +944,7 @@ export default function Torneios() {
 
   // Detail modal
   const [selectedTournament, setSelectedTournament] = useState<(Tournament & { teams?: TournamentTeam[] }) | null>(null);
-  const [detailTab, setDetailTab] = useState<'info' | 'teams' | 'groups' | 'bracket' | 'matches' | 'sponsors'>('info');
+  const [detailTab, setDetailTab] = useState<'info' | 'teams' | 'groups' | 'bracket' | 'matches' | 'cards' | 'sponsors'>('info');
   const [bracketData, setBracketData] = useState<BracketData | null>(null);
   const [bracketLoading, setBracketLoading] = useState(false);
 
@@ -1629,6 +2004,9 @@ export default function Torneios() {
                 <button className={`torneio-sub-tab ${detailTab === 'matches' ? 'active' : ''}`} onClick={() => { setDetailTab('matches'); if (!bracketData && selectedTournament.bracket_generated) loadBracket(selectedTournament.id); }}>
                   Jogos
                 </button>
+                <button className={`torneio-sub-tab ${detailTab === 'cards' ? 'active' : ''}`} onClick={() => setDetailTab('cards')}>
+                  Cards
+                </button>
                 <button className={`torneio-sub-tab ${detailTab === 'sponsors' ? 'active' : ''}`} onClick={() => setDetailTab('sponsors')}>
                   Patrocinadores
                 </button>
@@ -2300,6 +2678,10 @@ export default function Torneios() {
               )}
             </div>
               {/* Sponsors tab */}
+              {detailTab === 'cards' && selectedTournament && (
+                <PlayerCardsTab tournamentId={selectedTournament.id} />
+              )}
+
               {detailTab === 'sponsors' && selectedTournament && (
                 <SponsorsTab tournamentId={selectedTournament.id} />
               )}

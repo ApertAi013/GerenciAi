@@ -74,6 +74,22 @@ interface PodiumEntry {
   losses: number;
 }
 
+interface PlayerCardData {
+  id: number;
+  player_name: string;
+  position: string;
+  overall: number;
+  stat_atk: number;
+  stat_def: number;
+  stat_saq: number;
+  stat_rec: number;
+  stat_blq: number;
+  stat_fin: number;
+  card_type: string;
+  photo_url?: string;
+  team_id?: number;
+}
+
 interface TournamentData {
   tournament: {
     id: number;
@@ -115,6 +131,7 @@ interface TournamentData {
   individual_players?: { id: number; player_name: string; side: 'left' | 'right' }[];
   generated_pairs?: { team_name: string; left_player: string; right_player: string }[];
   viewer_count?: number;
+  team_cards?: Record<number, PlayerCardData[]>;
 }
 
 type SportCategory = 'volei' | 'futevolei' | 'futebol' | 'beach_tennis' | null;
@@ -331,7 +348,7 @@ export default function TournamentPublicPage() {
     );
   }
 
-  const { tournament, teams, matches, live_matches, groups, individual_players, generated_pairs } = data;
+  const { tournament, teams, matches, live_matches, groups, individual_players, generated_pairs, team_cards } = data;
   // Convert podium from backend format { champion, runner_up, third_place } to array
   const podiumRaw = data.podium as any;
   const podium: PodiumEntry[] = [];
@@ -348,6 +365,12 @@ export default function TournamentPublicPage() {
   const bracketGroups = groupMatchesByBracket(matches.filter(m => m.bracket_type !== 'group'));
   const nonByeMatches = matches.filter(m => !m.is_bye);
   const displayMap = buildDisplayMap(matches);
+
+  // Helper: get cards for a specific team (from team_cards map)
+  const getCardsForTeam = (teamId: number | undefined): PlayerCardData[] => {
+    if (!teamId || !team_cards) return [];
+    return team_cards[teamId] || [];
+  };
 
   // Format dates
   const startDate = new Date(tournament.tournament_date).toLocaleDateString('pt-BR', {
@@ -464,8 +487,15 @@ export default function TournamentPublicPage() {
               {/* 2nd place */}
               {podium.find(p => p.place === 2) && (() => {
                 const p = podium.find(p => p.place === 2)!;
+                const podiumCards = getCardsForTeam(p.team_id);
                 return (
                   <div style={{ flex: 1, maxWidth: 200, animation: 'fadeInUp 0.8s 0.3s ease-out both' }}>
+                    {/* FUT Cards above podium position */}
+                    {podiumCards.length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <TeamCardsMini cards={podiumCards} size="mini" />
+                      </div>
+                    )}
                     <div style={{
                       background: 'linear-gradient(180deg, rgba(148,163,184,0.15) 0%, rgba(148,163,184,0.03) 100%)',
                       border: '2px solid rgba(148,163,184,0.25)', borderRadius: 20, padding: '24px 16px 20px', textAlign: 'center',
@@ -483,8 +513,15 @@ export default function TournamentPublicPage() {
               {/* 1st place */}
               {podium.find(p => p.place === 1) && (() => {
                 const p = podium.find(p => p.place === 1)!;
+                const podiumCards = getCardsForTeam(p.team_id);
                 return (
                   <div style={{ flex: 1, maxWidth: 220, animation: 'fadeInUp 0.8s 0.1s ease-out both' }}>
+                    {/* FUT Cards above podium position */}
+                    {podiumCards.length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <TeamCardsMini cards={podiumCards} size="small" />
+                      </div>
+                    )}
                     <div style={{
                       background: 'linear-gradient(180deg, rgba(245,158,11,0.18) 0%, rgba(59,130,246,0.08) 50%, rgba(59,130,246,0.03) 100%)',
                       border: '2px solid rgba(245,158,11,0.35)', borderRadius: 24, padding: '28px 16px 24px', textAlign: 'center',
@@ -505,8 +542,15 @@ export default function TournamentPublicPage() {
               {/* 3rd place */}
               {podium.find(p => p.place === 3) && (() => {
                 const p = podium.find(p => p.place === 3)!;
+                const podiumCards = getCardsForTeam(p.team_id);
                 return (
                   <div style={{ flex: 1, maxWidth: 200, animation: 'fadeInUp 0.8s 0.5s ease-out both' }}>
+                    {/* FUT Cards above podium position */}
+                    {podiumCards.length > 0 && (
+                      <div style={{ marginBottom: 8 }}>
+                        <TeamCardsMini cards={podiumCards} size="mini" />
+                      </div>
+                    )}
                     <div style={{
                       background: 'linear-gradient(180deg, rgba(217,119,6,0.12) 0%, rgba(217,119,6,0.03) 100%)',
                       border: '2px solid rgba(217,119,6,0.25)', borderRadius: 20, padding: '24px 16px 20px', textAlign: 'center',
@@ -599,20 +643,38 @@ export default function TournamentPublicPage() {
                           {camMatch.court_name ? ` — ${camMatch.court_name}` : ''}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '0.8rem 1rem 1.2rem' }}>
-                        <div style={{ flex: 1, textAlign: 'right' }}>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{camMatch.team1_name || 'A definir'}</div>
-                          <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0.5rem 0.5rem 0.8rem' }}>
+                        {/* Team 1 cards (left) */}
+                        {getCardsForTeam(camMatch.team1_id).length > 0 && (
+                          <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                            {getCardsForTeam(camMatch.team1_id).map(c => (
+                              <FutCardMini key={c.id} card={c} size="mini" />
+                            ))}
+                          </div>
+                        )}
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
+                          <div style={{ flex: 1, textAlign: 'right' }}>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{camMatch.team1_name || 'A definir'}</div>
+                            <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                            <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{camMatch.team1_score ?? 0}</span>
+                            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>x</span>
+                            <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{camMatch.team2_score ?? 0}</span>
+                          </div>
+                          <div style={{ flex: 1, textAlign: 'left' }}>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{camMatch.team2_name || 'A definir'}</div>
+                            <div style={{ width: 40, height: 3, background: '#EF4444', borderRadius: 2 }} />
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{camMatch.team1_score ?? 0}</span>
-                          <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>x</span>
-                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{camMatch.team2_score ?? 0}</span>
-                        </div>
-                        <div style={{ flex: 1, textAlign: 'left' }}>
-                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{camMatch.team2_name || 'A definir'}</div>
-                          <div style={{ width: 40, height: 3, background: '#EF4444', borderRadius: 2 }} />
-                        </div>
+                        {/* Team 2 cards (right) */}
+                        {getCardsForTeam(camMatch.team2_id).length > 0 && (
+                          <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                            {getCardsForTeam(camMatch.team2_id).map(c => (
+                              <FutCardMini key={c.id} card={c} size="mini" />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -656,20 +718,40 @@ export default function TournamentPublicPage() {
                         {match.bracket_type !== 'grand_final' && match.bracket_type !== 'third_place' && ` R${match.round_number}`}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '1.5rem 1rem' }}>
-                      <div style={{ flex: 1, textAlign: 'right' }}>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{match.team1_name || 'A definir'}</div>
-                        <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
+                    {/* FUT Cards + Scoreboard */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '1rem 0.5rem 0' }}>
+                      {/* Team 1 cards (left side) */}
+                      {getCardsForTeam(match.team1_id).length > 0 && (
+                        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                          {getCardsForTeam(match.team1_id).map(c => (
+                            <FutCardMini key={c.id} card={c} size="mini" />
+                          ))}
+                        </div>
+                      )}
+                      {/* Scoreboard */}
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '0.5rem 0.5rem' }}>
+                        <div style={{ flex: 1, textAlign: 'right' }}>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{match.team1_name || 'A definir'}</div>
+                          <div style={{ width: 40, height: 3, background: '#3B82F6', borderRadius: 2, marginLeft: 'auto' }} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{match.team1_score ?? 0}</span>
+                          <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>x</span>
+                          <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{match.team2_score ?? 0}</span>
+                        </div>
+                        <div style={{ flex: 1, textAlign: 'left' }}>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{match.team2_name || 'A definir'}</div>
+                          <div style={{ width: 40, height: 3, background: '#EF4444', borderRadius: 2 }} />
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-                        <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#3B82F6', minWidth: 40, textAlign: 'center' }}>{match.team1_score ?? 0}</span>
-                        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>x</span>
-                        <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#EF4444', minWidth: 40, textAlign: 'center' }}>{match.team2_score ?? 0}</span>
-                      </div>
-                      <div style={{ flex: 1, textAlign: 'left' }}>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{match.team2_name || 'A definir'}</div>
-                        <div style={{ width: 40, height: 3, background: '#EF4444', borderRadius: 2 }} />
-                      </div>
+                      {/* Team 2 cards (right side) */}
+                      {getCardsForTeam(match.team2_id).length > 0 && (
+                        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                          {getCardsForTeam(match.team2_id).map(c => (
+                            <FutCardMini key={c.id} card={c} size="mini" />
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <LiveMatchAnimation category={category} team1Name={match.team1_name || 'Time A'} team2Name={match.team2_name || 'Time B'} team1Score={match.team1_score ?? 0} team2Score={match.team2_score ?? 0} isLive={true} teamSize={tournament.team_size} />
                   </div>
@@ -871,22 +953,34 @@ export default function TournamentPublicPage() {
                   const isChampion = team.status === 'champion';
                   const isRunnerUp = team.status === 'runner_up';
                   const isThird = team.status === 'third_place';
+                  const teamCards = getCardsForTeam(team.id);
                   return (
                     <div
                       key={team.id}
                       className={`tp-team-card ${isChampion ? 'champion' : isRunnerUp ? 'runner-up' : isThird ? 'third' : ''}`}
+                      style={teamCards.length > 0 ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}
                     >
-                      <div className="tp-team-seed">{team.seed}</div>
-                      <div className="tp-team-info">
-                        <div className="tp-team-name">{team.name}</div>
-                        <div className="tp-team-stats">
-                          {team.wins}V - {team.losses}D
-                          {team.total_points_scored > 0 && ` | ${team.total_points_scored} pts`}
+                      {/* FUT Cards row above team info */}
+                      {teamCards.length > 0 && (
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 8, paddingTop: 4 }}>
+                          {teamCards.map(c => (
+                            <FutCardMini key={c.id} card={c} size="mini" />
+                          ))}
                         </div>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+                        <div className="tp-team-seed">{team.seed}</div>
+                        <div className="tp-team-info" style={{ flex: 1 }}>
+                          <div className="tp-team-name">{team.name}</div>
+                          <div className="tp-team-stats">
+                            {team.wins}V - {team.losses}D
+                            {team.total_points_scored > 0 && ` | ${team.total_points_scored} pts`}
+                          </div>
+                        </div>
+                        {isChampion && <span className="tp-team-medal">{'\uD83E\uDD47'}</span>}
+                        {isRunnerUp && <span className="tp-team-medal">{'\uD83E\uDD48'}</span>}
+                        {isThird && <span className="tp-team-medal">{'\uD83E\uDD49'}</span>}
                       </div>
-                      {isChampion && <span className="tp-team-medal">{'\uD83E\uDD47'}</span>}
-                      {isRunnerUp && <span className="tp-team-medal">{'\uD83E\uDD48'}</span>}
-                      {isThird && <span className="tp-team-medal">{'\uD83E\uDD49'}</span>}
                     </div>
                   );
                 })}
@@ -1977,6 +2071,136 @@ function LiveDrawSection({ drawData, teams }: {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── FUT Card Mini (reusable mini FIFA-style card for public page) ───
+const FUT_CARD_BG_MAP: Record<string, string> = {
+  gold: '/fut-cards/large-rare-gold.png',
+  silver: '/fut-cards/large-rare-silver.png',
+  bronze: '/fut-cards/large-rare-bronze.png',
+  toty: '/fut-cards/large-toty.png',
+  legend: '/fut-cards/large-legend.png',
+  hero: '/fut-cards/large-hero.png',
+  motm: '/fut-cards/large-motm.png',
+  inform: '/fut-cards/large-if-gold.png',
+};
+
+const FUT_CARD_TEXT_MAP: Record<string, { top: string; bottom: string }> = {
+  gold: { top: '#4a3b10', bottom: '#4a3b10' },
+  silver: { top: '#3a3a3a', bottom: '#3a3a3a' },
+  bronze: { top: '#3e2415', bottom: '#3e2415' },
+  toty: { top: '#d4af37', bottom: '#d4af37' },
+  legend: { top: '#B39428', bottom: '#B39428' },
+  hero: { top: '#fff', bottom: '#fff' },
+  motm: { top: '#fff', bottom: '#fff' },
+  inform: { top: '#d4af37', bottom: '#d4af37' },
+};
+
+function FutCardMini({ card, size = 'mini' }: { card: PlayerCardData; size?: 'mini' | 'small' }) {
+  const bgImg = FUT_CARD_BG_MAP[card.card_type] || FUT_CARD_BG_MAP.gold;
+  const colors = FUT_CARD_TEXT_MAP[card.card_type] || FUT_CARD_TEXT_MAP.gold;
+
+  // mini = ~80px wide, small = ~130px wide
+  const isMini = size === 'mini';
+  const w = isMini ? 80 : 130;
+  const h = isMini ? 120 : 195;
+  // Scale factor relative to the full 200x300 card
+  const scale = w / 200;
+
+  return (
+    <div
+      style={{
+        width: w, height: h, position: 'relative',
+        backgroundImage: `url(${bgImg})`,
+        backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+        fontFamily: "'Titillium Web', sans-serif",
+        flexShrink: 0,
+        transition: 'transform 0.2s',
+      }}
+      title={`${card.player_name} - OVR ${card.overall}`}
+    >
+      {/* Overall */}
+      <div style={{
+        position: 'absolute', top: 52 * scale, left: 32 * scale,
+        fontSize: `${1.6 * scale}rem`, fontWeight: 900, color: colors.top,
+        lineHeight: 1, textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+      }}>
+        {card.overall}
+      </div>
+
+      {/* Position */}
+      <div style={{
+        position: 'absolute', top: 82 * scale, left: 32 * scale,
+        fontSize: `${0.65 * scale}rem`, fontWeight: 700, color: colors.top,
+        textTransform: 'uppercase', letterSpacing: 0.5, width: 30 * scale, textAlign: 'center',
+      }}>
+        {card.position}
+      </div>
+
+      {/* Photo */}
+      <div style={{
+        position: 'absolute', top: 40 * scale, left: '50%', transform: 'translateX(-50%)',
+        width: 100 * scale, height: 100 * scale, overflow: 'hidden',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      }}>
+        {card.photo_url ? (
+          <img src={card.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+        ) : (
+          <div style={{ fontSize: `${2.5 * scale}rem`, color: `${colors.top}44`, marginBottom: 5 * scale }}>
+            <svg width={20 * scale} height={20 * scale} viewBox="0 0 24 24" fill="currentColor" opacity="0.4"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+        )}
+      </div>
+
+      {/* Name */}
+      <div style={{
+        position: 'absolute', top: 150 * scale, left: 0, right: 0,
+        fontSize: `${0.78 * scale}rem`, fontWeight: 800, textTransform: 'uppercase',
+        color: colors.bottom, textAlign: 'center', letterSpacing: 0.3,
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        padding: `0 ${12 * scale}px`,
+      }}>
+        {card.player_name}
+      </div>
+
+      {/* Divider */}
+      <div style={{ position: 'absolute', top: 170 * scale, left: 30 * scale, right: 30 * scale, height: 1, background: `${colors.bottom}44` }} />
+
+      {/* Stats - only show on 'small' size, too tiny for mini */}
+      {!isMini && (
+        <div style={{
+          position: 'absolute', top: 178 * scale, left: 25 * scale, right: 25 * scale,
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0px 0',
+        }}>
+          {[
+            { label: 'ATK', val: card.stat_atk },
+            { label: 'DEF', val: card.stat_def },
+            { label: 'SAQ', val: card.stat_saq },
+            { label: 'REC', val: card.stat_rec },
+            { label: 'BLQ', val: card.stat_blq },
+            { label: 'FIN', val: card.stat_fin },
+          ].map(s => (
+            <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'center', padding: '1px 0' }}>
+              <span style={{ fontSize: `${0.85 * scale}rem`, fontWeight: 800, color: colors.bottom }}>{s.val}</span>
+              <span style={{ fontSize: `${0.55 * scale}rem`, fontWeight: 600, color: `${colors.bottom}99`, textTransform: 'uppercase', letterSpacing: 0.3 }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Helper: render a row of mini cards for a team ───
+function TeamCardsMini({ cards, size = 'mini' }: { cards: PlayerCardData[]; size?: 'mini' | 'small' }) {
+  if (!cards || cards.length === 0) return null;
+  return (
+    <div style={{ display: 'flex', gap: size === 'mini' ? 4 : 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+      {cards.map(card => (
+        <FutCardMini key={card.id} card={card} size={size} />
+      ))}
     </div>
   );
 }

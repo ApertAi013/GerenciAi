@@ -376,4 +376,52 @@ export const tournamentService = {
     const response = await api.delete(`/api/stream/sponsors/${tournamentId}/${sponsorId}`);
     return response.data;
   },
+
+  // Player Cards
+  async getPlayerCards(tournamentId: number): Promise<any> {
+    const response = await api.get(`/api/tournaments/${tournamentId}/cards`);
+    return response.data;
+  },
+
+  async createPlayerCard(tournamentId: number, formData: FormData): Promise<any> {
+    const response = await api.post(`/api/tournaments/${tournamentId}/cards`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  async updatePlayerCard(tournamentId: number, cardId: number, formData: FormData): Promise<any> {
+    const response = await api.put(`/api/tournaments/${tournamentId}/cards/${cardId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  async deletePlayerCard(tournamentId: number, cardId: number): Promise<any> {
+    const response = await api.delete(`/api/tournaments/${tournamentId}/cards/${cardId}`);
+    return response.data;
+  },
+
+  // Student Cards
+  async getStudentCard(studentId: number): Promise<any> {
+    const response = await api.get(`/api/tournaments/student-cards/${studentId}`);
+    return response.data;
+  },
+
+  async upsertStudentCard(studentId: number, formData: FormData): Promise<any> {
+    const response = await api.post(`/api/tournaments/student-cards/${studentId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  async deleteStudentCard(studentId: number): Promise<any> {
+    const response = await api.delete(`/api/tournaments/student-cards/${studentId}`);
+    return response.data;
+  },
+
+  async getTeamCards(tournamentId: number): Promise<any> {
+    const response = await api.get(`/api/tournaments/${tournamentId}/team-cards`);
+    return response.data;
+  },
 };

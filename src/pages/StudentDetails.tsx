@@ -31,6 +31,7 @@ import MakeupCreditsManager from '../components/MakeupCreditsManager';
 import { EditEnrollmentModal } from './Enrollments';
 import { getTemplates, applyVariables } from '../utils/whatsappTemplates';
 import WhatsAppTemplatePicker from '../components/WhatsAppTemplatePicker';
+import { tournamentService } from '../services/tournamentService';
 import '../styles/StudentDetails.css';
 import '../styles/ModernModal.css';
 import '../components/ComprehensiveEnrollmentForm.css';
@@ -99,6 +100,13 @@ export default function StudentDetails() {
   });
   const [isAdvancing, setIsAdvancing] = useState(false);
 
+  // FUT Card
+  const [studentCard, setStudentCard] = useState<any>(null);
+  const [showCardEditor, setShowCardEditor] = useState(false);
+  const [cardForm, setCardForm] = useState({ player_name: '', position: 'JOG', overall: 70, stat_atk: 50, stat_def: 50, stat_saq: 50, stat_rec: 50, stat_blq: 50, stat_fin: 50, card_type: 'gold', photo: null as File | null });
+  const [savingCard, setSavingCard] = useState(false);
+  const cardPhotoRef = useRef<HTMLInputElement>(null);
+
   // Financial stats
   const [financialStats, setFinancialStats] = useState({
     saldo_devedor: 0,
@@ -132,6 +140,20 @@ export default function StudentDetails() {
         financialService.getInvoices({ student_id: parseInt(id!) }),
         levelService.getLevels(),
       ]);
+
+      // Load FUT card
+      tournamentService.getStudentCard(parseInt(id!)).then(res => {
+        const card = res.data || null;
+        setStudentCard(card);
+        if (card) {
+          setCardForm({
+            player_name: card.player_name, position: card.position || 'JOG', overall: card.overall ?? 70,
+            stat_atk: card.stat_atk ?? 50, stat_def: card.stat_def ?? 50, stat_saq: card.stat_saq ?? 50,
+            stat_rec: card.stat_rec ?? 50, stat_blq: card.stat_blq ?? 50, stat_fin: card.stat_fin ?? 50,
+            card_type: card.card_type || 'gold', photo: null,
+          });
+        }
+      }).catch(() => setStudentCard(null));
 
       if (studentRes.status === 'success' && studentRes.data) {
         setStudent(studentRes.data);
@@ -490,6 +512,75 @@ export default function StudentDetails() {
 
   // --- Render ---
 
+  const CARD_BG_MAP: Record<string, string> = {
+    gold: '/fut-cards/large-rare-gold.png', silver: '/fut-cards/large-rare-silver.png',
+    bronze: '/fut-cards/large-rare-bronze.png', toty: '/fut-cards/large-toty.png',
+    legend: '/fut-cards/large-legend.png', hero: '/fut-cards/large-hero.png',
+  };
+  const CARD_TEXT_MAP: Record<string, string> = {
+    gold: '#4a3b10', silver: '#3a3a3a', bronze: '#3e2415', toty: '#d4af37', legend: '#B39428', hero: '#fff',
+  };
+
+  const handleSaveCard = async () => {
+    if (!cardForm.player_name.trim()) { toast.error('Nome obrigatorio'); return; }
+    setSavingCard(true);
+    try {
+      const fd = new FormData();
+      fd.append('player_name', cardForm.player_name.trim());
+      fd.append('position', cardForm.position);
+      fd.append('overall', String(cardForm.overall));
+      fd.append('stat_atk', String(cardForm.stat_atk));
+      fd.append('stat_def', String(cardForm.stat_def));
+      fd.append('stat_saq', String(cardForm.stat_saq));
+      fd.append('stat_rec', String(cardForm.stat_rec));
+      fd.append('stat_blq', String(cardForm.stat_blq));
+      fd.append('stat_fin', String(cardForm.stat_fin));
+      fd.append('card_type', cardForm.card_type);
+      if (cardForm.photo) fd.append('photo', cardForm.photo);
+      const res = await tournamentService.upsertStudentCard(parseInt(id!), fd);
+      setStudentCard(res.data);
+      setShowCardEditor(false);
+      toast.success(studentCard ? 'Card atualizado!' : 'Card criado!');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao salvar card');
+    } finally { setSavingCard(false); }
+  };
+
+  const handleDeleteCard = async () => {
+    if (!confirm('Remover card deste aluno?')) return;
+    try {
+      await tournamentService.deleteStudentCard(parseInt(id!));
+      setStudentCard(null);
+      toast.success('Card removido');
+    } catch { toast.error('Erro ao remover card'); }
+  };
+
+  const renderFutCardPreview = (card: any, size = 200) => {
+    const bg = CARD_BG_MAP[card.card_type] || CARD_BG_MAP.gold;
+    const c = CARD_TEXT_MAP[card.card_type] || CARD_TEXT_MAP.gold;
+    const h = size * 1.5;
+    const scale = size / 200;
+    return (
+      <div style={{ width: size, height: h, position: 'relative', backgroundImage: `url(${bg})`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', fontFamily: "'Titillium Web', sans-serif" }}>
+        <div style={{ position: 'absolute', top: 52*scale, left: 32*scale, fontSize: `${1.6*scale}rem`, fontWeight: 900, color: c, lineHeight: 1 }}>{card.overall}</div>
+        <div style={{ position: 'absolute', top: 82*scale, left: 32*scale, fontSize: `${0.65*scale}rem`, fontWeight: 700, color: c, textTransform: 'uppercase', letterSpacing: 1, width: 30*scale, textAlign: 'center' }}>{card.position}</div>
+        <div style={{ position: 'absolute', top: 40*scale, left: '50%', transform: 'translateX(-50%)', width: 100*scale, height: 100*scale, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          {card.photo_url ? <img src={card.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} /> : <span style={{ fontSize: `${2.5*scale}rem`, color: `${c}44`, marginBottom: 10*scale }}>👤</span>}
+        </div>
+        <div style={{ position: 'absolute', top: 152*scale, left: 0, right: 0, fontSize: `${0.78*scale}rem`, fontWeight: 800, textTransform: 'uppercase', color: c, textAlign: 'center', letterSpacing: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: `0 ${20*scale}px` }}>{card.player_name}</div>
+        <div style={{ position: 'absolute', top: 172*scale, left: 30*scale, right: 30*scale, height: 1, background: `${c}44` }} />
+        <div style={{ position: 'absolute', top: 178*scale, left: 25*scale, right: 25*scale, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px 0' }}>
+          {[{l:'ATK',v:card.stat_atk},{l:'DEF',v:card.stat_def},{l:'SAQ',v:card.stat_saq},{l:'REC',v:card.stat_rec},{l:'BLQ',v:card.stat_blq},{l:'FIN',v:card.stat_fin}].map(s => (
+            <div key={s.l} style={{ display: 'flex', alignItems: 'center', gap: 3*scale, justifyContent: 'center', padding: `${2*scale}px 0` }}>
+              <span style={{ fontSize: `${0.85*scale}rem`, fontWeight: 800, color: c }}>{s.v}</span>
+              <span style={{ fontSize: `${0.55*scale}rem`, fontWeight: 600, color: `${c}99`, textTransform: 'uppercase' }}>{s.l}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -550,6 +641,19 @@ export default function StudentDetails() {
                 {student.responsible_name && ` | Responsável: ${student.responsible_name}`}
               </p>
             </div>
+          </div>
+
+          {/* FUT Card */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            {studentCard ? (
+              <div style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => { setShowCardEditor(true); }} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
+                {renderFutCardPreview(studentCard, 140)}
+              </div>
+            ) : (
+              <button onClick={() => { setCardForm({ ...cardForm, player_name: student.full_name }); setShowCardEditor(true); }} style={{ padding: '8px 14px', borderRadius: 10, border: '2px dashed var(--border-color, #334155)', background: 'none', color: 'var(--text-muted, #64748b)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+                ⚽ Criar Card
+              </button>
+            )}
           </div>
 
           <div className="student-header-actions">
@@ -1101,6 +1205,62 @@ export default function StudentDetails() {
                 disabled={selectedClasses.length === 0 || isLoadingClasses}
               >
                 Adicionar ({selectedClasses.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FUT Card Editor Modal */}
+      {showCardEditor && (
+        <div className="mm-overlay" onClick={() => setShowCardEditor(false)}>
+          <div className="mm-modal mm-modal-md" onClick={e => e.stopPropagation()} style={{ maxHeight: '90vh', overflow: 'auto' }}>
+            <div className="mm-header">
+              <h3>{studentCard ? 'Editar Card' : 'Criar Card'}</h3>
+              <button className="mm-close" onClick={() => setShowCardEditor(false)}>&times;</button>
+            </div>
+            <div className="mm-content" style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+              {/* Preview */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                {renderFutCardPreview({ ...cardForm, photo_url: cardForm.photo ? URL.createObjectURL(cardForm.photo) : studentCard?.photo_url }, 180)}
+                <input type="file" ref={cardPhotoRef} accept="image/*" style={{ display: 'none' }} onChange={e => { if (e.target.files?.[0]) setCardForm(f => ({ ...f, photo: e.target.files![0] })); }} />
+                <button onClick={() => cardPhotoRef.current?.click()} style={{ padding: '6px 14px', borderRadius: 8, border: '1px dashed var(--border-color, #334155)', background: 'none', color: '#F58A25', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'inherit' }}>📷 Foto</button>
+              </div>
+
+              {/* Form */}
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <div className="mm-field"><label>Nome</label><input value={cardForm.player_name} onChange={e => setCardForm(f => ({ ...f, player_name: e.target.value }))} /></div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div className="mm-field" style={{ flex: 1 }}><label>Posicao</label><input value={cardForm.position} onChange={e => setCardForm(f => ({ ...f, position: e.target.value }))} maxLength={3} /></div>
+                  <div className="mm-field" style={{ flex: 1 }}><label>Overall</label><input type="number" min={1} max={99} value={cardForm.overall} onChange={e => setCardForm(f => ({ ...f, overall: Number(e.target.value) }))} /></div>
+                </div>
+
+                <div className="mm-field"><label>Tipo</label>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {['gold','silver','bronze','toty','legend','hero'].map(t => (
+                      <button key={t} onClick={() => setCardForm(f => ({ ...f, card_type: t }))} style={{ padding: '4px 10px', borderRadius: 6, border: `2px solid ${cardForm.card_type === t ? '#F58A25' : 'var(--border-color, #334155)'}`, background: cardForm.card_type === t ? 'rgba(245,138,37,0.1)' : 'none', color: cardForm.card_type === t ? '#F58A25' : 'var(--text-muted, #94a3b8)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, textTransform: 'capitalize', fontFamily: 'inherit' }}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mm-field"><label>Atributos</label>
+                  {[{k:'stat_atk',l:'ATK'},{k:'stat_def',l:'DEF'},{k:'stat_saq',l:'SAQ'},{k:'stat_rec',l:'REC'},{k:'stat_blq',l:'BLQ'},{k:'stat_fin',l:'FIN'}].map(s => (
+                    <div key={s.k} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ width: 32, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>{s.l}</span>
+                      <input type="range" min={1} max={99} value={(cardForm as any)[s.k]} onChange={e => setCardForm(f => ({ ...f, [s.k]: Number(e.target.value) }))} style={{ flex: 1, accentColor: '#F58A25' }} />
+                      <span style={{ width: 24, textAlign: 'center', fontWeight: 800, fontSize: '0.85rem', color: '#F58A25' }}>{(cardForm as any)[s.k]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="mm-footer">
+              {studentCard && (
+                <button className="mm-btn mm-btn-danger" onClick={handleDeleteCard} style={{ marginRight: 'auto' }}>Remover Card</button>
+              )}
+              <button className="mm-btn mm-btn-secondary" onClick={() => setShowCardEditor(false)}>Cancelar</button>
+              <button className="mm-btn mm-btn-primary" onClick={handleSaveCard} disabled={savingCard || !cardForm.player_name.trim()}>
+                {savingCard ? 'Salvando...' : studentCard ? 'Salvar' : 'Criar Card'}
               </button>
             </div>
           </div>

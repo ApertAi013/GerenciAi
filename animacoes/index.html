@@ -1,0 +1,2913 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArenAi - Animacoes 3D de Campeonatos</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+
+  .nav { display: flex; gap: 12px; justify-content: center; padding: 14px; background: rgba(0,0,0,0.85); border-bottom: 1px solid #222; position: fixed; top: 0; left: 0; right: 0; z-index: 100; backdrop-filter: blur(10px); }
+  .nav button { padding: 8px 22px; border: 1px solid #333; background: #1a1a1a; color: #ccc; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.3s; }
+  .nav button.active { background: #F58A25; color: #fff; border-color: #F58A25; }
+  .nav button:hover { border-color: #F58A25; }
+
+  .score-bar { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.85); padding: 10px 24px; border-radius: 12px; border: 1px solid #333; z-index: 100; backdrop-filter: blur(10px); }
+  .score-bar .team { text-align: center; min-width: 70px; }
+  .score-bar .team-name { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
+  .score-bar .team-score { font-size: 32px; font-weight: 800; }
+  .score-bar .team-a .team-score { color: #3B82F6; }
+  .score-bar .team-b .team-score { color: #EF4444; }
+  .score-bar .vs { font-size: 13px; opacity: 0.3; font-weight: 600; }
+  .score-bar .score-btn { padding: 3px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 700; margin-top: 3px; }
+  .score-bar .score-btn.a { background: #3B82F6; color: #fff; }
+  .score-bar .score-btn.b { background: #EF4444; color: #fff; }
+  .score-bar .score-btn:hover { opacity: 0.8; }
+
+  #canvas-container { width: 100vw; height: 100vh; }
+
+  .goal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 999; pointer-events: none; opacity: 0; transition: opacity 0.15s; }
+  .goal-overlay.show { opacity: 1; }
+  .goal-text { font-size: 100px; font-weight: 900; text-shadow: 0 0 60px currentColor, 0 0 120px currentColor; animation: none; }
+  .goal-overlay.show .goal-text { animation: goalPulse 0.4s ease-out; }
+  .goal-text.blue { color: #3B82F6; }
+  .goal-text.red { color: #EF4444; }
+
+  @keyframes goalPulse {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .hit-label { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 6px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 100; opacity: 0; transition: opacity 0.3s; letter-spacing: 1px; }
+  .hit-label.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <button class="active" onclick="switchScene(0)">Volei 3D</button>
+  <button onclick="switchScene(1)">Futevolei 3D</button>
+  <button onclick="switchScene(2)">Futebol Society</button>
+</div>
+
+<div class="score-bar">
+  <div class="team team-a">
+    <div class="team-name">Time A</div>
+    <div class="team-score" id="score-a">0</div>
+    <button class="score-btn a" onclick="scorePoint('a')">+1</button>
+  </div>
+  <div class="vs">VS</div>
+  <div class="team team-b">
+    <div class="team-name">Time B</div>
+    <div class="team-score" id="score-b">0</div>
+    <button class="score-btn b" onclick="scorePoint('b')">+1</button>
+  </div>
+</div>
+
+<div id="canvas-container"></div>
+
+<div class="goal-overlay" id="goal-overlay">
+  <div class="goal-text" id="goal-text">PONTO!</div>
+</div>
+
+<div class="hit-label" id="hit-label"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// =============== BALL TEXTURES (Canvas) ===============
+function createFootballTexture() {
+  var canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 256;
+  var ctx = canvas.getContext('2d');
+  // White base
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 512, 256);
+  // Draw black pentagon pattern (simplified)
+  ctx.fillStyle = '#222222';
+  ctx.strokeStyle = '#333333';
+  ctx.lineWidth = 2;
+  var centers = [
+    [128, 64], [384, 64], [64, 160], [256, 128], [448, 160],
+    [192, 192], [320, 192], [128, 240], [384, 240], [256, 40]
+  ];
+  for (var i = 0; i < centers.length; i++) {
+    var cx = centers[i][0], cy = centers[i][1];
+    ctx.beginPath();
+    for (var j = 0; j < 5; j++) {
+      var angle = (j / 5) * Math.PI * 2 - Math.PI / 2;
+      var px = cx + Math.cos(angle) * 22;
+      var py = cy + Math.sin(angle) * 22;
+      if (j === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+  // Add subtle seam lines
+  ctx.strokeStyle = '#cccccc';
+  ctx.lineWidth = 1;
+  for (var i = 0; i < centers.length; i++) {
+    for (var j = i + 1; j < centers.length; j++) {
+      var dx = centers[j][0] - centers[i][0];
+      var dy = centers[j][1] - centers[i][1];
+      var d = Math.sqrt(dx*dx + dy*dy);
+      if (d < 120) {
+        ctx.beginPath();
+        ctx.moveTo(centers[i][0], centers[i][1]);
+        ctx.lineTo(centers[j][0], centers[j][1]);
+        ctx.stroke();
+      }
+    }
+  }
+  var tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+function createVolleyballTexture() {
+  var canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 256;
+  var ctx = canvas.getContext('2d');
+  // Yellow-white base
+  ctx.fillStyle = '#fffde0';
+  ctx.fillRect(0, 0, 512, 256);
+  // Curved colored stripes (red, blue, yellow)
+  var colors = ['#cc2222', '#2244aa', '#ddaa00'];
+  for (var s = 0; s < 3; s++) {
+    ctx.strokeStyle = colors[s];
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    var offset = s * 170;
+    ctx.moveTo(offset, 0);
+    ctx.bezierCurveTo(offset + 60, 85, offset + 40, 170, offset + 100, 256);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(offset + 8, 0);
+    ctx.bezierCurveTo(offset + 68, 85, offset + 48, 170, offset + 108, 256);
+    ctx.stroke();
+  }
+  // Seam lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 2;
+  for (var i = 0; i < 8; i++) {
+    var x = i * 64;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.quadraticCurveTo(x + 30, 128, x, 256);
+    ctx.stroke();
+  }
+  var tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+function createGoalNetTexture() {
+  var canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 256;
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(255,255,255,0)';
+  ctx.clearRect(0, 0, 256, 256);
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 1.5;
+  var spacing = 12;
+  for (var x = 0; x <= 256; x += spacing) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke();
+  }
+  for (var y = 0; y <= 256; y += spacing) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke();
+  }
+  var tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+function createGrassTexture() {
+  var canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 512;
+  var ctx = canvas.getContext('2d');
+  // Base green
+  ctx.fillStyle = '#1a7a2e';
+  ctx.fillRect(0, 0, 512, 512);
+  // Radial gradient for stadium light effect (lighter in center)
+  var grad = ctx.createRadialGradient(256, 256, 40, 256, 256, 350);
+  grad.addColorStop(0, 'rgba(40,160,60,0.35)');
+  grad.addColorStop(0.6, 'rgba(20,100,30,0.0)');
+  grad.addColorStop(1, 'rgba(10,50,15,0.3)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 512, 512);
+  // Alternating stripes
+  for (var i = 0; i < 10; i += 2) {
+    ctx.fillStyle = 'rgba(30,140,50,0.22)';
+    ctx.fillRect(i * 51.2, 0, 51.2, 512);
+  }
+  // Tiny grass noise
+  for (var n = 0; n < 3000; n++) {
+    var nx = Math.random() * 512;
+    var ny = Math.random() * 512;
+    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(50,180,70,0.15)' : 'rgba(10,80,20,0.15)';
+    ctx.fillRect(nx, ny, 2, 2);
+  }
+  var tex = new THREE.CanvasTexture(canvas);
+  return tex;
+}
+
+function createSandTexture(isOuter) {
+  var canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 256;
+  var ctx = canvas.getContext('2d');
+  var base = isOuter ? '#b8963a' : '#d4a843';
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 256, 256);
+  // Noise for sand grain feel
+  for (var n = 0; n < 2000; n++) {
+    var nx = Math.random() * 256;
+    var ny = Math.random() * 256;
+    var shade = Math.random();
+    ctx.fillStyle = shade > 0.5 ?
+      'rgba(220,190,110,' + (0.1 + shade * 0.15) + ')' :
+      'rgba(150,120,60,' + (0.1 + shade * 0.15) + ')';
+    ctx.fillRect(nx, ny, 1 + Math.random() * 2, 1 + Math.random() * 2);
+  }
+  // Darker at edges for AO feel
+  if (!isOuter) {
+    var grad = ctx.createRadialGradient(128, 128, 30, 128, 128, 160);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.15)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 256);
+  }
+  var tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+
+// =============== PARTICLE SYSTEM ===============
+function createParticleSystem(scene, count, bounds, color1, color2) {
+  var particles = [];
+  var group = new THREE.Group();
+  var geo = new THREE.SphereGeometry(0.015, 4, 4);
+  for (var i = 0; i < count; i++) {
+    var c = Math.random() > 0.5 ? color1 : color2;
+    var mat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.15 + Math.random() * 0.2 });
+    var p = new THREE.Mesh(geo, mat);
+    p.position.set(
+      (Math.random() - 0.5) * bounds.x,
+      Math.random() * bounds.y + 0.5,
+      (Math.random() - 0.5) * bounds.z
+    );
+    p.userData.vy = 0.002 + Math.random() * 0.005;
+    p.userData.vx = (Math.random() - 0.5) * 0.003;
+    p.userData.vz = (Math.random() - 0.5) * 0.003;
+    p.userData.maxY = bounds.y + 1;
+    group.add(p);
+    particles.push(p);
+  }
+  scene.add(group);
+  return particles;
+}
+
+function animateParticles(particles, time) {
+  for (var i = 0; i < particles.length; i++) {
+    var p = particles[i];
+    p.position.y += p.userData.vy;
+    p.position.x += p.userData.vx + Math.sin(time * 0.5 + i) * 0.001;
+    p.position.z += p.userData.vz + Math.cos(time * 0.3 + i) * 0.001;
+    if (p.position.y > p.userData.maxY) {
+      p.position.y = 0.2;
+      p.position.x = (Math.random() - 0.5) * 20;
+      p.position.z = (Math.random() - 0.5) * 20;
+    }
+  }
+}
+
+// =============== BURST PARTICLES (on hit/goal) ===============
+function createBurstSystem(scene) {
+  var pool = [];
+  var geo = new THREE.SphereGeometry(0.03, 4, 4);
+  var group = new THREE.Group();
+  for (var i = 0; i < 30; i++) {
+    var mat = new THREE.MeshBasicMaterial({ color: 0xffffaa, transparent: true, opacity: 0 });
+    var p = new THREE.Mesh(geo, mat);
+    p.userData.active = false;
+    p.userData.vx = 0; p.userData.vy = 0; p.userData.vz = 0;
+    p.userData.life = 0;
+    group.add(p);
+    pool.push(p);
+  }
+  scene.add(group);
+  return pool;
+}
+
+function triggerBurst(pool, pos, color) {
+  for (var i = 0; i < pool.length; i++) {
+    var p = pool[i];
+    p.position.copy(pos);
+    p.material.color.setHex(color || 0xffffcc);
+    p.material.opacity = 0.8;
+    p.userData.active = true;
+    p.userData.vx = (Math.random() - 0.5) * 0.15;
+    p.userData.vy = 0.05 + Math.random() * 0.12;
+    p.userData.vz = (Math.random() - 0.5) * 0.15;
+    p.userData.life = 1.0;
+  }
+}
+
+function animateBurst(pool) {
+  for (var i = 0; i < pool.length; i++) {
+    var p = pool[i];
+    if (!p.userData.active) continue;
+    p.position.x += p.userData.vx;
+    p.position.y += p.userData.vy;
+    p.position.z += p.userData.vz;
+    p.userData.vy -= 0.003; // gravity
+    p.userData.life -= 0.025;
+    p.material.opacity = Math.max(0, p.userData.life * 0.8);
+    if (p.userData.life <= 0) {
+      p.userData.active = false;
+      p.material.opacity = 0;
+    }
+  }
+}
+
+// =============== GROUND SHADOW (contact shadow) ===============
+function createContactShadow() {
+  var geo = new THREE.CircleGeometry(0.25, 16);
+  var mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25, depthWrite: false });
+  var shadow = new THREE.Mesh(geo, mat);
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.015;
+  return shadow;
+}
+
+// =============== SMOOTH CAMERA HELPER ===============
+var cameraState = { x: 0, y: 0, z: 0, lookX: 0, lookY: 0, lookZ: 0 };
+function smoothCamera(camera, targetX, targetY, targetZ, lookX, lookY, lookZ, lerp) {
+  lerp = lerp || 0.03;
+  cameraState.x += (targetX - cameraState.x) * lerp;
+  cameraState.y += (targetY - cameraState.y) * lerp;
+  cameraState.z += (targetZ - cameraState.z) * lerp;
+  cameraState.lookX += (lookX - cameraState.lookX) * lerp;
+  cameraState.lookY += (lookY - cameraState.lookY) * lerp;
+  cameraState.lookZ += (lookZ - cameraState.lookZ) * lerp;
+  camera.position.set(cameraState.x, cameraState.y, cameraState.z);
+  camera.lookAt(cameraState.lookX, cameraState.lookY, cameraState.lookZ);
+}
+
+// Per-scene camera states for lerp
+var camStates = [
+  { x: 7, y: 4.5, z: 7, lx: 0, ly: 1.2, lz: 0 },
+  { x: 6, y: 4, z: 6, lx: 0, ly: 1, lz: 0 },
+  { x: 14, y: 11, z: 14, lx: 0, ly: 0, lz: 0 }
+];
+
+function lerpCam(cam, st, tx, ty, tz, lx, ly, lz, speed) {
+  speed = speed || 0.025;
+  st.x += (tx - st.x) * speed;
+  st.y += (ty - st.y) * speed;
+  st.z += (tz - st.z) * speed;
+  st.lx += (lx - st.lx) * speed;
+  st.ly += (ly - st.ly) * speed;
+  st.lz += (lz - st.lz) * speed;
+  cam.position.set(st.x, st.y, st.z);
+  cam.lookAt(st.lx, st.ly, st.lz);
+}
+
+// =============== GLOBALS ===============
+let currentScene = 0;
+const scores = [{ a: 0, b: 0 }, { a: 0, b: 0 }, { a: 0, b: 0 }];
+let renderer, clock;
+const scenes = [];
+const cameras = [];
+const animFns = [];
+
+function init() {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  document.getElementById('canvas-container').appendChild(renderer.domElement);
+  clock = new THREE.Clock();
+
+  initVolleyball();
+  initFutevolei();
+  initFootball();
+
+  animate();
+}
+
+// =============== SCORING ===============
+function scorePoint(team) {
+  // Route through triggerEvent for celebration animations
+  var type = currentScene === 2 ? 'goal' : 'point';
+  if (window.triggerEvent) {
+    window.triggerEvent(team, type);
+  } else {
+    // Fallback before triggerEvent is defined
+    scores[currentScene][team]++;
+    document.getElementById('score-a').textContent = scores[currentScene].a;
+    document.getElementById('score-b').textContent = scores[currentScene].b;
+    showOverlay(team);
+  }
+}
+
+function updateScoreDisplay() {
+  document.getElementById('score-a').textContent = scores[currentScene].a;
+  document.getElementById('score-b').textContent = scores[currentScene].b;
+}
+
+function showOverlay(team) {
+  const overlay = document.getElementById('goal-overlay');
+  const text = document.getElementById('goal-text');
+  text.className = 'goal-text ' + (team === 'a' ? 'blue' : 'red');
+  text.textContent = currentScene === 2 ? 'GOOOL!' : 'PONTO!';
+  overlay.classList.remove('show');
+  void overlay.offsetWidth; // force reflow for re-triggering animation
+  overlay.classList.add('show');
+  setTimeout(() => overlay.classList.remove('show'), 1200);
+}
+
+function switchScene(idx) {
+  currentScene = idx;
+  document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === idx));
+  updateScoreDisplay();
+  const btn = document.querySelectorAll('.score-btn');
+  btn[0].textContent = idx === 2 ? 'GOL!' : '+1';
+  btn[1].textContent = idx === 2 ? 'GOL!' : '+1';
+  // Hide futevolei hit label when switching away
+  if (idx !== 1) document.getElementById('hit-label').classList.remove('show');
+}
+
+// =============== CAPSULE GEOMETRY HELPER ===============
+// Three.js r128 does not have CapsuleGeometry, so we build one from
+// a cylinder body + two hemisphere caps merged via BufferGeometryUtils
+// approach: create cylinder + 2 sphere halves and combine into a group.
+// For simplicity and guaranteed compatibility, we use a Group approach.
+
+function makeCapsuleMesh(radius, halfHeight, material) {
+  // Returns a Group that looks like a capsule (cylinder + 2 hemisphere caps)
+  const g = new THREE.Group();
+
+  // Cylinder body
+  const cyl = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius, radius, halfHeight * 2, 16),
+    material
+  );
+  cyl.castShadow = true;
+  g.add(cyl);
+
+  // Top hemisphere
+  const topCap = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+    material
+  );
+  topCap.position.y = halfHeight;
+  topCap.castShadow = true;
+  g.add(topCap);
+
+  // Bottom hemisphere
+  const bottomCap = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2),
+    material
+  );
+  bottomCap.position.y = -halfHeight;
+  bottomCap.castShadow = true;
+  g.add(bottomCap);
+
+  return g;
+}
+
+// =============== SMOOTH MANNEQUIN CHARACTER ===============
+function createCapsulePlayer(jerseyColor, height) {
+  height = height || 1.5;
+  var group = new THREE.Group();
+
+  // Smooth matte material - like the mannequin reference
+  var bodyMat = new THREE.MeshStandardMaterial({ color: jerseyColor, roughness: 0.35, metalness: 0.0 });
+
+  // All proportions relative to height, mannequin-style
+  var headR = height * 0.15;
+  var neckR = height * 0.04;
+  var neckH = height * 0.03;
+  var chestW = height * 0.12;  // top radius
+  var waistW = height * 0.08;  // bottom radius
+  var torsoH = height * 0.22;
+  var hipR = height * 0.09;
+  var legRTop = height * 0.055;
+  var legRBot = height * 0.04;
+  var legH = height * 0.28;
+  var armRTop = height * 0.04;
+  var armRBot = height * 0.03;
+  var armH = height * 0.24;
+  var handR = height * 0.035;
+  var footH = height * 0.03;
+  var footW = height * 0.045;
+  var footD = height * 0.08;
+  var legGap = height * 0.06;
+
+  // Build from feet up
+  var footY = footH;
+  var legBot = footY + footH;
+  var legTop = legBot + legH;
+  var hipY = legTop + hipR * 0.3;
+  var torsoBot = hipY;
+  var torsoTop = torsoBot + torsoH;
+  var neckBot = torsoTop;
+  var neckTop = neckBot + neckH;
+  var headY = neckTop + headR * 0.9;
+  var shoulderY = torsoTop - torsoH * 0.08;
+
+  // --- HEAD ---
+  var head = new THREE.Mesh(new THREE.SphereGeometry(headR, 24, 16), bodyMat);
+  head.position.y = headY;
+  head.castShadow = true;
+  group.add(head);
+
+  // --- NECK ---
+  var neck = new THREE.Mesh(new THREE.CylinderGeometry(neckR, neckR, neckH + headR * 0.3, 12), bodyMat);
+  neck.position.y = neckBot + neckH * 0.5;
+  neck.castShadow = true;
+  group.add(neck);
+
+  // --- TORSO (smooth tapered cylinder: chest -> waist) ---
+  var torso = new THREE.Mesh(
+    new THREE.CylinderGeometry(chestW, waistW, torsoH, 16, 1),
+    bodyMat
+  );
+  torso.position.y = torsoBot + torsoH * 0.5;
+  torso.castShadow = true;
+  group.add(torso);
+
+  // --- HIPS (sphere for smooth transition) ---
+  var hips = new THREE.Mesh(new THREE.SphereGeometry(hipR, 14, 10), bodyMat);
+  hips.position.y = hipY;
+  hips.scale.set(1.1, 0.6, 0.8);
+  hips.castShadow = true;
+  group.add(hips);
+
+  // --- LEGS ---
+  var legGeo = new THREE.CylinderGeometry(legRTop, legRBot, legH, 10);
+
+  var legLPivot = new THREE.Group();
+  legLPivot.position.set(-legGap, legTop, 0);
+  var legLMesh = new THREE.Mesh(legGeo, bodyMat);
+  legLMesh.position.y = -legH * 0.5;
+  legLMesh.castShadow = true;
+  legLPivot.add(legLMesh);
+  // Knee sphere
+  var kneeL = new THREE.Mesh(new THREE.SphereGeometry(legRTop * 1.05, 8, 6), bodyMat);
+  kneeL.position.y = -legH * 0.45;
+  legLPivot.add(kneeL);
+  // Foot
+  var footL = new THREE.Mesh(new THREE.SphereGeometry(footW, 10, 8), bodyMat);
+  footL.position.set(0, -legH, footD * 0.2);
+  footL.scale.set(1, 0.55, 1.8);
+  footL.castShadow = true;
+  legLPivot.add(footL);
+  group.add(legLPivot);
+
+  var legRPivot = new THREE.Group();
+  legRPivot.position.set(legGap, legTop, 0);
+  var legRMesh = new THREE.Mesh(legGeo, bodyMat);
+  legRMesh.position.y = -legH * 0.5;
+  legRMesh.castShadow = true;
+  legRPivot.add(legRMesh);
+  var kneeR = new THREE.Mesh(new THREE.SphereGeometry(legRTop * 1.05, 8, 6), bodyMat);
+  kneeR.position.y = -legH * 0.45;
+  legRPivot.add(kneeR);
+  var footR = new THREE.Mesh(new THREE.SphereGeometry(footW, 10, 8), bodyMat);
+  footR.position.set(0, -legH, footD * 0.2);
+  footR.scale.set(1, 0.55, 1.8);
+  footR.castShadow = true;
+  legRPivot.add(footR);
+  group.add(legRPivot);
+
+  // --- ARMS ---
+  var armGeo = new THREE.CylinderGeometry(armRTop, armRBot, armH, 10);
+
+  var armLPivot = new THREE.Group();
+  armLPivot.position.set(-chestW - armRTop * 0.8, shoulderY, 0);
+  // Shoulder sphere
+  var shoulderL = new THREE.Mesh(new THREE.SphereGeometry(armRTop * 1.3, 8, 6), bodyMat);
+  armLPivot.add(shoulderL);
+  var armLMesh = new THREE.Mesh(armGeo, bodyMat);
+  armLMesh.position.y = -armH * 0.5;
+  armLMesh.castShadow = true;
+  armLPivot.add(armLMesh);
+  // Hand
+  var handLMesh = new THREE.Mesh(new THREE.SphereGeometry(handR, 10, 8), bodyMat);
+  handLMesh.position.y = -armH - handR * 0.3;
+  armLPivot.add(handLMesh);
+  armLPivot.rotation.z = 0.12;
+  group.add(armLPivot);
+
+  var armRPivot = new THREE.Group();
+  armRPivot.position.set(chestW + armRTop * 0.8, shoulderY, 0);
+  var shoulderR = new THREE.Mesh(new THREE.SphereGeometry(armRTop * 1.3, 8, 6), bodyMat);
+  armRPivot.add(shoulderR);
+  var armRMesh = new THREE.Mesh(armGeo, bodyMat);
+  armRMesh.position.y = -armH * 0.5;
+  armRMesh.castShadow = true;
+  armRPivot.add(armRMesh);
+  var handRMesh = new THREE.Mesh(new THREE.SphereGeometry(handR, 10, 8), bodyMat);
+  handRMesh.position.y = -armH - handR * 0.3;
+  armRPivot.add(handRMesh);
+  armRPivot.rotation.z = -0.12;
+  group.add(armRPivot);
+
+  // Store refs
+  group.userData.legL = legLPivot;
+  group.userData.legR = legRPivot;
+  group.userData.armL = armLPivot;
+  group.userData.armR = armRPivot;
+  group.userData.head = head;
+  group.userData.body = torso;
+  group.userData.playerHeight = height;
+  group.userData.baseY = 0;
+  group.castShadow = true;
+
+  return group;
+}
+
+// =============== PLAYER ANIMATION ===============
+// celebrationState: null, 'happy', or 'sad'
+function animatePlayer(player, time, idx, isActive, kickLeg, celebrationState) {
+  // --- Celebration / Sadness overrides ---
+  if (celebrationState === 'happy') {
+    // Jumping up and down with arms raised, slight spin
+    var jumpPhase = time * 10 + idx * 1.5;
+    var jumpH = Math.abs(Math.sin(jumpPhase)) * 0.35;
+    player.position.y = (player.userData.baseY || 0) + jumpH;
+
+    if (player.userData.armL) {
+      player.userData.armL.rotation.x = -2.0 + Math.sin(jumpPhase * 0.7) * 0.2;
+      player.userData.armR.rotation.x = -2.0 + Math.sin(jumpPhase * 0.7 + 0.5) * 0.2;
+      player.userData.armL.rotation.z = 0.4;
+      player.userData.armR.rotation.z = -0.4;
+    }
+    if (player.userData.legL) {
+      player.userData.legL.rotation.x = Math.sin(jumpPhase) * 0.15;
+      player.userData.legR.rotation.x = -Math.sin(jumpPhase) * 0.15;
+    }
+    // Slight spin
+    player.rotation.y += 0.03;
+    return;
+  }
+
+  if (celebrationState === 'sad') {
+    // Slumped, slow, head down
+    player.position.y = (player.userData.baseY || 0);
+
+    if (player.userData.armL) {
+      player.userData.armL.rotation.x = 0.15;
+      player.userData.armR.rotation.x = 0.15;
+      player.userData.armL.rotation.z = 0.35;
+      player.userData.armR.rotation.z = -0.35;
+    }
+    if (player.userData.legL) {
+      player.userData.legL.rotation.x = 0;
+      player.userData.legR.rotation.x = 0;
+    }
+    if (player.userData.head) {
+      player.userData.head.rotation.x = 0.3; // head tilted down
+    }
+    return;
+  }
+
+  // --- Normal animation ---
+  // Reset head tilt if not sad
+  if (player.userData.head) {
+    player.userData.head.rotation.x = 0;
+  }
+
+  var speed = isActive ? 7 : 2.5;
+  var legAmp = isActive ? 0.5 : 0.1;
+  var armAmp = isActive ? 0.4 : 0.08;
+
+  var phase = time * speed + idx * 2.1;
+  var legSwing = Math.sin(phase) * legAmp;
+  var armSwing = Math.sin(phase + Math.PI) * armAmp;
+
+  if (player.userData.legL) {
+    player.userData.legL.rotation.x = legSwing;
+    player.userData.legR.rotation.x = -legSwing;
+  }
+  if (player.userData.armL) {
+    player.userData.armL.rotation.x = armSwing;
+    player.userData.armR.rotation.x = -armSwing;
+    player.userData.armL.rotation.z = 0.15 + Math.abs(armSwing) * 0.1;
+    player.userData.armR.rotation.z = -0.15 - Math.abs(armSwing) * 0.1;
+  }
+
+  // Idle bounce
+  var bounce = Math.abs(Math.sin(phase)) * 0.03;
+  player.position.y = (player.userData.baseY || 0) + bounce;
+
+  // Kick override
+  if (kickLeg === 'right' && player.userData.legR) {
+    player.userData.legR.rotation.x = -1.1 - Math.sin(time * 14) * 0.3;
+    player.userData.armL.rotation.x = 0.6;
+    player.userData.armR.rotation.x = -0.3;
+  } else if (kickLeg === 'left' && player.userData.legL) {
+    player.userData.legL.rotation.x = -1.1 - Math.sin(time * 14) * 0.3;
+    player.userData.armR.rotation.x = 0.6;
+    player.userData.armL.rotation.x = -0.3;
+  }
+
+  // Idle bob
+  var bobAmp = isActive ? 0.06 : 0.03;
+  var bobSpeed = isActive ? speed * 2 : speed;
+  player.position.y = (player.userData.baseY || 0) + Math.abs(Math.sin(phase)) * bobAmp;
+}
+
+// =============== BALL ===============
+function createBall(radius, color, texture) {
+  radius = radius || 0.12;
+  color = color || 0xFFFFE0;
+  var geo = new THREE.SphereGeometry(radius, 28, 20);
+  var matOpts = {
+    color: color,
+    roughness: 0.35,
+    metalness: 0.05,
+    emissive: color,
+    emissiveIntensity: 0.12
+  };
+  if (texture) {
+    matOpts.map = texture;
+    matOpts.color = 0xffffff;
+  }
+  var mat = new THREE.MeshStandardMaterial(matOpts);
+  var ball = new THREE.Mesh(geo, mat);
+  ball.castShadow = true;
+  // No glow sprite - clean ball
+  return ball;
+}
+
+// =============== SAND COURT ===============
+function createSandCourt(w, h) {
+  var group = new THREE.Group();
+
+  // Court surface with vertex displacement for sand texture feel
+  var courtGeo = new THREE.PlaneGeometry(w, h, 64, 64);
+  var pos = courtGeo.attributes.position;
+  // Add vertex color variation for sand grain
+  var colors = [];
+  for (var i = 0; i < pos.count; i++) {
+    pos.setZ(i, pos.getZ(i) + (Math.random() - 0.5) * 0.025);
+    // Subtle color variation per vertex
+    var r = 0.83 + (Math.random() - 0.5) * 0.06;
+    var g2 = 0.66 + (Math.random() - 0.5) * 0.06;
+    var b = 0.26 + (Math.random() - 0.5) * 0.04;
+    colors.push(r, g2, b);
+  }
+  courtGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  pos.needsUpdate = true;
+  courtGeo.computeVertexNormals();
+
+  var sandTex = createSandTexture(false);
+  var courtMat = new THREE.MeshStandardMaterial({
+    map: sandTex,
+    vertexColors: true,
+    roughness: 0.95,
+    metalness: 0.0
+  });
+  var court = new THREE.Mesh(courtGeo, courtMat);
+  court.rotation.x = -Math.PI / 2;
+  court.position.y = 0.01;
+  court.receiveShadow = true;
+  group.add(court);
+
+  // Raised white boundary lines using thin box meshes (thicker and more visible than lines)
+  var lineH = 0.045;
+  var lineThick = 0.06;
+  var lineY = 0.03;
+  var lineMat2 = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, emissive: 0xffffff, emissiveIntensity: 0.15 });
+
+  // Top edge
+  var topLine = new THREE.Mesh(new THREE.BoxGeometry(w, lineH, lineThick), lineMat2);
+  topLine.position.set(0, lineY, -h/2);
+  group.add(topLine);
+  // Bottom edge
+  var botLine = new THREE.Mesh(new THREE.BoxGeometry(w, lineH, lineThick), lineMat2);
+  botLine.position.set(0, lineY, h/2);
+  group.add(botLine);
+  // Left edge
+  var leftLine = new THREE.Mesh(new THREE.BoxGeometry(lineThick, lineH, h), lineMat2);
+  leftLine.position.set(-w/2, lineY, 0);
+  group.add(leftLine);
+  // Right edge
+  var rightLine = new THREE.Mesh(new THREE.BoxGeometry(lineThick, lineH, h), lineMat2);
+  rightLine.position.set(w/2, lineY, 0);
+  group.add(rightLine);
+
+  return group;
+}
+
+// =============== NET ===============
+function createNet(width, height) {
+  var group = new THREE.Group();
+
+  var postMat = new THREE.MeshStandardMaterial({ color: 0xCCCCCC, roughness: 0.3, metalness: 0.5 });
+  var postGeo = new THREE.CylinderGeometry(0.05, 0.05, height + 0.4, 12);
+
+  var postL = new THREE.Mesh(postGeo, postMat);
+  postL.position.set(0, (height + 0.4) / 2, -width / 2);
+  postL.castShadow = true;
+  group.add(postL);
+
+  var postR = new THREE.Mesh(postGeo, postMat);
+  postR.position.set(0, (height + 0.4) / 2, width / 2);
+  postR.castShadow = true;
+  group.add(postR);
+
+  // Top tape (white band - thicker for realism)
+  var tapeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, emissive: 0xffffff, emissiveIntensity: 0.1 });
+  var tapeGeo = new THREE.BoxGeometry(0.04, 0.08, width);
+  var tape = new THREE.Mesh(tapeGeo, tapeMat);
+  tape.position.set(0, height, 0);
+  tape.castShadow = true;
+  group.add(tape);
+
+  // Bottom tape
+  var botTapeGeo = new THREE.BoxGeometry(0.03, 0.05, width);
+  var botTape = new THREE.Mesh(botTapeGeo, tapeMat);
+  botTape.position.set(0, height * 0.45, 0);
+  group.add(botTape);
+
+  // Antenna markers (red/white stripes at edges)
+  var antennaMat1 = new THREE.MeshStandardMaterial({ color: 0xff2200, roughness: 0.3 });
+  var antennaMat2 = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+  var antennaH = 0.8;
+  var stripeH = antennaH / 6;
+  for (var side = -1; side <= 1; side += 2) {
+    var az = side * width / 2;
+    for (var s = 0; s < 6; s++) {
+      var sMat = s % 2 === 0 ? antennaMat1 : antennaMat2;
+      var stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, stripeH, 6), sMat);
+      stripe.position.set(0, height + stripeH * s + stripeH / 2, az);
+      group.add(stripe);
+    }
+  }
+
+  // Tighter net mesh - more strings for realism
+  var netMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, side: THREE.DoubleSide });
+  var netHeight = height * 0.55;
+  var netBottom = height * 0.45;
+  var stringCount = 50;
+  for (var i = 0; i <= stringCount; i++) {
+    var frac = i / stringCount;
+    var z = -width / 2 + width * frac;
+    // Add slight sag to vertical strings
+    var stringGeo = new THREE.CylinderGeometry(0.005, 0.005, netHeight, 4);
+    var str = new THREE.Mesh(stringGeo, netMat);
+    str.position.set(0, netBottom + netHeight / 2, z);
+    group.add(str);
+  }
+  // Horizontal strings - more of them, with slight sag
+  var hCount = 16;
+  for (var j = 0; j <= hCount; j++) {
+    var frac2 = j / hCount;
+    var yy = netBottom + netHeight * frac2;
+    var hGeo = new THREE.CylinderGeometry(0.005, 0.005, width, 4);
+    var hStr = new THREE.Mesh(hGeo, netMat);
+    hStr.position.set(0, yy, 0);
+    hStr.rotation.x = Math.PI / 2;
+    group.add(hStr);
+  }
+
+  return group;
+}
+
+// =============== SCENE 1: VOLLEYBALL ===============
+function initVolleyball() {
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x080810);
+  scene.fog = new THREE.Fog(0x080810, 10, 18);
+
+  var camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(7, 5, 7);
+  camera.lookAt(0, 1, 0);
+
+  // Warm evening lighting
+  var ambient = new THREE.AmbientLight(0x505878, 0.5);
+  scene.add(ambient);
+
+  var hemi = new THREE.HemisphereLight(0x87CEEB, 0xD4A843, 0.35);
+  scene.add(hemi);
+
+  var dirLight = new THREE.DirectionalLight(0xffeedd, 1.3);
+  dirLight.position.set(5, 12, 5);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.set(2048, 2048);
+  dirLight.shadow.camera.near = 1;
+  dirLight.shadow.camera.far = 30;
+  dirLight.shadow.camera.left = -10;
+  dirLight.shadow.camera.right = 10;
+  dirLight.shadow.camera.top = 10;
+  dirLight.shadow.camera.bottom = -10;
+  dirLight.shadow.bias = -0.001;
+  scene.add(dirLight);
+
+  // Warm rim light for evening feel
+  var warmBack = new THREE.PointLight(0xff8844, 0.4, 20);
+  warmBack.position.set(-5, 3, -4);
+  scene.add(warmBack);
+
+  var spotLight = new THREE.SpotLight(0xffeebb, 0.5, 25, Math.PI / 5);
+  spotLight.position.set(-4, 10, 0);
+  scene.add(spotLight);
+
+  // Ground (large sandy area around court - different shade)
+  var outerSandTex = createSandTexture(true);
+  // No outer ground - dark background only
+
+  // Sand court
+  var court = createSandCourt(8, 5);
+  scene.add(court);
+
+  // Net
+  var net = createNet(5, 2.24);
+  scene.add(net);
+
+  // Dust particles
+  var dustParticles = createParticleSystem(scene, 40, { x: 14, y: 5, z: 14 }, 0xd4a843, 0xc49a3a);
+  // Burst particles
+  var burstPool = createBurstSystem(scene);
+
+  // Players (2v2) with contact shadows
+  var playersArr = [];
+  var playerShadows = [];
+  // Player positions: Team A back(0) x=-3, front/setter(1) x=-1.2; Team B front/setter(2) x=1.2, back(3) x=3
+  var positions = [
+    { x: -3, z: 0, team: 'a' }, { x: -1.2, z: 0, team: 'a' },
+    { x: 1.2, z: 0, team: 'b' }, { x: 3, z: 0, team: 'b' }
+  ];
+  for (var pi = 0; pi < positions.length; pi++) {
+    var p = positions[pi];
+    var color = p.team === 'a' ? 0x3B82F6 : 0xEF4444;
+    var player = createCapsulePlayer(color, 1.6);
+    player.position.set(p.x, 0, p.z);
+    player.userData.baseX = p.x;
+    player.userData.baseZ = p.z;
+    player.userData.team = p.team;
+    scene.add(player);
+    playersArr.push(player);
+    // Contact shadow
+    var cs = createContactShadow();
+    cs.position.set(p.x, 0.015, p.z);
+    scene.add(cs);
+    playerShadows.push(cs);
+  }
+
+  // Ball with volleyball texture
+  var volleyTex = createVolleyballTexture();
+  var ball = createBall(0.12, 0xFFFFE0, volleyTex);
+  scene.add(ball);
+
+  // Ball contact shadow
+  var ballShadow = createContactShadow();
+  ballShadow.scale.set(0.6, 0.6, 0.6);
+  scene.add(ballShadow);
+
+  // Celebration state for volleyball
+  var gameStateVolley = { celebrating: false, celebrateTeam: null, timer: 0, startTime: 0 };
+
+  scenes.push(scene);
+  cameras.push(camera);
+
+  // ===== VOLLEYBALL RALLY STATE MACHINE =====
+  // Teams: A = players 0(back),1(front/setter) on x<0 side; B = players 2(front/setter),3(back) on x>0 side
+  // Phases: serve, receive, set, attack, crossing, pause
+  var rallyState = {
+    phase: 'crossing',
+    team: 'b',          // team that currently has the ball (or will receive)
+    touch: 0,
+    touches: 3,         // 1=devolver de primeira, 2=de segunda, 3=jogada completa
+    activePlayer: 0,     // index within team (0=back, 1=front)
+    ballStart: { x: -1.2, y: 3.5, z: 0 },
+    ballEnd: { x: 2.0, y: 0.5, z: 0 },
+    ballPeak: 3.5,
+    progress: 0,
+    speed: 1.2,
+    lastPhase: ''
+  };
+
+  // Helper: get global player index from team + role
+  // Team A: back=0, front=1. Team B: front=2, back=3
+  function volleyPlayerIdx(team, role) {
+    // role: 'back'=0, 'front'=1
+    if (team === 'a') return role === 'back' ? 0 : 1;
+    else return role === 'front' ? 2 : 3;
+  }
+
+  function volleyPlayerPos(idx) {
+    return { x: playersArr[idx].userData.baseX, z: playersArr[idx].userData.baseZ };
+  }
+
+  // Parabolic ball interpolation
+  function parabolaY(startY, peakY, endY, t) {
+    return startY + (peakY - startY) * 4 * t * (1 - t) + (endY - startY) * t;
+  }
+
+  // Rally variations: different Z positions for attacks (left, center, right)
+  var rallyVariations = [
+    { setZ: -1.5, attackZ: -1.2, label: 'esquerda' },
+    { setZ: 0, attackZ: 0.3, label: 'centro' },
+    { setZ: 1.5, attackZ: 1.0, label: 'direita' },
+  ];
+  var currentVariation = 0;
+
+  function pickVariation() {
+    currentVariation = Math.floor(Math.random() * rallyVariations.length);
+    return rallyVariations[currentVariation];
+  }
+
+  function startVolleyPhase(phase, team) {
+    var curBall = { x: ball.position.x, y: ball.position.y, z: ball.position.z };
+    rallyState.phase = phase;
+    rallyState.team = team;
+    rallyState.progress = 0;
+
+    if (phase === 'receive') {
+      // TOQUE 1: Ball comes from other side to back player (receiver)
+      // Pick new variation + touches for this team's turn
+      var v = pickVariation();
+      rallyState.variation = v;
+      var rand = Math.random();
+      rallyState.touches = rand < 0.2 ? 1 : rand < 0.5 ? 2 : 3;
+
+      var recvZ = (Math.random() - 0.5) * 2.0;
+      var recvX = team === 'a' ? -2.5 : 2.5;
+      rallyState.receiveTargetX = recvX;
+      rallyState.receiveTargetZ = recvZ;
+
+      if (rallyState.touches === 1) {
+        // 1-touch: ball goes from here directly over the net to other side
+        var otherX = team === 'a' ? 2.5 : -2.5;
+        rallyState.ballStart = curBall;
+        rallyState.ballEnd = { x: otherX, y: 1.5, z: (Math.random() - 0.5) * 2 };
+        rallyState.ballPeak = 3.8;
+        rallyState.speed = 0.5;
+      } else {
+        // Ball goes to setter (front player)
+        var setterX = team === 'a' ? -1.0 : 1.0;
+        rallyState.setTargetX = setterX;
+        rallyState.setTargetZ = v.setZ * 0.6;
+        rallyState.ballStart = curBall;
+        rallyState.ballEnd = { x: setterX, y: 2.2, z: rallyState.setTargetZ };
+        rallyState.ballPeak = Math.max(curBall.y + 0.3, 3.2);
+        rallyState.speed = 0.55;
+      }
+    } else if (phase === 'set') {
+      // TOQUE 2: Setter sends ball
+      var v = rallyState.variation || rallyVariations[0];
+      if (rallyState.touches === 2) {
+        // 2-touch: over the net
+        var otherX = team === 'a' ? 2.2 : -2.2;
+        rallyState.ballStart = curBall;
+        rallyState.ballEnd = { x: otherX, y: 1.5, z: (Math.random() - 0.5) * 2 };
+        rallyState.ballPeak = 4.0;
+        rallyState.speed = 0.5;
+      } else {
+        // 3-touch: high set for attacker
+        var attackX = team === 'a' ? -0.5 : 0.5;
+        rallyState.attackTargetX = attackX;
+        rallyState.attackTargetZ = v.attackZ;
+        rallyState.ballStart = curBall;
+        rallyState.ballEnd = { x: attackX, y: 3.0, z: v.attackZ };
+        rallyState.ballPeak = 4.2;
+        rallyState.speed = 0.45;
+      }
+    } else if (phase === 'attack') {
+      // TOQUE 3: Spike over the net
+      var targetX = team === 'a' ? 2.2 + Math.random() * 0.5 : -2.2 - Math.random() * 0.5;
+      var targetZ = (Math.random() - 0.5) * 2.0;
+      rallyState.ballStart = curBall;
+      rallyState.ballEnd = { x: targetX, y: 1.5, z: targetZ };
+      rallyState.ballPeak = 3.5;
+      rallyState.speed = 0.8;
+    }
+  }
+
+  // Initialize first rally
+  startVolleyPhase('receive', 'a');
+
+  animFns.push(function(time) {
+    // Animate dust
+    animateParticles(dustParticles, time);
+    animateBurst(burstPool);
+
+    // Handle celebration state
+    if (gameStateVolley.celebrating) {
+      var elapsed = time - gameStateVolley.startTime;
+      if (elapsed > 3.0) {
+        gameStateVolley.celebrating = false;
+        gameStateVolley.celebrateTeam = null;
+        // Reset rally
+        startVolleyPhase('crossing', Math.random() > 0.5 ? 'a' : 'b');
+      } else {
+        var losingTeamSide = gameStateVolley.celebrateTeam === 'a' ? 1 : -1;
+        ball.position.x = losingTeamSide * 2.5;
+        ball.position.y = Math.max(0.12, ball.position.y - 0.06);
+        ball.position.z = 0;
+
+        for (var i = 0; i < playersArr.length; i++) {
+          var pl = playersArr[i];
+          var celState = pl.userData.team === gameStateVolley.celebrateTeam ? 'happy' : 'sad';
+          animatePlayer(pl, time, i, false, null, celState);
+          playerShadows[i].position.x = pl.position.x;
+          playerShadows[i].position.z = pl.position.z;
+        }
+        ballShadow.position.x = ball.position.x;
+        ballShadow.position.z = ball.position.z;
+        ballShadow.material.opacity = Math.max(0.05, 0.25 - ball.position.y * 0.04);
+
+        var tx = 7.5 * Math.cos(time * 0.1);
+        var tz = 7.5 * Math.sin(time * 0.1);
+        var ty = 4.5 + Math.sin(time * 0.15) * 0.5;
+        lerpCam(camera, camStates[0], tx, ty, tz, 0, 1.2, 0, 0.04);
+        return;
+      }
+    }
+
+    // Advance rally state (smoother speed)
+    var dt = 0.016;
+    rallyState.progress += dt * rallyState.speed;
+    if (rallyState.progress > 1.0) rallyState.progress = 1.0;
+
+    // Use smoothstep for smoother transitions (ease in/out)
+    var rawT = rallyState.progress;
+    var t = rawT * rawT * (3 - 2 * rawT); // smoothstep
+
+    var bs = rallyState.ballStart;
+    var be = rallyState.ballEnd;
+
+    // Dynamically update ballEnd to track ACTUAL player position
+    var backIdx = volleyPlayerIdx(rallyState.team, 'back');
+    var frontIdx = volleyPlayerIdx(rallyState.team, 'front');
+    if (rallyState.phase === 'receive' && rallyState.touches > 1) {
+      // Ball goes to setter (front player)
+      be.x = playersArr[frontIdx].position.x;
+      be.z = playersArr[frontIdx].position.z;
+    } else if (rallyState.phase === 'set' && rallyState.touches === 3) {
+      // Ball goes to attacker (back player running to net)
+      be.x = playersArr[backIdx].position.x;
+      be.z = playersArr[backIdx].position.z;
+    }
+
+    var bx = bs.x + (be.x - bs.x) * t;
+    var bz = bs.z + (be.z - bs.z) * t;
+    var by = parabolaY(bs.y, rallyState.ballPeak, be.y, t);
+    by = Math.max(by, 0.5);
+
+    // Direct position (no extra lerp - smoothstep already handles easing)
+    ball.position.x = bx;
+    ball.position.z = bz;
+    ball.position.y = by;
+
+    // Ball spin
+    ball.rotation.x += 0.08 * rallyState.speed;
+    ball.rotation.z += 0.04;
+
+    // Trigger burst on phase transitions
+    if (rallyState.phase !== rallyState.lastPhase) {
+      triggerBurst(burstPool, ball.position, 0xffffcc);
+      rallyState.lastPhase = rallyState.phase;
+    }
+
+    // Transition between phases: receive(1) → set(2) → attack(3) → receive(other team)
+    // No separate "crossing" phase - receive IS the ball coming from the other side
+    if (rallyState.progress >= 1.0) {
+      if (rallyState.phase === 'receive') {
+        if (rallyState.touches === 1) {
+          // 1-touch return: ball goes to other team's receive
+          var nextTeam = rallyState.team === 'a' ? 'b' : 'a';
+          startVolleyPhase('receive', nextTeam);
+        } else {
+          startVolleyPhase('set', rallyState.team);
+        }
+      } else if (rallyState.phase === 'set') {
+        if (rallyState.touches === 2) {
+          // 2-touch return: ball goes to other team's receive
+          var nextTeam = rallyState.team === 'a' ? 'b' : 'a';
+          startVolleyPhase('receive', nextTeam);
+        } else {
+          startVolleyPhase('attack', rallyState.team);
+        }
+      } else if (rallyState.phase === 'attack') {
+        // Attack done: other team receives
+        var nextTeam = rallyState.team === 'a' ? 'b' : 'a';
+        startVolleyPhase('receive', nextTeam);
+      }
+    }
+
+    // Ball shadow
+    ballShadow.position.x = ball.position.x;
+    ballShadow.position.z = ball.position.z;
+    ballShadow.material.opacity = Math.max(0.05, 0.25 - ball.position.y * 0.04);
+    ballShadow.scale.setScalar(0.4 + ball.position.y * 0.05);
+
+    // Active player indices
+    var backIdx = volleyPlayerIdx(rallyState.team, 'back');
+    var frontIdx = volleyPlayerIdx(rallyState.team, 'front');
+
+    for (var i = 0; i < playersArr.length; i++) {
+      var pl = playersArr[i];
+      var phase = rallyState.phase;
+
+      // Default: idle wobble at base position
+      var targetX = pl.userData.baseX + Math.sin(time * 1.2 + i * 2.5) * 0.15;
+      var targetZ = pl.userData.baseZ + Math.cos(time * 1.0 + i * 3) * 0.12;
+      var targetY = pl.userData.baseY || 0;
+      var poseType = 'idle';
+
+      // ---- RECEIVER (back player) during CROSSING: run to where ball will land ----
+      if (false) { // crossing removed
+        targetX = rallyState.receiveTargetX || pl.userData.baseX;
+        targetZ = rallyState.receiveTargetZ || pl.userData.baseZ;
+        poseType = 'ready';
+      }
+      // ---- RECEIVER during RECEIVE: manchete pose ----
+      else if (i === backIdx && phase === 'receive') {
+        targetX = rallyState.receiveTargetX || pl.userData.baseX;
+        targetZ = rallyState.receiveTargetZ || pl.userData.baseZ;
+        poseType = 'manchete';
+      }
+      // ---- SETTER during CROSSING/RECEIVE: move to set position (or stay back for 1-touch) ----
+      else if (i === frontIdx && phase === 'receive') {
+        if (rallyState.touches === 1) {
+          // 1-touch: setter stays at base, no need to move to set position
+          targetX = pl.userData.baseX;
+          targetZ = pl.userData.baseZ;
+        } else {
+          targetX = rallyState.setTargetX || pl.userData.baseX;
+          targetZ = (rallyState.setTargetZ || 0);
+        }
+        poseType = 'ready';
+      }
+      // ---- SETTER during SET: levantamento pose ----
+      else if (i === frontIdx && phase === 'set') {
+        targetX = rallyState.setTargetX || pl.userData.baseX;
+        targetZ = rallyState.setTargetZ || 0;
+        poseType = 'set';
+      }
+      // ---- BACK PLAYER during SET: run toward attack position! (only 3-touch) ----
+      else if (i === backIdx && phase === 'set' && rallyState.touches === 3) {
+        targetX = rallyState.attackTargetX || pl.userData.baseX;
+        targetZ = rallyState.attackTargetZ || 0;
+        poseType = 'running';
+      }
+      // ---- SETTER covers when back player attacks (ATTACK phase) ----
+      else if (i === frontIdx && phase === 'attack') {
+        // Move to back of court, opposite side of attacker
+        var attackerZ = rallyState.attackTargetZ || 0;
+        var coverZ = -attackerZ * 0.8; // opposite side
+        var coverX = (rallyState.team === 'a') ? -2.5 : 2.5; // back of own court
+        targetX = coverX;
+        targetZ = coverZ;
+        poseType = 'ready';
+      }
+      // ---- BACK PLAYER during ATTACK: jump and spike at ball position ----
+      else if (i === backIdx && phase === 'attack') {
+        targetX = rallyState.attackTargetX || pl.userData.baseX;
+        targetZ = rallyState.attackTargetZ || 0;
+        poseType = 'spike';
+      }
+
+      // Clamp target to own side of net (net at x=0) + court bounds
+      var isTeamA = (i === 0 || i === 1);
+      if (isTeamA) {
+        targetX = Math.min(targetX, -0.4); // can't cross net
+        targetX = Math.max(targetX, -4.0); // court back boundary
+      } else {
+        targetX = Math.max(targetX, 0.4);  // can't cross net
+        targetX = Math.min(targetX, 4.0);  // court back boundary
+      }
+      targetZ = Math.max(-2.5, Math.min(2.5, targetZ)); // side boundaries
+
+      // Smooth movement to target
+      pl.position.x += (targetX - pl.position.x) * 0.08;
+      pl.position.z += (targetZ - pl.position.z) * 0.08;
+
+      // Prevent overlapping with teammate (push apart)
+      var teammateIdx = isTeamA ? (i === 0 ? 1 : 0) : (i === 2 ? 3 : 2);
+      var tm = playersArr[teammateIdx];
+      var dx = pl.position.x - tm.position.x;
+      var dz = pl.position.z - tm.position.z;
+      var dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < 0.6 && dist > 0.01) {
+        var push = (0.6 - dist) * 0.5;
+        pl.position.x += (dx / dist) * push;
+        pl.position.z += (dz / dist) * push;
+      }
+
+      // Re-clamp after push
+      if (isTeamA) { pl.position.x = Math.max(-4.0, Math.min(-0.4, pl.position.x)); }
+      else { pl.position.x = Math.max(0.4, Math.min(4.0, pl.position.x)); }
+      pl.position.z = Math.max(-2.5, Math.min(2.5, pl.position.z));
+
+      // Face the ball
+      pl.lookAt(ball.position.x, pl.position.y, ball.position.z);
+
+      // Apply pose
+      if (poseType === 'manchete') {
+        pl.userData.armL.rotation.x = 0.7;
+        pl.userData.armR.rotation.x = 0.7;
+        pl.userData.armL.rotation.z = -0.3;
+        pl.userData.armR.rotation.z = 0.3;
+        pl.userData.legL.rotation.x = 0.2;
+        pl.userData.legR.rotation.x = 0.2;
+        pl.position.y = targetY + Math.sin(t * Math.PI) * 0.05;
+      } else if (poseType === 'set') {
+        pl.userData.armL.rotation.x = -2.0;
+        pl.userData.armR.rotation.x = -2.0;
+        pl.userData.armL.rotation.z = 0.3;
+        pl.userData.armR.rotation.z = -0.3;
+        pl.position.y = targetY + 0.12;
+        pl.userData.legL.rotation.x = -0.05;
+        pl.userData.legR.rotation.x = -0.05;
+        if (pl.userData.head) pl.userData.head.rotation.x = -0.3;
+      } else if (poseType === 'running') {
+        // Running animation - fast leg/arm swing
+        var runPhase = time * 8 + i;
+        pl.userData.legL.rotation.x = Math.sin(runPhase) * 0.5;
+        pl.userData.legR.rotation.x = -Math.sin(runPhase) * 0.5;
+        pl.userData.armL.rotation.x = -Math.sin(runPhase) * 0.4;
+        pl.userData.armR.rotation.x = Math.sin(runPhase) * 0.4;
+        pl.userData.armL.rotation.z = 0.15;
+        pl.userData.armR.rotation.z = -0.15;
+        pl.position.y = targetY + Math.abs(Math.sin(runPhase)) * 0.06;
+      } else if (poseType === 'spike') {
+        // Jump high + arm swing spike
+        var jumpT = Math.min(t * 1.3, 1);
+        var jumpH = 1.0 * Math.sin(jumpT * Math.PI);
+        pl.position.y = targetY + jumpH;
+        // Arm swing: back -> over head -> down
+        pl.userData.armR.rotation.x = -2.5 + jumpT * 4.5;
+        pl.userData.armR.rotation.z = -0.2;
+        pl.userData.armL.rotation.x = -1.0 + jumpT * 0.5;
+        pl.userData.armL.rotation.z = 0.5;
+        pl.userData.legL.rotation.x = -0.3 * Math.sin(jumpT * Math.PI);
+        pl.userData.legR.rotation.x = -0.25 * Math.sin(jumpT * Math.PI);
+        if (pl.userData.head) pl.userData.head.rotation.x = 0.2 * (1 - jumpT);
+      } else if (poseType === 'ready') {
+        // Ready stance - slightly bent, arms out
+        pl.userData.armL.rotation.x = 0.3;
+        pl.userData.armR.rotation.x = 0.3;
+        pl.userData.armL.rotation.z = 0.2;
+        pl.userData.armR.rotation.z = -0.2;
+        pl.userData.legL.rotation.x = 0.1;
+        pl.userData.legR.rotation.x = 0.1;
+        pl.position.y = targetY + Math.sin(time * 3 + i) * 0.02;
+      } else {
+        // Idle
+        pl.position.y = targetY;
+        animatePlayer(pl, time, i, false);
+      }
+
+      playerShadows[i].position.x = pl.position.x;
+      playerShadows[i].position.z = pl.position.z;
+    }
+
+    // Smooth camera orbit
+    var tx = 7.5 * Math.cos(time * 0.1);
+    var tz = 7.5 * Math.sin(time * 0.1);
+    var ty = 4.5 + Math.sin(time * 0.15) * 0.5;
+    lerpCam(camera, camStates[0], tx, ty, tz, 0, 1.2, 0, 0.04);
+  });
+
+  // Expose gameState for triggerEvent
+  window._gameStateVolley = gameStateVolley;
+  window._volleyBall = ball;
+  window._volleyPlayers = playersArr;
+}
+
+// =============== SCENE 2: FUTEVOLEI ===============
+function initFutevolei() {
+  var scene = new THREE.Scene();
+
+  // Golden hour sunset sky
+  scene.background = new THREE.Color(0x0a0812);
+  scene.fog = new THREE.Fog(0x0a0812, 10, 18);
+
+  var camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(6, 4.5, 6);
+  camera.lookAt(0, 1, 0);
+
+  // Golden hour lighting - warm, long shadows
+  var ambient = new THREE.AmbientLight(0x664433, 0.45);
+  scene.add(ambient);
+
+  var hemi = new THREE.HemisphereLight(0xFF9955, 0x553311, 0.45);
+  scene.add(hemi);
+
+  // Low-angle sun for long shadows (golden hour)
+  var sunLight = new THREE.DirectionalLight(0xffaa55, 1.5);
+  sunLight.position.set(-8, 5, 3); // Lower angle = longer shadows
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.set(2048, 2048);
+  sunLight.shadow.camera.near = 1;
+  sunLight.shadow.camera.far = 30;
+  sunLight.shadow.camera.left = -12;
+  sunLight.shadow.camera.right = 12;
+  sunLight.shadow.camera.top = 12;
+  sunLight.shadow.camera.bottom = -12;
+  sunLight.shadow.bias = -0.001;
+  scene.add(sunLight);
+
+  var fillLight = new THREE.PointLight(0xff6633, 0.5, 20);
+  fillLight.position.set(5, 3, -3);
+  scene.add(fillLight);
+
+  // Warm back-rim light for silhouette effect
+  var rimLight = new THREE.PointLight(0xff5500, 0.45, 18);
+  rimLight.position.set(-6, 2, -5);
+  scene.add(rimLight);
+
+  // Additional warm rim from the other side
+  var rimLight2 = new THREE.PointLight(0xff7722, 0.3, 15);
+  rimLight2.position.set(6, 1.5, 4);
+  scene.add(rimLight2);
+
+  // Ground - outer area slightly different
+  var outerSandTex2 = createSandTexture(true);
+  // No outer ground - dark background only
+
+  // Court
+  var court = createSandCourt(8, 5);
+  scene.add(court);
+
+  // Net (lower for futevolei ~1.1m)
+  var net = createNet(5, 1.7);
+  scene.add(net);
+
+  // Dust particles - golden tone
+  var dustFute = createParticleSystem(scene, 50, { x: 14, y: 4, z: 14 }, 0xffaa66, 0xdd8844);
+  var burstFute = createBurstSystem(scene);
+
+  // Players (2v2) with contact shadows
+  // Team A: back(0) x=-3, front(1) x=-1.2; Team B: front(2) x=1.2, back(3) x=3
+  var playersArr = [];
+  var playerShadowsFute = [];
+  var positions = [
+    { x: -3, z: 0, team: 'a' }, { x: -1.2, z: 0, team: 'a' },
+    { x: 1.2, z: 0, team: 'b' }, { x: 3, z: 0, team: 'b' }
+  ];
+  for (var pi = 0; pi < positions.length; pi++) {
+    var p = positions[pi];
+    var color = p.team === 'a' ? 0x3B82F6 : 0xEF4444;
+    var player = createCapsulePlayer(color, 1.6);
+    player.position.set(p.x, 0, p.z);
+    player.userData.baseX = p.x;
+    player.userData.baseZ = p.z;
+    player.userData.team = p.team;
+    // Store the head's original local Y for safety
+    if (player.userData.head) {
+      player.userData.headBaseY = player.userData.head.position.y;
+    }
+    scene.add(player);
+    playersArr.push(player);
+    var cs2 = createContactShadow();
+    cs2.position.set(p.x, 0.015, p.z);
+    scene.add(cs2);
+    playerShadowsFute.push(cs2);
+  }
+
+  // Ball with volleyball texture
+  var futeVolleyTex = createVolleyballTexture();
+  var ball = createBall(0.12, 0xFFFFE0, futeVolleyTex);
+  scene.add(ball);
+
+  // Ball contact shadow
+  var ballShadowFute = createContactShadow();
+  ballShadowFute.scale.set(0.6, 0.6, 0.6);
+  scene.add(ballShadowFute);
+
+  scenes.push(scene);
+  cameras.push(camera);
+
+  var hitLabel = document.getElementById('hit-label');
+
+  // Celebration state for futevolei
+  var gameStateFute = { celebrating: false, celebrateTeam: null, timer: 0, startTime: 0 };
+
+  // ===== FUTEVOLEI RALLY STATE MACHINE =====
+  var futeRally = {
+    phase: 'crossing',   // crossing, receive, set, attack
+    team: 'a',           // receiving team
+    touch: 0,
+    touches: 3,          // 1=devolver de primeira, 2=de segunda, 3=jogada completa
+    activePlayer: 0,
+    ballStart: { x: -1.2, y: 3.0, z: 0 },
+    ballEnd: { x: 2.5, y: 0.5, z: 0 },
+    ballPeak: 3.0,
+    progress: 0,
+    speed: 1.0,
+    lastPhase: '',
+    receiveType: 'chest', // 'chest' or 'head'
+    setType: 'foot',      // 'foot' or 'chest'
+    attackType: 'kick',   // 'kick' or 'bicycle'
+  };
+
+  // Helper: get global player index from team + role
+  function futePlayerIdx(team, role) {
+    if (team === 'a') return role === 'back' ? 0 : 1;
+    else return role === 'front' ? 2 : 3;
+  }
+
+  function futePlayerPos(idx) {
+    return { x: playersArr[idx].userData.baseX, z: playersArr[idx].userData.baseZ };
+  }
+
+  function futeParabolaY(startY, peakY, endY, t) {
+    return startY + (peakY - startY) * 4 * t * (1 - t) + (endY - startY) * t;
+  }
+
+  var futeVariations = [
+    { setZ: -1.2, attackZ: -1.0 },
+    { setZ: 0, attackZ: 0.2 },
+    { setZ: 1.2, attackZ: 0.8 },
+  ];
+  var currentFuteVar = 0;
+
+  function startFutePhase(phase, team) {
+    var curBall = { x: ball.position.x, y: ball.position.y, z: ball.position.z };
+    futeRally.phase = phase;
+    futeRally.team = team;
+    futeRally.progress = 0;
+
+    if (phase === 'receive') futeRally.receiveType = Math.random() > 0.5 ? 'chest' : 'head';
+    if (phase === 'set') futeRally.setType = Math.random() > 0.5 ? 'foot' : 'chest';
+    if (phase === 'attack') futeRally.attackType = Math.random() < 0.3 ? 'bicycle' : 'kick';
+
+    if (phase === 'receive') {
+      // Pick new variation + touches
+      currentFuteVar = Math.floor(Math.random() * futeVariations.length);
+      var rand = Math.random();
+      futeRally.touches = rand < 0.2 ? 1 : rand < 0.5 ? 2 : 3;
+      futeRally.receiveTargetX = team === 'a' ? -2.5 : 2.5;
+      futeRally.receiveTargetZ = (Math.random() - 0.5) * 2.0;
+      var v = futeVariations[currentFuteVar];
+      if (futeRally.touches === 1) {
+        var otherSideX = team === 'a' ? 2.5 : -2.5;
+        futeRally.ballStart = curBall;
+        futeRally.ballEnd = { x: otherSideX, y: 1.5, z: (Math.random() - 0.5) * 2 };
+        futeRally.ballPeak = 3.5;
+        futeRally.speed = 0.7;
+      } else {
+        var setterX = team === 'a' ? -1.0 : 1.0;
+        futeRally.setTargetX = setterX;
+        futeRally.setTargetZ = v.setZ * 0.5;
+        futeRally.ballStart = curBall;
+        futeRally.ballEnd = { x: setterX, y: 1.8, z: futeRally.setTargetZ };
+        futeRally.ballPeak = 2.8;
+        futeRally.speed = 0.8;
+      }
+    } else if (phase === 'set') {
+      var v = futeVariations[currentFuteVar];
+      if (futeRally.touches === 2) {
+        var otherSideX = team === 'a' ? 2.2 : -2.2;
+        futeRally.ballStart = curBall;
+        futeRally.ballEnd = { x: otherSideX, y: 1.5, z: (Math.random() - 0.5) * 2 };
+        futeRally.ballPeak = 3.5;
+        futeRally.speed = 0.7;
+      } else {
+        var attackX = team === 'a' ? -0.5 : 0.5;
+        futeRally.attackTargetX = attackX;
+        futeRally.attackTargetZ = v.attackZ;
+        futeRally.ballStart = curBall;
+        futeRally.ballEnd = { x: attackX, y: 2.5, z: v.attackZ };
+        futeRally.ballPeak = 3.5;
+        futeRally.speed = 0.8;
+      }
+    } else if (phase === 'attack') {
+      var targetX = team === 'a' ? 2.2 + Math.random() * 0.5 : -2.2 - Math.random() * 0.5;
+      var targetZ = (Math.random() - 0.5) * 2.0;
+      futeRally.ballStart = curBall;
+      futeRally.ballEnd = { x: targetX, y: 1.5, z: targetZ };
+      futeRally.ballPeak = 3.0;
+      futeRally.speed = 0.8;
+    }
+  }
+
+  // Initialize
+  startFutePhase('receive', 'a');
+
+  animFns.push(function(time) {
+    // Animate dust and burst
+    animateParticles(dustFute, time);
+    animateBurst(burstFute);
+
+    // Handle celebration state
+    if (gameStateFute.celebrating) {
+      var elapsed = time - gameStateFute.startTime;
+      if (elapsed > 2.5) {
+        gameStateFute.celebrating = false;
+        gameStateFute.celebrateTeam = null;
+        startFutePhase('receive', Math.random() > 0.5 ? 'a' : 'b');
+      } else {
+        var losingTeamSide = gameStateFute.celebrateTeam === 'a' ? 1 : -1;
+        ball.position.x = losingTeamSide * 2.5;
+        ball.position.y = Math.max(0.12, ball.position.y - 0.06);
+        ball.position.z = 0;
+
+        for (var i = 0; i < playersArr.length; i++) {
+          var pl = playersArr[i];
+          var celState = pl.userData.team === gameStateFute.celebrateTeam ? 'happy' : 'sad';
+          animatePlayer(pl, time, i, false, null, celState);
+          // Fix head position after celebration
+          if (pl.userData.head && pl.userData.headBaseY !== undefined) {
+            pl.userData.head.position.y = pl.userData.headBaseY;
+          }
+          playerShadowsFute[i].position.x = pl.position.x;
+          playerShadowsFute[i].position.z = pl.position.z;
+        }
+        ballShadowFute.position.x = ball.position.x;
+        ballShadowFute.position.z = ball.position.z;
+        ballShadowFute.material.opacity = Math.max(0.05, 0.25 - ball.position.y * 0.04);
+
+        var tx = 7 * Math.cos(time * 0.08 + 1);
+        var tz = 7 * Math.sin(time * 0.08 + 1);
+        var ty = 4 + Math.sin(time * 0.12) * 0.5;
+        lerpCam(camera, camStates[1], tx, ty, tz, 0, 1, 0, 0.04);
+        return;
+      }
+    }
+
+    // Advance rally state
+    futeRally.progress += 0.016 * futeRally.speed;
+    if (futeRally.progress > 1.0) futeRally.progress = 1.0;
+
+    var rawT = futeRally.progress;
+    var t = rawT * rawT * (3 - 2 * rawT); // smoothstep
+    var bs = futeRally.ballStart;
+    var be = futeRally.ballEnd;
+
+    // Dynamically update ballEnd to track ACTUAL player positions
+    var fBackIdx2 = futePlayerIdx(futeRally.team, 'back');
+    var fFrontIdx2 = futePlayerIdx(futeRally.team, 'front');
+    if (futeRally.phase === 'receive' && futeRally.touches > 1) {
+      be.x = playersArr[fFrontIdx2].position.x;
+      be.z = playersArr[fFrontIdx2].position.z;
+    } else if (futeRally.phase === 'set' && futeRally.touches === 3) {
+      be.x = playersArr[fBackIdx2].position.x;
+      be.z = playersArr[fBackIdx2].position.z;
+    }
+
+    var bx = bs.x + (be.x - bs.x) * t;
+    var bz = bs.z + (be.z - bs.z) * t;
+    var by = futeParabolaY(bs.y, futeRally.ballPeak, be.y, t);
+    by = Math.max(by, 0.5);
+    ball.position.x = bx;
+    ball.position.z = bz;
+    ball.position.y = by;
+
+    // Ball spin
+    ball.rotation.x += 0.06 * futeRally.speed;
+    ball.rotation.z += 0.03;
+
+    // Trigger burst on phase transitions
+    if (futeRally.phase !== futeRally.lastPhase) {
+      triggerBurst(burstFute, ball.position, 0xffddaa);
+      futeRally.lastPhase = futeRally.phase;
+    }
+
+    // Show hit label based on phase
+    if (currentScene === 1) {
+      var labelText = '';
+      if (futeRally.phase === 'receive' && futeRally.touches === 1) {
+        labelText = 'DE PRIMEIRA!';
+      } else if (futeRally.phase === 'receive') {
+        labelText = futeRally.receiveType === 'chest' ? 'PEITO' : 'CABECA';
+      } else if (futeRally.phase === 'set' && futeRally.touches === 2) {
+        labelText = 'DE SEGUNDA!';
+      } else if (futeRally.phase === 'set') {
+        labelText = futeRally.setType === 'foot' ? 'PE' : 'PEITO';
+      } else if (futeRally.phase === 'attack') {
+        labelText = futeRally.attackType === 'bicycle' ? 'BICICLETA!' : 'CHUTE';
+      }
+      if (labelText && t > 0.3 && t < 0.9) {
+        hitLabel.textContent = labelText;
+        hitLabel.classList.add('show');
+      } else {
+        hitLabel.classList.remove('show');
+      }
+    }
+
+    // Transition between phases (with touch variations)
+    if (futeRally.progress >= 1.0) {
+      if (futeRally.phase === 'receive') {
+        if (futeRally.touches === 1) {
+          var nextTeam = futeRally.team === 'a' ? 'b' : 'a';
+          startFutePhase('receive', nextTeam);
+        } else {
+          startFutePhase('set', futeRally.team);
+        }
+      } else if (futeRally.phase === 'set') {
+        if (futeRally.touches === 2) {
+          var nextTeam = futeRally.team === 'a' ? 'b' : 'a';
+          startFutePhase('receive', nextTeam);
+        } else {
+          startFutePhase('attack', futeRally.team);
+        }
+      } else if (futeRally.phase === 'attack') {
+        var nextTeam = futeRally.team === 'a' ? 'b' : 'a';
+        startFutePhase('receive', nextTeam);
+      }
+    }
+
+    // Ball shadow
+    ballShadowFute.position.x = ball.position.x;
+    ballShadowFute.position.z = ball.position.z;
+    ballShadowFute.material.opacity = Math.max(0.05, 0.25 - ball.position.y * 0.04);
+    ballShadowFute.scale.setScalar(0.4 + ball.position.y * 0.05);
+
+    var fBackIdx = futePlayerIdx(futeRally.team, 'back');
+    var fFrontIdx = futePlayerIdx(futeRally.team, 'front');
+
+    for (var i = 0; i < playersArr.length; i++) {
+      var pl = playersArr[i];
+      var phase = futeRally.phase;
+
+      // Force reset corrupted transforms every frame
+      pl.rotation.x = 0;
+      pl.rotation.z = 0;
+      if (pl.userData.head && pl.userData.headBaseY !== undefined) {
+        pl.userData.head.position.y = pl.userData.headBaseY;
+        pl.userData.head.rotation.x = 0;
+      }
+
+      var targetX = pl.userData.baseX + Math.sin(time * 1.2 + i * 2.5) * 0.15;
+      var targetZ = pl.userData.baseZ + Math.cos(time * 1.0 + i * 3) * 0.12;
+      var targetY = pl.userData.baseY || 0;
+      var poseType = 'idle';
+
+      // Receiver runs to ball during crossing
+      if (false) { // crossing removed for futevolei
+        targetX = futeRally.receiveTargetX || pl.userData.baseX;
+        targetZ = futeRally.receiveTargetZ || pl.userData.baseZ;
+        poseType = 'ready';
+      }
+      else if (i === fBackIdx && phase === 'receive') {
+        targetX = futeRally.receiveTargetX || pl.userData.baseX;
+        targetZ = futeRally.receiveTargetZ || pl.userData.baseZ;
+        poseType = futeRally.receiveType === 'chest' ? 'chest_recv' : 'header_recv';
+      }
+      else if (i === fFrontIdx && phase === 'receive') {
+        if (futeRally.touches === 1) {
+          // 1-touch: setter stays at base, no need to move to set position
+          targetX = pl.userData.baseX;
+          targetZ = pl.userData.baseZ;
+        } else {
+          targetX = futeRally.setTargetX || pl.userData.baseX;
+          targetZ = futeRally.setTargetZ || pl.userData.baseZ;
+        }
+        poseType = 'ready';
+      }
+      else if (i === fFrontIdx && phase === 'set') {
+        targetX = futeRally.setTargetX || pl.userData.baseX;
+        targetZ = futeRally.setTargetZ || 0;
+        poseType = futeRally.setType === 'foot' ? 'foot_set' : 'chest_set';
+      }
+      // ---- BACK PLAYER during SET: run toward attack position! (only 3-touch) ----
+      else if (i === fBackIdx && phase === 'set' && futeRally.touches === 3) {
+        targetX = futeRally.attackTargetX || pl.userData.baseX;
+        targetZ = futeRally.attackTargetZ || 0;
+        poseType = 'running';
+      }
+      // ---- SETTER covers when back player attacks (ATTACK phase) ----
+      else if (i === fFrontIdx && phase === 'attack') {
+        // Move to back of court, opposite side of attacker
+        var fAttackerZ = futeRally.attackTargetZ || 0;
+        var fCoverZ = -fAttackerZ * 0.8; // opposite side
+        var fCoverX = (futeRally.team === 'a') ? -2.5 : 2.5; // back of own court
+        targetX = fCoverX;
+        targetZ = fCoverZ;
+        poseType = 'ready';
+      }
+      else if (i === fBackIdx && phase === 'attack') {
+        targetX = futeRally.attackTargetX || pl.userData.baseX;
+        targetZ = futeRally.attackTargetZ || 0;
+        poseType = futeRally.attackType === 'bicycle' ? 'bicycle' : 'scissor';
+      }
+
+      // Smooth movement
+      // Clamp to own side of net + court bounds
+      var fIsTeamA = (i === 0 || i === 1);
+      if (fIsTeamA) {
+        targetX = Math.min(targetX, -0.4);
+        targetX = Math.max(targetX, -4.0);
+      } else {
+        targetX = Math.max(targetX, 0.4);
+        targetX = Math.min(targetX, 4.0);
+      }
+      targetZ = Math.max(-2.5, Math.min(2.5, targetZ));
+
+      pl.position.x += (targetX - pl.position.x) * 0.08;
+      pl.position.z += (targetZ - pl.position.z) * 0.08;
+
+      // Prevent overlapping with teammate
+      var fTeammateIdx = fIsTeamA ? (i === 0 ? 1 : 0) : (i === 2 ? 3 : 2);
+      var ftm = playersArr[fTeammateIdx];
+      var fdx = pl.position.x - ftm.position.x;
+      var fdz = pl.position.z - ftm.position.z;
+      var fdist = Math.sqrt(fdx * fdx + fdz * fdz);
+      if (fdist < 0.6 && fdist > 0.01) {
+        var fpush = (0.6 - fdist) * 0.5;
+        pl.position.x += (fdx / fdist) * fpush;
+        pl.position.z += (fdz / fdist) * fpush;
+      }
+
+      // Re-clamp
+      if (fIsTeamA) { pl.position.x = Math.max(-4.0, Math.min(-0.4, pl.position.x)); }
+      else { pl.position.x = Math.max(0.4, Math.min(4.0, pl.position.x)); }
+      pl.position.z = Math.max(-2.5, Math.min(2.5, pl.position.z));
+
+      pl.lookAt(ball.position.x, pl.position.y, ball.position.z);
+
+      // Apply poses
+      if (poseType === 'chest_recv') {
+        pl.userData.armL.rotation.x = 0.3; pl.userData.armR.rotation.x = 0.3;
+        pl.userData.armL.rotation.z = 0.8; pl.userData.armR.rotation.z = -0.8;
+        pl.userData.legL.rotation.x = 0.2; pl.userData.legR.rotation.x = 0.2;
+        pl.position.y = targetY + Math.sin(t * Math.PI) * 0.15;
+      } else if (poseType === 'header_recv') {
+        pl.position.y = targetY + 0.4 * Math.sin(t * Math.PI);
+        pl.userData.armL.rotation.x = 0.5; pl.userData.armR.rotation.x = 0.5;
+        pl.userData.armL.rotation.z = 0.3; pl.userData.armR.rotation.z = -0.3;
+        if (pl.userData.head) pl.userData.head.rotation.x = -0.3 * Math.sin(t * Math.PI);
+      } else if (poseType === 'foot_set') {
+        pl.userData.legR.rotation.x = -1.2 * Math.sin(t * Math.PI);
+        pl.userData.legL.rotation.x = 0.1;
+        pl.userData.armL.rotation.x = -0.5; pl.userData.armL.rotation.z = 0.5;
+        pl.userData.armR.rotation.x = 0.3; pl.userData.armR.rotation.z = -0.5;
+        pl.position.y = targetY + 0.05;
+      } else if (poseType === 'chest_set') {
+        pl.userData.armL.rotation.x = 0.2; pl.userData.armL.rotation.z = 0.7;
+        pl.userData.armR.rotation.x = 0.2; pl.userData.armR.rotation.z = -0.7;
+        pl.position.y = targetY + Math.sin(t * Math.PI) * 0.1;
+        pl.userData.legL.rotation.x = 0.15; pl.userData.legR.rotation.x = 0.15;
+      } else if (poseType === 'running') {
+        var rp = time * 8 + i;
+        pl.userData.legL.rotation.x = Math.sin(rp) * 0.5;
+        pl.userData.legR.rotation.x = -Math.sin(rp) * 0.5;
+        pl.userData.armL.rotation.x = -Math.sin(rp) * 0.4;
+        pl.userData.armR.rotation.x = Math.sin(rp) * 0.4;
+        pl.userData.armL.rotation.z = 0.15; pl.userData.armR.rotation.z = -0.15;
+        pl.position.y = targetY + Math.abs(Math.sin(rp)) * 0.06;
+      } else if (poseType === 'bicycle') {
+        var jt = Math.min(t * 1.3, 1);
+        pl.position.y = targetY + 1.0 * Math.sin(jt * Math.PI);
+        pl.rotation.x = -jt * Math.PI * 0.7;
+        pl.userData.legL.rotation.x = -1.5 * jt;
+        pl.userData.legR.rotation.x = -2.0 * jt;
+        pl.userData.armL.rotation.x = -1.0; pl.userData.armL.rotation.z = 0.6;
+        pl.userData.armR.rotation.x = -1.0; pl.userData.armR.rotation.z = -0.6;
+      } else if (poseType === 'scissor') {
+        var jt = Math.min(t * 1.3, 1);
+        pl.position.y = targetY + 0.7 * Math.sin(jt * Math.PI);
+        pl.userData.legR.rotation.x = -1.5 + jt * 3.0;
+        pl.userData.legL.rotation.x = 0.3;
+        pl.userData.armL.rotation.x = 0.5 - t * 0.5; pl.userData.armL.rotation.z = 0.4;
+        pl.userData.armR.rotation.x = -0.5 + t * 1.0; pl.userData.armR.rotation.z = -0.4;
+      } else if (poseType === 'ready') {
+        pl.userData.armL.rotation.x = 0.3; pl.userData.armR.rotation.x = 0.3;
+        pl.userData.armL.rotation.z = 0.2; pl.userData.armR.rotation.z = -0.2;
+        pl.userData.legL.rotation.x = 0.1; pl.userData.legR.rotation.x = 0.1;
+        pl.position.y = targetY + Math.sin(time * 3 + i) * 0.02;
+      } else {
+        pl.position.y = targetY;
+        animatePlayer(pl, time, i, false);
+      }
+
+      playerShadowsFute[i].position.x = pl.position.x;
+      playerShadowsFute[i].position.z = pl.position.z;
+    }
+
+    // Smooth camera orbit (golden hour)
+    var tx = 7 * Math.cos(time * 0.08 + 1);
+    var tz = 7 * Math.sin(time * 0.08 + 1);
+    var ty = 4 + Math.sin(time * 0.12) * 0.5;
+    lerpCam(camera, camStates[1], tx, ty, tz, 0, 1, 0, 0.04);
+  });
+
+  // Expose gameState for triggerEvent
+  window._gameStateFute = gameStateFute;
+  window._futeBall = ball;
+  window._futePlayers = playersArr;
+}
+
+// =============== SCENE 3: FOOTBALL SOCIETY ===============
+function initFootball() {
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060808);
+  scene.fog = new THREE.Fog(0x060808, 18, 30);
+
+  var camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(14, 12, 14);
+  camera.lookAt(0, 0, 0);
+
+  // Stadium lighting - 4 floodlights at corners
+  var ambient = new THREE.AmbientLight(0x334433, 0.35);
+  scene.add(ambient);
+
+  var hemi = new THREE.HemisphereLight(0x88AAFF, 0x228833, 0.25);
+  scene.add(hemi);
+
+  // Field dimensions
+  var fieldW = 20, fieldH = 12;
+
+  // 4 corner floodlights pointing at center
+  var floodPositions = [
+    { x: fieldW/2 + 3, z: fieldH/2 + 3 },
+    { x: -fieldW/2 - 3, z: fieldH/2 + 3 },
+    { x: fieldW/2 + 3, z: -fieldH/2 - 3 },
+    { x: -fieldW/2 - 3, z: -fieldH/2 - 3 }
+  ];
+  for (var fi = 0; fi < floodPositions.length; fi++) {
+    var fp = floodPositions[fi];
+    var floodlight = new THREE.SpotLight(0xfff8ee, 0.8, 50, Math.PI / 4, 0.5, 1);
+    floodlight.position.set(fp.x, 16, fp.z);
+    floodlight.target.position.set(0, 0, 0);
+    scene.add(floodlight);
+    scene.add(floodlight.target);
+    if (fi === 0) {
+      floodlight.castShadow = true;
+      floodlight.shadow.mapSize.set(2048, 2048);
+      floodlight.shadow.camera.near = 5;
+      floodlight.shadow.camera.far = 50;
+      floodlight.shadow.bias = -0.001;
+    }
+    // Floodlight pole visual
+    var poleMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.6, metalness: 0.4 });
+    var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 16, 8), poleMat);
+    pole.position.set(fp.x, 8, fp.z);
+    pole.castShadow = true;
+    scene.add(pole);
+    // Light fixture on top
+    var fixture = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.15, 0.4), new THREE.MeshStandardMaterial({ color: 0xdddddd, emissive: 0xffffcc, emissiveIntensity: 0.5 }));
+    fixture.position.set(fp.x, 16.2, fp.z);
+    scene.add(fixture);
+  }
+
+  // Main directional light for shadow quality
+  var mainLight = new THREE.DirectionalLight(0xfff8ee, 0.6);
+  mainLight.position.set(8, 18, 5);
+  mainLight.castShadow = true;
+  mainLight.shadow.mapSize.set(2048, 2048);
+  mainLight.shadow.camera.near = 1;
+  mainLight.shadow.camera.far = 45;
+  mainLight.shadow.camera.left = -18;
+  mainLight.shadow.camera.right = 18;
+  mainLight.shadow.camera.top = 18;
+  mainLight.shadow.camera.bottom = -18;
+  mainLight.shadow.bias = -0.001;
+  scene.add(mainLight);
+
+  // Green field with grass texture
+  var grassTex = createGrassTexture();
+  var fieldGeo = new THREE.PlaneGeometry(fieldW, fieldH, 1, 1);
+  var fieldMat = new THREE.MeshStandardMaterial({ map: grassTex, roughness: 0.8, metalness: 0.02 });
+  var field = new THREE.Mesh(fieldGeo, fieldMat);
+  field.rotation.x = -Math.PI / 2;
+  field.receiveShadow = true;
+  scene.add(field);
+
+  // Alternating grass stripes (more visible, wider)
+  for (var si = 0; si < 10; si += 2) {
+    var stripe = new THREE.Mesh(
+      new THREE.PlaneGeometry(fieldW / 10, fieldH),
+      new THREE.MeshStandardMaterial({ color: 0x22993a, roughness: 0.82, metalness: 0, transparent: true, opacity: 0.35 })
+    );
+    stripe.rotation.x = -Math.PI / 2;
+    stripe.position.set(-fieldW / 2 + fieldW / 10 * si + fieldW / 20, 0.005, 0);
+    scene.add(stripe);
+  }
+
+  // Surround area (darker green/brown outside field)
+  // No outer surround - dark background only
+
+  // Dust/atmosphere particles
+  var dustFootball = createParticleSystem(scene, 30, { x: 25, y: 8, z: 18 }, 0x88aa88, 0x669966);
+  var burstFootball = createBurstSystem(scene);
+
+  // ---- Field lines (using thin meshes for thickness) ----
+  var lineY = 0.02;
+  var lineThick = 0.08;
+  var lineH = 0.02;
+  var fieldLineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, emissive: 0xffffff, emissiveIntensity: 0.15 });
+
+  // Helper to make a line as a thin box between two points
+  function makeFieldLine(x1, z1, x2, z2) {
+    var dx = x2 - x1, dz = z2 - z1;
+    var len = Math.sqrt(dx*dx + dz*dz);
+    var angle = Math.atan2(dx, dz);
+    var line = new THREE.Mesh(new THREE.BoxGeometry(lineThick, lineH, len), fieldLineMat);
+    line.position.set((x1+x2)/2, lineY, (z1+z2)/2);
+    line.rotation.y = angle;
+    scene.add(line);
+  }
+
+  // Boundary rectangle
+  makeFieldLine(-fieldW/2, -fieldH/2, fieldW/2, -fieldH/2);
+  makeFieldLine(fieldW/2, -fieldH/2, fieldW/2, fieldH/2);
+  makeFieldLine(fieldW/2, fieldH/2, -fieldW/2, fieldH/2);
+  makeFieldLine(-fieldW/2, fieldH/2, -fieldW/2, -fieldH/2);
+
+  // Center line
+  makeFieldLine(0, -fieldH/2, 0, fieldH/2);
+
+  // Center circle
+  var circlePoints = [];
+  for (var ci = 0; ci <= 64; ci++) {
+    var a = (ci / 64) * Math.PI * 2;
+    circlePoints.push(new THREE.Vector3(Math.cos(a) * 2, lineY + 0.005, Math.sin(a) * 2));
+  }
+  var circleLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(circlePoints),
+    new THREE.LineBasicMaterial({ color: 0xffffff }));
+  scene.add(circleLine);
+  // Thicker center circle using a ring mesh
+  var ringGeo = new THREE.RingGeometry(1.92, 2.08, 64);
+  var ringMesh = new THREE.Mesh(ringGeo, fieldLineMat);
+  ringMesh.rotation.x = -Math.PI / 2;
+  ringMesh.position.y = lineY + 0.003;
+  scene.add(ringMesh);
+
+  // Center spot
+  var centerSpot = new THREE.Mesh(
+    new THREE.CircleGeometry(0.12, 16),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.1 })
+  );
+  centerSpot.rotation.x = -Math.PI / 2;
+  centerSpot.position.y = lineY + 0.005;
+  scene.add(centerSpot);
+
+  // Goal areas (penalty boxes)
+  var gaW = 3.5, gaH = 5;
+  var gaSmallW = 1.8, gaSmallH = 3;
+
+  // Left big box
+  makeFieldLine(-fieldW/2, -gaH/2, -fieldW/2 + gaW, -gaH/2);
+  makeFieldLine(-fieldW/2 + gaW, -gaH/2, -fieldW/2 + gaW, gaH/2);
+  makeFieldLine(-fieldW/2 + gaW, gaH/2, -fieldW/2, gaH/2);
+
+  // Left small box
+  makeFieldLine(-fieldW/2, -gaSmallH/2, -fieldW/2 + gaSmallW, -gaSmallH/2);
+  makeFieldLine(-fieldW/2 + gaSmallW, -gaSmallH/2, -fieldW/2 + gaSmallW, gaSmallH/2);
+  makeFieldLine(-fieldW/2 + gaSmallW, gaSmallH/2, -fieldW/2, gaSmallH/2);
+
+  // Right big box
+  makeFieldLine(fieldW/2, -gaH/2, fieldW/2 - gaW, -gaH/2);
+  makeFieldLine(fieldW/2 - gaW, -gaH/2, fieldW/2 - gaW, gaH/2);
+  makeFieldLine(fieldW/2 - gaW, gaH/2, fieldW/2, gaH/2);
+
+  // Right small box
+  makeFieldLine(fieldW/2, -gaSmallH/2, fieldW/2 - gaSmallW, -gaSmallH/2);
+  makeFieldLine(fieldW/2 - gaSmallW, -gaSmallH/2, fieldW/2 - gaSmallW, gaSmallH/2);
+  makeFieldLine(fieldW/2 - gaSmallW, gaSmallH/2, fieldW/2, gaSmallH/2);
+
+  // Penalty arcs (D-shape outside penalty box)
+  var penArcR = 1.5;
+  var penSpotDist = 2.8;
+  // Left penalty arc
+  var lpArcPts = [];
+  for (var pa = 0; pa <= 32; pa++) {
+    var ang = -Math.PI/3 + (pa/32) * (2*Math.PI/3);
+    var px = -fieldW/2 + penSpotDist + Math.cos(ang) * penArcR;
+    var pz = Math.sin(ang) * penArcR;
+    if (px > -fieldW/2 + gaW) {
+      lpArcPts.push(new THREE.Vector3(px, lineY + 0.005, pz));
+    }
+  }
+  if (lpArcPts.length > 1) {
+    var lpaRing = new THREE.Line(new THREE.BufferGeometry().setFromPoints(lpArcPts),
+      new THREE.LineBasicMaterial({ color: 0xffffff }));
+    scene.add(lpaRing);
+  }
+  // Right penalty arc
+  var rpArcPts = [];
+  for (var pa = 0; pa <= 32; pa++) {
+    var ang = Math.PI - Math.PI/3 + (pa/32) * (2*Math.PI/3);
+    var px = fieldW/2 - penSpotDist + Math.cos(ang) * penArcR;
+    var pz = Math.sin(ang) * penArcR;
+    if (px < fieldW/2 - gaW) {
+      rpArcPts.push(new THREE.Vector3(px, lineY + 0.005, pz));
+    }
+  }
+  if (rpArcPts.length > 1) {
+    var rpaRing = new THREE.Line(new THREE.BufferGeometry().setFromPoints(rpArcPts),
+      new THREE.LineBasicMaterial({ color: 0xffffff }));
+    scene.add(rpaRing);
+  }
+
+  // Corner arcs
+  var cornerR = 0.5;
+  var corners = [
+    { x: -fieldW/2, z: -fieldH/2, startA: 0 },
+    { x: fieldW/2, z: -fieldH/2, startA: Math.PI/2 },
+    { x: fieldW/2, z: fieldH/2, startA: Math.PI },
+    { x: -fieldW/2, z: fieldH/2, startA: -Math.PI/2 }
+  ];
+  for (var co = 0; co < corners.length; co++) {
+    var cc = corners[co];
+    var cPts = [];
+    for (var ca = 0; ca <= 16; ca++) {
+      var ang = cc.startA + (ca/16) * (Math.PI/2);
+      cPts.push(new THREE.Vector3(cc.x + Math.cos(ang) * cornerR, lineY + 0.005, cc.z + Math.sin(ang) * cornerR));
+    }
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(cPts),
+      new THREE.LineBasicMaterial({ color: 0xffffff })));
+  }
+
+  // Penalty spots
+  var penSpotMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.1 });
+  var penSpotL = new THREE.Mesh(new THREE.CircleGeometry(0.1, 12), penSpotMat);
+  penSpotL.rotation.x = -Math.PI / 2;
+  penSpotL.position.set(-fieldW/2 + penSpotDist, lineY + 0.005, 0);
+  scene.add(penSpotL);
+
+  var penSpotR = new THREE.Mesh(new THREE.CircleGeometry(0.1, 12), penSpotMat);
+  penSpotR.rotation.x = -Math.PI / 2;
+  penSpotR.position.set(fieldW/2 - penSpotDist, lineY + 0.005, 0);
+  scene.add(penSpotR);
+
+  // ---- 3D Realistic Goals ----
+  var goalW = 3.2, goalH = 2.1, goalD = 1.2;
+  var goalNetTex = createGoalNetTexture();
+
+  function createGoal(xPos) {
+    var g = new THREE.Group();
+    var sign = xPos > 0 ? 1 : -1;
+
+    // Thick white cylindrical posts and crossbar
+    var postR = 0.06;
+    var postMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff, roughness: 0.25, metalness: 0.6,
+      emissive: 0xffffff, emissiveIntensity: 0.05
+    });
+
+    // Front left post
+    var postGeo = new THREE.CylinderGeometry(postR, postR, goalH, 12);
+    var frontL = new THREE.Mesh(postGeo, postMat);
+    frontL.position.set(0, goalH / 2, -goalW / 2);
+    frontL.castShadow = true;
+    g.add(frontL);
+
+    // Front right post
+    var frontR = new THREE.Mesh(postGeo, postMat);
+    frontR.position.set(0, goalH / 2, goalW / 2);
+    frontR.castShadow = true;
+    g.add(frontR);
+
+    // Crossbar
+    var barGeo = new THREE.CylinderGeometry(postR, postR, goalW + postR * 2, 12);
+    var crossbar = new THREE.Mesh(barGeo, postMat);
+    crossbar.position.set(0, goalH, 0);
+    crossbar.rotation.x = Math.PI / 2;
+    crossbar.castShadow = true;
+    g.add(crossbar);
+
+    // Back support posts (thinner, angled back for depth)
+    var backR = 0.035;
+    var backPostGeo = new THREE.CylinderGeometry(backR, backR, goalH * 0.65, 8);
+    // Back left post - angled
+    var backL = new THREE.Mesh(backPostGeo, postMat);
+    backL.position.set(sign * goalD, goalH * 0.325, -goalW / 2);
+    g.add(backL);
+    // Back right post
+    var backRight = new THREE.Mesh(backPostGeo, postMat);
+    backRight.position.set(sign * goalD, goalH * 0.325, goalW / 2);
+    g.add(backRight);
+
+    // Top back bar
+    var topBackBar = new THREE.Mesh(
+      new THREE.CylinderGeometry(backR, backR, goalW, 8), postMat
+    );
+    topBackBar.position.set(sign * goalD, goalH * 0.65, 0);
+    topBackBar.rotation.x = Math.PI / 2;
+    g.add(topBackBar);
+
+    // Diagonal support from crossbar to back top (both sides)
+    var diagLen = Math.sqrt(goalD * goalD + (goalH - goalH * 0.65) * (goalH - goalH * 0.65));
+    var diagAngle = Math.atan2(goalH - goalH * 0.65, goalD);
+    var diagGeo = new THREE.CylinderGeometry(backR * 0.7, backR * 0.7, diagLen, 6);
+    for (var ds = -1; ds <= 1; ds += 2) {
+      var diag = new THREE.Mesh(diagGeo, postMat);
+      diag.position.set(sign * goalD / 2, (goalH + goalH * 0.65) / 2, ds * goalW / 2);
+      diag.rotation.z = sign * diagAngle;
+      g.add(diag);
+    }
+
+    // ---- Net using grid texture for realism ----
+    var netMat = new THREE.MeshBasicMaterial({
+      map: goalNetTex,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+
+    // Back net (slight curve/sag)
+    var backNetGeo = new THREE.PlaneGeometry(goalW, goalH * 0.65, 16, 8);
+    var bnPos = backNetGeo.attributes.position;
+    for (var ni = 0; ni < bnPos.count; ni++) {
+      // Slight sag based on height (lower = more sag toward back)
+      var localY = bnPos.getY(ni);
+      var sag = Math.sin((localY / (goalH * 0.65) + 0.5) * Math.PI) * 0.06;
+      bnPos.setZ(ni, bnPos.getZ(ni) + sag);
+    }
+    bnPos.needsUpdate = true;
+    backNetGeo.computeVertexNormals();
+    var backNet = new THREE.Mesh(backNetGeo, netMat);
+    backNet.position.set(sign * goalD, goalH * 0.325, 0);
+    g.add(backNet);
+
+    // Side nets (triangular profile: tall at front, short at back)
+    for (var side = -1; side <= 1; side += 2) {
+      var sideVerts = [];
+      var sideUvs = [];
+      var sideIndices = [];
+      var sideSegs = 10;
+      var sideRows = 8;
+      for (var row = 0; row <= sideRows; row++) {
+        for (var col = 0; col <= sideSegs; col++) {
+          var t = col / sideSegs; // 0=front, 1=back
+          var u = row / sideRows;
+          var sx = t * sign * goalD;
+          var maxHere = goalH * (1 - t * 0.35); // taller at front, shorter at back
+          var sy = u * maxHere;
+          var sz = side * goalW / 2;
+          // Slight sag
+          var sagS = Math.sin(t * Math.PI) * Math.sin(u * Math.PI) * 0.04;
+          sideVerts.push(sx, sy, sz + sagS * side);
+          sideUvs.push(t * 3, u * 3);
+        }
+      }
+      for (var row = 0; row < sideRows; row++) {
+        for (var col = 0; col < sideSegs; col++) {
+          var a = row * (sideSegs + 1) + col;
+          var b = a + 1;
+          var c = a + (sideSegs + 1);
+          var d = c + 1;
+          sideIndices.push(a, b, c, b, d, c);
+        }
+      }
+      var sideNetGeo = new THREE.BufferGeometry();
+      sideNetGeo.setAttribute('position', new THREE.Float32BufferAttribute(sideVerts, 3));
+      sideNetGeo.setAttribute('uv', new THREE.Float32BufferAttribute(sideUvs, 2));
+      sideNetGeo.setIndex(sideIndices);
+      sideNetGeo.computeVertexNormals();
+      var sideNet = new THREE.Mesh(sideNetGeo, netMat);
+      g.add(sideNet);
+    }
+
+    // Top net (slopes from crossbar height down to back bar height)
+    var topNetVerts = [];
+    var topNetUvs = [];
+    var topNetIndices = [];
+    var tSegs = 8, tCols = 12;
+    for (var tr = 0; tr <= tSegs; tr++) {
+      for (var tc = 0; tc <= tCols; tc++) {
+        var t = tr / tSegs; // 0=front, 1=back
+        var u = tc / tCols;
+        var tx = t * sign * goalD;
+        var ty = goalH - t * (goalH - goalH * 0.65);
+        var tz = -goalW / 2 + u * goalW;
+        // Slight sag
+        var sagT = Math.sin(t * Math.PI) * Math.sin(u * Math.PI) * 0.08;
+        topNetVerts.push(tx, ty - sagT, tz);
+        topNetUvs.push(t * 3, u * 3);
+      }
+    }
+    for (var tr = 0; tr < tSegs; tr++) {
+      for (var tc = 0; tc < tCols; tc++) {
+        var a = tr * (tCols + 1) + tc;
+        var b = a + 1;
+        var c = a + (tCols + 1);
+        var d = c + 1;
+        topNetIndices.push(a, b, c, b, d, c);
+      }
+    }
+    var topNetGeo = new THREE.BufferGeometry();
+    topNetGeo.setAttribute('position', new THREE.Float32BufferAttribute(topNetVerts, 3));
+    topNetGeo.setAttribute('uv', new THREE.Float32BufferAttribute(topNetUvs, 2));
+    topNetGeo.setIndex(topNetIndices);
+    topNetGeo.computeVertexNormals();
+    var topNetMesh = new THREE.Mesh(topNetGeo, netMat);
+    g.add(topNetMesh);
+
+    g.position.x = xPos;
+    return g;
+  }
+
+  scene.add(createGoal(-fieldW / 2));
+  scene.add(createGoal(fieldW / 2));
+
+  // ---- Players 6v6 ----
+  var playersArr = [];
+  var posA = [
+    { x: -8.5, z: 0, role: 'gk' },
+    { x: -6, z: -3, role: 'def' }, { x: -6, z: 3, role: 'def' },
+    { x: -2.5, z: -2.5, role: 'mid' }, { x: -2.5, z: 2.5, role: 'mid' },
+    { x: 1.5, z: 0, role: 'fwd' }
+  ];
+  var posB = [
+    { x: 8.5, z: 0, role: 'gk' },
+    { x: 6, z: -3, role: 'def' }, { x: 6, z: 3, role: 'def' },
+    { x: 2.5, z: -2.5, role: 'mid' }, { x: 2.5, z: 2.5, role: 'mid' },
+    { x: -1.5, z: 0, role: 'fwd' }
+  ];
+
+  var playerShadowsFoot = [];
+  for (var ai = 0; ai < posA.length; ai++) {
+    var pa = posA[ai];
+    var playerA = createCapsulePlayer(0x3B82F6, 1.5);
+    playerA.position.set(pa.x, 0, pa.z);
+    playerA.userData.baseX = pa.x;
+    playerA.userData.baseZ = pa.z;
+    playerA.userData.role = pa.role;
+    playerA.userData.team = 'a';
+    playerA.userData.wanderAngle = Math.random() * Math.PI * 2;
+    scene.add(playerA);
+    playersArr.push(playerA);
+    var csA = createContactShadow();
+    csA.position.set(pa.x, 0.015, pa.z);
+    scene.add(csA);
+    playerShadowsFoot.push(csA);
+  }
+  for (var bi = 0; bi < posB.length; bi++) {
+    var pb = posB[bi];
+    var playerB = createCapsulePlayer(0xEF4444, 1.5);
+    playerB.position.set(pb.x, 0, pb.z);
+    playerB.userData.baseX = pb.x;
+    playerB.userData.baseZ = pb.z;
+    playerB.userData.role = pb.role;
+    playerB.userData.team = 'b';
+    playerB.userData.wanderAngle = Math.random() * Math.PI * 2;
+    scene.add(playerB);
+    playersArr.push(playerB);
+    var csB = createContactShadow();
+    csB.position.set(pb.x, 0.015, pb.z);
+    scene.add(csB);
+    playerShadowsFoot.push(csB);
+  }
+
+  // Ball - classic white/black pentagon texture
+  var footTex = createFootballTexture();
+  var ball = createBall(0.11, 0xffffff, footTex);
+  ball.position.y = 0.11;
+  scene.add(ball);
+
+  // Ball contact shadow
+  var ballShadowFoot = createContactShadow();
+  ballShadowFoot.scale.set(0.5, 0.5, 0.5);
+  scene.add(ballShadowFoot);
+
+  var ballState = { x: 0, z: 0, vx: 0, vz: 0 };
+
+  // Possession system
+  var possession = {
+    team: 'a',
+    playerIdx: 5,   // forward of team a (index 5 in playersArr: team a=[0..5], team b=[6..11])
+    passing: false,
+    passTarget: -1,
+    passProgress: 0,
+    passFrom: null,
+    passTo: null,
+    passDuration: 0.7,
+    nextPassTime: 0,
+    interceptionCooldown: 0
+  };
+
+  function getTeamIndices(team) {
+    return team === 'a' ? [0,1,2,3,4,5] : [6,7,8,9,10,11];
+  }
+  function getOpponentIndices(team) {
+    return team === 'a' ? [6,7,8,9,10,11] : [0,1,2,3,4,5];
+  }
+  function getGkIndex(team) {
+    return team === 'a' ? 0 : 6;
+  }
+  function getGoalX(team) {
+    // The goal team 'a' attacks is +fieldW/2 (right), team 'b' attacks -fieldW/2 (left)
+    return team === 'a' ? fieldW / 2 : -fieldW / 2;
+  }
+  function getDefendGoalX(team) {
+    return team === 'a' ? -fieldW / 2 : fieldW / 2;
+  }
+
+  function resetPossessionAfterCelebration() {
+    // Give ball to team 'a' forward at center
+    possession.team = Math.random() < 0.5 ? 'a' : 'b';
+    var teamIdxs = getTeamIndices(possession.team);
+    possession.playerIdx = teamIdxs[5]; // forward
+    possession.passing = false;
+    possession.passTarget = -1;
+    possession.passProgress = 0;
+    possession.passFrom = null;
+    possession.passTo = null;
+    possession.interceptionCooldown = 0;
+    ballState.x = 0;
+    ballState.z = 0;
+  }
+
+  // Celebration state for football
+  var gameStateFootball = { celebrating: false, celebrateTeam: null, timer: 0, startTime: 0, ballAnim: null };
+
+  scenes.push(scene);
+  cameras.push(camera);
+
+  var lastKickTime = 0;
+  var initialized = false;
+  animFns.push(function(time) {
+    var dt = 0.016;
+
+    if (!initialized) {
+      initialized = true;
+      possession.nextPassTime = time + 2 + Math.random() * 2;
+      // Place carrier at a reasonable position
+      var carrier = playersArr[possession.playerIdx];
+      ballState.x = carrier.position.x;
+      ballState.z = carrier.position.z;
+    }
+
+    // Animate dust and burst
+    animateParticles(dustFootball, time);
+    animateBurst(burstFootball);
+
+    // Handle celebration state
+    if (gameStateFootball.celebrating) {
+      var elapsed = time - gameStateFootball.startTime;
+
+      if (gameStateFootball.ballAnim && elapsed < 0.8) {
+        var t = elapsed / 0.8;
+        ball.position.x = gameStateFootball.ballAnim.fromX + (gameStateFootball.ballAnim.toX - gameStateFootball.ballAnim.fromX) * t;
+        ball.position.z = gameStateFootball.ballAnim.fromZ + (gameStateFootball.ballAnim.toZ - gameStateFootball.ballAnim.fromZ) * t;
+        ball.position.y = 0.11 + Math.sin(t * Math.PI) * 1.2;
+      } else if (elapsed < 0.8) {
+        ball.position.y = Math.max(0.11, ball.position.y - 0.05);
+      }
+
+      if (elapsed > 3.5) {
+        gameStateFootball.celebrating = false;
+        gameStateFootball.celebrateTeam = null;
+        gameStateFootball.ballAnim = null;
+        resetPossessionAfterCelebration();
+        possession.nextPassTime = time + 2 + Math.random() * 2;
+        // Reset all players toward their base positions
+        for (var ri = 0; ri < playersArr.length; ri++) {
+          playersArr[ri].position.x = playersArr[ri].userData.baseX;
+          playersArr[ri].position.z = playersArr[ri].userData.baseZ;
+        }
+      } else {
+        for (var i = 0; i < playersArr.length; i++) {
+          var pl = playersArr[i];
+          var celState = pl.userData.team === gameStateFootball.celebrateTeam ? 'happy' : 'sad';
+          animatePlayer(pl, time, i, false, null, celState);
+          playerShadowsFoot[i].position.x = pl.position.x;
+          playerShadowsFoot[i].position.z = pl.position.z;
+        }
+
+        ball.rotation.z -= 0.05;
+        ball.rotation.x += 0.03;
+        ballShadowFoot.position.x = ball.position.x;
+        ballShadowFoot.position.z = ball.position.z;
+        ballShadowFoot.material.opacity = Math.max(0.05, 0.25 - ball.position.y * 0.03);
+
+        // Camera shake on goal
+        var shake = elapsed < 1.0 ? Math.sin(elapsed * 30) * 0.15 * (1 - elapsed) : 0;
+        var tx = 16 * Math.cos(time * 0.06) + shake;
+        var tz = 16 * Math.sin(time * 0.06) + shake;
+        var ty = 11 + Math.sin(time * 0.1) * 1.5;
+        lerpCam(camera, camStates[2], tx, ty, tz, shake * 0.5, shake * 0.3, shake * 0.5, 0.05);
+        return;
+      }
+    }
+
+    // ---- POSSESSION-BASED BALL & PLAYER AI ----
+    var carrier = playersArr[possession.playerIdx];
+    var carrierTeam = possession.team;
+    var attackGoalX = getGoalX(carrierTeam);
+    var teamIdxs = getTeamIndices(carrierTeam);
+    var oppIdxs = getOpponentIndices(carrierTeam);
+    var carrierGkIdx = getGkIndex(carrierTeam);
+    var oppGkIdx = getGkIndex(carrierTeam === 'a' ? 'b' : 'a');
+
+    // Decrease interception cooldown
+    if (possession.interceptionCooldown > 0) {
+      possession.interceptionCooldown -= dt;
+    }
+
+    // ---- PASSING LOGIC ----
+    if (possession.passing) {
+      // Interpolate ball from passFrom to passTo
+      possession.passProgress += dt / possession.passDuration;
+      if (possession.passProgress >= 1.0) {
+        // Pass arrived
+        possession.passProgress = 1.0;
+        possession.passing = false;
+        possession.playerIdx = possession.passTarget;
+        possession.team = playersArr[possession.passTarget].userData.team;
+        possession.passTarget = -1;
+        possession.passFrom = null;
+        possession.passTo = null;
+        possession.nextPassTime = time + 2 + Math.random() * 2;
+        // Burst on receive
+        triggerBurst(burstFootball, ball.position, 0x88ff88);
+      } else {
+        // Interpolate ball position
+        var t = possession.passProgress;
+        // Slight curve for realism
+        var midX = (possession.passFrom.x + possession.passTo.x) / 2;
+        var midZ = (possession.passFrom.z + possession.passTo.z) / 2;
+        ballState.x = possession.passFrom.x + (possession.passTo.x - possession.passFrom.x) * t;
+        ballState.z = possession.passFrom.z + (possession.passTo.z - possession.passFrom.z) * t;
+
+        // Check interception during pass
+        if (possession.interceptionCooldown <= 0) {
+          for (var oi = 0; oi < oppIdxs.length; oi++) {
+            var oppPlayer = playersArr[oppIdxs[oi]];
+            if (oppPlayer.userData.role === 'gk') continue; // GK doesn't intercept mid-field
+            var dbx = ballState.x - oppPlayer.position.x;
+            var dbz = ballState.z - oppPlayer.position.z;
+            var distBall = Math.sqrt(dbx * dbx + dbz * dbz);
+            if (distBall < 1.0 && Math.random() < 0.3 * dt * 60) {
+              // Interception!
+              possession.passing = false;
+              possession.passProgress = 0;
+              possession.passFrom = null;
+              possession.passTo = null;
+              possession.team = oppPlayer.userData.team;
+              possession.playerIdx = oppIdxs[oi];
+              possession.nextPassTime = time + 2 + Math.random() * 2;
+              possession.interceptionCooldown = 1.5;
+              triggerBurst(burstFootball, ball.position, 0xffaa44);
+              // Update references
+              carrier = playersArr[possession.playerIdx];
+              carrierTeam = possession.team;
+              attackGoalX = getGoalX(carrierTeam);
+              teamIdxs = getTeamIndices(carrierTeam);
+              oppIdxs = getOpponentIndices(carrierTeam);
+              carrierGkIdx = getGkIndex(carrierTeam);
+              oppGkIdx = getGkIndex(carrierTeam === 'a' ? 'b' : 'a');
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!possession.passing) {
+      // ---- CARRIER DRIBBLE ----
+      var dirToGoal = attackGoalX > 0 ? 1 : -1;
+      var dribbleSpeed = 2.0 * dt;
+      var zigzagFreq = 3.0;
+      var zigzagAmp = 0.8;
+
+      // Move carrier toward opponent goal with zigzag
+      var carrierTargetX = carrier.position.x + dirToGoal * dribbleSpeed;
+      var carrierTargetZ = carrier.position.z + Math.sin(time * zigzagFreq) * zigzagAmp * dt * 4;
+
+      // Don't let carrier go past the penalty box line (stop before goal to avoid auto-goal)
+      var maxCarrierX = attackGoalX > 0 ? fieldW / 2 - gaW - 0.5 : -fieldW / 2 + gaW + 0.5;
+      if (dirToGoal > 0) {
+        carrierTargetX = Math.min(carrierTargetX, maxCarrierX);
+      } else {
+        carrierTargetX = Math.max(carrierTargetX, maxCarrierX);
+      }
+
+      // If carrier reached the limit, turn back toward midfield slightly then pass
+      var atLimit = (dirToGoal > 0 && carrier.position.x >= maxCarrierX - 0.5) ||
+                    (dirToGoal < 0 && carrier.position.x <= maxCarrierX + 0.5);
+      if (atLimit && time >= possession.nextPassTime - 1) {
+        possession.nextPassTime = time; // force a pass
+      }
+
+      carrier.position.x += (carrierTargetX - carrier.position.x) * 0.12;
+      carrier.position.z += (carrierTargetZ - carrier.position.z) * 0.08;
+
+      // Clamp within field
+      carrier.position.x = Math.max(-fieldW / 2 + 0.5, Math.min(fieldW / 2 - 0.5, carrier.position.x));
+      carrier.position.z = Math.max(-fieldH / 2 + 0.5, Math.min(fieldH / 2 - 0.5, carrier.position.z));
+
+      // Ball follows carrier (at their feet, slightly forward)
+      var facingX = dirToGoal * 0.3;
+      ballState.x = carrier.position.x + facingX;
+      ballState.z = carrier.position.z;
+
+      // Check interception from opponents during dribble
+      if (possession.interceptionCooldown <= 0) {
+        for (var oi = 0; oi < oppIdxs.length; oi++) {
+          var oppPlayer = playersArr[oppIdxs[oi]];
+          if (oppPlayer.userData.role === 'gk') continue;
+          var dbx = ballState.x - oppPlayer.position.x;
+          var dbz = ballState.z - oppPlayer.position.z;
+          var distBall = Math.sqrt(dbx * dbx + dbz * dbz);
+          if (distBall < 1.0 && Math.random() < 0.3 * dt * 60) {
+            // Interception while dribbling
+            possession.team = oppPlayer.userData.team;
+            possession.playerIdx = oppIdxs[oi];
+            possession.nextPassTime = time + 2 + Math.random() * 2;
+            possession.interceptionCooldown = 1.5;
+            triggerBurst(burstFootball, ball.position, 0xffaa44);
+            // Update references
+            carrier = playersArr[possession.playerIdx];
+            carrierTeam = possession.team;
+            attackGoalX = getGoalX(carrierTeam);
+            teamIdxs = getTeamIndices(carrierTeam);
+            oppIdxs = getOpponentIndices(carrierTeam);
+            carrierGkIdx = getGkIndex(carrierTeam);
+            oppGkIdx = getGkIndex(carrierTeam === 'a' ? 'b' : 'a');
+            break;
+          }
+        }
+      }
+
+      // ---- CHECK IF TIME TO PASS ----
+      if (time >= possession.nextPassTime && !possession.passing) {
+        // Find a teammate to pass to (not GK, not self)
+        var candidates = [];
+        for (var ti = 0; ti < teamIdxs.length; ti++) {
+          var idx = teamIdxs[ti];
+          if (idx !== possession.playerIdx && idx !== carrierGkIdx) {
+            candidates.push(idx);
+          }
+        }
+        if (candidates.length > 0) {
+          var targetIdx = candidates[Math.floor(Math.random() * candidates.length)];
+          var targetPlayer = playersArr[targetIdx];
+          possession.passing = true;
+          possession.passTarget = targetIdx;
+          possession.passProgress = 0;
+          possession.passFrom = { x: ballState.x, z: ballState.z };
+          possession.passTo = { x: targetPlayer.position.x, z: targetPlayer.position.z };
+          // Pass duration scales with distance (0.5 to 1.0 seconds)
+          var passDx = possession.passTo.x - possession.passFrom.x;
+          var passDz = possession.passTo.z - possession.passFrom.z;
+          var passDist = Math.sqrt(passDx * passDx + passDz * passDz);
+          possession.passDuration = Math.min(1.0, Math.max(0.5, passDist / 10));
+          // Burst on kick
+          triggerBurst(burstFootball, ball.position, 0x88ff88);
+          lastKickTime = time;
+        }
+      }
+    }
+
+    // ---- UPDATE BALL VISUAL ----
+    ball.position.x = ballState.x;
+    ball.position.z = ballState.z;
+    ball.position.y = 0.11;
+
+    // Ball rotation
+    if (possession.passing) {
+      // Fast spin during pass
+      ball.rotation.z -= 0.12;
+      ball.rotation.x += 0.06;
+    } else {
+      // Gentle dribble rotation
+      ball.rotation.z -= 0.04;
+      ball.rotation.x += 0.03;
+    }
+
+    // Ball shadow
+    ballShadowFoot.position.x = ball.position.x;
+    ballShadowFoot.position.z = ball.position.z;
+    ballShadowFoot.material.opacity = 0.2;
+
+    // ---- UPDATE ALL PLAYERS ----
+    for (var i = 0; i < playersArr.length; i++) {
+      var pl = playersArr[i];
+      var isCarrier = (i === possession.playerIdx && !possession.passing);
+      var isOnCarrierTeam = (pl.userData.team === carrierTeam);
+      var targetX, targetZ;
+      var moveSpeed = 0.04;
+
+      if (isCarrier) {
+        // Carrier movement is handled above; just look toward goal
+        pl.lookAt(attackGoalX, pl.position.y, pl.position.z);
+        var distToBall = 0.3;
+        animatePlayer(pl, time, i, true, 'right');
+        playerShadowsFoot[i].position.x = pl.position.x;
+        playerShadowsFoot[i].position.z = pl.position.z;
+        continue;
+      }
+
+      if (pl.userData.role === 'gk') {
+        // Goalkeeper: stay near goal line, track ball Z gently
+        var gkGoalX = getDefendGoalX(pl.userData.team);
+        targetX = gkGoalX + (pl.userData.team === 'a' ? 1.2 : -1.2);
+        targetZ = ballState.z * 0.5;
+        targetZ = Math.max(-2.5, Math.min(2.5, targetZ));
+        moveSpeed = 0.02;
+      } else if (isOnCarrierTeam) {
+        // Teammates: stay in formation relative to BASE positions, shift slightly toward ball side
+        var ballBias = 0.15; // how much to shift toward ball
+        targetX = pl.userData.baseX + (ballState.x - pl.userData.baseX) * ballBias;
+        targetZ = pl.userData.baseZ + (ballState.z - pl.userData.baseZ) * ballBias;
+        // Add gentle movement for life
+        targetX += Math.sin(time * 0.8 + i * 1.7) * 0.8;
+        targetZ += Math.cos(time * 0.6 + i * 2.3) * 0.6;
+        moveSpeed = 0.015; // slow, smooth drift
+      } else {
+        // Opposition: maintain formation, only nearest player presses carrier
+        var distToCarrier = Math.sqrt(
+          (carrier.position.x - pl.position.x) * (carrier.position.x - pl.position.x) +
+          (carrier.position.z - pl.position.z) * (carrier.position.z - pl.position.z)
+        );
+        // Find who is closest opponent to carrier
+        var closestDist = 999;
+        var closestIdx = -1;
+        for (var ck = 0; ck < oppIdxs.length; ck++) {
+          var op = playersArr[oppIdxs[ck]];
+          if (op.userData.role === 'gk') continue;
+          var cd = Math.sqrt(
+            (carrier.position.x - op.position.x) * (carrier.position.x - op.position.x) +
+            (carrier.position.z - op.position.z) * (carrier.position.z - op.position.z)
+          );
+          if (cd < closestDist) { closestDist = cd; closestIdx = oppIdxs[ck]; }
+        }
+
+        if (i === closestIdx) {
+          // Closest opponent: press the carrier
+          targetX = carrier.position.x;
+          targetZ = carrier.position.z;
+          moveSpeed = 0.025;
+        } else {
+          // Others: hold formation, shift slightly toward ball
+          targetX = pl.userData.baseX + (ballState.x - pl.userData.baseX) * 0.12;
+          targetZ = pl.userData.baseZ + (ballState.z - pl.userData.baseZ) * 0.1;
+          targetX += Math.sin(time * 0.7 + i * 2.1) * 0.6;
+          targetZ += Math.cos(time * 0.5 + i * 1.8) * 0.5;
+          moveSpeed = 0.012; // very gentle drift
+        }
+      }
+
+      // Smooth movement (lerp)
+      pl.position.x += (targetX - pl.position.x) * moveSpeed;
+      pl.position.z += (targetZ - pl.position.z) * moveSpeed;
+
+      // Clamp within field
+      pl.position.x = Math.max(-fieldW / 2 + 0.5, Math.min(fieldW / 2 - 0.5, pl.position.x));
+      pl.position.z = Math.max(-fieldH / 2 + 0.5, Math.min(fieldH / 2 - 0.5, pl.position.z));
+
+      // Face the ball gently
+      pl.lookAt(ballState.x, pl.position.y, ballState.z);
+
+      // Determine animation state
+      var distToBall = Math.sqrt(
+        (pl.position.x - ballState.x) * (pl.position.x - ballState.x) +
+        (pl.position.z - ballState.z) * (pl.position.z - ballState.z)
+      );
+      var isActive = distToBall < 2.0;
+      var kickLeg = null;
+      if (possession.passing && i === possession.passTarget && possession.passProgress > 0.8) {
+        kickLeg = 'right';
+      }
+
+      animatePlayer(pl, time, i, isActive, kickLeg);
+
+      // Update contact shadow
+      playerShadowsFoot[i].position.x = pl.position.x;
+      playerShadowsFoot[i].position.z = pl.position.z;
+    }
+
+    // Smooth camera orbit
+    var tx = 16 * Math.cos(time * 0.06);
+    var tz = 16 * Math.sin(time * 0.06);
+    var ty = 11 + Math.sin(time * 0.1) * 1.5;
+    lerpCam(camera, camStates[2], tx, ty, tz, 0, 0, 0, 0.035);
+  });
+
+  // Expose for triggerEvent
+  window._gameStateFootball = gameStateFootball;
+  window._footballBall = ball;
+  window._footballBallState = ballState;
+  window._footballPlayers = playersArr;
+  window._footballFieldW = fieldW;
+  window._footballPossession = possession;
+}
+
+// =============== ANIMATION LOOP ===============
+function animate() {
+  requestAnimationFrame(animate);
+  var time = clock.getElapsedTime();
+
+  if (animFns[currentScene]) {
+    animFns[currentScene](time);
+  }
+
+  renderer.render(scenes[currentScene], cameras[currentScene]);
+}
+
+// =============== RESIZE ===============
+window.addEventListener('resize', function() {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  for (var i = 0; i < cameras.length; i++) {
+    cameras[i].aspect = window.innerWidth / window.innerHeight;
+    cameras[i].updateProjectionMatrix();
+  }
+});
+
+// =============== TRIGGER EVENT API ===============
+window.triggerEvent = function(team, type) {
+  if (team !== 'a' && team !== 'b') return;
+  if (type !== 'goal' && type !== 'point') return;
+
+  var time = clock.getElapsedTime();
+
+  if (type === 'goal' && currentScene === 2) {
+    // Football goal
+    var gs = window._gameStateFootball;
+    if (!gs || gs.celebrating) return;
+
+    gs.celebrating = true;
+    gs.celebrateTeam = team;
+    gs.startTime = time;
+
+    // Animate ball toward the opponent's goal
+    var ballS = window._footballBallState;
+    var fieldW = window._footballFieldW;
+    var goalX = team === 'a' ? fieldW / 2 : -fieldW / 2;
+    gs.ballAnim = {
+      fromX: ballS.x,
+      fromZ: ballS.z,
+      toX: goalX,
+      toZ: (Math.random() - 0.5) * 2.0
+    };
+
+    // Stop ball velocity
+    ballS.vx = 0;
+    ballS.vz = 0;
+
+    // Update score
+    scores[2][team]++;
+    updateScoreDisplay();
+    showOverlay(team);
+
+  } else if (type === 'point' && currentScene === 0) {
+    // Volleyball point
+    var gs = window._gameStateVolley;
+    if (!gs || gs.celebrating) return;
+
+    gs.celebrating = true;
+    gs.celebrateTeam = team;
+    gs.startTime = time;
+
+    scores[0][team]++;
+    updateScoreDisplay();
+    showOverlay(team);
+
+  } else if (type === 'point' && currentScene === 1) {
+    // Futevolei point
+    var gs = window._gameStateFute;
+    if (!gs || gs.celebrating) return;
+
+    gs.celebrating = true;
+    gs.celebrateTeam = team;
+    gs.startTime = time;
+
+    scores[1][team]++;
+    updateScoreDisplay();
+    showOverlay(team);
+
+  } else if (type === 'goal') {
+    // Goal called but not on football scene - still update score for football
+    scores[2][team]++;
+    if (currentScene === 2) {
+      updateScoreDisplay();
+      showOverlay(team);
+    }
+  } else if (type === 'point') {
+    // Point called but not on correct scene
+    var sceneIdx = currentScene; // 0=volley, 1=fute
+    if (sceneIdx === 0 || sceneIdx === 1) {
+      scores[sceneIdx][team]++;
+      updateScoreDisplay();
+      showOverlay(team);
+    }
+  }
+};
+
+// Listen for postMessage from WebView
+window.addEventListener('message', function(e) {
+  try {
+    var data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+    if (data.type === 'goal' || data.type === 'point') {
+      window.triggerEvent(data.team, data.type);
+    }
+  } catch(err) {}
+});
+
+// =============== START ===============
+init();
+</script>
+</body>
+</html>

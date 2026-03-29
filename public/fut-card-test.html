@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FUT Card Creator - Test</title>
+  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f172a; color: #e2e8f0; font-family: 'Titillium Web', sans-serif; min-height: 100vh; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; font-size: 1.5rem; color: #F58A25; }
+
+    .container { max-width: 900px; margin: 0 auto; display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
+
+    /* Card */
+    .fut-card { width: 200px; height: 300px; position: relative; background-size: contain; background-repeat: no-repeat; background-position: center; font-family: 'Titillium Web', sans-serif; transition: transform 0.2s; cursor: pointer; }
+    .fut-card:hover { transform: scale(1.05); }
+
+    .fut-card .overall { position: absolute; top: 52px; left: 32px; font-size: 1.7rem; font-weight: 900; line-height: 1; }
+    .fut-card .position { position: absolute; top: 84px; left: 32px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; width: 30px; text-align: center; }
+
+    .fut-card .photo { position: absolute; top: 38px; left: 50%; transform: translateX(-50%); width: 105px; height: 105px; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; }
+    .fut-card .photo img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+    .fut-card .photo .placeholder { font-size: 3rem; opacity: 0.3; margin-bottom: 10px; }
+
+    .fut-card .name { position: absolute; top: 152px; left: 0; right: 0; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; text-align: center; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 20px; }
+
+    .fut-card .divider { position: absolute; top: 172px; left: 30px; right: 30px; height: 1px; }
+
+    .fut-card .stats { position: absolute; top: 180px; left: 22px; right: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 1px 0; }
+    .fut-card .stat { display: flex; align-items: center; gap: 4px; justify-content: center; padding: 2px 0; }
+    .fut-card .stat-val { font-size: 0.88rem; font-weight: 800; }
+    .fut-card .stat-label { font-size: 0.55rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+
+    /* Form */
+    .form-panel { background: #1e293b; border-radius: 16px; padding: 24px; width: 350px; }
+    .form-panel h2 { font-size: 1.1rem; margin-bottom: 16px; color: #F58A25; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.75rem; font-weight: 600; color: #94a3b8; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 0.9rem; font-family: inherit; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #F58A25; }
+    .form-row { display: flex; gap: 8px; }
+    .form-row .form-group { flex: 1; }
+
+    .card-types { display: flex; gap: 6px; flex-wrap: wrap; }
+    .card-type-btn { padding: 6px 12px; border-radius: 8px; border: 2px solid #334155; background: none; color: #94a3b8; cursor: pointer; font-weight: 700; font-size: 0.75rem; text-transform: capitalize; font-family: inherit; transition: all 0.15s; }
+    .card-type-btn.active { border-color: #F58A25; color: #F58A25; background: rgba(245,138,37,0.1); }
+
+    .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .slider-row label { width: 35px; font-size: 0.75rem; font-weight: 700; color: #94a3b8; }
+    .slider-row input[type=range] { flex: 1; accent-color: #F58A25; }
+    .slider-row .val { width: 28px; text-align: center; font-weight: 800; font-size: 0.9rem; color: #F58A25; }
+
+    .preview-area { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+    .photo-btn { padding: 8px 16px; border-radius: 8px; border: 2px dashed #334155; background: none; color: #64748b; cursor: pointer; font-family: inherit; font-size: 0.8rem; transition: all 0.15s; }
+    .photo-btn:hover { border-color: #F58A25; color: #F58A25; }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import { removeBackground } from 'https://esm.sh/@imgly/background-removal@1.5.5';
+    window.imglyRemoveBg = removeBackground;
+    console.log('Background removal library loaded');
+  </script>
+  <h1>⚽ FUT Card Creator</h1>
+
+  <div class="container">
+    <!-- Preview -->
+    <div class="preview-area">
+      <div class="fut-card" id="cardPreview"></div>
+      <button class="photo-btn" onclick="document.getElementById('photoInput').click()">📷 Escolher Foto</button>
+      <div id="removingBg" style="display:none; color:#F58A25; font-size:0.8rem; font-weight:600;">⏳ Removendo fundo...</div>
+      <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(this)">
+    </div>
+
+    <!-- Form -->
+    <div class="form-panel">
+      <h2>Criar Card</h2>
+
+      <div class="form-group">
+        <label>Nome do Jogador</label>
+        <input type="text" id="playerName" value="JOGADOR" oninput="updateCard()">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Posicao</label>
+          <input type="text" id="position" value="JOG" maxlength="3" oninput="updateCard()">
+        </div>
+        <div class="form-group">
+          <label>Overall</label>
+          <input type="number" id="overall" value="75" min="1" max="99" oninput="updateCard()">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tipo de Card</label>
+        <div class="card-types" id="cardTypes"></div>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px">
+        <label>Atributos</label>
+        <div id="statsSliders"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CARD_TYPES = {
+      gold: { bg: '/fut-cards/large-rare-gold.png', color: '#4a3b10' },
+      silver: { bg: '/fut-cards/large-rare-silver.png', color: '#3a3a3a' },
+      bronze: { bg: '/fut-cards/large-rare-bronze.png', color: '#3e2415' },
+      toty: { bg: '/fut-cards/large-toty.png', color: '#d4af37' },
+      legend: { bg: '/fut-cards/large-legend.png', color: '#B39428' },
+      hero: { bg: '/fut-cards/large-hero.png', color: '#fff' },
+      motm: { bg: '/fut-cards/large-motm.png', color: '#fff' },
+      inform: { bg: '/fut-cards/large-if-gold.png', color: '#d4af37' },
+    };
+
+    const STATS = [
+      { id: 'atk', label: 'ATK' },
+      { id: 'def', label: 'DEF' },
+      { id: 'saq', label: 'SAQ' },
+      { id: 'rec', label: 'REC' },
+      { id: 'blq', label: 'BLQ' },
+      { id: 'fin', label: 'FIN' },
+    ];
+
+    let currentType = 'gold';
+    let photoUrl = null;
+    let statValues = { atk: 70, def: 65, saq: 72, rec: 68, blq: 60, fin: 75 };
+
+    // Init card types
+    const typesContainer = document.getElementById('cardTypes');
+    Object.keys(CARD_TYPES).forEach(type => {
+      const btn = document.createElement('button');
+      btn.className = 'card-type-btn' + (type === currentType ? ' active' : '');
+      btn.textContent = type;
+      btn.onclick = () => { currentType = type; document.querySelectorAll('.card-type-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); updateCard(); };
+      typesContainer.appendChild(btn);
+    });
+
+    // Init stat sliders
+    const slidersContainer = document.getElementById('statsSliders');
+    STATS.forEach(stat => {
+      const row = document.createElement('div');
+      row.className = 'slider-row';
+      row.innerHTML = `<label>${stat.label}</label><input type="range" min="1" max="99" value="${statValues[stat.id]}" oninput="statValues['${stat.id}']=Number(this.value);document.getElementById('val-${stat.id}').textContent=this.value;updateCard()"><span class="val" id="val-${stat.id}">${statValues[stat.id]}</span>`;
+      slidersContainer.appendChild(row);
+    });
+
+    async function handlePhoto(input) {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+
+      // Show original immediately
+      const reader = new FileReader();
+      reader.onload = (e) => { photoUrl = e.target.result; updateCard(); };
+      reader.readAsDataURL(file);
+
+      // Remove background with AI (wait for module to load)
+      const waitForBg = () => new Promise(resolve => {
+        if (window.imglyRemoveBg) return resolve(true);
+        let tries = 0;
+        const interval = setInterval(() => {
+          tries++;
+          if (window.imglyRemoveBg || tries > 50) { clearInterval(interval); resolve(!!window.imglyRemoveBg); }
+        }, 200);
+      });
+
+      document.getElementById('removingBg').style.display = 'block';
+      const ready = await waitForBg();
+      if (ready) {
+        try {
+          console.log('Removing background...');
+          const blob = await window.imglyRemoveBg(file, {
+            output: { format: 'image/png' },
+          });
+          const url = URL.createObjectURL(blob);
+          photoUrl = url;
+          updateCard();
+          console.log('Background removed!');
+        } catch (err) {
+          console.error('Erro ao remover fundo:', err);
+        }
+      } else {
+        console.warn('Background removal lib not loaded');
+      }
+      document.getElementById('removingBg').style.display = 'none';
+    }
+
+    function updateCard() {
+      const name = document.getElementById('playerName').value || 'JOGADOR';
+      const pos = document.getElementById('position').value || 'JOG';
+      const ovr = document.getElementById('overall').value || '75';
+      const cfg = CARD_TYPES[currentType];
+      const c = cfg.color;
+
+      const card = document.getElementById('cardPreview');
+      card.style.backgroundImage = `url(${cfg.bg})`;
+
+      card.innerHTML = `
+        <div class="overall" style="color:${c}">${ovr}</div>
+        <div class="position" style="color:${c}">${pos}</div>
+        <div class="photo">
+          ${photoUrl ? `<img src="${photoUrl}" alt="">` : `<div class="placeholder" style="color:${c}">👤</div>`}
+        </div>
+        <div class="name" style="color:${c}">${name.toUpperCase()}</div>
+        <div class="divider" style="background:${c}44"></div>
+        <div class="stats">
+          ${STATS.map(s => `
+            <div class="stat">
+              <span class="stat-val" style="color:${c}">${statValues[s.id]}</span>
+              <span class="stat-label" style="color:${c}">${s.label}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    updateCard();
+  </script>
+</body>
+</html>
