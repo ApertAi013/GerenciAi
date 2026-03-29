@@ -649,7 +649,7 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
     return (
       <div style={{ position: 'relative', width: 250, height: 320, cursor: 'pointer' }} title="Clique para trocar">
         {renderMiniCard(back, bgBack, cBack, { top: 0, left: 50, zIndex: 1, transform: 'scale(0.85) rotate(6deg)', opacity: 0.7, filter: 'brightness(0.8)' })}
-        {renderMiniCard(front, bgFront, cFront, { top: 10, left: 0, zIndex: 2, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' })}
+        {renderMiniCard(front, bgFront, cFront, { top: 10, left: 0, zIndex: 2, filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.5))' })}
       </div>
     );
   };
@@ -668,6 +668,8 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignTeamId, setAssignTeamId] = useState<number | null>(null);
   const [assignCardIds, setAssignCardIds] = useState<number[]>([]);
+  // Quick duo formation
+  const [selectedForDuo, setSelectedForDuo] = useState<number[]>([]);
   const [studentCardSearch, setStudentCardSearch] = useState('');
   const [studentCardResults, setStudentCardResults] = useState<any[]>([]);
   const [searchingStudentCards, setSearchingStudentCards] = useState(false);
@@ -727,6 +729,27 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro ao criar dupla');
     } finally { setSaving(false); }
+  };
+
+  const toggleSelectForDuo = (cardId: number) => {
+    setSelectedForDuo(prev => {
+      if (prev.includes(cardId)) return prev.filter(id => id !== cardId);
+      if (prev.length >= 2) return [prev[1], cardId]; // replace oldest
+      return [...prev, cardId];
+    });
+  };
+
+  const handleFormDuo = async (teamId: number) => {
+    if (selectedForDuo.length !== 2) return;
+    setSaving(true);
+    try {
+      for (const cardId of selectedForDuo) {
+        await handleAssignTeam(cardId, teamId);
+      }
+      setSelectedForDuo([]);
+      toast.success('Dupla formada!');
+    } catch { toast.error('Erro ao formar dupla'); }
+    finally { setSaving(false); }
   };
 
   const handleBulkAssign = async () => {
@@ -800,36 +823,39 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
   };
 
   const renderCardWithTeam = (card: any) => {
-    const assignedTeam = card.team_id ? teams.find(t => t.id === card.team_id) : null;
-    const availableTeams = teams.filter(t => !assignedTeamIds.has(t.id) || t.id === card.team_id);
+    const assignedTeam = card.team_id ? teams.find((t: any) => t.id === card.team_id) : null;
+    const isSelected = selectedForDuo.includes(card.id);
+    const canSelect = !card.team_id; // only unassigned cards can be selected for duo
 
     return (
       <div key={card.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-        {renderFutCard(card)}
-        {/* Team assignment */}
+        {/* Selection indicator */}
+        <div
+          style={{
+            position: 'relative',
+            border: isSelected ? '3px solid #F58A25' : '3px solid transparent',
+            borderRadius: 14, padding: 2, transition: 'border-color 0.2s',
+          }}
+          onClick={() => canSelect && toggleSelectForDuo(card.id)}
+        >
+          {renderFutCard(card)}
+          {isSelected && (
+            <div style={{ position: 'absolute', top: -6, right: -6, width: 24, height: 24, borderRadius: 12, background: '#F58A25', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
+              <FontAwesomeIcon icon={faCheck} style={{ color: '#fff', fontSize: '0.65rem' }} />
+            </div>
+          )}
+        </div>
+        {/* Team badge or select */}
         {assignedTeam ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 8, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', maxWidth: 200 }}>
             <FontAwesomeIcon icon={faCheck} style={{ color: '#10B981', fontSize: '0.7rem' }} />
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10B981', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{assignedTeam.name}</span>
-            <button
-              onClick={() => handleAssignTeam(card.id, null)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.7rem', padding: 2 }}
-              title="Desatribuir"
-            >
+            <button onClick={() => handleAssignTeam(card.id, null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.7rem', padding: 2 }}>
               <FontAwesomeIcon icon={faTimes} />
             </button>
           </div>
-        ) : (
-          <select
-            value=""
-            onChange={e => { if (e.target.value) handleAssignTeam(card.id, Number(e.target.value)); }}
-            style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border-color, #334155)', background: 'var(--bg-secondary, #1e293b)', color: 'var(--text-muted, #94a3b8)', maxWidth: 200, cursor: 'pointer', fontFamily: 'inherit' }}
-          >
-            <option value="">Atribuir a equipe...</option>
-            {availableTeams.map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
+        ) : !isSelected && (
+          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Clique para selecionar</span>
         )}
       </div>
     );
@@ -958,6 +984,43 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
               return renderCardWithTeam(card);
             });
           })()}
+        </div>
+      )}
+
+      {/* Floating duo formation bar */}
+      {selectedForDuo.length === 2 && (
+        <div style={{
+          position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 10,
+          background: 'linear-gradient(135deg, rgba(245,138,37,0.15), rgba(59,130,246,0.1))',
+          border: '1px solid rgba(245,138,37,0.3)', borderRadius: 12,
+          padding: '12px 16px', marginTop: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          backdropFilter: 'blur(8px)',
+        }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#F58A25' }}>
+            <FontAwesomeIcon icon={faUsers} style={{ marginRight: 6 }} />
+            2 cards selecionados — Escolha a equipe para formar dupla:
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <select
+              onChange={e => { if (e.target.value) handleFormDuo(Number(e.target.value)); }}
+              defaultValue=""
+              style={{ fontSize: '0.85rem', padding: '6px 12px', borderRadius: 8, border: '1px solid #F58A25', background: 'var(--bg-secondary, #1e293b)', color: 'var(--text-color, #e2e8f0)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}
+            >
+              <option value="">Selecionar equipe...</option>
+              {teams.filter((t: any) => !assignedTeamIds.has(t.id)).map((t: any) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+            <button onClick={() => setSelectedForDuo([])} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '0.8rem', fontFamily: 'inherit' }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+      {selectedForDuo.length === 1 && (
+        <div style={{ textAlign: 'center', marginTop: 8, fontSize: '0.8rem', color: '#F58A25', fontWeight: 600 }}>
+          Selecione mais 1 card para formar dupla
         </div>
       )}
 
