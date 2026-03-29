@@ -149,9 +149,10 @@ export default function StudentDetails() {
         levelService.getLevels(),
       ]);
 
-      // Load FUT card
-      tournamentService.getStudentCard(parseInt(id!)).then(res => {
-        const card = res.data || null;
+      // Load FUT card (non-blocking, never crashes the page)
+      try {
+        const cardRes = await tournamentService.getStudentCard(parseInt(id!));
+        const card = cardRes?.data || null;
         setStudentCard(card);
         if (card) {
           setCardForm({
@@ -161,7 +162,10 @@ export default function StudentDetails() {
             card_type: card.card_type || 'gold', photo: null,
           });
         }
-      }).catch(() => setStudentCard(null));
+      } catch {
+        // Card endpoint may not exist yet or student has no card - that's fine
+        setStudentCard(null);
+      }
 
       if (studentRes.status === 'success' && studentRes.data) {
         setStudent(studentRes.data);
