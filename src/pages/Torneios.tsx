@@ -616,6 +616,112 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
     );
   };
 
+  // ── Duo Cards display (2 cards overlapping) ──
+  const DuoCardsDisplay = ({ card1, card2, onClick }: { card1: any; card2: any; onClick?: () => void }) => {
+    const [frontIdx, setFrontIdx] = useState(0);
+    const front = frontIdx === 0 ? card1 : card2;
+    const back = frontIdx === 0 ? card2 : card1;
+    const bgFront = CARD_BG_MAP[front.card_type] || CARD_BG_MAP.gold;
+    const bgBack = CARD_BG_MAP[back.card_type] || CARD_BG_MAP.gold;
+    const cFront = (CARD_TEXT_MAP[front.card_type] || CARD_TEXT_MAP.gold).top;
+    const cBack = (CARD_TEXT_MAP[back.card_type] || CARD_TEXT_MAP.gold).top;
+
+    const renderMiniCard = (card: any, bgImg: string, c: string, style: React.CSSProperties) => (
+      <div style={{ width: 200, height: 300, position: 'absolute', backgroundImage: `url(${bgImg})`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', fontFamily: "'Titillium Web', sans-serif", transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer', ...style }} onClick={() => setFrontIdx(f => f === 0 ? 1 : 0)}>
+        <div style={{ position: 'absolute', top: 52, left: 32, fontSize: '1.6rem', fontWeight: 900, color: c, lineHeight: 1 }}>{card.overall}</div>
+        <div style={{ position: 'absolute', top: 82, left: 32, fontSize: '0.65rem', fontWeight: 700, color: c, textTransform: 'uppercase', letterSpacing: 1, width: 30, textAlign: 'center' }}>{card.position}</div>
+        <div style={{ position: 'absolute', top: 40, left: '50%', transform: 'translateX(-50%)', width: 100, height: 100, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          {card.photo_url ? <img src={card.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} /> : <FontAwesomeIcon icon={faUsers} style={{ fontSize: '2.5rem', color: `${c}44`, marginBottom: 10 }} />}
+        </div>
+        <div style={{ position: 'absolute', top: 150, left: 0, right: 0, fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: c, textAlign: 'center', letterSpacing: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 20px' }}>{card.player_name}</div>
+        <div style={{ position: 'absolute', top: 170, left: 30, right: 30, height: 1, background: `${c}44` }} />
+        <div style={{ position: 'absolute', top: 178, left: 25, right: 25, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px 0' }}>
+          {[{l:'ATK',v:card.stat_atk},{l:'DEF',v:card.stat_def},{l:'SAQ',v:card.stat_saq},{l:'REC',v:card.stat_rec},{l:'BLQ',v:card.stat_blq},{l:'FIN',v:card.stat_fin}].map(s => (
+            <div key={s.l} style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center', padding: '2px 0' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: c }}>{s.v}</span>
+              <span style={{ fontSize: '0.55rem', fontWeight: 600, color: `${c}99`, textTransform: 'uppercase' }}>{s.l}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    return (
+      <div style={{ position: 'relative', width: 250, height: 320, cursor: 'pointer' }} title="Clique para trocar">
+        {renderMiniCard(back, bgBack, cBack, { top: 0, left: 50, zIndex: 1, transform: 'scale(0.85) rotate(6deg)', opacity: 0.7, filter: 'brightness(0.8)' })}
+        {renderMiniCard(front, bgFront, cFront, { top: 10, left: 0, zIndex: 2, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' })}
+      </div>
+    );
+  };
+
+  // ── Duo mode state ──
+  const [createMode, setCreateMode] = useState<'single' | 'duo'>('single');
+  const [duoForm, setDuoForm] = useState({
+    player_name: '', position: 'DIR', overall: 70,
+    stat_atk: 50, stat_def: 50, stat_saq: 50,
+    stat_rec: 50, stat_blq: 50, stat_fin: 50,
+    card_type: 'gold', photo: null as File | null,
+  });
+  const duoPhotoRef = useRef<HTMLInputElement>(null);
+  const [duoPhotoPreview, setDuoPhotoPreview] = useState<string | null>(null);
+  const [removingBgDuo, setRemovingBgDuo] = useState(false);
+
+  const handleDuoPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDuoPhotoPreview(URL.createObjectURL(file));
+    setDuoForm(f => ({ ...f, photo: file }));
+    setRemovingBgDuo(true);
+    try {
+      const mod = await import(/* @vite-ignore */ 'https://esm.sh/@imgly/background-removal@1.5.5');
+      const removeBg = mod.removeBackground || mod.default;
+      if (removeBg) {
+        const blob = await removeBg(file, { output: { format: 'image/png' } });
+        setDuoPhotoPreview(URL.createObjectURL(blob));
+        setDuoForm(f => ({ ...f, photo: new File([blob], 'card-no-bg.png', { type: 'image/png' }) }));
+        toast.success('Fundo removido!');
+      }
+    } catch {}
+    setRemovingBgDuo(false);
+  };
+
+  const handleSaveDuo = async () => {
+    if (!cardForm.player_name.trim() || !duoForm.player_name.trim()) { toast.error('Nome dos dois jogadores obrigatorio'); return; }
+    setSaving(true);
+    try {
+      // Create card 1
+      const fd1 = new FormData();
+      fd1.append('player_name', cardForm.player_name.trim());
+      fd1.append('position', cardForm.position);
+      fd1.append('overall', String(cardForm.overall));
+      fd1.append('stat_atk', String(cardForm.stat_atk)); fd1.append('stat_def', String(cardForm.stat_def));
+      fd1.append('stat_saq', String(cardForm.stat_saq)); fd1.append('stat_rec', String(cardForm.stat_rec));
+      fd1.append('stat_blq', String(cardForm.stat_blq)); fd1.append('stat_fin', String(cardForm.stat_fin));
+      fd1.append('card_type', cardForm.card_type);
+      if (cardForm.photo) fd1.append('image', cardForm.photo);
+      await tournamentService.createPlayerCard(tournamentId, fd1);
+
+      // Create card 2
+      const fd2 = new FormData();
+      fd2.append('player_name', duoForm.player_name.trim());
+      fd2.append('position', duoForm.position);
+      fd2.append('overall', String(duoForm.overall));
+      fd2.append('stat_atk', String(duoForm.stat_atk)); fd2.append('stat_def', String(duoForm.stat_def));
+      fd2.append('stat_saq', String(duoForm.stat_saq)); fd2.append('stat_rec', String(duoForm.stat_rec));
+      fd2.append('stat_blq', String(duoForm.stat_blq)); fd2.append('stat_fin', String(duoForm.stat_fin));
+      fd2.append('card_type', duoForm.card_type);
+      if (duoForm.photo) fd2.append('image', duoForm.photo);
+      await tournamentService.createPlayerCard(tournamentId, fd2);
+
+      toast.success('Dupla de cards criada!');
+      setShowModal(false);
+      resetForm();
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao criar dupla');
+    } finally { setSaving(false); }
+  };
+
   const renderCardWithTeam = (card: any) => {
     const assignedTeam = card.team_id ? teams.find(t => t.id === card.team_id) : null;
     const availableTeams = teams.filter(t => !assignedTeamIds.has(t.id) || t.id === card.team_id);
@@ -729,7 +835,36 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
-          {cards.map((card: any) => renderCardWithTeam(card))}
+          {(() => {
+            // Group cards by team_id for duo display
+            const rendered = new Set<number>();
+            return cards.map((card: any) => {
+              if (rendered.has(card.id)) return null;
+              rendered.add(card.id);
+
+              // Check if this card shares a team with another card
+              if (card.team_id) {
+                const partner = cards.find((c: any) => c.id !== card.id && c.team_id === card.team_id);
+                if (partner && !rendered.has(partner.id)) {
+                  rendered.add(partner.id);
+                  const team = teams.find((t: any) => t.id === card.team_id);
+                  return (
+                    <div key={`duo-${card.id}-${partner.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                      <DuoCardsDisplay card1={card} card2={partner} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 8, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                        <FontAwesomeIcon icon={faCheck} style={{ color: '#10B981', fontSize: '0.7rem' }} />
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10B981' }}>{team?.name || 'Dupla'}</span>
+                        <button onClick={() => { handleAssignTeam(card.id, null); handleAssignTeam(partner.id, null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.7rem', padding: 2 }}>
+                          <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+              }
+              return renderCardWithTeam(card);
+            });
+          })()}
         </div>
       )}
 
@@ -738,10 +873,24 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
         <div className="mm-overlay" onClick={() => { setShowModal(false); resetForm(); }}>
           <div className="mm-modal mm-modal-md" onClick={e => e.stopPropagation()}>
             <div className="mm-header">
-              <h3>{editingCard ? 'Editar Card' : 'Novo Card'}</h3>
-              <button className="mm-close" onClick={() => { setShowModal(false); resetForm(); }}>&times;</button>
+              <h3>{editingCard ? 'Editar Card' : createMode === 'duo' ? 'Nova Dupla de Cards' : 'Novo Card'}</h3>
+              <button className="mm-close" onClick={() => { setShowModal(false); resetForm(); setCreateMode('single'); }}>&times;</button>
             </div>
             <div className="mm-content">
+              {/* Mode selector (only for new cards) */}
+              {!editingCard && (
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                  <button onClick={() => setCreateMode('single')} style={{ flex: 1, padding: '10px', borderRadius: 10, border: `2px solid ${createMode === 'single' ? '#F58A25' : 'var(--border-color, #334155)'}`, background: createMode === 'single' ? 'rgba(245,138,37,0.1)' : 'none', color: createMode === 'single' ? '#F58A25' : 'var(--text-muted, #94a3b8)', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', fontFamily: 'inherit' }}>
+                    <FontAwesomeIcon icon={faUser} style={{ marginRight: 6 }} /> Individual
+                  </button>
+                  <button onClick={() => setCreateMode('duo')} style={{ flex: 1, padding: '10px', borderRadius: 10, border: `2px solid ${createMode === 'duo' ? '#F58A25' : 'var(--border-color, #334155)'}`, background: createMode === 'duo' ? 'rgba(245,138,37,0.1)' : 'none', color: createMode === 'duo' ? '#F58A25' : 'var(--text-muted, #94a3b8)', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', fontFamily: 'inherit' }}>
+                    <FontAwesomeIcon icon={faUsers} style={{ marginRight: 6 }} /> Dupla
+                  </button>
+                </div>
+              )}
+
+              {/* Card 1 (or single) */}
+              {createMode === 'duo' && <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#F58A25', marginBottom: 8 }}>Jogador 1 (ESQ)</div>}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div className="mm-field">
                   <label>Nome do Jogador *</label>
