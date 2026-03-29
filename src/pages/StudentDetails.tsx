@@ -657,8 +657,9 @@ export default function StudentDetails() {
           <FontAwesomeIcon icon={faArrowLeft} /> Voltar
         </button>
 
-        <div className="student-header-content">
-          <div className="student-avatar-section">
+        <div className="student-header-content" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+          {/* Left: Avatar + Info */}
+          <div className="student-avatar-section" style={{ flex: 1, minWidth: 250 }}>
             <div className="student-avatar-large">
               {student.full_name.charAt(0).toUpperCase()}
             </div>
@@ -682,11 +683,11 @@ export default function StudentDetails() {
             </div>
           </div>
 
-          {/* FUT Card */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          {/* Center: FUT Card */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             {studentCard ? (
-              <div style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => { setShowCardEditor(true); }} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
-                {renderFutCardPreview(studentCard, 140)}
+              <div style={{ cursor: 'pointer', transition: 'transform 0.2s' }} onClick={() => setShowCardEditor(true)} onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')} onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}>
+                {renderFutCardPreview(studentCard, 120)}
               </div>
             ) : (
               <button onClick={() => { setCardForm({ ...cardForm, player_name: student.full_name }); setCardPhotoPreview(null); setShowCardEditor(true); }} style={{ padding: '8px 14px', borderRadius: 10, border: '2px dashed var(--border-color, #334155)', background: 'none', color: 'var(--text-muted, #64748b)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -695,13 +696,15 @@ export default function StudentDetails() {
             )}
           </div>
 
-          <div className="student-header-actions">
+          {/* Right: Action buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
             <div className="wtp-wrapper">
               <button
                 type="button"
                 className="btn-whatsapp"
                 onClick={handleWhatsAppClick}
-                title="Enviar mensagem de cobrança"
+                title="Enviar mensagem"
+                style={{ width: '100%' }}
               >
                 <FontAwesomeIcon icon={faWhatsapp} className="whatsapp-icon" />
                 WHATSAPP
@@ -725,6 +728,7 @@ export default function StudentDetails() {
             </button>
           </div>
         </div>
+
       </div>
 
       {/* Financial Cards */}
