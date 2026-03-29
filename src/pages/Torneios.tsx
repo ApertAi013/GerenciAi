@@ -665,6 +665,9 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
   const duoPhotoRef = useRef<HTMLInputElement>(null);
   const [duoPhotoPreview, setDuoPhotoPreview] = useState<string | null>(null);
   const [removingBgDuo, setRemovingBgDuo] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignTeamId, setAssignTeamId] = useState<number | null>(null);
+  const [assignCardIds, setAssignCardIds] = useState<number[]>([]);
 
   const handleDuoPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -722,6 +725,21 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
     } finally { setSaving(false); }
   };
 
+  const handleBulkAssign = async () => {
+    if (!assignTeamId || assignCardIds.length === 0) { toast.error('Selecione equipe e cards'); return; }
+    setSaving(true);
+    try {
+      for (const cardId of assignCardIds) {
+        await handleAssignTeam(cardId, assignTeamId);
+      }
+      setShowAssignModal(false);
+      setAssignTeamId(null);
+      setAssignCardIds([]);
+      toast.success('Cards atribuidos!');
+    } catch { toast.error('Erro ao atribuir'); }
+    finally { setSaving(false); }
+  };
+
   const renderCardWithTeam = (card: any) => {
     const assignedTeam = card.team_id ? teams.find(t => t.id === card.team_id) : null;
     const availableTeams = teams.filter(t => !assignedTeamIds.has(t.id) || t.id === card.team_id);
@@ -761,21 +779,37 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
           {cards.length} card{cards.length !== 1 ? 's' : ''} criado{cards.length !== 1 ? 's' : ''}
         </div>
-        <button
-          onClick={openCreate}
-          style={{
-            padding: '8px 16px', borderRadius: 8, border: 'none',
-            background: '#F58A25', color: '#fff', cursor: 'pointer',
-            fontWeight: 600, fontSize: '0.85rem',
-          }}
-        >
-          <FontAwesomeIcon icon={faPlus} style={{ marginRight: 6 }} />
-          Criar Card
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {/* Assign existing cards to team */}
+          {cards.filter((c: any) => !c.team_id).length > 0 && teams.filter((t: any) => !assignedTeamIds.has(t.id)).length > 0 && (
+            <button
+              onClick={() => setShowAssignModal(true)}
+              style={{
+                padding: '8px 16px', borderRadius: 8, border: '1px solid #3B82F6',
+                background: 'none', color: '#3B82F6', cursor: 'pointer',
+                fontWeight: 600, fontSize: '0.85rem', fontFamily: 'inherit',
+              }}
+            >
+              <FontAwesomeIcon icon={faLink} style={{ marginRight: 6 }} />
+              Atribuir a Equipe
+            </button>
+          )}
+          <button
+            onClick={openCreate}
+            style={{
+              padding: '8px 16px', borderRadius: 8, border: 'none',
+              background: '#F58A25', color: '#fff', cursor: 'pointer',
+              fontWeight: 600, fontSize: '0.85rem',
+            }}
+          >
+            <FontAwesomeIcon icon={faPlus} style={{ marginRight: 6 }} />
+            Criar Card
+          </button>
+        </div>
       </div>
 
       {/* Cards grid */}
@@ -865,6 +899,75 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
               return renderCardWithTeam(card);
             });
           })()}
+        </div>
+      )}
+
+      {/* Assign cards to team modal */}
+      {showAssignModal && (
+        <div className="mm-overlay" onClick={() => setShowAssignModal(false)}>
+          <div className="mm-modal mm-modal-md" onClick={e => e.stopPropagation()}>
+            <div className="mm-header">
+              <h3>Atribuir Cards a Equipe</h3>
+              <button className="mm-close" onClick={() => setShowAssignModal(false)}>&times;</button>
+            </div>
+            <div className="mm-content">
+              {/* Step 1: Select team */}
+              <div className="mm-field">
+                <label>Selecione a Equipe</label>
+                <select value={assignTeamId || ''} onChange={e => setAssignTeamId(Number(e.target.value) || null)} style={{ fontSize: '0.9rem' }}>
+                  <option value="">Escolher equipe...</option>
+                  {teams.filter((t: any) => !assignedTeamIds.has(t.id)).map((t: any) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Step 2: Select cards (max 2) */}
+              {assignTeamId && (
+                <div style={{ marginTop: 16 }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: 8 }}>
+                    Selecione os cards ({assignCardIds.length}/2)
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+                    {cards.filter((c: any) => !c.team_id).map((card: any) => {
+                      const selected = assignCardIds.includes(card.id);
+                      return (
+                        <div
+                          key={card.id}
+                          onClick={() => {
+                            if (selected) {
+                              setAssignCardIds(ids => ids.filter(id => id !== card.id));
+                            } else if (assignCardIds.length < 2) {
+                              setAssignCardIds(ids => [...ids, card.id]);
+                            }
+                          }}
+                          style={{
+                            cursor: 'pointer', transition: 'all 0.2s',
+                            border: selected ? '3px solid #10B981' : '3px solid transparent',
+                            borderRadius: 12, padding: 4,
+                            opacity: !selected && assignCardIds.length >= 2 ? 0.4 : 1,
+                          }}
+                        >
+                          {renderFutCard(card)}
+                          {selected && (
+                            <div style={{ textAlign: 'center', marginTop: 4 }}>
+                              <FontAwesomeIcon icon={faCheck} style={{ color: '#10B981' }} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="mm-footer">
+              <button className="mm-btn mm-btn-secondary" onClick={() => { setShowAssignModal(false); setAssignTeamId(null); setAssignCardIds([]); }}>Cancelar</button>
+              <button className="mm-btn mm-btn-primary" onClick={handleBulkAssign} disabled={!assignTeamId || assignCardIds.length === 0 || saving}>
+                {saving ? 'Atribuindo...' : `Atribuir ${assignCardIds.length} card${assignCardIds.length !== 1 ? 's' : ''}`}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
