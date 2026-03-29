@@ -15,6 +15,12 @@ import {
   faEye,
   faUserPlus,
   faArrowUpRightFromSquare,
+  faCamera,
+  faFutbol,
+  faIdCard,
+  faSpinner,
+  faUser,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import { studentService } from '../services/studentService';
 import { enrollmentService } from '../services/enrollmentService';
@@ -105,6 +111,8 @@ export default function StudentDetails() {
   const [showCardEditor, setShowCardEditor] = useState(false);
   const [cardForm, setCardForm] = useState({ player_name: '', position: 'JOG', overall: 70, stat_atk: 50, stat_def: 50, stat_saq: 50, stat_rec: 50, stat_blq: 50, stat_fin: 50, card_type: 'gold', photo: null as File | null });
   const [savingCard, setSavingCard] = useState(false);
+  const [removingBg, setRemovingBg] = useState(false);
+  const [cardPhotoPreview, setCardPhotoPreview] = useState<string | null>(null);
   const cardPhotoRef = useRef<HTMLInputElement>(null);
 
   // Financial stats
@@ -521,6 +529,30 @@ export default function StudentDetails() {
     gold: '#4a3b10', silver: '#3a3a3a', bronze: '#3e2415', toty: '#d4af37', legend: '#B39428', hero: '#fff',
   };
 
+  const handleCardPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show original immediately
+    setCardPhotoPreview(URL.createObjectURL(file));
+    setCardForm(f => ({ ...f, photo: file }));
+
+    // Remove background with AI
+    setRemovingBg(true);
+    try {
+      const { removeBackground } = await import('https://esm.sh/@imgly/background-removal@1.5.5' as any);
+      const blob = await removeBackground(file, { output: { format: 'image/png' } });
+      const noBgFile = new File([blob], 'card-no-bg.png', { type: 'image/png' });
+      setCardPhotoPreview(URL.createObjectURL(blob));
+      setCardForm(f => ({ ...f, photo: noBgFile }));
+      toast.success('Fundo removido!');
+    } catch (err) {
+      console.error('Erro ao remover fundo:', err);
+      // Keep original photo
+    }
+    setRemovingBg(false);
+  };
+
   const handleSaveCard = async () => {
     if (!cardForm.player_name.trim()) { toast.error('Nome obrigatorio'); return; }
     setSavingCard(true);
@@ -565,7 +597,7 @@ export default function StudentDetails() {
         <div style={{ position: 'absolute', top: 52*scale, left: 32*scale, fontSize: `${1.6*scale}rem`, fontWeight: 900, color: c, lineHeight: 1 }}>{card.overall}</div>
         <div style={{ position: 'absolute', top: 82*scale, left: 32*scale, fontSize: `${0.65*scale}rem`, fontWeight: 700, color: c, textTransform: 'uppercase', letterSpacing: 1, width: 30*scale, textAlign: 'center' }}>{card.position}</div>
         <div style={{ position: 'absolute', top: 40*scale, left: '50%', transform: 'translateX(-50%)', width: 100*scale, height: 100*scale, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          {card.photo_url ? <img src={card.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} /> : <span style={{ fontSize: `${2.5*scale}rem`, color: `${c}44`, marginBottom: 10*scale }}>👤</span>}
+          {card.photo_url ? <img src={card.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} /> : <FontAwesomeIcon icon={faUser} style={{ fontSize: `${2*scale}rem`, color: `${c}44`, marginBottom: 10*scale }} />}
         </div>
         <div style={{ position: 'absolute', top: 152*scale, left: 0, right: 0, fontSize: `${0.78*scale}rem`, fontWeight: 800, textTransform: 'uppercase', color: c, textAlign: 'center', letterSpacing: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: `0 ${20*scale}px` }}>{card.player_name}</div>
         <div style={{ position: 'absolute', top: 172*scale, left: 30*scale, right: 30*scale, height: 1, background: `${c}44` }} />
@@ -650,8 +682,8 @@ export default function StudentDetails() {
                 {renderFutCardPreview(studentCard, 140)}
               </div>
             ) : (
-              <button onClick={() => { setCardForm({ ...cardForm, player_name: student.full_name }); setShowCardEditor(true); }} style={{ padding: '8px 14px', borderRadius: 10, border: '2px dashed var(--border-color, #334155)', background: 'none', color: 'var(--text-muted, #64748b)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
-                ⚽ Criar Card
+              <button onClick={() => { setCardForm({ ...cardForm, player_name: student.full_name }); setCardPhotoPreview(null); setShowCardEditor(true); }} style={{ padding: '8px 14px', borderRadius: 10, border: '2px dashed var(--border-color, #334155)', background: 'none', color: 'var(--text-muted, #64748b)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <FontAwesomeIcon icon={faIdCard} /> Criar Card
               </button>
             )}
           </div>
@@ -1222,9 +1254,16 @@ export default function StudentDetails() {
             <div className="mm-content" style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
               {/* Preview */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                {renderFutCardPreview({ ...cardForm, photo_url: cardForm.photo ? URL.createObjectURL(cardForm.photo) : studentCard?.photo_url }, 180)}
-                <input type="file" ref={cardPhotoRef} accept="image/*" style={{ display: 'none' }} onChange={e => { if (e.target.files?.[0]) setCardForm(f => ({ ...f, photo: e.target.files![0] })); }} />
-                <button onClick={() => cardPhotoRef.current?.click()} style={{ padding: '6px 14px', borderRadius: 8, border: '1px dashed var(--border-color, #334155)', background: 'none', color: '#F58A25', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'inherit' }}>📷 Foto</button>
+                {renderFutCardPreview({ ...cardForm, photo_url: cardPhotoPreview || studentCard?.photo_url }, 180)}
+                <input type="file" ref={cardPhotoRef} accept="image/*" style={{ display: 'none' }} onChange={handleCardPhotoChange} />
+                <button onClick={() => cardPhotoRef.current?.click()} disabled={removingBg} style={{ padding: '6px 14px', borderRadius: 8, border: '1px dashed var(--border-color, #334155)', background: 'none', color: '#F58A25', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'inherit', opacity: removingBg ? 0.5 : 1 }}>
+                  <FontAwesomeIcon icon={faCamera} /> Foto
+                </button>
+                {removingBg && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: '#F58A25', fontWeight: 600 }}>
+                    <FontAwesomeIcon icon={faSpinner} spin /> Removendo fundo...
+                  </div>
+                )}
               </div>
 
               {/* Form */}
@@ -1256,7 +1295,7 @@ export default function StudentDetails() {
             </div>
             <div className="mm-footer">
               {studentCard && (
-                <button className="mm-btn mm-btn-danger" onClick={handleDeleteCard} style={{ marginRight: 'auto' }}>Remover Card</button>
+                <button className="mm-btn mm-btn-danger" onClick={handleDeleteCard} style={{ marginRight: 'auto' }}><FontAwesomeIcon icon={faTrash} /> Remover Card</button>
               )}
               <button className="mm-btn mm-btn-secondary" onClick={() => setShowCardEditor(false)}>Cancelar</button>
               <button className="mm-btn mm-btn-primary" onClick={handleSaveCard} disabled={savingCard || !cardForm.player_name.trim()}>
