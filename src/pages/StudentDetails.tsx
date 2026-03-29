@@ -1277,7 +1277,13 @@ export default function StudentDetails() {
               <div style={{ flex: 1, minWidth: 220 }}>
                 <div className="mm-field"><label>Nome</label><input value={cardForm.player_name} onChange={e => setCardForm(f => ({ ...f, player_name: e.target.value }))} /></div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <div className="mm-field" style={{ flex: 1 }}><label>Posicao</label><input value={cardForm.position} onChange={e => setCardForm(f => ({ ...f, position: e.target.value }))} maxLength={3} /></div>
+                  <div className="mm-field" style={{ flex: 1 }}><label>Posicao</label><input value={cardForm.position} onChange={e => setCardForm(f => ({ ...f, position: e.target.value.toUpperCase() }))} maxLength={4} placeholder="ESQ" />
+                    <div style={{ display: 'flex', gap: 3, marginTop: 4, flexWrap: 'wrap' }}>
+                      {['ESQ','DIR','PIV','LEV','LIB','JOG','ATA','DEF','SET','GOL'].map(p => (
+                        <button key={p} type="button" onClick={() => setCardForm(f => ({ ...f, position: p }))} style={{ padding: '2px 6px', borderRadius: 4, border: `1px solid ${cardForm.position === p ? '#F58A25' : 'var(--border-color, #334155)'}`, background: cardForm.position === p ? 'rgba(245,138,37,0.15)' : 'none', color: cardForm.position === p ? '#F58A25' : 'var(--text-muted, #64748b)', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 700, fontFamily: 'inherit' }}>{p}</button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="mm-field" style={{ flex: 1 }}><label>Overall</label><input type="number" min={1} max={99} value={cardForm.overall} onChange={e => setCardForm(f => ({ ...f, overall: Number(e.target.value) }))} /></div>
                 </div>
 
