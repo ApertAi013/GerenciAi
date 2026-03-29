@@ -992,21 +992,98 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
                 )}
               </div>
 
-              {/* Preview */}
-              <div style={{ marginTop: 12, textAlign: 'center' }}>
-                <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: 8 }}>Preview</label>
-                {renderFutCard({
-                  id: 'preview',
-                  ...cardForm,
-                  photo_url: photoPreview || editingCard?.photo_url || null,
-                })}
-              </div>
+              {/* Preview jogador 1 */}
+              {createMode === 'single' && (
+                <div style={{ marginTop: 12, textAlign: 'center' }}>
+                  <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: 8 }}>Preview</label>
+                  {renderFutCard({
+                    id: 'preview',
+                    ...cardForm,
+                    photo_url: photoPreview || editingCard?.photo_url || null,
+                  })}
+                </div>
+              )}
+
+              {/* ── Jogador 2 (dupla) ── */}
+              {createMode === 'duo' && !editingCard && (
+                <div style={{ marginTop: 16, borderTop: '2px solid var(--border-color, #334155)', paddingTop: 16 }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#3B82F6', marginBottom: 8 }}>Jogador 2 (DIR)</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className="mm-field">
+                      <label>Nome do Jogador 2 *</label>
+                      <input value={duoForm.player_name} onChange={e => setDuoForm({ ...duoForm, player_name: e.target.value })} placeholder="Ex: Maria Silva" />
+                    </div>
+                    <div className="mm-field">
+                      <label>Posicao</label>
+                      <select value={duoForm.position} onChange={e => setDuoForm({ ...duoForm, position: e.target.value })}>
+                        {['JOG','ESQ','DIR','ATA','DEF','PIV','LEV','LIB','SET','GOL','MEI'].map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className="mm-field">
+                      <label>Overall ({duoForm.overall})</label>
+                      <input type="range" min="1" max="99" value={duoForm.overall} onChange={e => setDuoForm({ ...duoForm, overall: Number(e.target.value) })} style={{ accentColor: '#3B82F6' }} />
+                    </div>
+                    <div className="mm-field">
+                      <label>Tipo do Card</label>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {Object.entries(CARD_TYPE_COLORS).map(([type, color]) => (
+                          <button key={type} type="button" onClick={() => setDuoForm({ ...duoForm, card_type: type })} style={{ padding: '4px 10px', borderRadius: 6, border: duoForm.card_type === type ? `2px solid ${color}` : '2px solid transparent', background: `${color}22`, color, fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase' }}>
+                            {CARD_TYPE_LABELS[type]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 4 }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary, #334155)', marginBottom: 8, display: 'block' }}>Atributos</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px 16px' }}>
+                      {[{key:'stat_atk',label:'ATK'},{key:'stat_def',label:'DEF'},{key:'stat_saq',label:'SAQ'},{key:'stat_rec',label:'REC'},{key:'stat_blq',label:'BLQ'},{key:'stat_fin',label:'FIN'}].map(stat => (
+                        <div key={stat.key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary, #64748b)' }}>{stat.label}</span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 800 }}>{(duoForm as any)[stat.key]}</span>
+                          </div>
+                          <input type="range" min="1" max="99" value={(duoForm as any)[stat.key]} onChange={e => setDuoForm({ ...duoForm, [stat.key]: Number(e.target.value) })} style={{ accentColor: '#3B82F6' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mm-field" style={{ marginTop: 12 }}>
+                    <label>Foto do Jogador 2 (opcional)</label>
+                    <input ref={duoPhotoRef} type="file" accept="image/*" onChange={handleDuoPhotoChange} disabled={removingBgDuo} />
+                    {removingBgDuo && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: '0.8rem', color: '#3B82F6', fontWeight: 600 }}>
+                        <FontAwesomeIcon icon={faSpinner} spin /> Removendo fundo...
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Duo preview */}
+                  <div style={{ marginTop: 12, textAlign: 'center' }}>
+                    <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: 8 }}>Preview da Dupla</label>
+                    <div style={{ display: 'inline-flex', gap: 0 }}>
+                      <DuoCardsDisplay
+                        card1={{ id: 'p1', ...cardForm, photo_url: photoPreview || null }}
+                        card2={{ id: 'p2', ...duoForm, photo_url: duoPhotoPreview || null }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="mm-footer">
-              <button className="mm-btn mm-btn-secondary" onClick={() => { setShowModal(false); resetForm(); setPhotoPreview(null); }}>Cancelar</button>
-              <button className="mm-btn mm-btn-primary" onClick={handleSave} disabled={saving || removingBg}>
-                {saving ? 'Salvando...' : removingBg ? 'Aguarde a remocao do fundo...' : editingCard ? 'Salvar' : 'Criar Card'}
-              </button>
+              <button className="mm-btn mm-btn-secondary" onClick={() => { setShowModal(false); resetForm(); setPhotoPreview(null); setCreateMode('single'); }}>Cancelar</button>
+              {createMode === 'duo' && !editingCard ? (
+                <button className="mm-btn mm-btn-primary" onClick={handleSaveDuo} disabled={saving || removingBg || removingBgDuo}>
+                  {saving ? 'Salvando...' : (removingBg || removingBgDuo) ? 'Aguarde a remocao do fundo...' : 'Criar Dupla'}
+                </button>
+              ) : (
+                <button className="mm-btn mm-btn-primary" onClick={handleSave} disabled={saving || removingBg}>
+                  {saving ? 'Salvando...' : removingBg ? 'Aguarde a remocao do fundo...' : editingCard ? 'Salvar' : 'Criar Card'}
+                </button>
+              )}
             </div>
           </div>
         </div>
