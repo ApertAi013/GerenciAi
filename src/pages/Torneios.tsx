@@ -668,6 +668,10 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignTeamId, setAssignTeamId] = useState<number | null>(null);
   const [assignCardIds, setAssignCardIds] = useState<number[]>([]);
+  const [studentCardSearch, setStudentCardSearch] = useState('');
+  const [studentCardResults, setStudentCardResults] = useState<any[]>([]);
+  const [searchingStudentCards, setSearchingStudentCards] = useState(false);
+  const studentSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleDuoPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -735,9 +739,64 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
       setShowAssignModal(false);
       setAssignTeamId(null);
       setAssignCardIds([]);
+      setStudentCardSearch('');
+      setStudentCardResults([]);
       toast.success('Cards atribuidos!');
     } catch { toast.error('Erro ao atribuir'); }
     finally { setSaving(false); }
+  };
+
+  const handleSearchStudentCards = (query: string) => {
+    setStudentCardSearch(query);
+    if (studentSearchTimeout.current) clearTimeout(studentSearchTimeout.current);
+    if (query.length < 2) {
+      setStudentCardResults([]);
+      setSearchingStudentCards(false);
+      return;
+    }
+    setSearchingStudentCards(true);
+    studentSearchTimeout.current = setTimeout(async () => {
+      try {
+        const res = await tournamentService.searchStudents(query);
+        const students = res.data || [];
+        const withCards = await Promise.all(students.slice(0, 10).map(async (s: any) => {
+          try {
+            const cardRes = await tournamentService.getStudentCard(s.id);
+            return { ...s, card: cardRes.data || null };
+          } catch { return { ...s, card: null }; }
+        }));
+        setStudentCardResults(withCards.filter((s: any) => s.card));
+      } catch {
+        setStudentCardResults([]);
+      }
+      setSearchingStudentCards(false);
+    }, 400);
+  };
+
+  const handleImportStudentCard = async (student: any) => {
+    const sc = student.card;
+    if (!sc) return null;
+    try {
+      const fd = new FormData();
+      fd.append('player_name', sc.player_name || student.name);
+      fd.append('position', sc.position || 'JOG');
+      fd.append('overall', String(sc.overall || 50));
+      fd.append('stat_atk', String(sc.stat_atk || 50));
+      fd.append('stat_def', String(sc.stat_def || 50));
+      fd.append('stat_saq', String(sc.stat_saq || 50));
+      fd.append('stat_rec', String(sc.stat_rec || 50));
+      fd.append('stat_blq', String(sc.stat_blq || 50));
+      fd.append('stat_fin', String(sc.stat_fin || 50));
+      fd.append('card_type', sc.card_type || 'gold');
+      if (sc.photo_url) fd.append('photo_url', sc.photo_url);
+      const res = await tournamentService.createPlayerCard(tournamentId, fd);
+      toast.success(`Card de ${sc.player_name || student.name} importado!`);
+      load();
+      return res.data;
+    } catch (err: any) {
+      toast.error('Erro ao importar card');
+      return null;
+    }
   };
 
   const renderCardWithTeam = (card: any) => {
@@ -787,7 +846,7 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
           {/* Assign existing cards to team */}
           {cards.filter((c: any) => !c.team_id).length > 0 && teams.filter((t: any) => !assignedTeamIds.has(t.id)).length > 0 && (
             <button
-              onClick={() => setShowAssignModal(true)}
+              onClick={() => { setShowAssignModal(true); setAssignTeamId(null); setAssignCardIds([]); setStudentCardSearch(''); setStudentCardResults([]); }}
               style={{
                 padding: '8px 16px', borderRadius: 8, border: '1px solid #3B82F6',
                 background: 'none', color: '#3B82F6', cursor: 'pointer',
@@ -922,6 +981,78 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
                 </select>
               </div>
 
+              {/* Search and import student cards */}
+              {assignTeamId && (
+                <div className="mm-field" style={{ marginTop: 16 }}>
+                  <label>Buscar Card de Aluno</label>
+                  <input
+                    placeholder="Digite o nome do aluno..."
+                    value={studentCardSearch}
+                    onChange={e => handleSearchStudentCards(e.target.value)}
+                    style={{ fontSize: '0.9rem' }}
+                  />
+                  {searchingStudentCards && (
+                    <div style={{ textAlign: 'center', padding: 12, color: '#94a3b8', fontSize: '0.8rem' }}>
+                      <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: 6 }} />
+                      Buscando...
+                    </div>
+                  )}
+                  {!searchingStudentCards && studentCardSearch.length >= 2 && studentCardResults.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: 12, color: '#94a3b8', fontSize: '0.8rem' }}>
+                      Nenhum aluno com card encontrado
+                    </div>
+                  )}
+                  {studentCardResults.length > 0 && (
+                    <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' }}>
+                      {studentCardResults.map((s: any) => (
+                        <div
+                          key={s.id}
+                          onClick={async () => {
+                            const imported = await handleImportStudentCard(s);
+                            if (imported) {
+                              setStudentCardSearch('');
+                              setStudentCardResults([]);
+                            }
+                          }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '8px 12px', borderRadius: 10,
+                            background: 'var(--bg-secondary, #1e293b)',
+                            border: '1px solid var(--border-color, #334155)',
+                            cursor: 'pointer', transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = '#F58A25'; e.currentTarget.style.background = 'rgba(245,138,37,0.05)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color, #334155)'; e.currentTarget.style.background = 'var(--bg-secondary, #1e293b)'; }}
+                        >
+                          {s.card?.photo_url ? (
+                            <img src={s.card.photo_url} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(245,138,37,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <FontAwesomeIcon icon={faUser} style={{ color: '#F58A25', fontSize: '0.8rem' }} />
+                            </div>
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary, #e2e8f0)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {s.card?.player_name || s.name}
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                              {s.card?.position || 'JOG'} &middot; OVR {s.card?.overall || 50} &middot; {s.card?.card_type || 'gold'}
+                            </div>
+                          </div>
+                          <div style={{
+                            padding: '4px 10px', borderRadius: 6,
+                            background: 'rgba(245,138,37,0.15)', color: '#F58A25',
+                            fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap',
+                          }}>
+                            Importar
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Step 2: Select cards (max 2) */}
               {assignTeamId && (
                 <div style={{ marginTop: 16 }}>
@@ -962,7 +1093,7 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
               )}
             </div>
             <div className="mm-footer">
-              <button className="mm-btn mm-btn-secondary" onClick={() => { setShowAssignModal(false); setAssignTeamId(null); setAssignCardIds([]); }}>Cancelar</button>
+              <button className="mm-btn mm-btn-secondary" onClick={() => { setShowAssignModal(false); setAssignTeamId(null); setAssignCardIds([]); setStudentCardSearch(''); setStudentCardResults([]); }}>Cancelar</button>
               <button className="mm-btn mm-btn-primary" onClick={handleBulkAssign} disabled={!assignTeamId || assignCardIds.length === 0 || saving}>
                 {saving ? 'Atribuindo...' : `Atribuir ${assignCardIds.length} card${assignCardIds.length !== 1 ? 's' : ''}`}
               </button>
