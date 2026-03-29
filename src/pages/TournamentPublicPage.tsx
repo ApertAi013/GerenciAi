@@ -491,7 +491,6 @@ export default function TournamentPublicPage() {
                       boxShadow: '0 0 40px rgba(245,158,11,0.15), 0 0 80px rgba(59,130,246,0.08)',
                     }}>
                       <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 20, height: 20, background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', border: '2px solid #fcd34d', boxShadow: '0 0 15px rgba(251,191,36,0.5)' }} />
-                      <div style={{ position: 'absolute', bottom: -20, left: '50%', transform: 'translateX(-50%)', width: 160, height: 60, borderRadius: '50%', border: '2px solid rgba(59,130,246,0.2)', boxShadow: '0 0 30px rgba(59,130,246,0.15)', pointerEvents: 'none' }} />
                       <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', margin: '10px auto 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 30px rgba(251,191,36,0.4)', border: '3px solid #fcd34d' }}>
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="#1e293b" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
                       </div>
