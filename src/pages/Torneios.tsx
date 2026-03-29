@@ -470,6 +470,41 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
     } catch (err: any) { toast.error('Erro ao remover card'); }
   };
 
+  // Teams for assignment
+  const [teams, setTeams] = useState<any[]>([]);
+  useEffect(() => {
+    tournamentService.getTournament(tournamentId).then(res => {
+      setTeams(res.data?.teams || []);
+    }).catch(() => {});
+  }, [tournamentId]);
+
+  const assignedTeamIds = new Set(cards.filter(c => c.team_id).map(c => c.team_id));
+
+  const handleAssignTeam = async (cardId: number, teamId: number | null) => {
+    try {
+      const fd = new FormData();
+      // Find current card data
+      const card = cards.find(c => c.id === cardId);
+      if (!card) return;
+      fd.append('player_name', card.player_name);
+      fd.append('position', card.position || 'JOG');
+      fd.append('overall', String(card.overall || 50));
+      fd.append('stat_atk', String(card.stat_atk || 50));
+      fd.append('stat_def', String(card.stat_def || 50));
+      fd.append('stat_saq', String(card.stat_saq || 50));
+      fd.append('stat_rec', String(card.stat_rec || 50));
+      fd.append('stat_blq', String(card.stat_blq || 50));
+      fd.append('stat_fin', String(card.stat_fin || 50));
+      fd.append('card_type', card.card_type || 'gold');
+      fd.append('team_id', teamId ? String(teamId) : '');
+      await tournamentService.updatePlayerCard(tournamentId, cardId, fd);
+      toast.success(teamId ? 'Card atribuido!' : 'Card desatribuido');
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Erro ao atribuir');
+    }
+  };
+
   const CARD_BG_MAP: Record<string, string> = {
     gold: '/fut-cards/large-rare-gold.png',
     silver: '/fut-cards/large-rare-silver.png',
@@ -581,6 +616,42 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
     );
   };
 
+  const renderCardWithTeam = (card: any) => {
+    const assignedTeam = card.team_id ? teams.find(t => t.id === card.team_id) : null;
+    const availableTeams = teams.filter(t => !assignedTeamIds.has(t.id) || t.id === card.team_id);
+
+    return (
+      <div key={card.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+        {renderFutCard(card)}
+        {/* Team assignment */}
+        {assignedTeam ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 8, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', maxWidth: 200 }}>
+            <FontAwesomeIcon icon={faCheck} style={{ color: '#10B981', fontSize: '0.7rem' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10B981', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{assignedTeam.name}</span>
+            <button
+              onClick={() => handleAssignTeam(card.id, null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: '0.7rem', padding: 2 }}
+              title="Desatribuir"
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          </div>
+        ) : (
+          <select
+            value=""
+            onChange={e => { if (e.target.value) handleAssignTeam(card.id, Number(e.target.value)); }}
+            style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border-color, #334155)', background: 'var(--bg-secondary, #1e293b)', color: 'var(--text-muted, #94a3b8)', maxWidth: 200, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            <option value="">Atribuir a equipe...</option>
+            {availableTeams.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Header */}
@@ -658,7 +729,7 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
         </div>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
-          {cards.map((card: any) => renderFutCard(card))}
+          {cards.map((card: any) => renderCardWithTeam(card))}
         </div>
       )}
 
