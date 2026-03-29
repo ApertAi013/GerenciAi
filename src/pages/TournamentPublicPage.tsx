@@ -347,6 +347,7 @@ export default function TournamentPublicPage() {
   const isFinished = tournament.status === 'finished';
   const bracketGroups = groupMatchesByBracket(matches.filter(m => m.bracket_type !== 'group'));
   const nonByeMatches = matches.filter(m => !m.is_bye);
+  const displayMap = buildDisplayMap(matches);
 
   // Format dates
   const startDate = new Date(tournament.tournament_date).toLocaleDateString('pt-BR', {
@@ -761,7 +762,7 @@ export default function TournamentPublicPage() {
                 <h2 className="tp-section-title">
                   Chave {tournament.format === 'group_stage' && tournament.group_stage_completed ? '(Mata-Mata)' : ''}
                 </h2>
-                <BracketView bracketGroups={bracketGroups} allMatches={matches} />
+                <BracketView bracketGroups={bracketGroups} allMatches={matches} displayMap={displayMap} />
               </>
             )}
 
@@ -778,7 +779,7 @@ export default function TournamentPublicPage() {
                     })
                     .slice(0, 12)
                     .map(match => (
-                      <MatchCard key={match.id} match={match} allMatches={matches} />
+                      <MatchCard key={match.id} match={match} allMatches={matches} displayMap={displayMap} />
                     ))}
                 </div>
               </>
@@ -839,7 +840,7 @@ export default function TournamentPublicPage() {
                 {tournament.format === 'group_stage' && (
                   <h2 className="tp-section-title">Fase Eliminatoria</h2>
                 )}
-                <BracketView bracketGroups={bracketGroups} allMatches={matches} />
+                <BracketView bracketGroups={bracketGroups} allMatches={matches} displayMap={displayMap} />
               </>
             ) : (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
@@ -903,7 +904,7 @@ export default function TournamentPublicPage() {
                   return (order[a.status] ?? 1) - (order[b.status] ?? 1) || a.match_number - b.match_number;
                 })
                 .map(match => (
-                  <MatchCard key={match.id} match={match} allMatches={matches} />
+                  <MatchCard key={match.id} match={match} allMatches={matches} displayMap={displayMap} />
                 ))}
             </div>
             {nonByeMatches.length === 0 && (
@@ -996,8 +997,14 @@ export default function TournamentPublicPage() {
 // ═══════════════════════════════════════════════════════════
 
 // Helper: get placeholder text for empty team slots
-function getTeamPlaceholder(match: TournamentMatch, slot: 1 | 2, allMatches: TournamentMatch[]): string {
-  // Find which match feeds into this slot
+function buildDisplayMap(allMatches: TournamentMatch[]): Map<number, number> {
+  const map = new Map<number, number>();
+  const sorted = [...allMatches].filter(m => !m.is_bye).sort((a, b) => a.match_number - b.match_number);
+  sorted.forEach((m, i) => map.set(m.id, i + 1));
+  return map;
+}
+
+function getTeamPlaceholder(match: TournamentMatch, slot: 1 | 2, allMatches: TournamentMatch[], displayMap?: Map<number, number>): string {
   const feeder = allMatches.find(m =>
     (slot === 1 && m.next_winner_match_id === match.id && m.next_winner_slot === 1) ||
     (slot === 1 && m.next_loser_match_id === match.id && m.next_loser_slot === 1) ||
@@ -1005,12 +1012,13 @@ function getTeamPlaceholder(match: TournamentMatch, slot: 1 | 2, allMatches: Tou
     (slot === 2 && m.next_loser_match_id === match.id && m.next_loser_slot === 2)
   );
   if (!feeder) return 'A definir';
+  const num = displayMap?.get(feeder.id) || feeder.match_number;
   const isWinner = feeder.next_winner_match_id === match.id && feeder.next_winner_slot === slot;
-  return isWinner ? `Venc. Jogo #${feeder.match_number}` : `Perd. Jogo #${feeder.match_number}`;
+  return isWinner ? `Venc. Jogo #${num}` : `Perd. Jogo #${num}`;
 }
 
 // ─── Match Card ───
-function MatchCard({ match, allMatches }: { match: TournamentMatch; allMatches?: TournamentMatch[] }) {
+function MatchCard({ match, allMatches, displayMap }: { match: TournamentMatch; allMatches?: TournamentMatch[]; displayMap?: Map<number, number> }) {
   const isLive = match.status === 'live';
   const isCompleted = match.status === 'completed';
   const bracketLabel = BRACKET_TYPE_LABELS[match.bracket_type] || match.bracket_type;
@@ -1018,7 +1026,7 @@ function MatchCard({ match, allMatches }: { match: TournamentMatch; allMatches?:
   return (
     <div className={`tp-match-card ${isLive ? 'live' : isCompleted ? 'completed' : ''}`}>
       <div className="tp-match-header">
-        <span className="tp-match-number">#{match.match_number}</span>
+        <span className="tp-match-number">#{displayMap?.get(match.id) || match.match_number}</span>
         {isLive && (
           <span className="tp-match-status live">
             <span className="tp-live-dot" style={{ width: 6, height: 6 }} />
@@ -1029,13 +1037,13 @@ function MatchCard({ match, allMatches }: { match: TournamentMatch; allMatches?:
         {!isLive && !isCompleted && <span className="tp-match-status pending">PENDENTE</span>}
       </div>
       <div className={`tp-match-team-row ${match.winner_id && match.winner_id === match.team1_id ? 'winner' : ''} ${!match.team1_name ? 'tbd' : ''}`}>
-        <span className="tp-match-team-name">{match.team1_name || (allMatches ? getTeamPlaceholder(match, 1, allMatches) : 'A definir')}</span>
+        <span className="tp-match-team-name">{match.team1_name || (allMatches ? getTeamPlaceholder(match, 1, allMatches, displayMap) : 'A definir')}</span>
         <span className="tp-match-team-score">
           {match.team1_score !== null && match.team1_score !== undefined ? match.team1_score : '-'}
         </span>
       </div>
       <div className={`tp-match-team-row ${match.winner_id && match.winner_id === match.team2_id ? 'winner' : ''} ${!match.team2_name ? 'tbd' : ''}`}>
-        <span className="tp-match-team-name">{match.team2_name || (allMatches ? getTeamPlaceholder(match, 2, allMatches) : 'A definir')}</span>
+        <span className="tp-match-team-name">{match.team2_name || (allMatches ? getTeamPlaceholder(match, 2, allMatches, displayMap) : 'A definir')}</span>
         <span className="tp-match-team-score">
           {match.team2_score !== null && match.team2_score !== undefined ? match.team2_score : '-'}
         </span>
@@ -1045,7 +1053,7 @@ function MatchCard({ match, allMatches }: { match: TournamentMatch; allMatches?:
 }
 
 // ─── Bracket View ───
-function BracketView({ bracketGroups, allMatches }: { bracketGroups: Record<string, TournamentMatch[][]>; allMatches?: TournamentMatch[] }) {
+function BracketView({ bracketGroups, allMatches, displayMap }: { bracketGroups: Record<string, TournamentMatch[][]>; allMatches?: TournamentMatch[]; displayMap?: Map<number, number> }) {
   const winnersRounds = bracketGroups['winners'];
   const losersRounds = bracketGroups['losers'];
   const grandFinalRounds = bracketGroups['grand_final'];
@@ -1084,7 +1092,7 @@ function BracketView({ bracketGroups, allMatches }: { bracketGroups: Record<stri
                   </div>
                   <div className="tp-bracket-round-matches">
                     {roundMatches.map(match => (
-                      <MatchCard key={match.id} match={match} allMatches={allMatches} />
+                      <MatchCard key={match.id} match={match} allMatches={allMatches} displayMap={displayMap} />
                     ))}
                   </div>
                 </div>
@@ -1110,7 +1118,7 @@ function BracketView({ bracketGroups, allMatches }: { bracketGroups: Record<stri
                     </div>
                     <div className="tp-bracket-round-matches">
                       {roundMatches.map(match => (
-                        <MatchCard key={match.id} match={match} allMatches={allMatches} />
+                        <MatchCard key={match.id} match={match} allMatches={allMatches} displayMap={displayMap} />
                       ))}
                     </div>
                   </div>
@@ -1127,13 +1135,13 @@ function BracketView({ bracketGroups, allMatches }: { bracketGroups: Record<stri
           {grandFinalRounds && grandFinalRounds[0] && grandFinalRounds[0].map(match => (
             <div key={match.id} className="tp-bracket-final-card">
               <div className="tp-bracket-round-label" style={{ color: '#EAB308', fontWeight: 700, fontSize: '0.85rem' }}>Grande Final</div>
-              <MatchCard match={match} allMatches={allMatches} />
+              <MatchCard match={match} allMatches={allMatches} displayMap={displayMap} />
             </div>
           ))}
           {thirdPlaceRounds && thirdPlaceRounds[0] && thirdPlaceRounds[0].map(match => (
             <div key={match.id} className="tp-bracket-final-card">
               <div className="tp-bracket-round-label" style={{ color: '#d97706', fontSize: '0.85rem' }}>Disputa 3o Lugar</div>
-              <MatchCard match={match} allMatches={allMatches} />
+              <MatchCard match={match} allMatches={allMatches} displayMap={displayMap} />
             </div>
           ))}
         </div>
@@ -1145,13 +1153,13 @@ function BracketView({ bracketGroups, allMatches }: { bracketGroups: Record<stri
           {grandFinalRounds && grandFinalRounds[0] && grandFinalRounds[0].map(m => (
             <div key={m.id}>
               <div className="tp-bracket-round-label" style={{ color: '#EAB308', fontWeight: 700 }}>Final</div>
-              <MatchCard match={m} allMatches={allMatches} />
+              <MatchCard match={m} allMatches={allMatches} displayMap={displayMap} />
             </div>
           ))}
           {thirdPlaceRounds && thirdPlaceRounds[0] && thirdPlaceRounds[0].map(m => (
             <div key={m.id}>
               <div className="tp-bracket-round-label" style={{ color: '#d97706' }}>3o Lugar</div>
-              <MatchCard match={m} allMatches={allMatches} />
+              <MatchCard match={m} allMatches={allMatches} displayMap={displayMap} />
             </div>
           ))}
         </div>
