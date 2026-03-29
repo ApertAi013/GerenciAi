@@ -582,10 +582,54 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
           <FontAwesomeIcon icon={faSpinner} spin style={{ fontSize: '1.5rem', color: '#94a3b8' }} />
         </div>
       ) : cards.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>
-          <FontAwesomeIcon icon={faMedal} style={{ fontSize: '2.5rem', marginBottom: 12, opacity: 0.4 }} />
-          <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Nenhum card criado</div>
-          <div style={{ fontSize: '0.8rem', marginTop: 4 }}>Crie cards estilo FIFA FUT para os jogadores do torneio</div>
+        <div style={{ padding: '20px 0' }}>
+          {/* Info banner */}
+          <div style={{ background: 'linear-gradient(135deg, rgba(245,138,37,0.08), rgba(59,130,246,0.05))', border: '1px solid rgba(245,138,37,0.2)', borderRadius: 16, padding: '28px 24px', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+              {/* Preview mockup */}
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <div style={{ width: 90, height: 135, backgroundImage: 'url(/fut-cards/large-rare-gold.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', opacity: 0.7, borderRadius: 4 }} />
+                <div style={{ width: 90, height: 135, backgroundImage: 'url(/fut-cards/large-toty.png)', backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', opacity: 0.5, borderRadius: 4 }} />
+              </div>
+              {/* Text */}
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#F58A25', marginBottom: 8 }}>
+                  <FontAwesomeIcon icon={faTrophy} style={{ marginRight: 8 }} />
+                  Cards de Jogadores
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #94a3b8)', lineHeight: 1.5, marginBottom: 12 }}>
+                  Crie cards personalizados estilo <strong style={{ color: 'var(--text-color, #e2e8f0)' }}>FIFA Ultimate Team</strong> para os competidores do torneio. Os cards aparecem automaticamente na <strong style={{ color: 'var(--text-color, #e2e8f0)' }}>pagina publica</strong> do campeonato:
+                </p>
+                <ul style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #94a3b8)', lineHeight: 1.8, paddingLeft: 16, marginBottom: 14 }}>
+                  <li><strong style={{ color: '#10B981' }}>Ao vivo</strong> — Cards aparecem ao lado do placar durante as partidas</li>
+                  <li><strong style={{ color: '#3B82F6' }}>Aba Times</strong> — Cada equipe exibe os cards dos seus jogadores</li>
+                  <li><strong style={{ color: '#EAB308' }}>Podio</strong> — O campeao tem destaque com cards maiores</li>
+                  <li><strong style={{ color: '#8B5CF6' }}>Perfil do aluno</strong> — Cards ficam salvos no perfil de cada aluno</li>
+                </ul>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, padding: '6px 12px', fontSize: '0.75rem', color: '#10B981', fontWeight: 600 }}>
+                    <FontAwesomeIcon icon={faUsers} style={{ marginRight: 4 }} /> Mais engajamento dos espectadores
+                  </div>
+                  <div style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, padding: '6px 12px', fontSize: '0.75rem', color: '#3B82F6', fontWeight: 600 }}>
+                    <FontAwesomeIcon icon={faCamera} style={{ marginRight: 4 }} /> Remocao de fundo automatica
+                  </div>
+                  <div style={{ background: 'rgba(245,138,37,0.1)', border: '1px solid rgba(245,138,37,0.2)', borderRadius: 8, padding: '6px 12px', fontSize: '0.75rem', color: '#F58A25', fontWeight: 600 }}>
+                    <FontAwesomeIcon icon={faMedal} style={{ marginRight: 4 }} /> Visual profissional
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={openCreate}
+              style={{ padding: '12px 24px', borderRadius: 10, border: 'none', background: '#F58A25', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem', fontFamily: 'inherit' }}
+            >
+              <FontAwesomeIcon icon={faPlus} style={{ marginRight: 8 }} />
+              Criar Primeiro Card
+            </button>
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
