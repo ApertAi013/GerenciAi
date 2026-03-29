@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus, faTrophy, faSpinner, faCalendar, faMapMarkerAlt,
-  faUsers, faUser, faPlay, faStop, faCheck, faTimes, faCopy, faLink,
+  faUsers, faUser, faPlay, faStop, faCheck, faTimes, faCopy, faLink, faMagnifyingGlass,
   faCamera, faMedal, faChevronRight, faCircle, faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { tournamentService } from '../services/tournamentService';
@@ -869,6 +869,18 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
           {cards.length} card{cards.length !== 1 ? 's' : ''} criado{cards.length !== 1 ? 's' : ''}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          {/* Import student card */}
+          <button
+            onClick={() => { setShowAssignModal(true); setAssignTeamId(null); setAssignCardIds([]); setStudentCardSearch(''); setStudentCardResults([]); }}
+            style={{
+              padding: '8px 16px', borderRadius: 8, border: '1px solid #8B5CF6',
+              background: 'none', color: '#8B5CF6', cursor: 'pointer',
+              fontWeight: 600, fontSize: '0.85rem', fontFamily: 'inherit',
+            }}
+          >
+            <FontAwesomeIcon icon={faMagnifyingGlass} style={{ marginRight: 6 }} />
+            Adicionar Card Existente
+          </button>
           {/* Assign existing cards to team */}
           {cards.filter((c: any) => !c.team_id).length > 0 && teams.filter((t: any) => !assignedTeamIds.has(t.id)).length > 0 && (
             <button
@@ -1125,29 +1137,56 @@ function PlayerCardsTab({ tournamentId }: { tournamentId: number }) {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
                     {cards.filter((c: any) => !c.team_id).map((card: any) => {
                       const selected = assignCardIds.includes(card.id);
+                      const disabled = !selected && assignCardIds.length >= 2;
                       return (
                         <div
                           key={card.id}
                           onClick={() => {
-                            if (selected) {
-                              setAssignCardIds(ids => ids.filter(id => id !== card.id));
-                            } else if (assignCardIds.length < 2) {
-                              setAssignCardIds(ids => [...ids, card.id]);
-                            }
+                            if (disabled) return;
+                            if (selected) setAssignCardIds(ids => ids.filter(id => id !== card.id));
+                            else setAssignCardIds(ids => [...ids, card.id]);
                           }}
                           style={{
-                            cursor: 'pointer', transition: 'all 0.2s',
-                            border: selected ? '3px solid #10B981' : '3px solid transparent',
-                            borderRadius: 12, padding: 4,
-                            opacity: !selected && assignCardIds.length >= 2 ? 0.4 : 1,
+                            cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                            border: selected ? '3px solid #10B981' : '3px solid var(--border-color, #334155)',
+                            borderRadius: 14, padding: 6, position: 'relative',
+                            opacity: disabled ? 0.35 : 1,
+                            background: selected ? 'rgba(16,185,129,0.06)' : 'none',
                           }}
                         >
-                          {renderFutCard(card)}
-                          {selected && (
-                            <div style={{ textAlign: 'center', marginTop: 4 }}>
-                              <FontAwesomeIcon icon={faCheck} style={{ color: '#10B981' }} />
+                          {/* Checkbox */}
+                          <div style={{
+                            position: 'absolute', top: -4, right: -4, zIndex: 5,
+                            width: 26, height: 26, borderRadius: 13,
+                            border: selected ? '2px solid #10B981' : '2px solid var(--border-color, #64748b)',
+                            background: selected ? '#10B981' : 'var(--bg-primary, #0f172a)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                          }}>
+                            {selected && <FontAwesomeIcon icon={faCheck} style={{ color: '#fff', fontSize: '0.7rem' }} />}
+                          </div>
+                          {/* Card name + mini info (no full card render to avoid edit click) */}
+                          <div style={{ width: 140, textAlign: 'center', padding: '8px 4px' }}>
+                            <div style={{
+                              width: 140, height: 210, position: 'relative',
+                              backgroundImage: `url(${CARD_BG_MAP[card.card_type] || CARD_BG_MAP.gold})`,
+                              backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+                              fontFamily: "'Titillium Web', sans-serif", pointerEvents: 'none',
+                            }}>
+                              {(() => {
+                                const c2 = (CARD_TEXT_MAP[card.card_type] || CARD_TEXT_MAP.gold).top;
+                                const sc = 140/200;
+                                return (<>
+                                  <div style={{ position: 'absolute', top: 52*sc, left: 32*sc, fontSize: `${1.6*sc}rem`, fontWeight: 900, color: c2, lineHeight: 1 }}>{card.overall}</div>
+                                  <div style={{ position: 'absolute', top: 82*sc, left: 32*sc, fontSize: `${0.65*sc}rem`, fontWeight: 700, color: c2, textTransform: 'uppercase', letterSpacing: 0.5, width: 30*sc, textAlign: 'center' }}>{card.position}</div>
+                                  <div style={{ position: 'absolute', top: 40*sc, left: '50%', transform: 'translateX(-50%)', width: 100*sc, height: 100*sc, overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                    {card.photo_url ? <img src={card.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} /> : <FontAwesomeIcon icon={faUsers} style={{ fontSize: `${2*sc}rem`, color: `${c2}44` }} />}
+                                  </div>
+                                  <div style={{ position: 'absolute', top: 150*sc, left: 0, right: 0, fontSize: `${0.78*sc}rem`, fontWeight: 800, textTransform: 'uppercase', color: c2, textAlign: 'center', padding: `0 ${10*sc}px`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.player_name}</div>
+                                </>);
+                              })()}
                             </div>
-                          )}
+                          </div>
                         </div>
                       );
                     })}
